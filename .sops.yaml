@@ -1,0 +1,6 @@
+creation_rules:
+    - path_regex: secret.*\.ya?ml
+      encrypted_regex: "^(username|password|privateurl)$"
+      key_groups:
+      - age:
+        - age14ysm820ajay8wqslnkjqcewvq4tmeucth3a88qk4a7hl0mnwkfaqmj6xx5
