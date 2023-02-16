@@ -1,9 +1,10 @@
 ﻿version: '3'
 tasks:
   debian:
-    desc: "Generate dotenv file"
+    desc: "Run Debian-Packer"
+    deps: [ general:env ]
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds:
-      - env > .env.bak
+      - echo "Here run Packer"
     preconditions:
       - if [ "$vmtemplate_debian_enabled" = "true" ]; then exit 0; else exit 1; fi

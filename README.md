@@ -18,4 +18,5 @@
 - terraform
 - sops (optional)
 - pre-commit (optional)
-
+- yq 
+- taskfile
