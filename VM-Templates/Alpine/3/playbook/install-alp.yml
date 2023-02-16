@@ -1,0 +1,21 @@
+- name: "Installer des packages par defaut"
+  community.general.apk:
+    name:
+      - curl
+      - git
+      - sshfs
+      - sudo
+      - tree
+      - htop
+      - fish
+      - vim
+      - unzip
+      - figlet
+      - docker
+      - docker-compose
+      - nfs-utils
+      - borgbackup
+      - bash
+    state: present
+  become: yes
+

@@ -1,0 +1,8 @@
+---
+- hosts: default 
+  remote_user: root
+  tasks:
+  - name: ajout des tasks via un .yml  
+    include_tasks: install-alp.yml
+    when: ansible_facts['os_family'] == "Alpine"
+
