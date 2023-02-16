@@ -1,6 +1,7 @@
 #!/bin/bash
 filename="$1"
 log_file="./pre-commit.log"
+echo $@ | tee $log_file
 if [[ "$filename" =~ ^secret\..*\.ya?ml$ ]]; then
   echo "$filename matches pattern, encrypting..." | tee $log_file
   sops -e -i $filename
