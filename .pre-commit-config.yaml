@@ -6,3 +6,5 @@ repos:
       entry: .pre-commit-sops.sh
       language: script
       pass_filenames: true
+      verbose: true
+      always_run: true
