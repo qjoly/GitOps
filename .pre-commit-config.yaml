@@ -3,7 +3,7 @@ repos:
   hooks:
     - id: encrypt files
       name: encrypt files
-      entry: .pre-commit-sops.sh
+      entry: .scripts/.pre-commit-sops.sh
       language: script
       pass_filenames: true
       verbose: true

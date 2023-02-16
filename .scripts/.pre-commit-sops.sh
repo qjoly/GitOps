@@ -11,5 +11,3 @@ else
   echo "$filename does not match pattern and will not be encrypted" >> $log_file
 fi
 done
-
-

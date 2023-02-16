@@ -1,0 +1,3 @@
+[submodule "VM-Templates/Proxmox/Debian/11"]
+	path = VM-Templates/Proxmox/Debian/11
+	url = https://github.com/QJoly/Debian-Template-Proxmox
