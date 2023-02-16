@@ -4,5 +4,7 @@ tasks:
     desc: "Generate dotenv file"
     cmds:
       - ./.scripts/parse_yaml.sh "{{.secret_file}}"
-    preconditions:
+    preconditions: # do not start if fail
       - which yq >/dev/null
+    status: # check if the task need to be runned
+      - test -f .env
