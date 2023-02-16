@@ -1,0 +1,8 @@
+﻿version: '3'
+tasks:
+  env:
+    desc: "Generate dotenv file"
+    cmds:
+      - ./.scripts/parse_yaml.sh "{{.secret_file}}"
+    preconditions:
+      - which yq >/dev/null

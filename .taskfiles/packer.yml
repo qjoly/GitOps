@@ -1,0 +1,9 @@
+﻿version: '3'
+tasks:
+  debian:
+    desc: "Generate dotenv file"
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    cmds:
+      - env > .env.bak
+    preconditions:
+      - if [ "$vmtemplate_debian_enabled" = "true" ]; then exit 0; else exit 1; fi
