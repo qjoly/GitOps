@@ -12,6 +12,7 @@
 - Gestion des secrets par Packer via du YAML
 - Créer un taskfile pour lancer les étapes de manières séquentielles
 - Créer les premiers terraforms
+- Gerer variables d'env avec Packer
 
 
 # Requirements
