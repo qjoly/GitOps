@@ -8,3 +8,9 @@ tasks:
       - which yq >/dev/null
     status: # check if the task need to be runned
       - test -f .env
+  clean:
+    desc: "Clean everything"
+    cmds:
+      - rm .env
+    preconditions: # do not start if fail
+      - which yq >/dev/null
