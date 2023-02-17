@@ -1,0 +1,87 @@
+{
+  "variables":
+    {
+      "cpu": "{{env `vmtemplate_debian_cpu`}}",
+      "ram": "{{env `vmtemplate_debian_memory`}}",
+      "name": "{{env `vmtemplate_debian_iso_url`}}",
+      "disk_size": "{{env `vmtemplate_debian_iso_url`}}",
+      "version": "11",
+      "iso_url": "{{env `vmtemplate_debian_iso_url`}}",
+      "iso_checksum" : "{{env `vmtemplate_debian_iso_checksum`}}",
+      "headless": "true",
+      "ssh_username": "{{env `vmtemplate_debian_username`}}",
+      "ssh_password": "{{env `vmtemplate_debian_password`}}",
+      "config_file":"preseed.cfg"
+    },
+  "builders": [
+    {
+      "name": "{{user `name`}}{{user `version`}}",
+      "type": "qemu",
+      "format": "qcow2",
+      "accelerator": "kvm",
+      "qemu_binary": "/usr/bin/qemu-system-x86_64",
+      "net_device": "virtio-net",
+      "disk_interface": "virtio",
+      "disk_cache": "none",
+      "qemuargs": [[ "-m", "{{user `ram`}}M" ],[ "-smp", "{{user `cpu`}}" ]],
+      "ssh_wait_timeout": "30m",
+      "http_directory": "http",
+      "http_port_min": 10082,
+      "http_port_max": 10089,
+      "host_port_min": 2222,
+      "host_port_max": 2229,
+      "ssh_username": "{{user `ssh_username`}}",
+      "ssh_password": "{{user `ssh_password`}}",
+      "iso_urls": "{{user `iso_url`}}",
+      "iso_checksum": "{{user `iso_checksum`}}",
+      "boot_wait": "15s",
+      "boot_command": [
+                "<esc><wait2>",
+                "auto <wait>",
+                "console-keymaps-at/keymap=us <wait>",
+                "console-setup/ask_detect=false <wait>",
+                "debconf/frontend=noninteractive <wait>",
+                "debian-installer=en_US <wait>",
+                "fb=false <wait>",
+                "install <wait>",
+                "kbd-chooser/method=us <wait>",
+                "keyboard-configuration/xkb-keymap=us <wait>",
+                "locale=en_US <wait>",
+                "netcfg/get_hostname={{user `name`}}{{user `version`}} <wait>",
+                "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/{{user `config_file`}} <wait>",
+                "<enter><wait>"
+      ],
+      "disk_size": "{{user `disk_size`}}",
+      "disk_discard": "unmap",
+      "disk_compression": true,
+      "headless": "{{user `headless`}}",
+      "shutdown_command": "echo '{{user `ssh_password`}}' | sudo -S shutdown -P now",
+      "output_directory": "artifacts/{{user `name`}}.qcow2"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "{{.Vars}} bash '{{.Path}}'",
+      "inline": [
+        "apt-get update",
+        "apt -y install ansible"
+        ]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "ansible/playbook.yml",
+      "playbook_dir": "ansible"
+    },
+    {
+      "type": "shell",
+      "execute_command": "{{.Vars}} bash '{{.Path}}'",
+      "inline": [
+        "apt -y remove ansible",
+        "apt-get clean",
+        "apt-get -y autoremove --purge"
+      ]
+    }
+  ]
+  
+}

@@ -1,0 +1,28 @@
+---
+- hosts: all
+  gather_facts: true
+
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+  - name: "Install packages"
+    apt:
+      name: "{{item}}"
+      state: present
+    loop:
+      - vim
+      - exa
+      - grc
+      - most
+      - highlight
+      - source-highlight
+      - python3-pygments
+      - gawk
+      - git
+      - gnupg
+      - net-tools
+      - dnsutils
+      - python3-apt
+      - qemu-guest-agent
+
