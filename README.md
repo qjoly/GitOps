@@ -12,7 +12,12 @@
 - Gestion des secrets par Packer via du YAML
 - Créer un taskfile pour lancer les étapes de manières séquentielles
 - Créer les premiers terraforms
+- Générer le mot de passe dans le preseed de Debian
 
+pour copier clé publique dans debian : 
+task: 
+    - recup dans variable le contenu de $vmtemplate_debian_ssh_key
+    - faire le templating du preseed
 
 # Requirements
 - terraform
@@ -20,3 +25,4 @@
 - pre-commit (optional)
 - yq 
 - taskfile
+- j2cli
