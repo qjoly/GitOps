@@ -5,8 +5,10 @@ tasks:
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     verbose: true
     cmds:
-      - cp ${vmtemplate_debian_ssh_key} VM-Templates/{{.hypervisor}}/Debian/http/ssh_key
+      - cp ${vmtemplate_debian_ssh_key} VM-Templates/{{.hypervisor}}/Debian/http/used_public_key
+      - cd VM-Templates/{{.hypervisor}}/Debian/ && ssh_key=$(cat $vmtemplate_debian_ssh_key) j2 http/preseed.cfg.j2 > http/preseed.cfg
+      - cd VM-Templates/{{.hypervisor}}/Debian/ && packer build packer.json
     preconditions:
       - sh: '[ $vmtemplate_debian_enabled = "true" ]'
-      - sh: '[ -z "$vmtemplate_debian_ssh_key" ]'
+      - sh: '[ -n "$vmtemplate_debian_ssh_key" ]'
       - sh: 'test -f "$vmtemplate_debian_ssh_key"'
