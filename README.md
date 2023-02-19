@@ -13,6 +13,7 @@
 - Créer un taskfile pour lancer les étapes de manières séquentielles
 - Créer les premiers terraforms
 - Générer le mot de passe dans le preseed de Debian
+- Gerer variables d’env avec Packer
 
 pour copier clé publique dans debian : 
 task: 

@@ -7,5 +7,6 @@ tasks:
     cmds:
       - cp ${vmtemplate_debian_ssh_key} VM-Templates/{{.hypervisor}}/Debian/http/ssh_key
     preconditions:
-      - if [ "$vmtemplate_debian_enabled" = "true" ]; then exit 0; else exit 1; fi
-      - if [ "$vmtemplate_debian_ssh_key" = "false" ]; then exit 0; else exit 1; fi
+      - sh: '[ $vmtemplate_debian_enabled = "true" ]'
+      - sh: '[ -z "$vmtemplate_debian_ssh_key" ]'
+      - sh: 'test -f "$vmtemplate_debian_ssh_key"'
