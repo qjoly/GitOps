@@ -4,7 +4,7 @@
       "cpu": "{{env `vmtemplate_debian_cpu`}}",
       "ram": "{{env `vmtemplate_debian_memory`}}",
       "name": "{{env `vmtemplate_debian_iso_url`}}",
-      "disk_size": "{{env `vmtemplate_debian_iso_url`}}",
+      "disk_size": "{{env `vmtemplate_debian_disk_size`}}",
       "version": "11",
       "iso_url": "{{env `vmtemplate_debian_iso_url`}}",
       "iso_checksum" : "{{env `vmtemplate_debian_iso_checksum`}}",
