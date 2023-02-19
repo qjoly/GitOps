@@ -12,5 +12,6 @@ tasks:
     desc: "Clean everything"
     cmds:
       - rm .env
+      - rm $(find . -type f -name "preseed.cfg")  
     preconditions: # do not start if fail
       - which yq >/dev/null
