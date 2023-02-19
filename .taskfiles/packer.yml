@@ -2,9 +2,10 @@
 tasks:
   debian:
     desc: "Run Debian-Packer"
-    deps: [ general:env ]
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    verbose: true
     cmds:
-      - echo "Here run Packer"
+      - cp ${vmtemplate_debian_ssh_key} VM-Templates/{{.hypervisor}}/Debian/http/ssh_key
     preconditions:
       - if [ "$vmtemplate_debian_enabled" = "true" ]; then exit 0; else exit 1; fi
+      - if [ "$vmtemplate_debian_ssh_key" = "false" ]; then exit 0; else exit 1; fi
