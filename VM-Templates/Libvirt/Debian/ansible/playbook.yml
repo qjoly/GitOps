@@ -25,4 +25,9 @@
       - dnsutils
       - python3-apt
       - qemu-guest-agent
+  - name: sudo without password for default user group
+    copy:
+      content: '{{ utilisateur }} ALL=(ALL:ALL) NOPASSWD:ALL'
+      dest: /etc/sudoers.d/utilisateur
+      mode: 0440
 
