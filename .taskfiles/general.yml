@@ -11,7 +11,11 @@ tasks:
   clean:
     desc: "Clean everything"
     cmds:
-      - rm .env
-      - rm $(find . -type f -name "preseed.cfg")  
+      - cmd: rm .env 
+        ignore_error: true
+      - cmd: rm $(find . -type f -name "preseed.cfg")
+        ignore_error: true
+      - cmd: rm -r $(find . -type d -name "artifacts")
+        ignore_error: true
     preconditions: # do not start if fail
       - which yq >/dev/null
