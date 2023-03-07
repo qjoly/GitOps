@@ -12,3 +12,5 @@ tasks:
       - sh: '[ $vmtemplate_debian_enabled = "true" ]'
       - sh: '[ -n "$vmtemplate_debian_ssh_key" ]'
       - sh: 'test -f "$vmtemplate_debian_ssh_key"'
+    status:
+      - test -f 'artifacts/packer-Debian'
