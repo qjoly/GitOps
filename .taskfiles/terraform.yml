@@ -1,0 +1,30 @@
+﻿version: '3'
+tasks:
+  provisionning:
+    desc: "Launch Terraform"
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    verbose: true
+    cmds:
+      - cd VM/{{.hypervisor}}/Debian/ && packer build packer.json
+
+  debian:
+    desc: "Running Debian terraform"
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    verbose: true
+    cmds:
+      - cd VM/{{.hypervisor}}/Debian/ && ls -lah
+    preconditions:
+      - sh: '[ $vmtemplate_debian_enabled = "true" ]'
+      - sh: '[ -n "$vmtemplate_debian_ssh_key" ]'
+      - sh: 'test -f "$vmtemplate_debian_ssh_key"'
+
+  alpine:
+    desc: "Running Alpine terraform"
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    verbose: true
+    cmds:
+      - cd VM/{{.hypervisor}}/Alpine/ && ls -lah
+    preconditions:
+      - sh: '[ $vmtemplate_alpine_enabled = "true" ]'
+      - sh: '[ -n "$vmtemplate_alpine_ssh_key" ]'
+      - sh: 'test -f "$vmtemplate_alpine_ssh_key"'
