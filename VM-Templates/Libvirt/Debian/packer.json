@@ -16,7 +16,7 @@
     },
   "builders": [
     {
-      "name": "{{user `name`}}{{user `version`}}",
+      "name": "{{user `name`}}",
       "type": "qemu",
       "format": "qcow2",
       "accelerator": "kvm",
@@ -57,7 +57,7 @@
       "disk_compression": true,
       "headless": "{{user `headless`}}",
       "shutdown_command": "echo '{{user `default_password`}}' | sudo -S shutdown -P now",
-      "output_directory": "artifacts/{{user `name`}}.qcow2"
+      "output_directory": "../../../artifacts/"
     }
   ],
   "provisioners": [
