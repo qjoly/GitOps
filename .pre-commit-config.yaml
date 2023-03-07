@@ -8,3 +8,7 @@ repos:
       pass_filenames: true
       verbose: true
       always_run: true
+- repo: https://github.com/sirosen/fix-smartquotes
+  rev: 0.1.1
+  hooks:
+    - id: fix-smartquotes
