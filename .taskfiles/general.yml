@@ -6,16 +6,18 @@ tasks:
       - ./.scripts/parse_yaml.sh "{{.secret_file}}"
     preconditions: # do not start if fail
       - which yq >/dev/null
-    status: # check if the task need to be runned
-      - test -f .env
+
   clean:
     desc: "Clean everything"
     cmds:
       - cmd: rm .env 
         ignore_error: true
+      - cmd: rm .tfenv 
+        ignore_error: true
       - cmd: rm $(find . -type f -name "preseed.cfg")
         ignore_error: true
       - cmd: rm -r $(find . -type d -name "artifacts")
         ignore_error: true
-    preconditions: # do not start if fail
-      - which yq >/dev/null
+      - cmd: cd VM/{{.hypervisor}}/ && terraform destroy -auto-approve
+        ignore_error: true
+      
