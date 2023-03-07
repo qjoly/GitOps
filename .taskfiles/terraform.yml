@@ -5,26 +5,55 @@ tasks:
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     verbose: true
     cmds:
-      - cd VM/{{.hypervisor}}/Debian/ && packer build packer.json
+      - cmd: task terraform:debian
+        ignore_error: true
+      - cmd: task terraform:alpine
+        ignore_error: true
 
   debian:
     desc: "Running Debian terraform"
-    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env', '.tfenv']
     verbose: true
+    vars:
+      source_file: 'artifacts/packer-Debian'
+    env:
+      TF_VAR_source_file: '../../{{.source_file}}'
     cmds:
-      - cd VM/{{.hypervisor}}/Debian/ && ls -lah
+      - cp .env .tfenv && sed -i "s/^/TF_VAR_/g" .tfenv
+      - mkdir -p $hypervisor_libvirt_pool_dir
+      - chown :libvirt $hypervisor_libvirt_pool_dir
+      - cd VM/{{.hypervisor}}/ && terraform init && terraform apply
+    interactive: true
     preconditions:
       - sh: '[ $vmtemplate_debian_enabled = "true" ]'
-      - sh: '[ -n "$vmtemplate_debian_ssh_key" ]'
-      - sh: 'test -f "$vmtemplate_debian_ssh_key"'
+      - sh: test -f {{.sourcefile}}
 
   alpine:
     desc: "Running Alpine terraform"
-    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env', '.tfenv']
     verbose: true
+    vars:
+      sourcefile: 'artifacts/packer-Alpine'
+    env:
+      TF_VAR_sourcefile: "../../{{.sourcefile}}"
     cmds:
-      - cd VM/{{.hypervisor}}/Alpine/ && ls -lah
+      - cp .env .tfenv && sed -i "s/^/TF_VAR_/g" .tfenv
+      - mkdir -p $hypervisor_libvirt_pool_dir
+      - cd VM/{{.hypervisor}}/
     preconditions:
       - sh: '[ $vmtemplate_alpine_enabled = "true" ]'
       - sh: '[ -n "$vmtemplate_alpine_ssh_key" ]'
-      - sh: 'test -f "$vmtemplate_alpine_ssh_key"'
+      - sh: test -f {{.sourcefile}}
+
+  destroy-debian:
+    desc: "Running Debian terraform"
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env', '.tfenv']
+    verbose: true
+    vars:
+      source_file: 'artifacts/packer-Debian'
+    env:
+      TF_VAR_source_file: '../../{{.source_file}}'
+    cmds:
+      - cp .env .tfenv && sed -i "s/^/TF_VAR_/g" .tfenv
+      - cd VM/{{.hypervisor}}/ && terraform destroy -auto-approve
+    interactive: true
