@@ -13,7 +13,7 @@
 - Créer un taskfile pour lancer les étapes de manières séquentielles
 - Créer les premiers terraforms
 - Générer le mot de passe dans le preseed de Debian
-- Gerer variables d’env avec Packer
+- Gerer variables d'env avec Packer
 
 pour copier clé publique dans debian : 
 task: 
@@ -27,3 +27,7 @@ task:
 - yq 
 - taskfile
 - j2cli
+
+# Libvirt
+
+- Créer/utiliser un groupe pour le daemon libvirt (`unix_sock_group = "libvirt"` dans `/etc/libvirt/libvirtd.conf`)
