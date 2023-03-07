@@ -2,3 +2,6 @@ pre-commit.log
 .env*
 .tfenv*
 **.terraform**
+inventory.ini
+**tfstate**
+artifacts/
