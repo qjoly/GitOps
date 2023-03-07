@@ -40,7 +40,7 @@ d-i     passwd/root-login       boolean true
 d-i     passwd/root-password password {{ vmtemplate_debian_root_password }}
 d-i     passwd/root-password-again password {{ vmtemplate_debian_root_password }}
 d-i     passwd/make-user boolean true
-d-i     passwd/user-fullname string ansible deploy
+d-i     passwd/user-fullname string deploy
 d-i     passwd/username string {{ vmtemplate_debian_username }}
 d-i     passwd/user-password password {{ vmtemplate_debian_password }}
 d-i     passwd/user-password-again password {{ vmtemplate_debian_password }}
@@ -65,15 +65,11 @@ d-i     cdrom-detect/eject      boolean true
 d-i     debian-installer/exit/halt      boolean false
 d-i     debian-installer/exit/poweroff  boolean false
 d-i     pkgsel/include string vim openssh-server sudo htop iotop rsync mc curl python3 python3-pip python3-apt dnsutils net-tools net-tools gnupg2 wget hostname ansible qemu-guest-agent parted
-
 d-i     preseed/late_command string \
 	in-target sed -i '/^#PermitRootLogin/c\PermitRootLogin yes' /etc/ssh/sshd_config; \
 	in-target mkdir -p /root/.ssh; \
-	in-target /bin/sh -c echo '{{ ssh_key }}' > /root/.ssh/authorized_keysg; \
+	in-target /bin/sh -c echo '{{ ssh_key }}' > /root/.ssh/authorized_keys; \
 	in-target chmod -R go-rwx /root/.ssh/authorized_keys; \
 	in-target sed -i 's/# alias ll/alias ll/g' /root/.bashrc; \
-	in-target sed -i 's/# alias ls/alias ls/g' /root/.bashrc; \
-	in-target sed -i 's/# alias l/alias l/g' /root/.bashrc; \
-	in-target sed -i 's/# export LS_OPTIONS/export LS_OPTIONS/g' /root/.bashrc; \
-  	in-target sed -i 's/# eval/eval/g' /root/.bashrc;
+ 	in-target sed -i 's/# eval/eval/g' /root/.bashrc;
 
