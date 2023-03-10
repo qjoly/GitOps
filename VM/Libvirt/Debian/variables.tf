@@ -27,3 +27,9 @@ variable "hypervisor_libvirt_pool_name" {
     description = "This is another example input variable using env variables."
 }
 
+
+variable "provisionning_debian_kubernetes_enabled" {
+    type        = bool
+    default     = false
+    description = "This is another example input variable using env variables."
+}

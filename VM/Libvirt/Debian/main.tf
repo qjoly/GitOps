@@ -30,7 +30,27 @@ ${module.node[0].node_name} ansible_host=${module.node[0].node_ip}
 ${item.node_name} ansible_host=${item.node_ip}
 %{endfor}
 %{endif}
+[k3s_cluster:children]
+master
+node
 _EOF
 
   depends_on = [module.node]
+}
+
+
+resource "null_resource" "playbooks" {
+  count = var.provisionning_debian_kubernetes_enabled ? 1 : 0
+  
+  depends_on = [module.node, local_file.inventory]
+
+  provisioner "local-exec" {
+    when    = create
+    command = "ANSIBLE_FORCE_COLOR=true ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook --timeout 30 -i inventory.ini ${path.cwd}/../../Ansible/set_hostname.yml -v"
+  }
+
+  provisioner "local-exec" {
+    when    = create
+    command = "ANSIBLE_FORCE_COLOR=true ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook --timeout 30 -i inventory.ini ${path.cwd}/../../Ansible/k3s/site.yml -v -e ansible_user=utilisateur"
+  }
 }
