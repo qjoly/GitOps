@@ -12,7 +12,8 @@
       "default_username": "{{env `vmtemplate_debian_username`}}",
       "default_password": "{{env `vmtemplate_debian_password`}}",
       "root_password": "{{env `vmtemplate_debian_root_password`}}",
-      "config_file":"preseed.cfg"
+      "config_file":"preseed.cfg",
+      "ssh_key": "{{env `vmtemplate_debian_ssh_key`}}"
     },
   "builders": [
     {
@@ -75,7 +76,17 @@
       "type": "ansible-local",
       "playbook_file": "ansible/playbook.yml",
       "playbook_dir": "ansible",
-      "extra_arguments": ["--extra-vars", "utilisateur={{ user `default_username` }}"]
+      "extra_arguments": ["-v", "--extra-vars", "'utilisateur={{ user `default_username` }}", "ssh_key={{ user `ssh_key` }}'"]
+    },
+    {
+      "type": "file",
+      "source": "{{ user `ssh_key` }}",
+      "destination": "/root/.ssh/authorized_keys"
+    },
+    {
+      "type": "file",
+      "source": "{{ user `ssh_key` }}",
+      "destination": "/home/{{ user `default_username`}}/.ssh/authorized_keys"
     },
     {
       "type": "shell",
@@ -87,5 +98,4 @@
       ]
     }
   ]
-  
 }
