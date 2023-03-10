@@ -1,11 +1,34 @@
 ---
 - hosts: all
   gather_facts: true
-
   vars:
     ansible_python_interpreter: /usr/bin/python3
 
   tasks:
+
+  - name: Create directory
+    file:
+      path: "/home/{{ utilisateur }}/.ssh/"
+      state: directory
+      owner: "{{ utilisateur }}"
+      group: "{{ utilisateur }}"
+      
+  - name: Create authorized_keys for the default user if not exists
+    copy:
+      dest: "/home/{{ utilisateur }}/.ssh/authorized_keys"
+      content: ""
+      owner: "{{ utilisateur }}"
+      group: "{{ utilisateur }}"
+      force: no
+
+  - name: Create authorized_keys for the default user if not exists
+    copy:
+      dest: "/home/{{ utilisateur }}/.ssh/authorized_keys"
+      content: ""
+      owner: "{{ utilisateur }}"
+      group: "{{ utilisateur }}"
+      force: no
+
   - name: "Install packages"
     apt:
       name: "{{item}}"
@@ -25,9 +48,9 @@
       - dnsutils
       - python3-apt
       - qemu-guest-agent
+
   - name: sudo without password for default user group
     copy:
       content: '{{ utilisateur }} ALL=(ALL:ALL) NOPASSWD:ALL'
       dest: /etc/sudoers.d/utilisateur
       mode: 0440
-
