@@ -2,7 +2,6 @@
 tasks:
   env:
     desc: "Generate dotenv file"
-    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds:
       - ./.scripts/parse_yaml.sh "{{.secret_file}}"
     preconditions:
@@ -41,4 +40,5 @@ tasks:
       - task general:env
       - task general:prepare-ansible
       - task packer:debian
+      - sleep 1
       - task terraform:provisioning
