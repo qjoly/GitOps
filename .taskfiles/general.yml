@@ -2,14 +2,29 @@
 tasks:
   env:
     desc: "Generate dotenv file"
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds:
       - ./.scripts/parse_yaml.sh "{{.secret_file}}"
-    preconditions: # do not start if fail
+    preconditions:
       - which yq >/dev/null
+  
+  prepare-ansible:
+    desc: clone k3s-ansible if needed
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    cmds:
+      - cmd: git clone https://github.com/k3s-io/k3s-ansible VM/Ansible/k3s
+    preconditions:
+      - sh: '[ $provisionning_debian_kubernetes_enabled = true ]'
+    status:
+      - test -d 'VM/Ansible/k3s/'
 
   clean:
     desc: "Clean everything"
     cmds:
+      - cmd: task terraform:destroy-debian
+        ignore_error: true
+      - cmd: rm -rf VM/Ansible/k3s
+        ignore_error: true
       - cmd: rm .env 
         ignore_error: true
       - cmd: rm .tfenv 
@@ -18,6 +33,12 @@ tasks:
         ignore_error: true
       - cmd: rm -r $(find . -type d -name "artifacts")
         ignore_error: true
-      - cmd: cd VM/{{.hypervisor}}/ && terraform destroy -auto-approve
-        ignore_error: true
       
+  all:
+    desc: "Run every task"
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    cmds:
+      - task general:env
+      - task general:prepare-ansible
+      - task packer:debian
+      - task terraform:provisioning
