@@ -8,17 +8,8 @@
 
 # TODO
 
-- Gestion des secrets par Terraform via du YAML
-- Gestion des secrets par Packer via du YAML
-- Créer un taskfile pour lancer les étapes de manières séquentielles
-- Créer les premiers terraforms
-- Générer le mot de passe dans le preseed de Debian
-- Gerer variables d'env avec Packer
-
-pour copier clé publique dans debian : 
-task: 
-    - recup dans variable le contenu de $vmtemplate_debian_ssh_key
-    - faire le templating du preseed
+Kubernetes :
+    - Récupérer le kubeconfig
 
 # Requirements
 - terraform
@@ -31,3 +22,23 @@ task:
 # Libvirt
 
 - Créer/utiliser un groupe pour le daemon libvirt (`unix_sock_group = "libvirt"` dans `/etc/libvirt/libvirtd.conf`)
+
+
+# Troubleshooting
+
+## EnvironmentFilter from jinja2
+During Ansible:
+```
+Cannot import name 'environmentfilter' from 'jinja2'
+```
+You **can't** install Ansible using *apt*, you'll get an old version with a lot of deprecated dependencies. Please install Ansible using pip install : 
+`python3 -m pip install --user ansible`
+
+
+## Ipv6 instead of ipv4
+```
+│ TASK [Gathering Facts] *********************************************************
+│ fatal: [kube-0-tf]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: ssh: connect to host fe80::5054:ff:fec2:1c4 port 22: Invalid argument", "unreachable": true}
+│ ok: [kube-2-tf]
+│ ok: [kube-1-tf]
+```
