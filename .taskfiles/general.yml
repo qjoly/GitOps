@@ -32,6 +32,8 @@ tasks:
         ignore_error: true
       - cmd: rm -r $(find . -type d -name "artifacts")
         ignore_error: true
+      - cmd: rm kubeconfig.yml
+        ignore_error: true
       
   all:
     desc: "Run every task"
@@ -40,5 +42,5 @@ tasks:
       - task general:env
       - task general:prepare-ansible
       - task packer:debian
-      - sleep 1
+      - sleep 3
       - task terraform:provisioning
