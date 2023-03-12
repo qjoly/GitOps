@@ -5,3 +5,4 @@ pre-commit.log
 inventory.ini
 **tfstate**
 artifacts/
+kubeconfig.yml

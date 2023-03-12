@@ -1,0 +1,18 @@
+﻿
+version: '3'
+tasks:
+  fetch_config:
+    desc: "Download the kubeconfig of master"
+    vars:
+       master_inventory: "artifacts/master"
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    verbose: true
+    cmds:
+      - ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i {{.master_inventory}} VM/Ansible/fetch_kubeconfig.yml -e ansible_user=${vmtemplate_debian_username}
+
+
+  pods:
+    desc: "Get all running pods" 
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    cmds: 
+     - kubectl --kubeconfig ./kubeconfig.yml get all -A

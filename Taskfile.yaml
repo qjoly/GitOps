@@ -20,3 +20,7 @@ includes:
   terraform:
     taskfile: ./.taskfiles/terraform.yml
     optional: false
+
+  kubernetes:
+    taskfile: ./.taskfiles/kubernetes.yml
+    optional: false
