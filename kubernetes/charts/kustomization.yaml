@@ -1,0 +1,10 @@
+﻿---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - bitnami.yaml
+  - k8s-at-home.yaml
+  - bjw-s.yaml
+  - qjoly.yaml
+  - grafana.yaml
+  - prometheus-community.yaml
