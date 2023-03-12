@@ -5,6 +5,7 @@ tasks:
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     verbose: true
     cmds:
+      - cmd: cp .env .tfenv && sed -i "s/^/TF_VAR_/g" .tfenv
       - cmd: if [ "$provisionning_debian_enabled" == "true" ]; then task terraform:debian;else echo "Not enabled"; fi
       - cmd: if [ "$provisionning_alpine_enabled" == "true" ]; then task terraform:alpine;else echo "Not enabled"; fi
 
@@ -17,7 +18,6 @@ tasks:
     env:
       TF_VAR_source_file: '../../../{{.source_file}}'
     cmds:
-      - cp .env .tfenv && sed -i "s/^/TF_VAR_/g" .tfenv
       - mkdir -p $hypervisor_libvirt_pool_dir
       - chown :libvirt $hypervisor_libvirt_pool_dir
       - cd VM/{{.hypervisor}}/Debian && (terraform init -upgrade && terraform apply) || echo "If your inventory.txt contains an ipv6 address, please rerun task terraform:debian"
