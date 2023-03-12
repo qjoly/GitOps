@@ -38,6 +38,14 @@ _EOF
   depends_on = [module.node]
 }
 
+resource "local_file" "master" {
+  filename = "../../../artifacts/master"
+  content = <<_EOF
+${module.node[0].node_ip}
+_EOF
+
+  depends_on = [module.node]
+}
 
 resource "null_resource" "playbooks" {
   count = var.provisionning_debian_kubernetes_enabled ? 1 : 0
