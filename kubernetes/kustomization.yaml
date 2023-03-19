@@ -2,6 +2,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - charts/kustomization.yml
-  - basics/kustomization.yml
-  - monitoring/kustomization.yml
+  - charts/kustomization.yaml
+  - basics/kustomization.yaml
+  - monitoring/kustomization.yaml
