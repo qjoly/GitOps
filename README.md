@@ -6,7 +6,7 @@
 
 ![Nombre de visites](https://visitor-badge.deta.dev/badge?page_id=qjoly.gitops)
 
-![WIP](http://www.msibm.edu.in/wp-content/uploads/2023/01/4164008-middle.png)
+![WIP](https://github.com/QJoly/GitOps/blob/main/.github/workflows/wip.png?raw=true)
 
 # Description du projet
 
