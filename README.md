@@ -2,11 +2,11 @@
     <img src="https://avatars.githubusercontent.com/u/82603435?v=4" width="140px" alt="Helm LOGO"/>
     <br>
     <img src="http://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&center=true&width=435&lines=GitOps;D%C3%A9ploiement+Automatis%C3%A9+de+mon+Lab;Terraform%2C+k3s%2C+Packer" alt="Typing SVG" />
+    <br> <br> <br>
+    <img src="https://github.com/QJoly/GitOps/blob/main/.github/workflows/wip.png?raw=true" alt="Work in Progress">
 </p>
 
 ![Nombre de visites](https://visitor-badge.deta.dev/badge?page_id=qjoly.gitops)
-
-![WIP](https://github.com/QJoly/GitOps/blob/main/.github/workflows/wip.png?raw=true)
 
 # Description du projet
 
