@@ -44,3 +44,8 @@ tasks:
       - task packer:debian
       - sleep 3
       - task terraform:provisioning
+      - task kubernetes:fetch_config
+      - sleep 10 # Wait 10 seconds to let the cluster start
+      - task kubernetes:check-flux-pre
+      - task kubernetes:install-flux
+      

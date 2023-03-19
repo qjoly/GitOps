@@ -10,9 +10,27 @@ tasks:
     cmds:
       - ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i {{.master_inventory}} VM/Ansible/fetch_kubeconfig.yml -e ansible_user=${vmtemplate_debian_username}
 
-
   pods:
     desc: "Get all running pods" 
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
      - kubectl --kubeconfig ./kubeconfig.yml get all -A
+
+  check-flux-pre:
+    desc: "Check if flux can be installed" 
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    cmds: 
+     - flux --kubeconfig ./kubeconfig.yml check --pre
+
+  install-flux:
+    desc: "Check if flux can be installed" 
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    cmds: 
+     - flux --kubeconfig ./kubeconfig.yml install
+
+
+  configure-flux:
+    desc: "Check if flux can be installed" 
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    cmds: 
+     - kubectl --kubeconfig ./kubeconfig.yml apply -k ./kubernetes/flux-system/
