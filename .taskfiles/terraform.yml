@@ -18,8 +18,6 @@ tasks:
     env:
       TF_VAR_source_file: '../../../{{.source_file}}'
     cmds:
-      - mkdir -p $hypervisor_libvirt_pool_dir
-      - chown :libvirt $hypervisor_libvirt_pool_dir
       - cd VM/{{.hypervisor}}/Debian && (terraform init -upgrade && terraform apply) || echo "If your inventory.txt contains an ipv6 address, please rerun task terraform:debian"
     interactive: true
     preconditions:
@@ -35,8 +33,6 @@ tasks:
     env:
       TF_VAR_sourcefile: "../../{{.sourcefile}}"
     cmds:
-      - cp .env .tfenv && sed -i "s/^/TF_VAR_/g" .tfenv
-      - mkdir -p $hypervisor_libvirt_pool_dir
       - cd VM/{{.hypervisor}}/
     status:
       - '[ $vmtemplate_alpine_enabled = "false" ]'
