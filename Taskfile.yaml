@@ -6,8 +6,7 @@ vars:
   secret_file: ./secret.dev.yaml
   hypervisor: Libvirt # for now, only proxmox is available
   distribution: Debian 
-  distribution_version: 11
-
+  
 includes:
   general:
     taskfile: ./.taskfiles/general.yml
