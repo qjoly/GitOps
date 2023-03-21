@@ -98,4 +98,10 @@ markdown_extensions:
 nav:
   - Introduction: index.md
   - General:
+      - Installer les dépendances: dep.md
+      - Lancement du projet: start.md
+  - Hyperviseurs:
       - Configurer Libvirt: libvirt.md
+      - Configurer Proxmox: proxmox.md
+  - Autre:
+      - Chiffrer vos secrets: sops.md

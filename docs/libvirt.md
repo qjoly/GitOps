@@ -1,4 +1,7 @@
 ﻿
+
+# Utiliser Libvirt sans les permissions root
+
 Le module Terraform Libvirt n'est utilisable que via l'URI `qemu:///system` *(Je souhaite résoudre ce problème au plus vite mais j'ai l'impression qu'il manque quelque chose au provider…)*. Si vous souhaitez lancer ce projet via un utilisateur *non-root*, il est impératif de rendre le socket Qemu disponible pour votre utilisateur.
 
 
