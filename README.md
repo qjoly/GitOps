@@ -19,6 +19,7 @@ J'utilise Kubernetes dans différents contextes, ma "production" est dans un ser
 - yq 
 - taskfile
 - j2cli
+- flux (cli)
 
 # TODO
 
@@ -37,6 +38,14 @@ J'utilise Kubernetes dans différents contextes, ma "production" est dans un ser
     - [ ] Configuration Libvirt
     - [ ] Résolution d'erreur Libvirt
     
+# Démarrer le projet
+
+Les différentes étapes de l'installation sont gérées par Taskfile. Il suffit donc de lancer la commande suivante:
+```bash
+task general:all
+```
+
+Une documentation détaillera les étapes une-par-une.
 
 # Troubleshooting
 
