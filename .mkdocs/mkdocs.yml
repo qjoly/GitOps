@@ -1,8 +1,8 @@
 site_name: GitOps
 site_description: My full homelab setup based on Packer/Terraform/Kubernetes
 site_author: Quentin JOLY
-repo_name: qjoly/GitOps
-repo_url: https://github.com/qjoly/GitOps
+repo_name: QJoly/GitOps
+repo_url: https://github.com/QJoly/GitOps
 # https://squidfunk.github.io/mkdocs-material/setup/adding-a-git-repository/#edit-button
 edit_uri: "edit/main/docs/src/"
 
@@ -10,12 +10,12 @@ edit_uri: "edit/main/docs/src/"
 theme:
   name: material
 
-  # Static files
+# Static files
 #  static_templates:
 #    - 404.html
 
-  # logo: https://raspbernetes.github.io/img/logo.svg
-  # favicon: https://raspbernetes.github.io/img/logo.svg
+  logo: https://raspbernetes.github.io/img/logo.svg
+  favicon: https://raspbernetes.github.io/img/logo.svg
   language: fr
 
   palette:
@@ -105,3 +105,4 @@ nav:
       - Configurer Proxmox: proxmox.md
   - Autre:
       - Chiffrer vos secrets: sops.md
+      - Fork le projet: fork.md

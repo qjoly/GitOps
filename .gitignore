@@ -6,3 +6,4 @@ inventory.ini
 **tfstate**
 artifacts/
 kubeconfig.yml
+.mkdocs/site
