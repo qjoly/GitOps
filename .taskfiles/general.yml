@@ -21,7 +21,7 @@ tasks:
     desc: "Clean everything"
     cmds:
       - cmd: task terraform:destroy-debian
-        ignore_error: true
+        ignore_error: false
       - cmd: rm -rf VM/Ansible/k3s
         ignore_error: true
       - cmd: rm .env 
@@ -45,7 +45,6 @@ tasks:
       - sleep 3
       - task terraform:provisioning
       - task kubernetes:fetch_config
-      - sleep 10 # Wait 10 seconds to let the cluster start
+      - sleep 10 # Wait few seconds to let the cluster start
       - task kubernetes:check-flux-pre
       - task kubernetes:install-flux
-      
