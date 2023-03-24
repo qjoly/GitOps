@@ -7,7 +7,7 @@ Bienvenue sur la documentation de mon projet GitOps me permettant de déployer m
 
 ## Maison
 
-Je dispose d'un cluster Kubernetes composés de machines ARM *(pour la faible consommation d'énergie)*
+Je dispose d'un cluster Kubernetes composés de machines ARM *(pour la faible consommation d'énergie)*. Celui-ci est basé sur 4 noeuds :
 
 | Nom               | Référence      | Mémoire vive | Taille disque |
 |-------------------|----------------|--------------|---------------|
@@ -17,11 +17,10 @@ Je dispose d'un cluster Kubernetes composés de machines ARM *(pour la faible co
 | mary-read         | Raspberry Pi 4 | 4Go          | 64Go          |
 
 <center>
-    <img src="https://thebidouilleur.xyz/assets/images/cluster-inside-be46a51a10af86eaa0996cb490ad31a9.jpeg" width=50%>
+    <img src="./img/cluster.jpeg" width=50%>
 </center>
 
 *C'est un petit peu le bordel, mais c'est compact. Il y a également un ventilateur derrière le commutateur.*
-
 
 ## Cloud
 
