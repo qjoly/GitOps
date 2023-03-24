@@ -23,14 +23,13 @@ tasks:
      - flux --kubeconfig ./kubeconfig.yml check --pre
 
   install-flux:
-    desc: "Check if flux can be installed" 
+    desc: "Install flux" 
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
      - flux --kubeconfig ./kubeconfig.yml install
 
-
   configure-flux:
-    desc: "Check if flux can be installed" 
+    desc: "Add the qjoly/gitops repo as source in flux" 
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
      - kubectl --kubeconfig ./kubeconfig.yml apply -k ./kubernetes/flux-system/
