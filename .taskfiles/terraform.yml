@@ -1,7 +1,7 @@
 ﻿version: '3'
 tasks:
   provisioning:
-    desc: "Launch Terraform"
+    desc: "Run all step in Terraform"
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     verbose: true
     cmds:
@@ -10,7 +10,7 @@ tasks:
       - cmd: if [ "$provisionning_alpine_enabled" == "true" ]; then task terraform:alpine;else echo "Not enabled"; fi
 
   debian:
-    desc: "Running Debian terraform"
+    desc: "Terraform apply for Debian"
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env', '.tfenv']
     verbose: true
     vars:
@@ -25,7 +25,7 @@ tasks:
       - sh: test -f {{.sourcefile}}
 
   alpine:
-    desc: "Running Alpine terraform"
+    desc: "Terraform apply for Alpine"
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env', '.tfenv']
     verbose: true
     vars:
@@ -41,7 +41,7 @@ tasks:
       - test -f {{.sourcefile}} 
 
   destroy-debian:
-    desc: "Running Debian terraform"
+    desc: "Terraform destroy for Debian"
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env', '.tfenv']
     verbose: true
     vars:
