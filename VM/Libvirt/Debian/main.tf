@@ -7,7 +7,7 @@ resource "libvirt_pool" "cluster" {
 
 module "node" {
   count             = var.provisionning_debian_kubernetes_nodes
-  source            = "./modules/libvirt-qemu"
+  source            = "QJoly/libvirt/module"
   node_name         = "kube-${count.index}-tf"
   node_memory       = var.provisionning_debian_memory
   node_vcpu         = var.provisionning_debian_cpu
