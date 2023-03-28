@@ -40,9 +40,11 @@ tasks:
     desc: "Run every task"
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds:
+      - task general:requirements
       - task general:env
       - task general:prepare-ansible
-      - task packer:debian
+      - cmd: task packer:debian
+        ignore_error: true
       - sleep 3
       - task terraform:provisioning
       - task kubernetes:fetch_config
@@ -50,3 +52,17 @@ tasks:
       - task kubernetes:check-flux-pre
       - task kubernetes:install-flux
       - task kubernetes:configure-flux
+
+  requirements:
+    desc: "Check if requirements are installed"
+    cmds:
+      - which terraform >/dev/null
+      - which packer >/dev/null
+      - which ansible >/dev/null
+      - which yq >/dev/null
+      - which jq >/dev/null
+      - which kubectl >/dev/null
+      - which task >/dev/null
+      - which git >/dev/null
+      - which curl >/dev/null
+      - which wget >/dev/null
