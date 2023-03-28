@@ -17,8 +17,11 @@
         "vm_disk": "{{env `vmtemplate_debian_disk_size`}}",
         "vm_memory": "{{env `vmtemplate_debian_memory`}}",
         "ssh_username": "root",
-        "ssh_password": "{{env `ssh_password`}}",
-	      "proxmox_network": "{{env `hypervisor_proxmox_vm_network`}}"
+        "ssh_password": "{{env `vmtemplate_debian_root_password`}}",
+        "default_username": "{{env `vmtemplate_debian_username`}}",
+        "default_password": "{{env `vmtemplate_debian_password`}}",
+	      "proxmox_network": "{{env `hypervisor_proxmox_vm_network`}}",
+        "ssh_key": "{{env `vmtemplate_debian_ssh_key`}}"
     },
     "sensitive-variables": ["proxmox_password", "ssh_password" ],
     "builders": [
@@ -48,7 +51,7 @@
             "disks": [
               {
                 "type": "virtio",
-                "disk_size": "{{user `vm_disk`}}",
+                "disk_size": "{{user `vm_disk`}}M",
                 "storage_pool": "{{ user `proxmox_vm_storage`}}",
                 "storage_pool_type": "directory",
                 "format": "raw"
@@ -83,42 +86,42 @@
             ]
         }
     ],
-    "provisioners": [
-      {
-        "type": "shell",
-        "execute_command": "{{.Vars}} bash '{{.Path}}'",
-        "inline": [
-          "id",
-          "echo '{{user `default_password`}}' | sudo -S id",
-          "sudo apt-get update",
-          "sudo apt -y install ansible"
-          ]
-      },
-      {
-        "type": "ansible-local",
-        "playbook_file": "ansible/playbook.yml",
-        "playbook_dir": "ansible",
-        "extra_arguments": ["-v", "--extra-vars", "'utilisateur={{ user `default_username` }}", "ssh_key={{ user `ssh_key` }}'"]
-      },
-      {
-        "type": "file",
-        "source": "{{ user `ssh_key` }}",
-        "destination": "/root/.ssh/authorized_keys"
-      },
-      {
-        "type": "file",
-        "source": "{{ user `ssh_key` }}",
-        "destination": "/home/{{ user `default_username`}}/.ssh/authorized_keys"
-      },
-      {
-        "type": "shell",
-        "execute_command": "{{.Vars}} bash '{{.Path}}'",
-        "inline": [
-          "apt -y remove ansible",
-          "apt-get clean",
-          "apt-get -y autoremove --purge"
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "{{.Vars}} bash '{{.Path}}'",
+      "inline": [
+        "id",
+        "echo '{{user `default_password`}}' | sudo -S id",
+        "sudo apt-get update",
+        "sudo apt -y install ansible"
         ]
-      }
-    ]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "ansible/playbook.yml",
+      "playbook_dir": "ansible",
+      "extra_arguments": ["-v", "--extra-vars", "'utilisateur={{ user `default_username` }}", "ssh_key={{ user `ssh_key` }}'"]
+    },
+    {
+      "type": "file",
+      "source": "{{ user `ssh_key` }}",
+      "destination": "/root/.ssh/authorized_keys"
+    },
+    {
+      "type": "file",
+      "source": "{{ user `ssh_key` }}",
+      "destination": "/home/{{ user `default_username`}}/.ssh/authorized_keys"
+    },
+    {
+      "type": "shell",
+      "execute_command": "{{.Vars}} bash '{{.Path}}'",
+      "inline": [
+        "apt -y remove ansible",
+        "apt-get clean",
+        "apt-get -y autoremove --purge"
+      ]
+    }
+  ]
 }
 
