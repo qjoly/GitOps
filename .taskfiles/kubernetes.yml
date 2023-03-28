@@ -33,3 +33,9 @@ tasks:
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
      - kubectl --kubeconfig ./kubeconfig.yml apply -k ./kubernetes/flux-system/
+
+  k9s:
+    desc: "Run k9s using new kubeconfig" 
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    cmds: 
+     - k9s --kubeconfig ./kubeconfig.yml

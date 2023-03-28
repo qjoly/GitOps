@@ -6,6 +6,7 @@ tasks:
       - ./.scripts/parse_yaml.sh "{{.secret_file}}"
     preconditions:
       - which yq >/dev/null
+      - test -f "{{.secret_file}}"
   
   prepare-ansible:
     desc: clone k3s-ansible if needed
@@ -48,3 +49,4 @@ tasks:
       - sleep 10 # Wait few seconds to let the cluster start
       - task kubernetes:check-flux-pre
       - task kubernetes:install-flux
+      - task kubernetes:configure-flux
