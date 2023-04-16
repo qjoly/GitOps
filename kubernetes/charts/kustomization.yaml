@@ -7,4 +7,5 @@ resources:
   - bjw-s.yaml
   - qjoly.yaml
   - grafana.yaml
+  - fairwinds.yaml
   - prometheus-community.yaml
