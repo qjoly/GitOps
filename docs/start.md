@@ -92,16 +92,18 @@ task: Available tasks for this project:
 * general:clean:                   Clean everything
 * general:env:                     Generate dotenv file
 * general:prepare-ansible:         clone k3s-ansible if needed
+* general:requirements:            Check if requirements are installed
 * kubernetes:check-flux-pre:       Check if flux can be installed
-* kubernetes:configure-flux:       Check if flux can be installed
+* kubernetes:configure-flux:       Add the qjoly/gitops repo as source in flux
 * kubernetes:fetch_config:         Download the kubeconfig of master
-* kubernetes:install-flux:         Check if flux can be installed
+* kubernetes:install-flux:         Install flux
+* kubernetes:k9s:                  Run k9s using new kubeconfig
 * kubernetes:pods:                 Get all running pods
 * packer:debian:                   Run Debian-Packer
-* terraform:alpine:                Running Alpine terraform
-* terraform:debian:                Running Debian terraform
-* terraform:destroy-debian:        Running Debian terraform
-* terraform:provisioning:          Launch Terraform
+* terraform:alpine:                Terraform apply for Alpine
+* terraform:debian:                Terraform apply for Debian
+* terraform:destroy-debian:        Terraform destroy for Debian
+* terraform:provisioning:          Run all step in Terraform
 ```
 
 Voici les étapes lancées dans l'ordre :
@@ -113,3 +115,4 @@ Voici les étapes lancées dans l'ordre :
 - kubernetes:fetch_config
 - kubernetes:check-flux-pre
 - kubernetes:install-flux
+- kubernetes:configure-flux
