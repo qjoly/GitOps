@@ -9,3 +9,4 @@ resources:
   - grafana.yaml
   - fairwinds.yaml
   - prometheus-community.yaml
+  - kubevious.yaml
