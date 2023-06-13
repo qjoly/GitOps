@@ -12,7 +12,7 @@
 
 J'utilise Kubernetes dans différents contextes, ma "production" est dans un serveur dédié OVH avec un hyperviseur **Proxmox** tandis que mon Homelab est basé sur **Libvirt**. Afin d'uniformiser mes environnements, j'ai décidé de créer un projet qui me permettrait de déployer rapidement un les mêmes applications sur les deux hyperviseurs.
 
-Le projet est donc scindé en 2 parties, une partie Terraform/Ansible qui permet de déployer l'infrastructure 
+Le projet est donc scindé en 2 parties, une partie Terraform/Ansible qui permet de déployer l'infrastructure, et une autre déployant un cluster Kubernetes et le provisionne via Flux
 
 # Dépendances
 - terraform
