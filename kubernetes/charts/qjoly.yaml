@@ -2,8 +2,8 @@
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
-  name: qjoly-charts
+  name: rubxkube-charts
   namespace: flux-system
 spec:
   interval: 1h
-  url: https://qjoly.github.io/helm-charts/ 
+  url: https://rubxkube.github.io/charts/
