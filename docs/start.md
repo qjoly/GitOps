@@ -1,7 +1,7 @@
 ﻿
 Avant de lancer la commande `task` qui va exécuter les tâches une-par-une, il convient de vérifier que les dépendances soient présentes sur votre machine.
 
-La page permettant d'installer les dépendances est accessible [ici](../dep/)
+La page permettant d’installer les dépendances est accessible [ici](../dep/)
 
 ## Configuration
 
@@ -22,9 +22,9 @@ vars:
 ```
 
 - `secret_file` renvoie vers le fichier contenant les variables nécessaire à Packer et Terraform.
-- `hypervisor` permet à task de lancer Terraform/Packer dans des contextes différents : (ex:`VM/Libvirt` pour Terraform si l'hyperviseur est `Libvirt`).
-*Pour l'instant, je n'ai prévu que Proxmox et Libvirt.*
-- `distribution` fonctionne d'une manière identique à `hypervisor` : permet à Packer/Terraform de trouver des contextes adaptés (ex:`VM/Libvirt/Debian` si l'hyperviseur est `Libvirt` et la distribution est `Debian`)
+- `hypervisor` permet à task de lancer Terraform/Packer dans des contextes différents : (ex:`VM/Libvirt` pour Terraform si l’hyperviseur est `Libvirt`).
+*Pour l’instant, je n’ai prévu que Proxmox et Libvirt.*
+- `distribution` fonctionne d’une manière identique à `hypervisor` : permet à Packer/Terraform de trouver des contextes adaptés (ex:`VM/Libvirt/Debian` si l’hyperviseur est `Libvirt` et la distribution est `Debian`)
 
 ### SecretFile
 
@@ -106,7 +106,7 @@ task: Available tasks for this project:
 * terraform:provisioning:          Run all step in Terraform
 ```
 
-Voici les étapes lancées dans l'ordre :
+Voici les étapes lancées dans l’ordre :
 
 - general:env
 - general:prepare-ansible
