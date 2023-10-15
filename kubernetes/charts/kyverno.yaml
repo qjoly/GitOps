@@ -2,8 +2,8 @@
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
-  name: rubxkube-charts
+  name: kyverno-charts
   namespace: flux-system
 spec:
   interval: 1h
-  url: https://rubxkube.github.io/charts/
+  url: https://kyverno.github.io/kyverno/
