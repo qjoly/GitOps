@@ -4,6 +4,12 @@
     description = "Quantity of RAM (in Mo) for each node."
 }
 
+variable "vmtemplate_debian_username" {
+    type        = string
+    default     = "utilisateur"
+    description = "admin username for the VM."
+}
+
 variable "provisionning_debian_cpu" {
     type        = number
     default     = 1
