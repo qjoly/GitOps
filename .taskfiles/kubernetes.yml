@@ -21,18 +21,24 @@ tasks:
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
      - flux --kubeconfig ./kubeconfig.yml check --pre
+    preconditions:
+      - sh: '[ $provisionning_debian_kubernetes_enabled = true ]'
 
   install-flux:
     desc: "Install flux" 
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
      - flux --kubeconfig ./kubeconfig.yml install
+    preconditions:
+      - sh: '[ $provisionning_debian_kubernetes_enabled = true ]'
 
   configure-flux:
     desc: "Add the qjoly/gitops repo as source in flux" 
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
      - kubectl --kubeconfig ./kubeconfig.yml apply -k ./kubernetes/flux-system/
+    preconditions:
+      - sh: '[ $provisionning_debian_kubernetes_enabled = true ]'
 
   k9s:
     desc: "Run k9s using new kubeconfig" 

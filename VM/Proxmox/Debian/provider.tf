@@ -12,5 +12,5 @@ provider "proxmox" {
   pm_user    = var.hypervisor_proxmox_username
   pm_password = var.hypervisor_proxmox_password
   pm_tls_insecure = "true"
-  pm_parallel     = 3
+  pm_parallel     = 2
 }
