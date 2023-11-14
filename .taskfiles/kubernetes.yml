@@ -52,4 +52,4 @@ tasks:
     desc: "Create a kubernetes secret with the private age key" 
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
-     - kubectl --kubeconfig ./kubeconfig.yml create secret generic sops-age --namespace=flux-system --from-file=.secrets/age 
+     - kubectl --kubeconfig ./kubeconfig.yml create secret generic sops-age --namespace=flux-system --from-file=age.agekey=.secrets/age 
