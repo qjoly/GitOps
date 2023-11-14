@@ -1,17 +1,35 @@
-﻿---
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
-  name: prezdocker
-  namespace: static-websites
+    name: prezdocker
+    namespace: static-websites
 spec:
-  interval: 15m
-  chart:
-    spec:
-      chart: prezdocker
-      version: ">=0.1.3"
-      sourceRef:
-        kind: HelmRepository
-        name: qjoly-charts
-        namespace: flux-system
-
+    interval: 15m
+    chart:
+        spec:
+            chart: ENC[AES256_GCM,data:HqOaMdicu7NdqA==,iv:b2cpLnbqD9dqvi9VVRloM4HJpxl1JlCd67W+aDeBt38=,tag:LeDU2K7FSUIywC5adx9/8A==,type:str]
+            version: ENC[AES256_GCM,data:09JZmBGe6g==,iv:knoa2frfy84qWHXDJgBLIyfZfZq/k5KGjJN2GcLtLEc=,tag:ZfW9W0YrwhnfafuMo2jOAg==,type:str]
+            sourceRef:
+                kind: ENC[AES256_GCM,data:8QPRYSAsQ9/wfhc90Rw=,iv:32EEIEEi/aLzHfYmsnKL4yCjyK04PDRPHF9Xdlu9JLk=,tag:QpmxJ6NBaqTK2uD9I++19w==,type:str]
+                name: ENC[AES256_GCM,data:GCbt29waGR6D65wQ,iv:cp3XtODdgZRSG6SaJnriWi3Y9q7zywfArLjGzlrQgMk=,tag:F85CVhDUfMuvWV5UC9otSg==,type:str]
+                namespace: ENC[AES256_GCM,data:ZCpPs+cay7rgUn8=,iv:UcmWI6u18gE9M3ytBzc48Lmk6InarlQluCoLdp+DXYs=,tag:G7ZfrW1oCjkpMxQaGZsxFQ==,type:str]
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age:
+        - recipient: age1p9z8z69fa63fa8pnxklq00e8k3556sc233wlp20na7cykthtgvgqwnvej5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBNbW1YcTlkLzRyRXVydm1O
+            ZGhIdXRmSExQYjJscEwrWUxlMjV0TlBhK0VBClQ2OVNRRTkwZlJFYnlDU2NTVVVW
+            RmZsZi82c0pYRzh6dVk0MHJLS0VwR00KLS0tIC9YcGkxTWY3THREVjdYbnlSN0sx
+            VDVKWkhQdUZ4UTN6S3c0bG1qeVJyS2MKL/lMaaRl6dUpbdBUDVw/VQWu++E2CvSu
+            39jCPYLmAax9STc7O1IDIWaVWpZ2uqZ6TGL5qCfwFbV8CVPba3jxGw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2023-11-14T14:40:25Z"
+    mac: ENC[AES256_GCM,data:MbNsOAvgWWozRe/PiHV0o2j92DwWaDqFSZkbQZpdJOs6LMI42GC29RpeXctaw+Uw6+FFDrwLzK92bAuNsx8Q7DT+hKhj6TAXGWuJxYGKGOj5h1Dexh02mDaqAX6gyoBjZo0C48n/Eb7RlneEOXfS0HyYL0t4T2zmqOmCsJX4bOI=,iv:2Ovv9J971Z9DEAaw7vrYYZtvBx1F66dcNQ6204P5PdU=,tag:fB717e2je1RIILqb2drpbQ==,type:str]
+    pgp: []
+    encrypted_regex: ^(chart|password|user|username)$
+    version: 3.8.1
