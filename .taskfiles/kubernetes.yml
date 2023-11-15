@@ -32,6 +32,9 @@ tasks:
     desc: "Add the qjoly/gitops repo as source in flux" 
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
+     - echo "Don't forget to commit the changes in the repo (git add ./kubernetes/.sops.yaml && git commit -m \"Add age key to sops\")"
+     - interactive: true
+       cmd: read -p "Press enter to continue or CTRL+C to abort"
      - kubectl --kubeconfig ./kubeconfig.yml apply -k ./kubernetes/flux-system/
 
   k9s:
@@ -45,6 +48,14 @@ tasks:
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
      - age-keygen -o .secrets/age
+    preconditions:
+      - sh: '! test -f .secrets/age'
+
+  configure-sops-with-age-key:
+    desc: "Create age key" 
+    dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+    cmds: 
+     - sed "s/age[A-z0-9]*$/$(cat .secrets/age | grep "public" | cut -d' ' -f4)/" -i ./kubernetes/.sops.yaml
     preconditions:
       - sh: '! test -f .secrets/age'
 
