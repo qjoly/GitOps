@@ -13,4 +13,4 @@ spec:
       name: sops-age
   sourceRef:
     kind: GitRepository
-    name: qjoly
+    name: gitops
