@@ -19,6 +19,7 @@ sudo mv ./kind /usr/local/bin/kind
 
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 mv kubectl /home/codespace/.local/bin/
+. <(kubectl completion bash)
 kind create cluster
 
 curl -s https://fluxcd.io/install.sh | sudo bash -- 
