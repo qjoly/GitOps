@@ -2,11 +2,10 @@
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
-  name: qjoly
+  name: gitops
   namespace: flux-system
 spec:
   interval: 1m0s
   url: https://github.com/qjoly/GitOps
   ref:
-    branch: dev
-
+    branch: "main"

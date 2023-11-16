@@ -2,7 +2,7 @@
 module "node" {
   count             = var.provisionning_debian_kubernetes_nodes
   source            = "QJoly/proxmox/module"
-  version           = "0.0.1"
+  version           = "1.0.0"
   node_name         = "kube-${count.index}-tf"
   node_target       = var.hypervisor_proxmox_node
   node_qemuga       = 1

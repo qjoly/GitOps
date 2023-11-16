@@ -7,3 +7,4 @@ inventory.ini
 artifacts/
 kubeconfig.yml
 .mkdocs/site
+.secrets

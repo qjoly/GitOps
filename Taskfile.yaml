@@ -4,7 +4,7 @@ version: '3'
 
 vars:
   secret_file: ./secret.dev.yaml
-  hypervisor: Proxmox # for now, only proxmox is available
+  hypervisor: proxmox # for now, only proxmox is available
   distribution: Debian 
   
 includes:
