@@ -51,7 +51,12 @@ tasks:
       - sleep 10 # Wait few seconds to let the cluster start
       - task kubernetes:check-flux-pre
       - task kubernetes:install-flux
+      - cmd: task kubernetes:create-age-key
+        ignore_error: true
+      - task kubernetes:create-age-secret
+      - task kubernetes:configure-sops-with-age-key
       - task kubernetes:configure-flux
+
 
   requirements:
     desc: "Check if requirements are installed"
