@@ -1,0 +1,16 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kyverno
+  namespace: kyverno
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: kyverno
+      sourceRef:
+        kind: HelmRepository
+        name: kyverno-charts
+        namespace: flux-system
+
