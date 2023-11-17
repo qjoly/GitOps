@@ -1,0 +1,127 @@
+{
+    "description": "Debian 11 (bulleyes)",
+    "variables": {
+        "proxmox_url": "{{env `hypervisor_proxmox_node_url`}}",
+        "proxmox_vm_storage": "{{env `hypervisor_proxmox_vm_storage`}}",
+        "proxmox_iso_storage": "{{env `hypervisor_proxmox_iso_storage`}}",
+        "proxmox_iso_checksum": "{{env `vmtemplate_debian_iso_checksum`}}",
+        "proxmox_node": "{{env `hypervisor_proxmox_node`}}",
+        "proxmox_username": "{{env `hypervisor_proxmox_username`}}",
+        "proxmox_iso_url": "{{env `vmtemplate_debian_iso_url`}}",
+        "proxmox_password": "{{env `hypervisor_proxmox_password`}}",
+        "vm_id": "{{env `vmtemplate_debian_id`}}",
+        "vm_name": "{{env `vmtemplate_debian_name`}}",
+        "template_description": "{{env `template_description`}}",
+        "vm_default_user": "{{env `vmtemplate_debian_username`}}",
+        "vm_cpu": "{{env `vmtemplate_debian_cpu`}}",
+        "vm_disk": "{{env `vmtemplate_debian_disk_size`}}",
+        "vm_memory": "{{env `vmtemplate_debian_memory`}}",
+        "ssh_username": "root",
+        "ssh_password": "{{env `vmtemplate_debian_root_password`}}",
+        "default_username": "{{env `vmtemplate_debian_username`}}",
+        "default_password": "{{env `vmtemplate_debian_password`}}",
+	      "proxmox_network": "{{env `hypervisor_proxmox_vm_network`}}",
+        "ssh_key": "{{env `vmtemplate_debian_ssh_key`}}"
+    },
+    "sensitive-variables": ["proxmox_password", "ssh_password" ],
+    "builders": [
+        {
+            "type": "proxmox",
+            "proxmox_url":  "{{user `proxmox_url`}}",
+            "node": "{{user `proxmox_node`}}",
+            "insecure_skip_tls_verify": true,
+            "username": "{{user `proxmox_username`}}",
+            "password": "{{user `proxmox_password`}}",
+            "template_description":"{{user `template_description`}}",
+            "vm_id":  "{{user `vm_id`}}",
+            "vm_name": "{{user `vm_name`}}",
+            "memory": "{{user `vm_memory`}}",
+            "cores": "{{user `vm_cpu`}}",
+            "os": "l26",
+
+            "http_directory": "http",
+
+            "network_adapters": [
+              {
+                "model": "virtio",
+                "bridge": "{{user `proxmox_network`}}"
+              }
+            ],
+
+            "disks": [
+              {
+                "type": "virtio",
+                "disk_size": "{{user `vm_disk`}}M",
+                "storage_pool": "{{ user `proxmox_vm_storage`}}",
+                "storage_pool_type": "directory",
+                "format": "raw"
+              }
+            ],
+            "qemu_agent": "true",
+            "ssh_username": "{{user `ssh_username`}}",
+            "ssh_password": "{{user `ssh_password`}}",
+            "ssh_timeout": "30m",
+            "iso_url": "{{user `proxmox_iso_url`}}",  
+            "iso_storage_pool": "{{user `proxmox_iso_storage`}}",  
+            "iso_checksum": "{{user `proxmox_iso_checksum`}}",
+            "unmount_iso": true,
+            "boot_wait": "10s",
+            "boot_command": [
+                "<esc><wait>",
+                "auto <wait>",
+                "console-keymaps-at/keymap=fr <wait>",
+                "console-setup/ask_detect=false <wait>",
+                "debconf/frontend=noninteractive <wait>",
+                "debian-installer=fr_FR <wait>",
+                "fb=false <wait>",
+                "install <wait>",
+		            "packer_host={{ .HTTPIP }} <wait>",
+		            "packer_port={{ .HTTPPort }} <wait>",
+                "kbd-chooser/method=fr <wait>",
+                "keyboard-configuration/xkb-keymap=fr <wait>",
+                "locale=fr_FR <wait>",
+                "netcfg/get_hostname={{user `vm_name`}} <wait>",
+                "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg <wait>",
+                "<enter><wait>"
+            ]
+        }
+    ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "{{.Vars}} bash '{{.Path}}'",
+      "inline": [
+        "id",
+        "echo '{{user `default_password`}}' | sudo -S id",
+        "sudo apt-get update",
+        "sudo apt -y install ansible"
+        ]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "ansible/playbook.yml",
+      "playbook_dir": "ansible",
+      "extra_arguments": ["-v", "--extra-vars", "'utilisateur={{ user `default_username` }}", "ssh_key={{ user `ssh_key` }}'"]
+    },
+    {
+      "type": "file",
+      "source": "{{ user `ssh_key` }}",
+      "destination": "/root/.ssh/authorized_keys"
+    },
+    {
+      "type": "file",
+      "source": "{{ user `ssh_key` }}",
+      "destination": "/home/{{ user `default_username`}}/.ssh/authorized_keys"
+    },
+    {
+      "type": "shell",
+      "execute_command": "{{.Vars}} bash '{{.Path}}'",
+      "inline": [
+        "apt -y remove ansible",
+        "apt-get clean",
+        "apt-get -y autoremove --purge"
+      ]
+    }
+  ]
+}
+

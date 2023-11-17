@@ -1,0 +1,9 @@
+﻿---
+- hosts: all
+  gather_facts: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+  - name: Set a hostname
+    ansible.builtin.hostname:
+      name: "{{ inventory_hostname_short }}"

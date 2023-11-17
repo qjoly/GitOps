@@ -1,0 +1,16 @@
+﻿---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kubevious
+  namespace: monitoring
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: kubevious
+      version: ">=1.1.2"
+      sourceRef:
+        kind: HelmRepository
+        name: kubevious
+        namespace: flux-system

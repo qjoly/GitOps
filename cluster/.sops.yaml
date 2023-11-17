@@ -1,0 +1,5 @@
+creation_rules:
+  - encrypted_regex: '^(chart|password|user|username)$'
+    key_groups:
+      - age:
+        - age1p9z8z69fa63fa8pnxklq00e8k3556sc233wlp20na7cykthtgvgqwnvej5
