@@ -5,3 +5,4 @@ resources:
   - charts
   - monitoring
   - security
+  - basics
