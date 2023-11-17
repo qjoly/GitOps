@@ -1,6 +1,6 @@
 ﻿Si vous voulez utiliser mon projet, je vous invite à créer un Fork sur un dépôt Git qui vous appartient.
 
-Une fois le dépôt copié, il suffira de modifier l'URL utilisée par *Flux* durant le déploiement dans les fichiers `./kubernetes/flux-system/GitRepository` et `./kubernetes/flux-system/kustomization-git.yml`.
+Une fois le dépôt copié, il suffira de modifier l'URL utilisée par *Flux* durant le déploiement dans les fichiers `./cluster/flux-system/GitRepository` et `./cluster/flux-system/kustomization-git.yml`.
 
 ```yml
 ---

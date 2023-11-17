@@ -8,7 +8,7 @@ tasks:
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     verbose: true
     cmds:
-      - ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i {{.master_inventory}} VM/Ansible/fetch_kubeconfig.yml -e ansible_user=${vmtemplate_debian_username}
+      - ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i {{.master_inventory}} terraform/Ansible/fetch_kubeconfig.yml -e ansible_user=${vmtemplate_debian_username}
 
   pods:
     desc: "Get all running pods" 
@@ -32,10 +32,10 @@ tasks:
     desc: "Add the qjoly/gitops repo as source in flux" 
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
-     - echo "Don't forget to commit the changes in the repo (git add ./kubernetes/.sops.yaml && git commit -m \"Add age key to sops\")"
+     - echo "Don't forget to commit the changes in the repo (git add ./cluster/.sops.yaml && git commit -m \"Add age key to sops\")"
      - interactive: true
        cmd: read -p "Press enter to continue or CTRL+C to abort"
-     - kubectl --kubeconfig ./kubeconfig.yml apply -k ./kubernetes/flux-system/
+     - kubectl --kubeconfig ./kubeconfig.yml apply -k ./cluster/flux-system/
 
   k9s:
     desc: "Run k9s using new kubeconfig" 
@@ -55,7 +55,7 @@ tasks:
     desc: "Create age key" 
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds: 
-     - sed "s/age[A-z0-9]*$/$(cat .secrets/age | grep "public" | cut -d' ' -f4)/" -i ./kubernetes/.sops.yaml
+     - sed "s/age[A-z0-9]*$/$(cat .secrets/age | grep "public" | cut -d' ' -f4)/" -i ./cluster/.sops.yaml
     preconditions:
       - sh: '! test -f .secrets/age'
 
