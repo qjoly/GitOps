@@ -5,7 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 5m0s
-  path: ./kubernetes
+  path: ./cluster
   prune: true
   decryption:
     provider: sops
