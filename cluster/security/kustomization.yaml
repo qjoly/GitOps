@@ -6,4 +6,4 @@ resources:
   - kyverno.yaml
   - polaris-ns.yaml
   - polaris.yaml
-#  - policies
+  - policies
