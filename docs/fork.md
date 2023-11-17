@@ -1,31 +1,20 @@
-﻿Si vous voulez utiliser mon projet, je vous invite à créer un Fork sur un dépôt Git qui vous appartient.
+﻿## 1. Forker le dépôt
 
-Une fois le dépôt copié, il suffira de modifier l'URL utilisée par *Flux* durant le déploiement dans les fichiers `./cluster/flux-system/GitRepository` et `./cluster/flux-system/kustomization-git.yml`.
+Pour reprendre ce projet, il faut commencer par le forker. Vous pouvez utiliser la branche `template` qui propose une version sans chiffrement des secrets. 
 
-```yml
----
-apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: GitRepository
-metadata:
-  name: qjoly
-  namespace: flux-system
-spec:
-  interval: 1m0s
-  url: https://github.com/qjoly/GitOps
-  ref:
-    branch: main
+## 2. Installer le cluster
+
+Créer le fichier `./secret.dev.yaml` à partir du fichier `./secret.dev.yaml.template` et renseigner les valeurs en fonction de votre environnement.
+
+```bash
+cp ./secret.dev.yaml.template ./secret.dev.yaml
 ```
-```yml
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: qjoly
-  namespace: flux-system
-spec:
-  interval: 5m0s
-  path: ./kubernetes
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: qjoly
-```
+
+## 3. Modifier configuration de Flux
+Si vous voulez utiliser mon projet, je vous invite à créer un Fork sur un dépôt Git qui vous appartient.
+
+Une fois le dépôt copié, il suffira de modifier l'URL utilisée par *Flux* durant le déploiement dans le fichier `./cluster/flux-system/GitRepository`.
+
+## 4. Configurer SOPS
+
+[Voir la page sur SOPS.](https://qjoly.github.io/GitOps/sops/)
