@@ -1,9 +1,9 @@
 ﻿
-# Création d'un utilisateur proxmox
+# Création d’un utilisateur proxmox
 
 Par sécurité, je vous recommande de créer un utilisateur proxmox avec les permissions minimales.
 
-Vous devrez d'abord créer un utilisateur ayant les permissions nécéssaires à la création/modification d'une machine virtuelle. Lancez les commandes suivantes dans le terminal d'un Proxmox *(un des noeuds du cluster)* :
+Vous devrez d’abord créer un utilisateur ayant les permissions nécéssaires à la création/modification d’une machine virtuelle. Lancez les commandes suivantes dans le terminal d’un Proxmox *(un des noeuds du cluster)* :
 ```bash
 export role_proxmox=gitops
 export user_proxmox=gitops
@@ -19,4 +19,4 @@ Vous devrez également ajouter les accès à vos pools de stockage manuellement 
     <img src="../img/perms-iso.png" >
 </center>
 
-Une fois les permissions ajoutées, vous pouvez définir un mot de passe à votre utilisateur directement sur la WebUI
+Une fois les permissions ajoutées, vous pouvez définir un mot de passe à votre utilisateur directement sur la WebUI.

@@ -3,9 +3,7 @@
   gather_facts: true
   vars:
     ansible_python_interpreter: /usr/bin/python3
-
   tasks:
-
   - name: Create directory
     file:
       path: "/home/{{ utilisateur }}/.ssh/"
@@ -21,13 +19,11 @@
       group: "{{ utilisateur }}"
       force: no
 
-  - name: Create authorized_keys for the default user if not exists
+  - name: sudo without password for default user group
     copy:
-      dest: "/home/{{ utilisateur }}/.ssh/authorized_keys"
-      content: ""
-      owner: "{{ utilisateur }}"
-      group: "{{ utilisateur }}"
-      force: no
+      content: '{{ utilisateur }} ALL=(ALL:ALL) NOPASSWD:ALL'
+      dest: /etc/sudoers.d/utilisateur
+      mode: 0440
 
   - name: "Install packages"
     apt:
@@ -35,13 +31,6 @@
       state: present
     loop:
       - vim
-      - exa
-      - grc
-      - most
-      - highlight
-      - source-highlight
-      - python3-pygments
-      - gawk
       - git
       - gnupg
       - net-tools
@@ -49,8 +38,4 @@
       - python3-apt
       - qemu-guest-agent
 
-  - name: sudo without password for default user group
-    copy:
-      content: '{{ utilisateur }} ALL=(ALL:ALL) NOPASSWD:ALL'
-      dest: /etc/sudoers.d/utilisateur
-      mode: 0440
+

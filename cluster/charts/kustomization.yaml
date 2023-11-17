@@ -5,8 +5,10 @@ resources:
   - bitnami.yaml
   - k8s-at-home.yaml
   - bjw-s.yaml
-  - qjoly.yaml
+  - rubxkube.yaml
   - grafana.yaml
   - fairwinds.yaml
   - prometheus-community.yaml
   - kubevious.yaml
+  - kyverno.yaml
+
