@@ -12,18 +12,18 @@ tasks:
     desc: clone k3s-ansible if needed
     dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
     cmds:
-      - cmd: git clone https://github.com/k3s-io/k3s-ansible VM/Ansible/k3s
+      - cmd: git clone https://github.com/k3s-io/k3s-ansible terraform/Ansible/k3s
     preconditions:
       - sh: '[ $provisionning_debian_kubernetes_enabled = true ]'
     status:
-      - test -d 'VM/Ansible/k3s/'
+      - test -d 'terraform/Ansible/k3s/'
 
   clean:
     desc: "Clean everything"
     cmds:
       - cmd: task terraform:destroy-debian
         ignore_error: false
-      - cmd: rm -rf VM/Ansible/k3s
+      - cmd: rm -rf terraform/Ansible/k3s
         ignore_error: true
       - cmd: rm .env 
         ignore_error: true

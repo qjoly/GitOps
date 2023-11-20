@@ -18,7 +18,7 @@ tasks:
     env:
       TF_VAR_source_file: '../../../{{.source_file}}'
     cmds:
-      - cd VM/{{.hypervisor}}/Debian && (terraform init -upgrade && terraform apply) || echo "If your inventory.txt contains an ipv6 address, please rerun task terraform:debian"
+      - cd terraform/{{.hypervisor}}/Debian && (terraform init -upgrade && terraform apply) || echo "If your inventory.txt contains an ipv6 address, please rerun task terraform:debian"
     interactive: true
     preconditions:
       - sh: '[ $vmtemplate_debian_enabled = "true" ]'
@@ -33,7 +33,7 @@ tasks:
     env:
       TF_VAR_sourcefile: "../../{{.sourcefile}}"
     cmds:
-      - cd VM/{{.hypervisor}}/
+      - cd terraform/{{.hypervisor}}/
     status:
       - '[ $vmtemplate_alpine_enabled = "false" ]'
     preconditions:
@@ -50,5 +50,5 @@ tasks:
       TF_VAR_source_file: '../../../{{.source_file}}'
     cmds:
       - cp .env .tfenv && sed -i "s/^/TF_VAR_/g" .tfenv
-      - cd VM/{{.hypervisor}}/Debian && terraform destroy -auto-approve
+      - cd terraform/{{.hypervisor}}/Debian && terraform destroy -auto-approve
     interactive: true

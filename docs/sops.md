@@ -43,6 +43,6 @@ Lancer la tache `kubernetes:create-age-secret` pour créer un secret Kubernetes 
 task kubernetes:create-age-secret
 ```
 
-Pour configurer le fichier `kubernetes/.sops.yaml` avec la clé de chiffrement, lancer la tache `kubernetes:configure-sops-with-age-key`.
+Pour configurer le fichier `cluster/.sops.yaml` avec la clé de chiffrement, lancer la tache `kubernetes:configure-sops-with-age-key`.
 
 **Ne pas oublier de commiter les changements 
