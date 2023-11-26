@@ -1,5 +1,5 @@
 mkdocs-git-revision-date-localized-plugin==1.2.1
-mkdocs-material==9.4.12
+mkdocs-material==9.4.14
 mkdocs-autolinks-plugin==0.7.1
 mkdocs-diagrams==1.0.0
 mkdocs-glightbox
