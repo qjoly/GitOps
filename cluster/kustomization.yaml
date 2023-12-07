@@ -4,6 +4,6 @@ kind: Kustomization
 resources:
   - charts
   - crds
-  - security
-  - monitoring
-  - basics
+#  - security
+#  - monitoring
+#  - basics
