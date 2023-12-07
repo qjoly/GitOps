@@ -2,13 +2,13 @@
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
-  name: rook-ceph
+  name: rook
   namespace: rook-ceph 
 spec:
   interval: 15m
   chart:
     spec:
-      chart: rook-release
+      chart: rook-ceph
       version: "v1.12.9"
       sourceRef:
         kind: HelmRepository
