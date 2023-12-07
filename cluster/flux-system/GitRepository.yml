@@ -8,4 +8,4 @@ spec:
   interval: 1m0s
   url: https://github.com/qjoly/GitOps
   ref:
-    branch: "feat/refactoring"
+    branch: "rook"
