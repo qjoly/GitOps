@@ -1,5 +1,5 @@
 creation_rules:
-  - path_regex: talos/.*/.*
+  - path_regex: talos/.*
     encrypted_regex: '((?i)(pass|secret($|[^N])|ca|crt|key|token|^data$|^stringData$))'
     key_groups:
       - age:

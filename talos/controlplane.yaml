@@ -1,0 +1,138 @@
+version: v1alpha1
+debug: false
+persist: true
+machine:
+    type: controlplane
+    token: ENC[AES256_GCM,data:ZZE3c4xoibmah1ZH4S6crRy11zAB7ls=,iv:4gtSQLiaUzRFStHo1gHLMnL/xe2iFbm9BOe52Lekni4=,tag:PSSXA7PH49LTDDCziO0uXA==,type:str]
+    ca:
+        crt: ENC[AES256_GCM,data:OooTWrt9bZ1efGGBPFMY9wzKNvKnwNxHcb5KJbwJ8LhUf06MCwOSnsSa18BlEarn6VYm3Ip+T6M92qDLkIeyoOv5s7fUf6TpX0jDsv9Mcpd6O8/aD7wlGhydwvC//FQVdE8EpkLVEgdx4XNboYW8JaZ7iwTUHdZHOvnTnqJlfC3s/LuI2JfeCX+OXm9DI5Y/k4od4+XQBoZCK3MWbisVa2N3NGh9pTm7F0EIkS+ugaOvC1BErsF7oXFSs5fQTctexmc1EPiamz/jVuiCsvWnsXLY2TkNtgUq73CKQhP0I1SKvTTmfaW6jntifuU5VHZvltljmOHwxbgU8GSX4GAew0QNILzCaP9nF+/8GVPFzu/DSdlm0QJmW/3VC1E6NvEzbeS1Sh0cdG9BpXn2r+6tc20Hpn33xH+lkK2qQyjax9xr8kz3SHpxJE5OHjh2O5+Nj0urhyyX6zbvPE3mjBvPxFDEHVK72e0/7/pCddE8c+aoRhc8y/jG7oMbQI6jid5ksxkSr9zo7VnwnOHdnF7a+oj+ABEpaBnR4A7z6uXG0Wzy2yq3Rt9gCJ2NmUVjOZDlxjTEHAN69uFt0WYT0osV+ow0jFun35ulFb5/GJEqwKaC660dns61qySvKm/UF1uboBc6q16dqEDtVPhZTdu18h6y9qzKITCuRTB6YcBpA7IqavziG5hJXnp/oGY6oIP1/oP20NPgDDtR1no3umLL3ScMkkcL2rRj4D2jsKD5kDTjDsBWltU0aujIIKOWEnQqbpk0aGWauVry880Lv+0Zn1nvBANV8bgBaDRsYiwQwDA8nSP8cOWWEICR6s/m6hAPU8ZSKOZC2I/ajdipQByoLFqy+/AVlhjh+/vpH3QVr5ZTG4eh,iv:4SbUQHW4y4hOS0/zwwk8jJ2/cZPapwYBSqm2Oi5Ceag=,tag:zHcpLCeUMXtF57SKvgYqsA==,type:str]
+        key: ENC[AES256_GCM,data:kGwtPcWmi/vLbrmPebZ1cZ0mbGhza9nbs58ugiTSmZvtk3gCL9XlcY7DfPLzul9GjCJRUce9nXP5lMx+bKaKrjXoYJFiw4gatF+pE2ovsd95GDg+ja+Jna+IbNysgIu5vZvokmf5CdL6BnnTZgNJNkeYCDs7If9Gx1m1B2XeOQop1Eso4lRJXJkrXzqeDbva7p8Diu6iy5r6YI+issH34YnUgYXTuUwOOa6uYREat4/hKsvo,iv:jk84mR5ycT0N+JUuOJKLVAipQAHchgpFXiYH3X1D+Wc=,tag:F4azsW/v0nf7eqUpEtsupA==,type:str]
+    certSANs: []
+    kubelet:
+        image: ghcr.io/siderolabs/kubelet:v1.28.3
+        defaultRuntimeSeccompProfileEnabled: true
+        disableManifestsDirectory: true
+    network: {}
+    install:
+        disk: /dev/sda
+        image: ghcr.io/siderolabs/installer:v1.5.5
+        wipe: false
+    registries: {}
+    features:
+        rbac: true
+        stableHostname: true
+        apidCheckExtKeyUsage: ENC[AES256_GCM,data:e5JBvQ==,iv:Nm5YavueLngnv2LQQgl+83mxCVqBWB0OdQAI9r2BgKM=,tag:eF7w5h8/AmvMJ01WR1t0qg==,type:bool]
+        diskQuotaSupport: true
+        kubernetesTalosAPIAccess:
+            # Enable Talos API access from Kubernetes pods.
+            enabled: true
+            allowedRoles:
+                - os:reader
+            # The list of Kubernetes namespaces Talos API access is available from.
+            allowedKubernetesNamespaces:
+                - kube-system
+    sysctls:
+        #     kernel.domainname: talos.dev
+        net.ipv4.ip_forward: "0"
+cluster:
+    id: GXJ5tPATSHB6Q6MZKmf8kjPi3uipPRLC2sSXw_A6VyM=
+    secret: ENC[AES256_GCM,data:jKQLlZyh5hdPdg5Ckgazjgn9CCeffyra2TGsrCZmCIO3a1CSOFulQFgYoGE=,iv:iDGeWDkPZCyALHd9qJsG2KP4HnOG3W6il5FP1ppqsbA=,tag:9EgKBCh68MSfeyUjBjOKPA==,type:str]
+    controlPlane:
+        endpoint: https://192.168.128.10:6443
+    clusterName: talos
+    network:
+        dnsDomain: cluster.local
+        podSubnets:
+            - 10.244.0.0/16
+        serviceSubnets:
+            - 10.96.0.0/12
+        cni:
+            # Cilium install manually
+            name: none
+            #            urls:
+            #                - https://raw.githubusercontent.com/qjoly/GitOps/main/talos/integrations/cilium/cilium.yaml
+    token: ENC[AES256_GCM,data:oJh/Ci3N5uS+bakC2bLyvmw2AT+GlTU=,iv:MqZLEYjtze/KXxPVZ5NGUwtaAXotHr2w0SlFckxSo18=,tag:36z2oWYcdpCPTOlVqHoH/w==,type:str]
+    secretboxEncryptionSecret: ENC[AES256_GCM,data:LPxCrnNkQoRJjv1htqbApAOGDVqGh98qFwe6HoxqDwhG+jrs/upShyaUsMk=,iv:7OS/7CWeVe5PkL1uPXcKAGTVUo+1WBir+ghGBbcyPJQ=,tag:l1m6S8DcrKWjwVlWpaj3aA==,type:str]
+    ca:
+        crt: ENC[AES256_GCM,data:aWQaZ6ZKDwBuv+pzWmJK+LcEF8WPrk7FlxRzc3fvZrP42IP94jZ6ierIh37RvY2yqwQz3hbSNmT0sPH79nOljHgSs1t4PzEbSLubm1deLFzkJU/AxJKjm3cZ+zye7mTNin25y1StTIKfxRQ6F2CDkdmsKz2f8FiNLPgjMiSBFfQy2KosouteA1poj6EpssLdlvOwQmN9su5QIE0aPB5jVWDvY3oSRnez0QRGCTdfpAXZqa4ZmKA2TW9eB/GCL8jPYade3Yf0h6hauS426Hgv8Ut6YQmPS2v4xIRatXkoAADmouS/+gH8AfxzvoVBcHK0y3SB9FkDfBwydFu6/jm1F6eWxoy8miR2BOP8fuPHgrdZm8uxBR2L/VG/SZKC8SirVcbAWskXL3S3m89WHlSW6iCMOxZ03Td3wnrGLIpMjANVqaDt7UZziPzNa+Wp0WyFfbGwGwKP6DiWIJ5EC4ffAzXFvtzx7tVfalODgywtq1XH4d+YEoNhv2sV5AfexbBJKjDcY0WQrnrHvLHdAbD5EESNhtEQwb/v1msYtQjk8xy01klydS/Do25XKZIN2KpPEHeGxhMO4r+9UiPcL1UlgckG70zv4aWxuaKUZa9a1nKEpvW4LK6Lq0MvLGNHAza/4wAt9EKxKnwU42u/yXYDivKO0LX3BnRU+LQZh6YHWh+cNIe+FSdkUHVI74JxaxMEvv7mT1GjbV80R220OaMVLhdg7xCyxIrHY2ju1P2SdE5kNgBuhIDt3Mc54tparjgVrxQrjlrhWtPBmW2ZQefxLLvzGlQKtvz01VZ5+mn6kkw2rL34lAJxE5MpkhaWcgCZOkIshIWYdT2uS1LDF6o/U71BBQiTDtSouZMMy6frpfAg93dlZ0UEbuFxp9FOy7v21KksNMxSRvybsBYpHiM4diMWgYnHFT3pPXZSFCSxTuLtan6ydyuILS1sF8BTQxppHzIE5ne/6J1JZCWXRbhy0qjAhLBBr8fScWyB8bc6/DarmCM5+8BiQzGFL6MFC9nen4zj/kBzTiQ13jpRKJDvXmiUYYNmFYvmt6pdyA==,iv:TBaeW11xhkB5eQBxFdVgTq9UZRceG2fe9iFcO1Vb3qU=,tag:yLVCj8GBs9qCLwboZqyi4w==,type:str]
+        key: ENC[AES256_GCM,data:Sn/2m8cQZFgBCJS46bBnAQ6PhcY+32XDr3J9MZOPye04KIr1aU9m8pqIYtb8dXYcW8WS1KO/nw7a6wHIuuDLl/h1PGAwh8T6h9LqpUFy1l0OXcwQAIEU8rDcqSZuN3oVdVEmfG+o2swWJKkzQu66+dY/6n81gTOZRdBoXr8jSe/O5D0qVvwQ8aw+C/Vxg4dBrnJPnnCUueRUB5oX18uMj9ySkgkka47xTxiC06VDxqVX3xbbCDvvKvZCBsiR2D/u86J41xq/rHwu+pHJhJIgNDCB30TQ+pfeC4e9+Tc1d1C0psnFhYoCSRs2M34W0jmLnAc6Pplb4JvxfDJLLxN3yDRFDYqgr8XWnGQsgyV8pxx4tixkI6YbajxcOrkTu7MBvpswjaoc767rCx7z6cMjRA==,iv:YzOU0JToTAe6rY+JkZhDiuZgvRbr8rYRK2i8L7W7G8Q=,tag:szz72rRuMXAN9PW4EjftSw==,type:str]
+    aggregatorCA:
+        crt: ENC[AES256_GCM,data:HtY/vntE3iY76yT+XH1zs+Da1lpeCMOoSKDTJ13enfj8Y4iK0fTYSO+FsPH8lfupfX+Mt/Ro7KORTwycs80975nBlwttiHbLpfg1Tsy8ZO/2ellB7XkNvfdHSC+F9ieQP6kdwJpxZ6mQt5BapF/SUx6L94ZD9Uc3AarXmdz7s8ZquucyRMVmcn/h38zkPI0heeFBsAjzmMfNMiS+Ph1IXuAFFAcPSPfPFcaw3Z81Mr9unKLomAu1aBhTs47jrYTfhtTb0zM0LxGoax3WKOkZVujwPh27fPtJk+QbK87K7rcxQGU6el53c4t/MQfwSTPahJdi8KiNNDGubFZ3nd6RmjcYFhc6zsVo9eBjD7FSoERWwq2yCQu9ErHRy5FVXeSbaEBo7s6oJlCLMqMzZ82omVCiIYBiZf1KZXnFjfdwfr73IB+rRgfF+u8ycoEQGr1uXvaFkaOhqcZixmrA/VsTjsoMejY3UXYxPyh8zLEUsy5JC4Gh9MhX5ccroOu/O9lxa4sBDZV0eiEYIqDI5B5wgjzpRAtGrwO0BSvEkcN2Qt+cU3RJEr80Lqc4ge5+Wi6vYlaCjywl5fa24KBCiCbBdQeyAGzxJ2rCX7UdXZtjO4FyGf6yVvM5apqPisnePlim1sqqyMQZvP7deMtZ1pq5TpejDX5uQ/cGGqkkvuae8u53zxFMoyg7N1nXRB5gdOz/UvYNnRyi7E1iSUvE+2MdUSS6vJKBahGVBdVHY5CAMw5LU7D3OQZm5nim8EKB4elvukspV/p6etbF7pzWFaiU/ZPOcXNFJmApiJrUpH1YIgvEWRjP03tGqTdF0lFZnhLQeTcF6q+6aUYSXweJariQH11sFI5zclMBrZG5/vWEtNmLESTh7xSj+wJzfnGPdkKhaCRzxz2e0D46uy2NrTKfnhp5yxgCxF8ugLfU7R6pqijNovnW5eDIAqh4HpqaDEbx,iv:A9igUJW35JHT9ZUFhHs6YZYpVx+15q0uFS6e04Gyefk=,tag:W7jBoepZZCJ8STiaOnJ4OA==,type:str]
+        key: ENC[AES256_GCM,data:4mBzcMmmSeEvQYkPr/F7UfGsaKUrX0/1FTwMTSG77Af30YB4cIqan1zFFazR+W3IRAH1dSeUjk4fdVBEyiF3Ro2qXsNYYbFIgbPtVfI794X340jTjrPLPzH7UJ68tyU59qf5tiwrHkvQZirx0b3o6sOvDXLOccbhRPl9tKDdMM5dW7GogFkmdSWKgG9DYqNqZXZIrJAHlpbpNNqaUwz8En/mrbDzzY8HtWVfOVRX4CIgd2D3XyELFA0jiUFmg5spD5iGkOf7wfbmxI9YeqQPSOe5uy4IV82m46vciPG7JSJWjceDcRgZg0GCwD8uVv+xUMwM9+qRCl3BOO7yGEAR/ra5vfTGNbZviHY5zScp3IenJmS5+2ATmp+irp8tKZ5BebnU07atOQBMlNkJxBMe1A==,iv:NxbnODYQSZsJLKVNZiJ2lymxs17EczULheER/nrL8QA=,tag:d/prlJNXU8emVhd+yg1rwA==,type:str]
+    serviceAccount:
+        key: ENC[AES256_GCM,data:EdbwHlLpkd1/sbsjL7ecQadhVlR5uWx07u2vTNiuit5rz2LSXWMPASy/HPX5RuDmWALgnwdtLJEnrQf/Pyl1NTf3VPaWoziKLFGwx0mujmOdvUHdey0k5Hy4vZz0EzbQIdnC+vHp5BcGmLRIktGV9W3/tj1fq5+TK7suR1QoNosN/GGWJaEQfJFkq75YDjK1HVvm8DlWe/Cz5I9gGFSHQeAbaIeT8ac20Kj/VxzVDRv4bbUX75AF3Inz17vvHBRINz3xpRwOBEpfK6HS71H1jfRvcy6R77cHNcfZQ0fywcLWkkrudfDelsq2o8iB6DbdVJWfW40I0q0eUopv3Ldu+kIyow+U7Wdmh06aimFsCvjAbTUHAQE5j9Tdydeobtu+ytvmMuUnU+M6PunP4yNZbA==,iv:pCvuOobCxp2Jr1isrcUJrPlxqie4jBEuxG/eiAXOLxI=,tag:zM39jfXQvLQw7CxHYfGTWw==,type:str]
+    apiServer:
+        image: registry.k8s.io/kube-apiserver:v1.28.3
+        certSANs:
+            - 192.168.128.10
+        disablePodSecurityPolicy: true
+        # Configure the API server admission plugins.
+        #        admissionControl:
+        #            - name: PodSecurity # Name is the name of the admission controller.
+        #              # Configuration is an embedded configuration object to be used as the plugin's
+        #              configuration:
+        #                apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+        #                defaults:
+        #                    audit: restricted
+        #                    audit-version: latest
+        #                    enforce: baseline
+        #                    enforce-version: latest
+        #                    warn: restricted
+        #                    warn-version: latest
+        #                exemptions:
+        #                    namespaces:
+        #                        - kube-system
+        #                    runtimeClasses: []
+        #                    usernames: []
+        #                kind: PodSecurityConfiguration
+        # Configure the API server audit policy.
+        auditPolicy:
+            apiVersion: audit.k8s.io/v1
+            kind: Policy
+            rules:
+                - level: Metadata
+    controllerManager:
+        image: registry.k8s.io/kube-controller-manager:v1.28.3
+    proxy:
+        image: registry.k8s.io/kube-proxy:v1.28.3
+        # Disabled for Cilium
+        disabled: true
+    scheduler:
+        image: registry.k8s.io/kube-scheduler:v1.28.3
+    discovery:
+        enabled: false
+        registries:
+            kubernetes:
+                disabled: true
+            service: {}
+    etcd:
+        ca:
+            crt: ENC[AES256_GCM,data:wgFvDT7rPbQuO2VkOjHFNspOUTwex7aHUYuXWrMYsEg3AJQhhW/ABW2MNJze1Fm1x8lMCvA7MqHH8SEUND1Rpz0v263/kOPgogFkFjCcvh5IrmOlTqM1vscbTFIJ/WNd2VzE9ReuSHpJEY/fxJEKMrIdkqnPx4bRxJdXB2Hdl5CzUzy1hz4gxas1JROrHNMXTujGzRZ7I7ilf2rYA8TqHRMypVVjtOVCIm3mXADC15SaAnQDVUe0CdJf2PTBFf6H7F7fXClzquk/jTBYawv9pB3Do7fHacsIGnLUctc5J+S/SzxtbB5nMFn8BNCz80frJU7RYgRhK0CHmcVKiXm0iCObdyYjQ4DWn/71CQkhCdVLyNiQkoKs2XeBvp+tCL/G3LPApqsfLLE9gBG4Idm5tPsE2+Htl9grANHEvFJLYh4j6MftbV80jCjlBrlmzojFg9VYNVqYCFwgGw/pQjy9ohJOlwL3O60P48VTTjH6oI4nIiVglBGVzQS6O4qlKO97gZUuwKWvJkdD70RQQHAalrhCIbASsoqGbJXBcQE4bnQJkI3+5/Oytl6X9ObVO1AqeGlWL1YWTBjFbDpNjVZCyUP688zRTnedZe5aHLGeyUiVSuBYRNLHoCr5CRHNQKug3HntvSbI3gjsTMFJZmzsS21fFaNsnxqh3yjpipfrisTC3cdiQOO/hkawCuMI2ZsgWNso1+HLCxOiZsSSdNb5no4FMb3lZ+2DgeVIgWos4MF/C68IP41mfJ64g6xIbQ5jKkIT/JO0CKmoRqhoj7WBqIMSAaWSylu6ZewJ+NZJHORuhg2NRvNE57An1DuyYhKcuRezp94nDJvtEzY5JCFD4NCy68fRKptVyaX0qYKx9OsNqesr0lV2duZI3E3vZ+32KQ4wNY1G56PCjCarhN/ZW5guD2wBCN8cgQKoGXPwcjEzNyDt2/v3U+sTTv5VldHNm3WprGQoZKlbSf1nZzATGCnWOXg6zs9OWJHoZJcBahOsNimsuZJ0NNnjrfDMDK5nXmyycg==,iv:UVBCsF6DDGh6lw4lewLIR/miH5rDqNNEpMDdtuJOaGE=,tag:WGDki3piRhhymAMYsgmpVA==,type:str]
+            key: ENC[AES256_GCM,data:zttFKnmfo1ph5jOIygILe6gRt5R9JX3HPMxutasJcQEoCWRRUwydkCRewKN7UypL5QuiUBgq95ljGETfgrXFy37IUBktLz6TJoSJ+fiiHeWctkqhAYA+z36GZV6BALg8zJfLlLwdxl2d5RjSjevKUWTVuPco8m8OAuMnqP+umU74XiX0CIhZQCMjDKbpKHHtvRs/LeTLIp8qaExnfd0EytQdsAtvy86YPl0E2t0UcocT8Y9XhljnOhaKM36te6XuAV7+qpojCXoJ88gc3TAdW10Hd+5ReG4FWolWriypy3t15GeX94GjdCHppDiq5XjJwADp63SWmx5bjsxx5u3UxiA0MZNnbgTuzz608GFvAF5+HyuCkfZRSJjEaP8bp4/84+tFNk0LBijfoVsPWawdgg==,iv:n5nTjEH/NO6L2RXeEVk8lsm0ca27seO67HfOPtOrZBI=,tag:vfda5ieTrK8ApaeJ+fGoyg==,type:str]
+    extraManifests: []
+    #   - https://www.example.com/manifest1.yaml
+    #   - https://www.example.com/manifest2.yaml
+    inlineManifests: []
+    #    adminKubeconfig:
+    #      certLifetime: 1h0m0s # Admin kubeconfig certificate lifetime (default is 1 year).
+    allowSchedulingOnControlPlanes: true
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age:
+        - recipient: age14ysm820ajay8wqslnkjqcewvq4tmeucth3a88qk4a7hl0mnwkfaqmj6xx5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA3RkZTeWtXMWtuR1pBVEpP
+            cTlqcnlXbHIwMmhQblFyZ0RKMDhZbXVxQTBJCi9SVE9wNzhaTGVra3dVQTZ4OCtC
+            YjBCUXNnMWZMWTdyQ3FsQUFhVU1EaDgKLS0tIFBuRWU3cWxad2pYQlZqekVHVTU2
+            MHk1WDlTS0x2RU1VRDJDMkNnd2l5dXMKcVAw6li8TmT9lHBbGuZSpIvoIJYpYOXV
+            5oKLTvbpA+GTSt6RK+A7M97DHTjSA+30Y57qbdCvgoVq8lBInsM7kQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2023-12-07T09:43:55Z"
+    mac: ENC[AES256_GCM,data:6tJipKN9qHshWHUPeamiR2lobPbOib7ifvNrGFUexu4icjErLdhf7ZQZw2xRM4s8qtzUVbpIgDWSkvE4bhScGeGEMYByXnuGQoKAnE0CXATGhKMNtRp2rCx2vEJtuX+wEAG+8qggwMjNYumy7F3z7g2ropQeCJB2T8rZq3zjSt4=,iv:2D0edO7z2HFAu+9xQfgkXx6BEQR18SxBaPHmZ27tCgs=,tag:vJUPilLm7JgUhFIpV7RU7g==,type:str]
+    pgp: []
+    encrypted_regex: ((?i)(pass|secret($|[^N])|ca|crt|key|token|^data$|^stringData$))
+    version: 3.8.1
