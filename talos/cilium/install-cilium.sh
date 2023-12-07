@@ -6,4 +6,7 @@ cilium install \
     --helm-set=cgroup.autoMount.enabled=false \
     --helm-set=cgroup.hostRoot=/sys/fs/cgroup \
     --helm-set=k8sServiceHost=localhost \
-    --helm-set=k8sServicePort=7445
+    --helm-set=k8sServicePort=7445 \
+    --helm-set=hubble.relay.enabled=true \
+    --helm-set=hubble.ui.enabled=true
+
