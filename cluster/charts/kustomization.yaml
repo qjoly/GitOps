@@ -10,5 +10,6 @@ resources:
   - fairwinds.yaml
   - prometheus-community.yaml
   - kubevious.yaml
+  - rook.yaml
   - kyverno.yaml
 
