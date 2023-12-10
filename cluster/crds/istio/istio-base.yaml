@@ -8,8 +8,8 @@ spec:
   chart:
     spec:
       chart: base
-      version: "XXXX"
+      version: ">=1.20.0"
       sourceRef:
         kind: HelmRepository
         name: istio-charts
-        namespace: istio-system
+        namespace: flux-system
