@@ -2,9 +2,10 @@ apiVersion: v1
 kind: Secret
 metadata:
     name: cloudflare-api-token-secret
+    namespace: cert-manager
 type: Opaque
 stringData:
-    api-token: ENC[AES256_GCM,data:2YYzevKQ/+d0lE1BhMcqhBkkDmpR14LaUq3gu8eGoD6enPLB51dGYg==,iv:AZOQlaqTa2HwUxgm7FXUnuKRH9IzZ4x7HIftJ5cK0cw=,tag:TfK8Ing/ZXNf/pJIqGHZsQ==,type:str]
+    api-token: ENC[AES256_GCM,data:Qp41C0yYgjXmGxPKYPZokKMLDEY7NTZFW2tQfGEERHOI6UbPjaLjFA==,iv:I8dgGAsHpoDbHp3Y1472cCnOIrLp0xvEvoXNwpDc8yk=,tag:/r/mpJhTjmUbGdW37WGR5A==,type:str]
 sops:
     kms: []
     gcp_kms: []
@@ -14,14 +15,14 @@ sops:
         - recipient: age1p9z8z69fa63fa8pnxklq00e8k3556sc233wlp20na7cykthtgvgqwnvej5
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSByZVFWK2pQMTJvZGt5U2o5
-            SWpOblhRMUUxMDhiOThTQ3hhZzI0YldyVFVzCnZlUlkrT3JQZ3NBT1ZWejM1TEdm
-            UG5kVS96bzVZQm9wTXFkT1FHL3kzWUUKLS0tIFdWSnRoWUpBaGNqejkxZW9rNkNU
-            bTBjQ1BSYVJOK3VLZG5tWGQyclpWWWsKNmzw2B++gfpn+4tl/bPVRjPQ9w3jgpmS
-            RODQMvxhXbMsc+3VVy2NtxW4UY70NtHzvQ6dAFEQwU6ZMiIGLDQMbg==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA1MTh0di8vclpQYTdESXd1
+            OHZiUGlkaDhpNmpUbzhzbmt4bHM0SVd6RkhFCm4xVE0rSEVySFhvR0p5bE5UTGx1
+            YUJaRUU3Q3NnUzJMakhHaGFOa2hZUEkKLS0tIFZCSVMwYnVEam00MUI4Vytuc3F5
+            bWtuc05VUHZpT2VuSW4rV2tMckZZSU0K71IIwPfPLS8eRTDP3z33pBDv3DlQmAFK
+            Fk98Wc29q5bor55Vcopc63eukf0Nyln3QlkDt9KNCw8dI7NZOaxYdQ==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2023-12-10T16:26:29Z"
-    mac: ENC[AES256_GCM,data:sipxgBZUvP90NA1rVdwcFn6mo6DgLxHcJ6AC0PDFDDFn5culyJPTVmwx6/CrSdskkDVBdK8qy44lZXrEwFwZsmq6JbAtiZDpvxG74olm8Jir4JdP6XijGG6XojuGkMPLzSqusvgWcx2tyaoEMdDX1tlBxX6nukdj4ag77IUt4vw=,iv:t/rr8Z0ZTGfEtZRZb5UXrmAl5pj4SYjvPwLEdKovNIE=,tag:BsYQq6K6BzKH9AJ2G3Rn0A==,type:str]
+    lastmodified: "2023-12-15T09:07:42Z"
+    mac: ENC[AES256_GCM,data:l8b7FpJgiEh4Tjjc3qH8QZM8QpxoM4aV1GmbJAQ4UGrGCwdec+74ZLsCfrOAvDHuQX9vdn1efjgwB/KAi5hG/mKTtQyagFTLMf2VbVNceV9UQYCwaTh6M4dS8YL+6g17cJMgA+qHiO70OG1Zj7Vdae9+WoEy+wDvVkNOMIdjaes=,iv:doRn2vgVddz4vC9zKOr9IlB6qav+XGRenalnUMd5yJo=,tag:MA6lsdJWob8M9HZ2iWBErA==,type:str]
     pgp: []
     encrypted_regex: ^(chart|password|user|username|api-token)$
     version: 3.8.1
