@@ -12,4 +12,5 @@ resources:
   - kubevious.yaml
   - rook.yaml
   - kyverno.yaml
+  - csi-driver-nfs.yaml
 
