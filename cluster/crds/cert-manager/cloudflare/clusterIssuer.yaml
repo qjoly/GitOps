@@ -1,7 +1,8 @@
 apiVersion: cert-manager.io/v1
-kind: Issuer
+kind: ClusterIssuer
 metadata:
   name: cloudflare
+  namespace: cert-manager
 spec:
   acme:
     email: cloudflare@thoughtless.eu
