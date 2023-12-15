@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - bitnami.yaml
   - k8s-at-home.yaml
+  - jetstack.yaml
   - bjw-s.yaml
   - rubxkube.yaml
   - grafana.yaml
@@ -12,4 +13,6 @@ resources:
   - kubevious.yaml
   - rook.yaml
   - kyverno.yaml
+  - istio.yaml
+
 
