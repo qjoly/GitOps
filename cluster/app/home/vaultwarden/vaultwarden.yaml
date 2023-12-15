@@ -16,4 +16,18 @@ spec:
         namespace: flux-system
   values:
     common:
+      ingress:
+        enabled: false
+      variables:
+        nonSecret:
+          DOMAIN: "https://vault.thoughtless.eu"
+      persistence:
+        enabled: true
+        volumes:
+          - name: "data"
+            storageClassName: "nfs-csi"
+            size: "5Gi"
+            containerMount: "/data"
+            pvcClaim: ""
+
 
