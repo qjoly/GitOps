@@ -8,11 +8,29 @@
 
 ![Packer](https://img.shields.io/badge/packer-%23E7EEF0.svg?style=for-the-badge&logo=packer&logoColor=%2302A8EF)![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)![Ansible](https://img.shields.io/badge/ansible-%231A1918.svg?style=for-the-badge&logo=ansible&logoColor=white)![Flux](https://img.shields.io/badge/flux-%23326ce5.svg?style=for-the-badge&logoColor=white)
 
-# Description du projet
 
-J'utilise Kubernetes dans différents contextes, ma "production" est dans un serveur dédié OVH avec un hyperviseur **Proxmox** tandis que mon Homelab est basé sur **Libvirt**. Afin d'uniformiser mes environnements, j'ai décidé de créer un projet qui me permettrait de déployer rapidement un les mêmes applications sur les deux hyperviseurs.
+# GitOps
 
-Le projet est donc scindé en 2 parties, une partie Terraform/Ansible qui permet de déployer l'infrastructure, et une autre déployant un cluster Kubernetes et le provisionne via Flux
+Ce projet a pour but de déployer un cluster Kubernetes pour mon lab personnel.
+
+## Version Talos
+
+![Talos](https://www.talos.dev/images/logo.svg | width=100 )
+
+
+Pour un déploiement baremetal, j'ai choisi d'utiliser Talos. Talos est un système d'exploitation pour Kubernetes. Il est conçu pour être sécurisé par défaut, simplifier les opérations et être facilement extensible.
+
+La configuration de Talos est gérée par des fichiers YAML dans le répertoire `talos`. Pour déployer Talos, il suffit de lancer la commande suivante :
+
+```bash
+talosctl apply-config -e {IP} -n {IP} --insecure --file ./(controlplane|worker).yaml
+```
+
+Il faudra manuellement installer Cilium via le script `./talos/integrations/cilium/install.sh`.
+
+## Version Packer/Terraform
+
+Je dispose de plusieurs machines virtuelles sur lesquelles je souhaite déployer un cluster Kubernetes. Pour cela, j'ai décidé d'utiliser Terraform pour déployer l'infrastructure, Packer pour créer les images, Ansible pour provisionner les machines et Flux pour déployer les applications.
 
 # Dépendances
 - terraform
