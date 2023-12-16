@@ -145,7 +145,7 @@ spec:
 #            - --start-time=0:00
 #            - --end-time=23:59:59
 #            - --time-zone=UTC
-        - --annotate-nodes=true
+#        - --annotate-nodes=true
 #            - --lock-release-delay=30m
 #            - --log-format=text
 #            - --metrics-host=""
