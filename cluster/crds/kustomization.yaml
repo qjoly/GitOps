@@ -4,5 +4,4 @@ kind: Kustomization
 resources:
   - api-gateway
   - cert-manager
-  - kured
   - istio
