@@ -15,7 +15,7 @@ Ce projet a pour but de déployer un cluster Kubernetes pour mon lab personnel.
 
 ## Version Talos
 
-![Talos](https://www.talos.dev/images/logo.svg | width=100 )
+<img src="https://www.talos.dev/images/logo.svg" width="100px">
 
 
 Pour un déploiement baremetal, j'ai choisi d'utiliser Talos. Talos est un système d'exploitation pour Kubernetes. Il est conçu pour être sécurisé par défaut, simplifier les opérations et être facilement extensible.
