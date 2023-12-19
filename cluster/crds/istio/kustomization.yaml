@@ -5,4 +5,4 @@ resources:
   - namespace.yaml
   - istio-base.yaml
   - istiod.yaml
-  - istio-ingress.yaml
+#  - istio-ingress.yaml
