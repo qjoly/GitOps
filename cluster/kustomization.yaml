@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - charts
   - crds
+  - gateway
   - storageclass 
 #  - app
 #  - security
