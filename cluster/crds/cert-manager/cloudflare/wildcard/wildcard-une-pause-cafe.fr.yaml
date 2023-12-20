@@ -1,14 +1,14 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: wildcard-une-pause-cafe
+  name: wildcard-une-tasse-de.cafe
   namespace: default
 spec:
-  secretName: wildcard-une-pause-cafe
+  secretName: wildcard-une-tasse-de.cafe
   issuerRef:
     name: cloudflare
     kind: ClusterIssuer 
-  commonName: "*.une-pause-cafe.fr"
+  commonName: "*.une-tasse-de.cafe"
   dnsNames:
-  - "une-pause-cafe.fr"
-  - "*.une-pause-cafe.fr"
+  - "une-tasse-de.cafe"
+  - "*.une-tasse-de.cafe"
