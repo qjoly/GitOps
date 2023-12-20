@@ -10,6 +10,11 @@ spec:
   hostnames:
     - "vault.thoughtless.eu"
   rules:
+  - filters:
+      - type: RequestRedirect
+        requestRedirect:
+          scheme: https
+          statusCode: 301
   - matches:
     - path:
         value: /
