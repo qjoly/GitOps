@@ -2,3 +2,5 @@
 kind: Namespace
 metadata:
   name: monitoring
+  labels:
+    shared-gateway-access: "true"
