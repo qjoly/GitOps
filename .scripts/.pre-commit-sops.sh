@@ -3,7 +3,7 @@ log_file="./pre-commit.log"
 for filename in "$@"
 do
     echo "Checking.... $filename"
-if [[ "$filename" =~ ^secret\..*\.ya?ml$ ]]; then
+if [[ "$filename" =~ ^secret\..*\.ya?ml$ ]] || [[ "$filename" =~ talos/(controlplane|worker).ya?ml ]] ; then
   echo "$filename matches pattern, encrypting..." >> $log_file
   sops -e -i $filename
   git add $filename
