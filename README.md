@@ -6,14 +6,11 @@
 
 <div align="center">
 
-  [![Blog](https://img.shields.io/badge/Talos-v1.6.0-blue?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://une-tasse-de.cafe/)
+  [![Blog](https://img.shields.io/badge/Blog-blue?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://une-tasse-de.cafe/)
   [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.28.3-blue?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
   [![Linux](https://img.shields.io/badge/Talos-v1.6.0-blue?style=for-the-badge&logo=linux&logoColor=white)](https://kubernetes.io/)
 
 </div>
-
-
-![Packer](https://img.shields.io/badge/packer-%23E7EEF0.svg?style=for-the-badge&logo=packer&logoColor=%2302A8EF)![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)![Ansible](https://img.shields.io/badge/ansible-%231A1918.svg?style=for-the-badge&logo=ansible&logoColor=white)![Flux](https://img.shields.io/badge/flux-%23326ce5.svg?style=for-the-badge&logoColor=white)
 
 
 # GitOps
