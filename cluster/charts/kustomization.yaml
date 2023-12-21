@@ -15,3 +15,4 @@ resources:
   - kyverno.yaml
   - csi-driver-nfs.yaml
   - istio.yaml
+  - grafana-community.yaml
