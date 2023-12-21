@@ -1,7 +1,7 @@
 helm install \
     cilium \
     cilium/cilium \
-    --version 1.14.0 \
+    --version 1.60.0 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
     --set=kubeProxyReplacement=true \
@@ -12,7 +12,9 @@ helm install \
     --set=k8sServiceHost=localhost \
     --set=k8sServicePort=7445 \
     --set=l2announcements.enabled=true \
-    --set=l2announcements.leaseDuration="300s" \
+    --set=k8sClientRateLimit.qps=32 \
+    --set=k8sClientRateLimit.burst=5 \
+    --set=l2announcements.leaseDuration="24h" \
     --set=l2announcements.leaseRenewDeadline="60s" \
     --set=l2announcements.leaseRetryPeriod="10s" \
     --set=externalIPs.enabled=true \
