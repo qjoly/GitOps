@@ -3,11 +3,11 @@ kind: StorageClass
 metadata:
   name: nfs-csi
   annotations:
-    storageclass.kubernetes.io/is-default-class: true
+    storageclass.kubernetes.io/is-default-class: "true"
 provisioner: nfs.csi.k8s.io
 parameters:
   server: 192.168.128.107
-  share: /exports
+  share: /export
 reclaimPolicy: Retain 
 allowVolumeExpansion: true
 volumeBindingMode: Immediate
