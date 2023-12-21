@@ -1,0 +1,37 @@
+apiVersion: v1
+data:
+  alertmanager.yml: |
+    global: {}
+    receivers:
+      - name: 'web.hook'
+        webhook_configs:
+          - url: 'http://127.0.0.1:5001/'
+      - name: 'email'
+        email_configs:
+        - to: 'contact@une-pause-cafe.fr'
+          from: 'no-reply@une-pause-cafe.fr'
+          smarthost: 'mail.infomaniak.com:587'
+          auth_username: 'no-reply@une-pause-cafe.fr'
+          auth_identity: 'no-reply@une-pause-cafe.fr'
+          auth_password: 'KvXC5&!eZi9G*3'
+    route:
+      group_interval: 5m
+      group_wait: 10s
+      receiver: email
+      repeat_interval: 3h
+
+kind: ConfigMap
+metadata:
+  annotations:
+    meta.helm.sh/release-name: loki-stack
+    meta.helm.sh/release-namespace: monitoring
+  labels:
+    app: prometheus
+    app.kubernetes.io/managed-by: Helm
+    component: alertmanager
+    helm.toolkit.fluxcd.io/name: loki-stack
+    helm.toolkit.fluxcd.io/namespace: monitoring
+    heritage: Helm
+    release: loki-stack
+  name: loki-stack-prometheus-alertmanager
+  namespace: monitoring
