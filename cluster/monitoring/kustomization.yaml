@@ -5,3 +5,4 @@ resources:
   - namespace.yaml
 #  - kubevious.yaml
   - loki-stack.yaml
+  - http-route-grafana.yaml
