@@ -1,37 +1,38 @@
-apiVersion: v1
+apiVersion: ENC[AES256_GCM,data:WU0=,iv:Sg3IjptCio+xtEwz1n84XkXtoGgHnAJlGIUIhauwkmU=,tag:lFiNPxow2Rk1A5adgiiqlQ==,type:str]
 data:
-  alertmanager.yml: |
-    global: {}
-    receivers:
-      - name: 'web.hook'
-        webhook_configs:
-          - url: 'http://127.0.0.1:5001/'
-      - name: 'email'
-        email_configs:
-        - to: 'contact@une-pause-cafe.fr'
-          from: 'no-reply@une-pause-cafe.fr'
-          smarthost: 'mail.infomaniak.com:587'
-          auth_username: 'no-reply@une-pause-cafe.fr'
-          auth_identity: 'no-reply@une-pause-cafe.fr'
-          auth_password: 'KvXC5&!eZi9G*3'
-    route:
-      group_interval: 5m
-      group_wait: 10s
-      receiver: email
-      repeat_interval: 3h
-
-kind: ConfigMap
+    alertmanager.yml: ENC[AES256_GCM,data:+IwcLKWyWYTuOAGZjyHr19fy7L506nqCJoJ1LJEokTXUEeGJMcDg27THnoLzfY0RKMJwHXbZbTdQLmbNLJ1bJXdAtZv5QUR2qau+DoPJXwdV590DfOJtQYUDLLsdPOo4GPE1E2CsJf7e4hLcx+jVnpf+I0Gv3GzecLQTNjozb168dyqihADO/HbBh1a4q0OzFGfGWbxiJoEKMzJU47j5dvjNKYN6Lw3ZGsG9ldBTks7wTQmVjtMHrINscumgGmCzbI7HXmqktPFu/ZK1igJbJVJQpjlG14HLf8/WHm6F8Ex5XQMUii0J4QHogXrdsczV0f+U2Z227c7eJn4DjGSzX+O8wRnvu8DE1ZQUVvhtjpTr45DSmEYQpFXJK78Btmu6Fmk9HwBK1NITW1yoLhIXDA87h1wM8l8I8PA0BJXgTD/XTc3IsS+rUW9mZauyDmi/dSMChqJIM2eHAtxyCgtieUAcE2trqqw6+CHe2igy1uwEDhUTll0CzuqIXQAAuO3AwfMC8QQdJC3obvi+xeC3fzhaHY8nbp/pE0VtO1jXU46rjgLH7JM7h7EoUmO8oUOX/ybDC6456K7CmLv8fgm5dGMgDs4cX0EGGW/pLT6Cxs+uoJ3RL02RqpBlSBJsD4wcnry7QWfv8B65coMfl55Ytov80aOYWC5ZwhvbZ7IJn9QvmxS9IwQ12c78fycV9drHbXDYgrUzPxgYmbwzMe0WcGI/lmbIU5fEfZA4uYEn9jqYUwQEwJU1WCDmcyPsxWcAzvwszKEmW4E=,iv:f/SSAZ3f7M3liAtT2x1GK5PtEJIB8DdEkWKJJNL4Xy4=,tag:n4ftvI5ugCB0+nW6vTOEgg==,type:str]
+kind: ENC[AES256_GCM,data:s9PY3qZYXLtn,iv:5NfRbXEsqR6CSWIEM2pKvj2Oh6LWW/FCk7QQck3i8W4=,tag:KrITFCzvnI1aHRQ3MyHAnQ==,type:str]
 metadata:
-  annotations:
-    meta.helm.sh/release-name: loki-stack
-    meta.helm.sh/release-namespace: monitoring
-  labels:
-    app: prometheus
-    app.kubernetes.io/managed-by: Helm
-    component: alertmanager
-    helm.toolkit.fluxcd.io/name: loki-stack
-    helm.toolkit.fluxcd.io/namespace: monitoring
-    heritage: Helm
-    release: loki-stack
-  name: loki-stack-prometheus-alertmanager
-  namespace: monitoring
+    annotations:
+        meta.helm.sh/release-name: ENC[AES256_GCM,data:aiB68iXGFVkbog==,iv:VaF7b6mJRqArPG81ftwL4NulnylTxCnW3SmWwi3HImI=,tag:VLJoV/U+Ofvw/Dj0wCrUOQ==,type:str]
+        meta.helm.sh/release-namespace: ENC[AES256_GCM,data:FAjr5DXvTXlScg==,iv:OV3gCR4vXxnEdg+JKUHCionx0OBJBs/lagheqK8/rm8=,tag:K9m73ulegFSCAEC7wzqyvg==,type:str]
+    labels:
+        app: ENC[AES256_GCM,data:f8aakwotEdtmyA==,iv:74FyHgr4JDHgXZTW2XKSmxjSBown9+YaBZwLc93IlgI=,tag:dLYFDWkjIjiB4gC8g4kxZw==,type:str]
+        app.kubernetes.io/managed-by: ENC[AES256_GCM,data:0pEPLQ==,iv:R+NldqfeYZ7CTKxnQRbM3tI18t5OpkSjdMRznR2tsXU=,tag:4ZhXKutosJjVgfSrKDeRBw==,type:str]
+        component: ENC[AES256_GCM,data:QYcvZMeGoeZZ17n8,iv:8Gnh32bRgdvjQ+PZGVkoXJ5DsZ2UWhbsro/oqV8vT8g=,tag:OMkQnO0HY//Ys33g3guqGw==,type:str]
+        helm.toolkit.fluxcd.io/name: ENC[AES256_GCM,data:WlQ4bKeeYggWCQ==,iv:QXu/ZyrGMVvAa3DspztFr31bwrHH2cin4MzqoZ9GZXc=,tag:Zb5DH2MYt8Bokgj89yBkXA==,type:str]
+        helm.toolkit.fluxcd.io/namespace: ENC[AES256_GCM,data:slwIlbKo4GKVKw==,iv:0XpowwUCS9hHHm/otOYPO5AfTpl9Fb22iJn5k7vT6KE=,tag:d/RJDz/7wPaeyBunLT765Q==,type:str]
+        heritage: ENC[AES256_GCM,data:2lWzMQ==,iv:/NnQ6AgXKbaceVeROm3dKVqc4UMrjHyCykN+6FGeYUQ=,tag:nG00uC0M+EoBmRc2QXIMjA==,type:str]
+        release: ENC[AES256_GCM,data:vcPq4fk87NonsQ==,iv:kSYJGE/k0hPcnZjlSJHCpd/UQftKOwwJolnl0KSjtVY=,tag:770eCG5XLwC1gVb0tdb7zQ==,type:str]
+    name: ENC[AES256_GCM,data:V6ORMbjhrbR+Jt9Z7p9frLt9OioRnLV7UEPjL71r+bu1ew==,iv:jRM8zVNag7sCgYZZn6FhqeFBtHxU2XGfsfJ7cj2uLgk=,tag:t/X/HlzS7yWfe7LQIu0rKg==,type:str]
+    namespace: ENC[AES256_GCM,data:SOJcCZvGVdajrA==,iv:+5j6aUscgIWcd3TD1guMsngNjSSMog7yrNwQSc9toeE=,tag:Xc7d4nuYZyPAkZ4WqseaMg==,type:str]
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age:
+        - recipient: age1p9z8z69fa63fa8pnxklq00e8k3556sc233wlp20na7cykthtgvgqwnvej5
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB1Ky9zR2lOMXowWEpvTHJO
+            aUwvT3NlZzR2ay9iazRtL1NtY25palpxMEg0CkVNdkx4MDJOcVR2QUZzSi9WYlVp
+            d0IvYUhmUmwyNXl4U3dCVjlVS3NRMlUKLS0tIEJ0cVRrbHVzbngxclBXNC9aWkxp
+            c1VkWTAyZCtGYU1KNlA5MDI1ZEJWMlUKRfx0bwva082h48XacMQkAqP54AA0EBf7
+            D9m8WJ9H8RRbi4h1h9RBjt/I8qGBk2rKS+cwbFl2O5g8vDVefiGbsQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2023-12-21T20:21:56Z"
+    mac: ENC[AES256_GCM,data:E+qNL/pnCsispWKLnWxK/aFcEG0AcE7fpF29a9bIuweZTQ4QR4ZiE+PjAF+bPo68wZZOFwj4/tp3mNjeN9L24YFCZg05AME/Tt9ARw02L8NWke89uDdbJLonKpNDSUGyTYnVoo2eQdam8KsnO//xL+8REAps7epTYfQqBsoCPSk=,iv:I0Tl8a3aGewAj1ZBYqCCHo5OJje1vd5r5NN+jbQ8Hxw=,tag:KttOdfJ361Zb6UTyl+3yWw==,type:str]
+    pgp: []
+    unencrypted_suffix: _unencrypted
+    version: 3.8.1
