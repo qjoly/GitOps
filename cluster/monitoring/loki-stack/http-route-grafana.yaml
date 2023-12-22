@@ -9,11 +9,11 @@ spec:
     namespace: default
   hostnames: ["grafana.une-tasse-de.cafe"]
   rules:
-  - filters:
-      - type: RequestRedirect
-        requestRedirect:
-          scheme: https
-          statusCode: 301
+#  - filters:
+#      - type: RequestRedirect
+#        requestRedirect:
+#          scheme: https
+#          statusCode: 301
   - matches:
     - path:
         type: PathPrefix
