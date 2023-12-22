@@ -12,9 +12,9 @@ helm template \
     --set=k8sServiceHost=localhost \
     --set=k8sServicePort=7445 \
     --set=l2announcements.enabled=true \
-    --set=l2announcements.leaseDuration="300s" \
+    --set=l2announcements.leaseDuration="24h" \
     --set=l2announcements.leaseRenewDeadline="60s" \
-    --set=l2announcements.leaseRetryPeriod="10s" \
+    --set=l2announcements.leaseRetryPeriod="60s" \
     --set=externalIPs.enabled=true \
     --set=hubble.relay.enabled=true \
     --set=hubble.ui.enabled=true
