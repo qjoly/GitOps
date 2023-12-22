@@ -1,0 +1,72 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: hajimari
+  namespace: default
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: hajimari
+      version: ">=2.0.2"
+      sourceRef:
+        kind: HelmRepository
+        name: hajimari-charts
+        namespace: flux-system
+  values:
+    env:
+      # -- Set the container timezone
+      TZ: "Europe/Paris"
+    
+    hajimari:
+      instanceName: null
+      defaultEnable: true
+    
+      namespaceSelector:
+        matchNames:
+        - media
+      title: null
+      name: "You"
+    
+      # -- Add custom applications to the discovered application list
+      customApps: []
+      # - group: Media
+      #   apps:
+      #     - name: Test
+      #       url: 'https://example.com'
+      #       icon: 'mdi:test-tube'
+      #       info: This is a test app
+      
+      globalBookmarks: []
+      # - group: Communicate
+      #   bookmarks:
+      #   - name: Discord
+      #     url: 'https://discord.com'
+      #   - name: Gmail
+      #     url: 'http://gmail.com'
+      #   - name: Slack
+      #     url: 'https://slack.com/signin'
+    
+    
+    # -- Configures service settings for the chart.
+    # @default -- See values.yaml
+    service:
+      main:
+        ports:
+          http:
+            port: 3000
+    
+    serviceAccount:
+      create: true
+    
+    ingress:
+      main:
+        enabled: false
+    persistence:
+      data:
+        enabled: true
+        type: pvc
+        accessMode: ReadWriteOnce
+        size: 1Gi
+

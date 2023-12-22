@@ -6,6 +6,6 @@ resources:
   - crds
   - gateway
   - storageclass 
-#  - app
+  - app
 #  - security
   - monitoring
