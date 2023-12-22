@@ -11,6 +11,13 @@ data:
             ( up == 0 )
            labels:
              severity: low
+      - name: websites
+        rules:
+         - alert: any:website:down
+           expr: >
+            ( probe_success == 0 )
+           labels:
+             severity: high
   prometheus.yml: |
     global:
       evaluation_interval: 1m
@@ -26,6 +33,23 @@ data:
       static_configs:
       - targets:
         - localhost:9090
+    - job_name: 'websites'
+      metrics_path: /probe
+      params:
+        module: [http_2xx]
+      static_configs:
+        - targets:
+          - https://vault.thoughtless.eu
+          - https://freshrss.thoughtless.eu
+      relabel_configs:
+        - source_labels: [__address__]
+          target_label: __param_target
+        - source_labels: [__param_target]
+          regex: 'http.://(.*)' # supprimer le http(s) dans l'instance, sinon mettre à (.*) pour garder l'adresse complète
+          replacement: '${1}'
+          target_label: instance
+        - target_label: __address__ # Interroger le blackbox exporter
+          replacement: blackbox-exporter-prometheus-blackbox-exporter:9115
     - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
       job_name: kubernetes-apiservers
       kubernetes_sd_configs:
