@@ -16,3 +16,4 @@ resources:
   - csi-driver-nfs.yaml
   - istio.yaml
   - grafana-community.yaml
+  - hajimari.yaml
