@@ -40,6 +40,9 @@ data:
       static_configs:
         - targets:
           - https://vault.thoughtless.eu
+          - https://une-tasse-de.cafe
+          - https://thebidouilleur.xyz
+          - https://une-pause-cafe.fr
           - https://freshrss.thoughtless.eu
       relabel_configs:
         - source_labels: [__address__]
