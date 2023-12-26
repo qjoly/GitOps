@@ -12,10 +12,9 @@
 
 </div>
 
-
 # GitOps
 
-Github repository where I manage my labs.
+Github for cluster administration.
 
 ## Clusters
 
@@ -31,6 +30,13 @@ Github repository where I manage my labs.
 | talos-v1m-53q | Worker        | 192.168.128.100 | Talos v1.6.0 | 3 Go | 2     | Amd64        |       |
 
 ### Home
+
+| Node          | Type          | IP              | OS           | RAM  | Cores | Architecture | Notes |
+|---------------|---------------|-----------------|--------------|------|-------|--------------|-------|
+| talos-0ya-z8j | Control-plane | 192.168.1.203  | Talos v1.5.5 | 4 Go | 4     | Arm64        |       |
+| talos-4n2-efl | Control-plane | 192.168.1.204  | Talos v1.5.5 | 4 Go | 4     | Arm64        |       |
+| talos-th0-iv8 | Control-plane | 192.168.1.205  | Talos v1.5.5 | 4 Go | 4     | Arm64        |       |
+| talos-i2b-uua | Worker        | 192.168.1.34   | Talos v1.6.0 | 3 Go | 2     | Amd64        |       |
 
 ## Version Talos
 
