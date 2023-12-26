@@ -40,7 +40,9 @@ Github for cluster administration.
 
 ## Version Talos
 
-<img src="https://www.talos.dev/images/logo.svg" width="100px">
+<p align="center">
+    <img src="https://www.talos.dev/images/logo.svg" width="100px">
+</p>
 
 Pour un déploiement baremetal, j'ai choisi d'utiliser Talos. Talos est un système d'exploitation pour Kubernetes. Il est conçu pour être sécurisé par défaut, simplifier les opérations et être facilement extensible.
 
@@ -63,6 +65,9 @@ Les fichiers de configuration de Talos vont également installer [Cilium](https:
 
 ## Version Packer/Terraform
 
+<p align="center">
+    <img src="https://www.datocms-assets.com/2885/1620155106-brandhcpackerverticalcolor.svg" width="100px">
+</p>
 Je dispose de plusieurs machines virtuelles sur lesquelles je souhaite déployer un cluster Kubernetes. Pour cela, j'ai décidé d'utiliser Terraform pour déployer l'infrastructure, Packer pour créer les images, Ansible pour provisionner les machines et Flux pour déployer les applications.
 
 ### Dépendances
