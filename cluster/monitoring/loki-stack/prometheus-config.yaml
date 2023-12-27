@@ -16,6 +16,7 @@ data:
          - alert: any:website:down
            expr: >
             ( probe_success == 0 )
+           for: 10m
            labels:
              severity: high
   prometheus.yml: |
