@@ -14,5 +14,4 @@ spec:
   eventSources:
     - kind: HelmRelease
       name: '*'
-    - kind: Kustomization
-      name: '*'
+
