@@ -4,3 +4,6 @@ kind: Kustomization
 resources:
   - kustomization-git.yml
   - GitRepository.yml
+  - discord-webhook.yaml
+  - alerts.yaml
+  - notification-provider.yaml
