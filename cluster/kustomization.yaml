@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - charts
   - crds
-  - flux-system
+  - flux-system/alerts
   - gateway
   - storageclass 
   - app
