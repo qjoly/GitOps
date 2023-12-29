@@ -8,3 +8,4 @@ resources:
 #  - security
 #  - monitoring
   - app
+  - flux-system
