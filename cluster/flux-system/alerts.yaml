@@ -6,7 +6,7 @@ metadata:
 spec:
   summary: "RPI4Cluster (Home)"
   eventMetadata:
-    env: "testing"
+    env: "Testing"
     cluster: "Talos"
   providerRef:
     name: discord
