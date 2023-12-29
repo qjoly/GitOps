@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+    address: aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTA4NDQ4MTgwNTY1MjA4MjY4OS9FU2d3YjA2M19TRk04YWZEZ010dVVZcFBnRnUtWmNEVXBYUkF0c29yZDJMVmx5NWU0MWpIOVE3RTBXSzEyVjQyUmZjZA==
+kind: Secret
+metadata:
+    name: discord-webhook
+    namespace: flux-system

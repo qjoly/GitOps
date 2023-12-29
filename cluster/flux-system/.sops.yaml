@@ -1,0 +1,6 @@
+creation_rules:
+  - encrypted_regex: '^(token)$'
+    key_groups:
+      - age:
+        - age1p9z8z69fa63fa8pnxklq00e8k3556sc233wlp20na7cykthtgvgqwnvej5
+        - age14ysm820ajay8wqslnkjqcewvq4tmeucth3a88qk4a7hl0mnwkfaqmj6xx5
