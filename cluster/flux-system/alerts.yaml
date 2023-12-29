@@ -12,7 +12,7 @@ spec:
     name: discord
   eventSeverity: info
   eventSources:
-    - kind: GitRepository
+    - kind: HelmRelease
       name: '*'
     - kind: Kustomization
       name: '*'
