@@ -19,12 +19,12 @@ spec:
             enabled: true
             primary:
                 readinessProbe:
-                    initialDelaySeconds: 60
+                    initialDelaySeconds: 190
             auth:
                 postgresPassword: changeme
                 database: joplin
                 username: joplinuser
-                password: ENC[AES256_GCM,data:YoXFiy5zHYwS6lrOgwM=,iv:8H8yjxBmlTqIdqEYRz2rka52T0yCKw/aKVtlCB503Mw=,tag:vSWH2ciPVtqiiHmxZfpq5g==,type:str]
+                password: ENC[AES256_GCM,data:yjsAZlCLco5App60gAE=,iv:odSnEdctoOIK7gcv/bVvOFFReolLtJ9sEZ/X7kwxMh8=,tag:qiD9BzLzYb2JFmpI0cmxXA==,type:str]
             persistence:
                 enabled: true
                 existingClaim: ""
@@ -71,7 +71,7 @@ spec:
                     DB_CLIENT: pg
                     POSTGRES_DATABASE: joplin
                     POSTGRES_USER: joplinuser
-                    POSTGRES_PASSWORD: ENC[AES256_GCM,data:0bEnqgIRMwLsvG2+gFY=,iv:pDOZlKuZjQmC8LrIgA8uPubJ6Y2MUrAc2mkTSlseXAk=,tag:GRClXTy51QWEz6Wt1oQtGQ==,type:str]
+                    POSTGRES_PASSWORD: ENC[AES256_GCM,data:2hAqzvLX2OB7eFEA2Nc=,iv:Z8SThRYHilpW7fRzwaYnoYBASwk9qnp5RWzvC/7trvM=,tag:Depjlv2R5aW4vsiAxjmrAQ==,type:str]
                     # if postgresql.enabled, must be RELEASE-NAME-postgresql (ex: my-wakapi-postgresql)
                     POSTGRES_HOST: joplin-postgresql
                     POSTGRES_PORT: "5432"
@@ -129,23 +129,23 @@ sops:
         - recipient: age1p9z8z69fa63fa8pnxklq00e8k3556sc233wlp20na7cykthtgvgqwnvej5
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBLbE00bFdrbC9NNGJZVTNI
-            Ky9PZkNSekxkbUtVbzNlNFVNcHpVVEtSSkVBClhjVlFpTEdNNkZPcnlFYzdseVQ4
-            dVREaVJINkcraFVvOGVaSURKd1U5ZUUKLS0tIEEzTEdUNlJxVXNMZDVTVXZyYVBr
-            d1BmTlRPZFd2SUZPak5aOU9KTkt4bk0K2VNnE2T/FyKD5zxLAEYTBqJW48q/lkx1
-            fPAXjXmGmPAJqcImdlPxJorBr2sozioL5Ivb3xfQgCjr1K2si6NOkg==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBjWG5kU1c4a2ZaZ3FqVHox
+            ZzltNUJQV0pyOFZ1T1V5akpEMCtNUllxeUdZCmVNUXZOR2VsRkI1NXpUai82NVV0
+            QzZDbXVDY3dSOGZnYjJuSEw3SHc0RDgKLS0tIFdaVEZ2RURhcmhqZmJVOUZ5OEFn
+            T2RKYWZETWdoNWJnRE0rMVVTQnR5YWcKbGyz2G1W4p+ivhcogM7JV0k8LruvZqXI
+            nqHlAuCZmedWfJDGbSWd3m8IGVeJ5b9p3aJAzhHFAxnCGL9Se1qQUQ==
             -----END AGE ENCRYPTED FILE-----
         - recipient: age14ysm820ajay8wqslnkjqcewvq4tmeucth3a88qk4a7hl0mnwkfaqmj6xx5
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBnUXQ1UXZkVy9LWnVqMFlr
-            eFFmcEF5Wmt2OVdWTGdsUUVMR3NrTkxxZDJBCmlzYW10V1ZUbTF4MklNcmlzYkNh
-            dlBnZml3MWJZSkg5bHREWDRHaWdrNVUKLS0tIG5uR3RsYVcyVkh4d0pwdFUyVHIw
-            Z1NzUVMzdTNrZmlvQkZGTHd2NGhuTFUKxCYUPG2kd4WeNTiKyFnEHsRQlhyxWzUR
-            NUArLRCkedfmiDPL0B+JC6Uiedvlj797m6ICkdn4x90GG7OVgs/+Kw==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBGa3k4bnpNN0ZyRWJLY3Ns
+            K1R2ME1aMUhQWTJ4M2g1K0lqRTJVM2p5N3lRCklLa2JWdHgrcFJFaVJTMURSc05s
+            NnFSSmFDWHRLYXpFQ2VyOUsvcllpSjgKLS0tIDJtN0JIS0VreWhNK2t2eU5XZXZN
+            MXdYbTgwTEloUHZsMERiQk11WEZJclEKnnmWNAzAPCWtBNcrM4r5J0WJjrS0EHgc
+            IOt0qLb3QS3fX0WnHPnL9e1w4NWyPtlCmt6Y8xorJX1Q4Ucgb2tXgQ==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-01-04T17:32:33Z"
-    mac: ENC[AES256_GCM,data:4VuuuPjbH57F/0UdhIoLWEeuilefPsXRjbYQY0mv8iVIVSCSy0tXKTKI7vxxZB0g/WSh7SGdNlMogvPIQ+yAj0kfAhqC+thtE448819J/jREU3ohxfEALKmhTKMb/rVB02O2DeZCPTJBUBC2hlv9osWavypCfJAVhAkFW3dClh8=,iv:I9gP83BTVUWjRLLvptfL6F0SyBdLqfxZAfFqAbBihMI=,tag:goN9sFP6Z4W5vgmbvKC5LA==,type:str]
+    lastmodified: "2024-01-04T17:45:09Z"
+    mac: ENC[AES256_GCM,data:M/Yg3ujwb48JfjSqSUOrui15TfoTukyYDulGKDqMcfMGX2legE/cBIR3o8OFj1YlgkegQalWGbVPYzYmGGH6P6xt3j/YyIV4zKk2YY+7iYGamXXpCdQFx1WxRAv/wtCOlQsIEJKKw+KVoPnpEE9KSNE7Ah9kY6/Wr39KFrPb8Z0=,iv:iTctHoBNoMIlarldmP7FZH+L6hghIdatp7l/O+IM5Dg=,tag:ZvlsGfk1RBOMo6puJTGDRg==,type:str]
     pgp: []
     encrypted_regex: ^(password|POSTGRES_PASSWORD)$
     version: 3.8.1
