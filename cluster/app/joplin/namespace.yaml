@@ -1,0 +1,6 @@
+﻿apiVersion: v1
+kind: Namespace
+metadata:
+  name: joplin
+  labels:
+    shared-gateway-access: "true"
