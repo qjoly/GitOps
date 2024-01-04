@@ -17,11 +17,14 @@ spec:
         define: 22300
         postgresql:
             enabled: true
+            primary:
+                readinessProbe:
+                    initialDelaySeconds: 60
             auth:
                 postgresPassword: changeme
                 database: joplin
                 username: joplinuser
-                password: ENC[AES256_GCM,data:wne11Ovu+AB/C4i7yBg=,iv:MRj0x1srkwQxVHnSkBz+8rkZxeloVspp1MPuhAcoxKk=,tag:YKVYyL7FVToMcvdHRwZp7g==,type:str]
+                password: ENC[AES256_GCM,data:YoXFiy5zHYwS6lrOgwM=,iv:8H8yjxBmlTqIdqEYRz2rka52T0yCKw/aKVtlCB503Mw=,tag:vSWH2ciPVtqiiHmxZfpq5g==,type:str]
             persistence:
                 enabled: true
                 existingClaim: ""
@@ -50,7 +53,7 @@ spec:
             # ingress
             ingress:
                 enabled: false
-                hostName: joplin.un-tasse-de.cafe
+                hostName: joplin.une-tasse-de.cafe
                 tls:
                     enabled: true
                     secretName: ""
@@ -68,11 +71,11 @@ spec:
                     DB_CLIENT: pg
                     POSTGRES_DATABASE: joplin
                     POSTGRES_USER: joplinuser
-                    POSTGRES_PASSWORD: ENC[AES256_GCM,data:Q+6V0aVAYw2qZC7ynSo=,iv:f6GNsS95uHTktg/2guYZ+GtVOxYK/HdUCM+zBvZs0sE=,tag:XVoBWCSgyUG/TqWq44gtYg==,type:str]
+                    POSTGRES_PASSWORD: ENC[AES256_GCM,data:0bEnqgIRMwLsvG2+gFY=,iv:pDOZlKuZjQmC8LrIgA8uPubJ6Y2MUrAc2mkTSlseXAk=,tag:GRClXTy51QWEz6Wt1oQtGQ==,type:str]
                     # if postgresql.enabled, must be RELEASE-NAME-postgresql (ex: my-wakapi-postgresql)
                     POSTGRES_HOST: joplin-postgresql
                     POSTGRES_PORT: "5432"
-                    APP_BASE_URL: https://joplin.un-tasse-de.cafe
+                    APP_BASE_URL: https://joplin.une-tasse-de.cafe
             # horizontal autoscaler
             hpa:
                 enabled: false
@@ -126,23 +129,23 @@ sops:
         - recipient: age1p9z8z69fa63fa8pnxklq00e8k3556sc233wlp20na7cykthtgvgqwnvej5
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA5T3cvOEhYN2EyeUZIVVFB
-            M21JcmdSYXZDUVRMdGlVbEsweWUzRmI1ZVM0CjM0VUlLN3k0RzlicFVyeXZBdFB6
-            SFY5enFVdUZrNjA5RFpyZmNSNlRZZTgKLS0tIGljNUhkVGU3bTU2Zis1NDJhdXQz
-            ZGhEK2F0RlhDY2Vtem1DTGMxb1BHRDQKYyzcaR+w6jHY0FzxktHzZ+t4QPIsNBPu
-            pyJoVIeAUOZ4t4wsu//lHwkzCblYHuCjII4Y9ynSQORgKlczXmZYjw==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBLbE00bFdrbC9NNGJZVTNI
+            Ky9PZkNSekxkbUtVbzNlNFVNcHpVVEtSSkVBClhjVlFpTEdNNkZPcnlFYzdseVQ4
+            dVREaVJINkcraFVvOGVaSURKd1U5ZUUKLS0tIEEzTEdUNlJxVXNMZDVTVXZyYVBr
+            d1BmTlRPZFd2SUZPak5aOU9KTkt4bk0K2VNnE2T/FyKD5zxLAEYTBqJW48q/lkx1
+            fPAXjXmGmPAJqcImdlPxJorBr2sozioL5Ivb3xfQgCjr1K2si6NOkg==
             -----END AGE ENCRYPTED FILE-----
         - recipient: age14ysm820ajay8wqslnkjqcewvq4tmeucth3a88qk4a7hl0mnwkfaqmj6xx5
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBicXhFYkIxR090Y2xTVngy
-            SUgvV2ZQenQ0bmRrV0RSUWUzLzNyckltcmdFCkJTUjl6MHFKMjZPZ1NwWmxic3Q0
-            KzRlKzNQT1B4SmxRTCtQa0J4WVJpaU0KLS0tIGYrRWtCZXlUdUlwUUxhaVhQMlhN
-            cGlOeEw4b0RoajZqSXVtU0t4WU5IZGMKOuqz3gxLGttQZptnlMWl7rcjuBb+KoXN
-            re3k+0G37Z9J+XrtXlOmWyokXZluj6b/uXa+yUUtW6NXhQ6yoDZhow==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBnUXQ1UXZkVy9LWnVqMFlr
+            eFFmcEF5Wmt2OVdWTGdsUUVMR3NrTkxxZDJBCmlzYW10V1ZUbTF4MklNcmlzYkNh
+            dlBnZml3MWJZSkg5bHREWDRHaWdrNVUKLS0tIG5uR3RsYVcyVkh4d0pwdFUyVHIw
+            Z1NzUVMzdTNrZmlvQkZGTHd2NGhuTFUKxCYUPG2kd4WeNTiKyFnEHsRQlhyxWzUR
+            NUArLRCkedfmiDPL0B+JC6Uiedvlj797m6ICkdn4x90GG7OVgs/+Kw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-01-04T17:11:07Z"
-    mac: ENC[AES256_GCM,data:wxjLv8tAYNSHJamVfdr2zLzQxLcBycst9o5O/SpGWGAc1GB0TmijMzW4ILLMyCJr/BM2L/prItorTZeu/vh01qaNbMuEEvQZa1xSkz2N4yx+xWgqmtjCAfMU87+EsYiOsQ8/NH4MnwuTYFNm2LrsKdJnUwIwa6uJCkQ3Ko2YVH4=,iv:TwMHJcF4oHuGInbDpbZ7TWef8JyItu9QoDLhaVoDfi8=,tag:3oClnBY4ax2c9LlEBugHGw==,type:str]
+    lastmodified: "2024-01-04T17:32:33Z"
+    mac: ENC[AES256_GCM,data:4VuuuPjbH57F/0UdhIoLWEeuilefPsXRjbYQY0mv8iVIVSCSy0tXKTKI7vxxZB0g/WSh7SGdNlMogvPIQ+yAj0kfAhqC+thtE448819J/jREU3ohxfEALKmhTKMb/rVB02O2DeZCPTJBUBC2hlv9osWavypCfJAVhAkFW3dClh8=,iv:I9gP83BTVUWjRLLvptfL6F0SyBdLqfxZAfFqAbBihMI=,tag:goN9sFP6Z4W5vgmbvKC5LA==,type:str]
     pgp: []
     encrypted_regex: ^(password|POSTGRES_PASSWORD)$
     version: 3.8.1
