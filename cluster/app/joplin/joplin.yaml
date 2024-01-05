@@ -18,13 +18,17 @@ spec:
         postgresql:
             enabled: true
             primary:
-                readinessProbe:
+                startupProbe:
+                    enabled: true
+                    timeoutSeconds: 5
+                    periodSeconds: 30
+                    failureThreshold: 60
                     initialDelaySeconds: 600
             auth:
                 postgresPassword: changeme
                 database: joplin
                 username: joplinuser
-                password: ENC[AES256_GCM,data:Mkiz9vxTDqDRG2tiKYI=,iv:PhxfCQxPjao0WtEfDwMJ+sWDslI47zEdczdbNjiEgnY=,tag:CjBb+PRZL3l43cWQNWktZg==,type:str]
+                password: ENC[AES256_GCM,data:BNWJA6Iqmn4OUVjByQI=,iv:hHMM5H2OKTZE2AfdR8iqNJI8+jIhL6znb8fhEuTm2KM=,tag:RSW33jyBZ1Z8Z6GJxMQcIw==,type:str]
             persistence:
                 enabled: true
                 existingClaim: ""
@@ -71,7 +75,7 @@ spec:
                     DB_CLIENT: pg
                     POSTGRES_DATABASE: joplin
                     POSTGRES_USER: joplinuser
-                    POSTGRES_PASSWORD: ENC[AES256_GCM,data:1V7EKS/DLDEevr6MqaA=,iv:z/Wi3k2ITy7Vna1A/VZry/WVjO2/vFgcL3iCtVfW4YA=,tag:p7Xw5NCuBvWde0YOI+ix3g==,type:str]
+                    POSTGRES_PASSWORD: ENC[AES256_GCM,data:xDOKLiIqmQqR/LLM1Ts=,iv:oj19kWwxQXW6adOoHYuRKYZYsLB3Te/hXePOO6KbLqo=,tag:naRpyS3Zc8U1/Ku3u9RTDA==,type:str]
                     # if postgresql.enabled, must be RELEASE-NAME-postgresql (ex: my-wakapi-postgresql)
                     POSTGRES_HOST: joplin-postgresql
                     POSTGRES_PORT: "5432"
@@ -129,23 +133,23 @@ sops:
         - recipient: age1p9z8z69fa63fa8pnxklq00e8k3556sc233wlp20na7cykthtgvgqwnvej5
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA4LzQxbk9KRGhHYnhGb29s
-            WWRGNnYzcStYaUE3MTZjSk00TENUOXNWUXhzClVuelNiMFBqYVJqOHBqMnk1MGdM
-            eGZkemoxUXdaMWk1dHowUXlySU1tSHMKLS0tIGQ5T1FBQkhIOXhEMkE3UWE3Y2lK
-            WUw1SWlIVXBSMUxhS3kwT2JJeENJV3cKn6EHQD7BQyn7uRV3scMSfujgNbhhvyhk
-            e8FWmMBiq6+di2MaVYAO2mGHWzvjKuTeIHWYfoE/7wnidjJdz3s1Vw==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB0VXVFRVpjTlB3YWcwaGF0
+            K25oL283YlNUV2JlR3pGM2QvZ1VwVWVDcFZZCmFwaTZrK1gxd2JtYTZ0Q21QNEdv
+            R2lzaG4xNTRYb3BwT0JuRU5LcHNZWHcKLS0tIEM2a3R1NEhONFJQVS9ONHdFVHFa
+            MkFUc3VTQURMc2s4TEVzZkZQN3J1WGsKw36SpyOgEGeESLuVBpL57q2x8sFssdqY
+            qp20mglr5aq9H43PnxxZlKOnoLXR9jrWduS+p8DF7XWkdfYPmrdajw==
             -----END AGE ENCRYPTED FILE-----
         - recipient: age14ysm820ajay8wqslnkjqcewvq4tmeucth3a88qk4a7hl0mnwkfaqmj6xx5
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBRdnppVVNod3JmcFVYUytW
-            UjhDeGhiNkZSQUNSOVhaT1cxNXdTU0dHR2xvCllscWdZYUk4Um9IemZpanIrNWJ2
-            NEVrcTdBaXJPekhMcHFFNE84RmhRSXMKLS0tIG92djZvbEp2aEpmNGdLL1h0WWV6
-            cTk4QWlXNGo2clhPNEdod2RmVGtwUTQKid/zByqCaE3iaoYhGoxJc4CtktH4KaYb
-            sBygn7CP5/42s1Tt2WzdSJn5fazxf3aE02s49bNCppMXvs2aQF21QA==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBNN3NWRFRqUXozM2Y5RDkx
+            L3VlNVpneWFtamY0TGdwY0RUT0hldktsMFdFCjg2UUpXbTJiREhxUmNJaUY4SWJL
+            VlI1RFgxN295cEx1ZHl6Z1dheUp5MmsKLS0tIE9hc0l0VGozc1c5bGx1OUVVMjFB
+            S1Q4cUNMYm9GWDcyZkJROXNJL0VQTkEKjfiprRAHbnboau69KJMLWKuGH1mZyvJn
+            Pn1f0lP5h9V+rqs2UbjprbVxcKSws1/1Bybucb9PIdUi9YFQKHmxiw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-01-04T18:08:48Z"
-    mac: ENC[AES256_GCM,data:1j7fJyX9vvOZZf3F2EuA2p8MZxIb4FpBl83IbybDQ4kGFzY/DgR0ylQPgDej9S+yza/WgL44C8vYNu6hBdaF3H9m13BfKCLbYSDkSM2R+FkZ1LF7LsOQqyrG6RHO7AlsycN9ogzlVEV1qSffluXjt6vtecAWPosvUAariw5pjKQ=,iv:MHxjHo4wFpRyU/FhQf184Z2f3oewLbj0YiG4k+DcxiM=,tag:RvGSaLRUOV10ATovJN/TWA==,type:str]
+    lastmodified: "2024-01-05T11:28:44Z"
+    mac: ENC[AES256_GCM,data:CtL+oZUu2IxwwZ2L3KuETUxeH4mFSuiO15tp2hBzNMQ1WBxqvIZ4aLI63SNiZNNHJ4f54Cq5mZ2Li5x2ZgodJsS/7CptFt32PL+0nwKsKS0FujKBCL261plS2o9gHqp6QpCm42dZF7vK96vXfxorIQmUw6gDeYef+RTv1XDqxGY=,iv:6RY2C1lV+x+gjKJSk1YvwQqG4bRyZTAMWhrSgtvDh4E=,tag:6pGuxuiJogKeaAwLxlckZg==,type:str]
     pgp: []
     encrypted_regex: ^(password|POSTGRES_PASSWORD)$
     version: 3.8.1
