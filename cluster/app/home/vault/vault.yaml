@@ -19,5 +19,10 @@ spec:
       enabled: false
     csi:
       enabled: true
+    server:
+      dataStorage:
+        enabled: true
+        storageClass: "nfs-csi"
+    
 
 
