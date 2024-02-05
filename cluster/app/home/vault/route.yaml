@@ -1,8 +1,8 @@
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: HTTPRoute
 metadata:
-  name: freshrss
-  namespace: freshrss
+  name: vault
+  namespace: vault
 spec:
   parentRefs:
   - name: shared-gateway
