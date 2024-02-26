@@ -1,7 +1,7 @@
 helm template \
     cilium \
     cilium/cilium \
-    --version 1.14.5 \
+    --version 1.15.1 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
     --set=kubeProxyReplacement=true \
@@ -16,10 +16,11 @@ helm template \
     --set=l2announcements.leaseRenewDeadline="60s" \
     --set=l2announcements.leaseRetryPeriod="10s" \
     --set=externalIPs.enabled=true \
-    --set=hubble.relay.enabled=true \
-    --set=hubble.ui.enabled=true \
+    --set gatewayAPI.enabled=true \
     --set=k8sClientRateLimit.qps=50 \
     --set=k8sClientRateLimit.burst=100 > cilium.yaml
+#    --set=hubble.relay.enabled=true \
+#    --set=hubble.ui.enabled=true \
 
 #    --helm-set=k8sServiceHost=localhost \
 #    --helm-set=k8sServicePort=7445 \
