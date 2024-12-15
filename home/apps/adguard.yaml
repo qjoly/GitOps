@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: adguard
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://k8s-at-home.com/charts/
+    chart: adguard-home
+    targetRevision: 5.5.2
+    helm:
+      values: |
+        env:
+          TZ: "Europe/Paris"
+        service:
+          main:
+            primary: true
+            ports:
+              http:
+                port: 3000
+
+          dns-tcp:
+            enabled: true
+            type: NodePort
+            ports:
+              dns-tcp:
+                enabled: true
+                port: 53
+                protocol: TCP
+                targetPort: 53
+            externalTrafficPolicy: Local
+
+          dns-udp:
+            enabled: true
+            type: NodePort
+            ports:
+              dns-udp:
+                enabled: true
+                port: 53
+                protocol: UDP
+                targetPort: 53
+            externalTrafficPolicy: Local
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: adguard
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
