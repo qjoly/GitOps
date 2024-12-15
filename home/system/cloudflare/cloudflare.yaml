@@ -1,18 +1,17 @@
----
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: cloudflare-manifests
+  name: cloudflare-tunnel
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/qjoly/gitops
-    targetRevision: HEAD
-    path: home/system/cloudflare
+    repoURL: https://cloudflare.github.io/helm-charts
+    chart: cloudflare-tunnel
+    targetRevision: 0.3.2
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: cloudflare
   syncPolicy:
     automated:
       prune: true
