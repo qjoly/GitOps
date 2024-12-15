@@ -21,19 +21,11 @@ spec:
                 port: 3000
 
           dns-tcp:
-            enabled: true
-            type: NodePort
-            ports:
-              dns-tcp:
-                enabled: true
-                port: 53
-                protocol: TCP
-                targetPort: 53
-            externalTrafficPolicy: Local
+            enabled: false
 
           dns-udp:
             enabled: true
-            type: NodePort
+            type: LoadBalancer
             ports:
               dns-udp:
                 enabled: true
