@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/qjoly/homelab
+    repoURL: https://github.com/qjoly/gitops
     targetRevision: main
     path: common
   destination:
@@ -27,7 +27,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/qjoly/homelab
+    repoURL: https://github.com/qjoly/gitops
     targetRevision: main
     path: lungo/system
   destination:
@@ -48,7 +48,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/qjoly/homelab
+    repoURL: https://github.com/qjoly/gitops
     targetRevision: main
     path: lungo/apps
   destination:
