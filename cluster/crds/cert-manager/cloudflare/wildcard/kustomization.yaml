@@ -1,6 +1,0 @@
-﻿---
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - wildcard-thoughtless.eu.yaml
-  - wildcard-une-pause-cafe.fr.yaml

@@ -1,10 +1,1 @@
-pre-commit.log
-.env*
-.tfenv*
-**.terraform**
-inventory.ini
-**tfstate**
-artifacts/
-kubeconfig.yml
-.mkdocs/site
-.secrets
+cluster-keys.json

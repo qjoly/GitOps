@@ -1,93 +1,104 @@
+
 <p align="center">
     <img src="https://avatars.githubusercontent.com/u/82603435?v=4" width="140px" alt="Helm LOGO"/>
     <br>
-    <img src="http://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&center=true&width=435&lines=GitOps;D%C3%A9ploiement+Automatis%C3%A9+de+mon+Lab;Terraform%2C+k3s%2C+Packer" alt="Typing SVG" />
+    <a href="https://a-cup-of.coffee"><img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&center=true&vCenter=true&width=435&lines=Homelab+made+simple;Talos+go+brrrrr;GitOps+FTW;No+inspiration+for+what+I'm+going+to+write+here" alt="Typing SVG" /></a>
 </p>
 
 <div align="center">
 
-  [![Blog](https://img.shields.io/badge/Blog-blue?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://une-tasse-de.cafe/)
-  [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.28.3-blue?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
-  [![Linux](https://img.shields.io/badge/Talos-v1.6.0-blue?style=for-the-badge&logo=linux&logoColor=white)](https://kubernetes.io/)
+  [![Blog](https://img.shields.io/badge/Blog-blue?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://a-cup-of.coffee/)
+  [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.31.3-blue?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+  [![Linux](https://img.shields.io/badge/Talos-v1.8.3-blue?style=for-the-badge&logo=linux&logoColor=white)](https://talos.dev/)
 
 </div>
 
-# GitOps
+# HomeLab
 
-Github for cluster administration.
+<div align="center">
 
-## Clusters
+*Homelab setup based on Omni and Talos.*
 
-### Cloud
+</div>
 
-| Node          | Type          | IP              | OS           | RAM  | Cores | Architecture | Notes |
-|---------------|---------------|-----------------|--------------|------|-------|--------------|-------|
-| talos-0ya-z8j | Control-plane | 192.168.128.10  | Talos v1.6.0 | 3 Go | 2     | Amd64        |       |
-| talos-4n2-efl | Control-plane | 192.168.128.91  | Talos v1.6.0 | 3 Go | 2     | Amd64        |       |
-| talos-th0-iv8 | Control-plane | 192.168.128.37  | Talos v1.6.0 | 3 Go | 2     | Amd64        |       |
-| talos-i2b-uua | Worker        | 192.168.128.114 | Talos v1.6.0 | 3 Go | 2     | Amd64        |       |
-| talos-jmc-u9l | Worker        | 192.168.128.106 | Talos v1.6.0 | 3 Go | 2     | Amd64        |       |
-| talos-v1m-53q | Worker        | 192.168.128.100 | Talos v1.6.0 | 3 Go | 2     | Amd64        |       |
+## Overview
 
-### Home
+This repository contains the configuration files for my homelab. The homelab is a collection of servers and services that I run at home or in the cloud. The homelab is used for learning, testing, and hosting projects.
 
-| Node          | Type          | IP              | OS           | RAM  | Cores | Architecture | Notes |
-|---------------|---------------|-----------------|--------------|------|-------|--------------|-------|
-| talos-0ya-z8j | Control-plane | 192.168.1.203  | Talos v1.5.5 | 4 Go | 4     | Arm64        |       |
-| talos-4n2-efl | Control-plane | 192.168.1.204  | Talos v1.5.5 | 4 Go | 4     | Arm64        |       |
-| talos-th0-iv8 | Control-plane | 192.168.1.205  | Talos v1.5.5 | 4 Go | 4     | Arm64        |       |
-| talos-i2b-uua | Worker        | 192.168.1.34   | Talos v1.6.0 | 3 Go | 2     | Amd64        |       |
+## Stack 
 
-## Version Talos
+To avoid headaches and to keep things simple, I use [Talos](https://www.talos.dev/) to manage the Kubernetes cluster (don't hesitate to check [a little article I wrote about it](https://a-cup-of.coffee/blog/talos/)). To be more specific, I have a self-hosted [Omni](https://www.siderolabs.com/platform/saas-for-kubernetes/) instance to manage all clusters with a single endpoint and secure them with SSO.
 
-<p align="center">
-    <img src="https://www.talos.dev/images/logo.svg" width="100px">
-</p>
+### Core Components
 
-Pour un déploiement baremetal, j'ai choisi d'utiliser Talos. Talos est un système d'exploitation pour Kubernetes. Il est conçu pour être sécurisé par défaut, simplifier les opérations et être facilement extensible.
+- [**Omni** (Self-hosted)](https://www.siderolabs.com/platform/saas-for-kubernetes/) : Manage all nodes between clusters and regions.
+- [Cilium](https://cilium.io/) as CNI and LB (ARP mode)
+- [Nginx Ingress Controller](https://kubernetes.github.io/ingress-nginx/) for Ingress management (and [Istio](https://istio.io/) deployed on some clusters)
+- [Cert Manager](https://cert-manager.io/) for TLS certificates.
+- [Longhorn](https://longhorn.io/) for storage based on nodes disks.
+- [Reflector](https://github.com/emberstack/kubernetes-reflector/blob/main/README.md) to sync secrets across namespaces (requirement for External Secrets + Vault).
+- [External Secrets](https://external-secrets.io/latest/) to fetch secrets from a remote store.
+- [Vault](https://www.vaultproject.io/) as a secret store to store secrets.
 
-La configuration de Talos est gérée par des fichiers YAML dans le répertoire `talos`. Pour déployer Talos, il suffit de lancer la commande suivante :
+### Cluster
+
+- **Lungo** : A cluster based on virtual machines on a Proxmox server hosted by OVH.
+- **Home** (Quite original, right?) : A cluster based on small devices (ARM and x86) at home.
+- **Arabica** (:warning: WIP) : Yet another cluster based on virtual machines on a Proxmox server hosted by OVH.
+
+## Usage
+
+To use this repository, you need to have the Omni CLI installed. You can find the installation instructions [here](https://omni.siderolabs.com/how-to-guides/install-and-configure-omnictl).
+
+Download the `omniconfig` file from the Omni instance and merge it with the one in your home directory.
 
 ```bash
-cd talos/
-CONTROLPLANE=("192.168.128.10" "192.168.128.91" "192.168.128.37")
-for node in $CONTROLPLANE; do
-    talosctl apply-config --insecure -n $node -e $node --file controlplane.yaml
-done
-
-WORKER=("192.168.128.100" "192.168.128.106" "192.168.128.114")
-for node in $WORKER; do
-    talosctl apply-config --insecure -n $node -e $node --file worker.yaml
-done
+omnictl config merge ./omniconfig.yaml
 ```
 
-Les fichiers de configuration de Talos vont également installer [Cilium](https://cilium.io).
+Then, you can deploy the cluster based on the MachineClass you have configured.
 
-## Version Packer/Terraform
-
-<p align="center">
-    <img src="https://www.datocms-assets.com/2885/1620155106-brandhcpackerverticalcolor.svg" width="100px">
-</p>
-Je dispose de plusieurs machines virtuelles sur lesquelles je souhaite déployer un cluster Kubernetes. Pour cela, j'ai décidé d'utiliser Terraform pour déployer l'infrastructure, Packer pour créer les images, Ansible pour provisionner les machines et Flux pour déployer les applications.
-
-### Dépendances
-- terraform
-- sops (facultatif)
-- pre-commit (facultatif)
-- yq
-- taskfile
-- j2cli
-- flux (cli)
-    
-### Démarrer le projet
-
-Les différentes étapes de l'installation sont gérées par Taskfile. Il suffit donc de lancer la commande suivante :
 ```bash
-task general:all
+cd lungo
+omnictl cluster template sync -f template.yaml
 ```
 
-Je vous invite à suivre la documentation du projet [ici](https://qjoly.github.io/GitOps/) pour installer les dépendances et créer le fichier de configuration.
+This will create a new cluster based on the configuration you have set in the `template.yaml` file. You can download the kubeconfig file using the following command:
 
-# LICENSE
+```bash
+omnictl kubeconfig --cluster lungo
+```
 
-![License](https://img.shields.io/github/license/QJoly/GitOps?style=for-the-badge)
+<details>
+<summary>Example of kubeconfig file</summary>
+
+```yaml
+apiVersion: v1
+kind: Config
+clusters:
+  - cluster:
+      server: https://omni.home.une-tasse-de.cafe:8100/
+    name: omni-lungo
+contexts:
+  - context:
+      cluster: omni-lungo
+      namespace: default
+      user: omni-lungo-quentinj@une-pause-cafe.fr
+    name: omni-lungo
+current-context: omni-lungo
+users:
+- name: omni-lungo-quentinj@une-pause-cafe.fr
+  user:
+    exec:
+      apiVersion: client.authentication.k8s.io/v1beta1
+      args:
+        - oidc-login
+        - get-token
+        - --oidc-issuer-url=https://omni.home.une-tasse-de.cafe/oidc
+        - --oidc-client-id=native
+        - --oidc-extra-scope=cluster:lungo
+      command: kubectl
+      env: null
+      provideClusterInfo: false
+```
+</details>

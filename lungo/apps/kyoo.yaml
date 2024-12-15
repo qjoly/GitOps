@@ -1,0 +1,84 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyoo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://rubxkube.github.io/charts/
+    chart: kyoo
+    targetRevision: 0.1.2
+    helm:
+      values: |
+        volumes:
+          media:
+            enabled: false
+        secrets:
+          rabbitmq:
+            enabled: false
+          kyoo:
+            enabled: false
+        config:
+          data:
+            LIBRARY_LANGUAGES: "fr"
+        extraResources:
+          # This is a secret that is needed by the ExternalSecrets controller
+          # It will be edited by reflector to add the secret data
+          - apiVersion: v1
+            kind: Secret
+            metadata:
+              name: vault-token
+              annotations:
+                reflector.v1.k8s.emberstack.com/reflects: "external-secrets/vault-token"
+                argocd.argoproj.io/sync-wave: "-1"
+            type: Opaque
+          - apiVersion: external-secrets.io/v1beta1
+            kind: ExternalSecret
+            metadata:
+              name: kyoo-secrets
+            spec:
+              refreshInterval: "30s"
+              secretStoreRef:
+                name: vault-backend
+                kind: ClusterSecretStore
+              target:
+                name: kyoo-secrets
+              data:
+              - secretKey: kyoo-apikeys
+                remoteRef:
+                  key: kyoo
+                  property: kyoo-apikeys
+          - apiVersion: external-secrets.io/v1beta1
+            kind: ExternalSecret
+            metadata:
+              name: kyoo-rabbitmq
+            spec:
+              refreshInterval: "30s"
+              secretStoreRef:
+                name: vault-backend
+                kind: ClusterSecretStore
+              target:
+                name: kyoo-rabbitmq
+              data:
+              - secretKey: rabbitmq_user
+                remoteRef:
+                  key: kyoo
+                  property: rabbitmq_user
+              - secretKey: rabbitmq_password
+                remoteRef:
+                  key: kyoo
+                  property: rabbitmq_password
+              - secretKey: erlang_cookie
+                remoteRef:
+                  key: kyoo
+                  property: erlang_cookie
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyoo
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true

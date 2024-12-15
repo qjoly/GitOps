@@ -1,0 +1,46 @@
+kind: Cluster
+name: home
+labels:
+  template: true
+  cni: cilium
+  kubespan: enabled
+kubernetes:
+  version: v1.31.3
+talos:
+  version: v1.8.3
+features:
+  enableWorkloadProxy: true
+  diskEncryption: false
+  useEmbeddedDiscoveryService: true
+patches:
+  - name: enable-workload
+    file: patches/workload-on-cp.yml
+  - name: kubespan-enabled
+    file: patches/kubespan.yml
+  - name: no-cni # we will install cilium in extraManifests
+    file: patches/cni.yml
+  - name: disable-kubeproxy
+    file: patches/disable-kubeproxy.yml
+  - name: manifests
+    file: patches/extraManifests.yml
+  - name: metric-server
+    file: patches/metrics-server.yml
+systemExtensions:
+  - siderolabs/qemu-guest-agent
+  - siderolabs/iscsi-tools
+  - siderolabs/util-linux-tools
+---
+kind: Workers
+name: workers
+labels:
+  type: worker
+machineClass:
+  name: home
+  size: 3
+---
+kind: ControlPlane
+labels:
+  type: control-plane
+machineClass:
+  name: home
+  size: 3
