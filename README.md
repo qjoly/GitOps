@@ -36,9 +36,10 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 - [Nginx Ingress Controller](https://kubernetes.github.io/ingress-nginx/) for Ingress management (and [Istio](https://istio.io/) deployed on some clusters)
 - [Cert Manager](https://cert-manager.io/) for TLS certificates.
 - [Longhorn](https://longhorn.io/) for storage based on nodes disks.
-- [Reflector](https://github.com/emberstack/kubernetes-reflector/blob/main/README.md) to sync secrets across namespaces (requirement for External Secrets + Vault).
+- ~~[Reflector](https://github.com/emberstack/kubernetes-reflector/blob/main/README.md) to sync secrets across namespaces (requirement for External Secrets + Vault).~~ (Removed 16/12/2024)
 - [External Secrets](https://external-secrets.io/latest/) to fetch secrets from a remote store.
 - [Vault](https://www.vaultproject.io/) as a secret store to store secrets.
+- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet.
 
 ### Cluster
 
