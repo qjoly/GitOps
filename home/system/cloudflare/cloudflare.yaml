@@ -17,7 +17,7 @@ spec:
             secretName: "cloudflare-tunnel"
             ingress:
               - hostname: "*.thoughtless.eu"
-                service: "https://ingress-nginx-controller.kube-system.svc.cluster.local:443"
+                service: "https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443"
                 originRequest:
                   noTLSVerify: true
 
