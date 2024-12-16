@@ -85,25 +85,12 @@ spec:
         tokenSecretRef:
           name: "vault-token"
           key: "token"
+          namespace: "external-secrets"
 EOF
 ```
 
 ### Test the External Secrets
 
-
-***Create a secret in the default namespace that reflects the secret in the external-secrets namespace***
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: vault-token
-  namespace: default
-  annotations:
-   reflector.v1.k8s.emberstack.com/reflects: "external-secrets/vault-token"
-type: Opaque
-EOF
-```
 
 ***Create an External Secret that syncs the secret in Vault with the Kubernetes cluster***
 ```bash

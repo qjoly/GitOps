@@ -23,16 +23,6 @@ spec:
           data:
             LIBRARY_LANGUAGES: "fr"
         extraResources:
-          # This is a secret that is needed by the ExternalSecrets controller
-          # It will be edited by reflector to add the secret data
-          - apiVersion: v1
-            kind: Secret
-            metadata:
-              name: vault-token
-              annotations:
-                reflector.v1.k8s.emberstack.com/reflects: "external-secrets/vault-token"
-                argocd.argoproj.io/sync-wave: "-1"
-            type: Opaque
           - apiVersion: external-secrets.io/v1beta1
             kind: ExternalSecret
             metadata:
