@@ -19,6 +19,7 @@ spec:
               external-dns.alpha.kubernetes.io/hostname: jackett.thoughtless.eu
               external-dns.alpha.kubernetes.io/target: 2f3b093d-bd57-4708-8d54-42723da21338.cfargotunnel.com
             hostName: jackett.thoughtless.eu
+            ingressClassName: nginx
   destination:
     server: https://kubernetes.default.svc
     namespace: jackett
