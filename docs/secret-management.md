@@ -51,7 +51,7 @@ External Secrets allows you to use secrets stored in external secret management 
 
 *Note: This is actually the root token, which is not recommended for production use. In a production environment, you should create a dedicated token with the appropriate policies.*
 
-***Create a secret with the Vault token and note which namespaces are allowed to reflect it***
+***Create a secret with the Vault token***
 ```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -61,9 +61,6 @@ stringData:
 metadata:
   name: vault-token
   namespace: external-secrets
-  annotations:
-   reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
-   reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: "kube-system,cert-manager-infomaniak,kube-system"
 type: Opaque
 EOF
 ```
