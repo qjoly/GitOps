@@ -4,4 +4,5 @@ metadata:
   annotations:
     reflector.v1.k8s.emberstack.com/reflects: external-secrets/vault-token
   name: vault-token
+  namespace: cloudflare
 type: Opaque
