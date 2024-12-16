@@ -74,8 +74,6 @@ spec:
                 requests:
                   storage: 50Gi
               storageClassName: local
-          # This is a secret that is needed by the ExternalSecrets controller
-          # It will be edited by reflector to add the secret data
           - apiVersion: external-secrets.io/v1beta1
             kind: ExternalSecret
             metadata:
