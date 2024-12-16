@@ -6,9 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://k8s-at-home.com/charts/
+    repoURL: https://charts.gabe565.com
     chart: adguard-home
-    targetRevision: 5.5.2
+    targetRevision: 0.3.24
     helm:
       values: |
         env:

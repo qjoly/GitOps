@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
 - jackett
 - media
+- adguard.yaml
