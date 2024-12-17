@@ -11,6 +11,7 @@ spec:
     chart: rook-ceph-cluster
     helm:
       values: |
+        cephObjectStores: []
         cephFileSystems:
           - name: ceph-filesystem
             spec:
