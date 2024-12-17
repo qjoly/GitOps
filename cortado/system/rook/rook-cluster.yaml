@@ -9,7 +9,13 @@ spec:
     repoURL: https://charts.rook.io/release
     targetRevision: v1.15.6
     chart: rook-ceph-cluster
-    helm: {}
+    helm:
+      values: |
+        cephClusterSpec:
+          mon:
+            allowMultiplePerNode: true
+          mgr:
+            allowMultiplePerNode: true
   destination:
     server: https://kubernetes.default.svc
     namespace: rook-ceph
