@@ -23,8 +23,7 @@ spec:
           enabled: false
         ui:
           enabled: true
-          serviceType: "LoadBalancer"
-          serviceNodePort: null
+          serviceType: "ClusterIP"
           externalPort: 8200
   destination:
     server: https://kubernetes.default.svc
