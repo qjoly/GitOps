@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudflare-tunnel
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://cloudflare.github.io/helm-charts
+    chart: cloudflare-tunnel
+    targetRevision: 0.3.2
+    helm:
+      values: |
+          cloudflare:
+            tunnelName: "home-cluster"
+            tunnelId: "2f3b093d-bd57-4708-8d54-42723da21338"
+            secretName: "cloudflare-tunnel"
+            ingress:
+              - hostname: "*.thoughtless.eu"
+                service: "https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443"
+                originRequest:
+                  noTLSVerify: true
+
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+
+          replicaCount: 1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cloudflare
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
