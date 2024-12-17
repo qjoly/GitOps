@@ -4,4 +4,3 @@ kind: Kustomization
 resources:
 - rook-operator.yaml
 - rook-cluster.yaml
-
