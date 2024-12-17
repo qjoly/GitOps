@@ -9,6 +9,13 @@ spec:
     repoURL: https://rubxkube.github.io/charts/
     chart: flaresolverr
     targetRevision: 0.0.1
+    helm:
+      values: |
+        common:
+          image:
+            repository: 21hsmw/flaresolverr
+            tag: nodriver
+            pullPolicy: Always
   destination:
     server: https://kubernetes.default.svc
     namespace: jackett
