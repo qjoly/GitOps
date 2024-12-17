@@ -24,8 +24,13 @@ patches:
      file: patches/metrics-server.yml
    - name: workload-on-cp
      file: patches/workload-on-cp.yml
+   - name: zfs
+     file: patches/zfs.yml
+   - name: local-path-provisioner
+     file: patches/local-path-provisionner.yml
 systemExtensions:
   - siderolabs/iscsi-tools
+  - siderolabs/zfs
   - siderolabs/util-linux-tools
 ---
 kind: ControlPlane
