@@ -11,7 +11,7 @@ talos:
 features:
   diskEncryption: true
   useEmbeddedDiscoveryService: true
- patches:
+patches:
    - name: kubespan-enabled
      file: patches/kubespan.yml
    - name: no-cni # we will install cilium in extraManifests
@@ -22,6 +22,8 @@ features:
      file: patches/extraManifests.yml
    - name: metric-server
      file: patches/metrics-server.yml
+   - name: workload-on-cp
+     file: patches/workload-on-cp.yml
 systemExtensions:
   - siderolabs/iscsi-tools
   - siderolabs/util-linux-tools
