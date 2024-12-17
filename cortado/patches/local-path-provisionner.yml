@@ -1,9 +1,9 @@
 machine:
   kubelet:
     extraMounts:
-      - destination: /var/local-path-provisioner
+      - destination: /var/zfs_pool
         type: bind
-        source: /var/local-path-provisioner
+        source: /var/zfs_pool
         options:
           - bind
           - rshared

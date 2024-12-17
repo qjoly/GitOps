@@ -6,3 +6,4 @@ resources:
 - external-dns
 - cloudflare
 - vault.yaml
+- local-path-provisioner
