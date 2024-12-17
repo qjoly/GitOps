@@ -11,6 +11,46 @@ spec:
     chart: rook-ceph-cluster
     helm:
       values: |
+        cephFileSystems:
+          - name: ceph-filesystem
+            spec:
+              metadataPool:
+                replicated:
+                  size: 3
+              dataPools:
+                - failureDomain: host
+                  replicated:
+                    size: 3
+                  name: data0
+              metadataServer:
+                activeCount: 1
+                activeStandby: true
+                resources:
+                  limits:
+                    cpu: "2000m"
+                    memory: "2Gi"
+                  requests:
+                    cpu: "1000m"
+                    memory: "2Gi"
+                priorityClassName: system-cluster-critical
+            storageClass:
+              enabled: true
+              isDefault: true
+              name: ceph-filesystem
+              pool: data0
+              reclaimPolicy: Delete
+              allowVolumeExpansion: true
+              mountOptions: []
+              parameters:
+                csi.storage.k8s.io/provisioner-secret-name: rook-csi-cephfs-provisioner
+                csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+                csi.storage.k8s.io/controller-expand-secret-name: rook-csi-cephfs-provisioner
+                csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+                csi.storage.k8s.io/node-stage-secret-name: rook-csi-cephfs-node
+                csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+                csi.storage.k8s.io/fstype: ext4
+
+        cephBlockPools: {}
         cephClusterSpec:
           mon:
             allowMultiplePerNode: true
