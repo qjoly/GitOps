@@ -8,6 +8,8 @@ spec:
   source:
     repoURL: https://cloudflare.github.io/helm-charts
     chart: cloudflare-tunnel
+    plugins:
+      name: cmp-plugin-v0.0.1
     targetRevision: 0.3.2
     helm:
       values: |
