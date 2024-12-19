@@ -18,4 +18,3 @@ data:
       - CiliumIdentity
       clusters:
       - "*"
-
