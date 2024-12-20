@@ -5,6 +5,12 @@ metadata:
   namespace: argocd
 spec:
   project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cloudflare
   source:
     repoURL: https://rubxkube.github.io/charts/
     targetRevision: 0.3.2
@@ -33,9 +39,3 @@ spec:
                 memory: "128Mi"
 
             replicaCount: 1
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: cloudflare
-  syncPolicy:
-    syncOptions:
-      - CreateNamespace=true
