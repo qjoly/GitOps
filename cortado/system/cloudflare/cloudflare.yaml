@@ -6,17 +6,22 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://cloudflare.github.io/helm-charts
+    #repoURL: https://cloudflare.github.io/helm-charts
+    repoURL: https://github.com/RubxKube/charts/
+    path: charts/cloudflare-tunnel/
     chart: cloudflare-tunnel
-    targetRevision: 0.3.2
+    targetRevision: cloudflare-tunnel
     helm:
       values: |
+          config:
           cloudflare:
+            annotations:
+              avp.kubernetes.io/path: "kv/cloudflared"
             tunnelName: "home-cluster"
             tunnelId: "2f3b093d-bd57-4708-8d54-42723da21338"
             secretName: "cloudflare-tunnel"
             ingress:
-              - hostname: "*.<path:kv/cloudflared#domain>"
+              - hostname: <domain>
                 service: "https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443"
                 originRequest:
                   noTLSVerify: true
