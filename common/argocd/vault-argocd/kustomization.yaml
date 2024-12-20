@@ -1,21 +1,12 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
 resources:
-- argocd.install.yaml
+- https://github.com/argoproj/argo-cd//manifests/cluster-install?ref=v2.13.2
+- cmp-plugin.yaml
 - vault-credentials.yaml
 
-images:
-- name: quay.io/argoproj/argocd
-  newName: quay.io/argoproj/argocd
-  newTag: v2.13.2
+patchesStrategicMerge:
+- argocd-repo-server.yaml
+- config.yaml
 
-patches:
-  - target:
-      kind: Deployment
-      name: argocd-repo-server
-    path: vault-repo-server.yaml
-  - target:
-      kind: ConfigMap
-      name: argocd-cm
-    path: argocd.config.yaml
