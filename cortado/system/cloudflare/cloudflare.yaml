@@ -10,7 +10,7 @@ spec:
     targetRevision: 0.3.2
     chart: cloudflare-tunnel
     plugin:
-      name: argocd-vault-plugin-helm-with-values
+      name: argocd-vault-plugin-helm
       env:
         - name: HELM_VALUES
           value: |
