@@ -6,42 +6,35 @@ metadata:
 spec:
   project: default
   source:
-    #repoURL: https://cloudflare.github.io/helm-charts
-    repoURL: https://github.com/RubxKube/charts/
-    path: charts/cloudflare-tunnel/
-    chart: cloudflare-tunnel
+    repoURL: https://rubxkube.github.io/charts/
+    targetRevision: 0.3.2
     plugin:
       name: argocd-vault-plugin
-    targetRevision: cloudflare-tunnel
+    chart: cloudflare-tunnel
     helm:
       values: |
-          config:
-          cloudflare:
-            annotations:
-              avp.kubernetes.io/path: "kv/cloudflared"
-            tunnelName: "home-cluster"
-            tunnelId: "2f3b093d-bd57-4708-8d54-42723da21338"
-            secretName: "cloudflare-tunnel"
-            ingress:
-              - hostname: <domain>
-                service: "https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443"
-                originRequest:
-                  noTLSVerify: true
+        cloudflare:
+          tunnelName: "home-cluster"
+          tunnelId: "2f3b093d-bd57-4708-8d54-42723da21338"
+          secretName: "cloudflare-tunnel"
+          ingress:
+            - hostname: <path:kv/cloudflared#domain>
+              service: "https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443"
+              originRequest:
+                noTLSVerify: true
 
-          resources:
-            limits:
-              cpu: "100m"
-              memory: "128Mi"
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
 
-          replicaCount: 1
+        replicaCount: 1
   destination:
     server: https://kubernetes.default.svc
-    namespace: cloudflare
+    namespace: default
   syncPolicy:
-    automated:
-      prune: true
     syncOptions:
       - CreateNamespace=true
