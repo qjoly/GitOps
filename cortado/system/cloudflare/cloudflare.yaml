@@ -8,8 +8,8 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/charts/
     targetRevision: 0.3.2
-    plugin:
-      name: argocd-vault-plugin
+    # plugin:
+    #   name: argocd-vault-plugin
     chart: cloudflare-tunnel
     helm:
       values: |
