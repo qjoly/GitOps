@@ -10,6 +10,8 @@ spec:
     repoURL: https://github.com/RubxKube/charts/
     path: charts/cloudflare-tunnel/
     chart: cloudflare-tunnel
+    plugin:
+      name: argocd-vault-plugin
     targetRevision: cloudflare-tunnel
     helm:
       values: |
