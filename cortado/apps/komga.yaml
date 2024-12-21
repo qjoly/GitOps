@@ -5,31 +5,28 @@ metadata:
   namespace: argocd
 spec:
   project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: komga
   source:
     repoURL: https://rubxkube.github.io/charts/
     chart: komga
-    targetRevision: 0.0.1
     plugin:
       name: argocd-vault-plugin-helm
       env:
         - name: HELM_VALUES
           value: |
-          common:
-            ingress:
-              enabled: true
-              hostName: "komga.<path:kv/cloudflared#domain>"
-              ingressClassName: nginx
-              tls:
+            common:
+              ingress:
                 enabled: true
-                secretName: "komga-tls"
-              annotations:
-                cert-manager.io/cluster-issuer: cloudflare
-                external-dns.alpha.kubernetes.io/target: 54.36.168.210
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: komga
-  syncPolicy:
-    automated:
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
+                hostName: "komga.<path:kv/cloudflared#domain>"
+                ingressClassName: nginx
+                tls:
+                  enabled: true
+                  secretName: "komga-tls"
+                annotations:
+                  cert-manager.io/cluster-issuer: cloudflare
+                  external-dns.alpha.kubernetes.io/target: 54.36.168.210
