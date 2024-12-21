@@ -32,6 +32,7 @@ data:
           - bash
           - "-c"
           - |
+            helm repo add common https://rubxkube.github.io/common-charts &&
             helm dependency build
       generate:
         command:

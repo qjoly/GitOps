@@ -30,4 +30,4 @@ spec:
                   secretName: "komga-tls"
                 annotations:
                   cert-manager.io/cluster-issuer: cloudflare
-                  external-dns.alpha.kubernetes.io/target: 54.36.168.210
+                  external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflared#IP>"
