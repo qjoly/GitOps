@@ -16,7 +16,11 @@ spec:
             enabled: true
             hostName: komga.thoughtless.eu
             ingressClassName: nginx
+            tls:
+              enabled: true
+              secretName: "komga-tls"
             annotations:
+              cert-manager.io/cluster-issuer: cloudflare
               external-dns.alpha.kubernetes.io/target: 54.36.168.210
   destination:
     server: https://kubernetes.default.svc
