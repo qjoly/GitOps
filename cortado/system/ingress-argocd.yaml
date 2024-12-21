@@ -3,13 +3,12 @@ kind: Ingress
 metadata:
   annotations:
     cert-manager.io/cluster-issuer: cloudflare
-    external-dns.alpha.kubernetes.io/target: 54.36.168.210
   name: argocd
   namespace: argocd
 spec:
   ingressClassName: nginx
   rules:
-  - host: argocd.cortado.thoughtless.eu
+  - host: argocd.cortado.<path:kv/cloudflared#domain>
     http:
       paths:
       - backend:
@@ -21,5 +20,5 @@ spec:
         pathType: Prefix
   tls:
   - hosts:
-    - argocd.cortado.thoughtless.eu
+    - argocd.cortado.<path:kv/cloudflared#domain>
     secretName: argocd-tls
