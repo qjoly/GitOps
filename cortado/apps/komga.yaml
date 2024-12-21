@@ -9,19 +9,22 @@ spec:
     repoURL: https://rubxkube.github.io/charts/
     chart: komga
     targetRevision: 0.0.1
-    helm:
-      values: |
-        common:
-          ingress:
-            enabled: true
-            hostName: komga.thoughtless.eu
-            ingressClassName: nginx
-            tls:
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+          common:
+            ingress:
               enabled: true
-              secretName: "komga-tls"
-            annotations:
-              cert-manager.io/cluster-issuer: cloudflare
-              external-dns.alpha.kubernetes.io/target: 54.36.168.210
+              hostName: "komga.<path:kv/cloudflared#domain>"
+              ingressClassName: nginx
+              tls:
+                enabled: true
+                secretName: "komga-tls"
+              annotations:
+                cert-manager.io/cluster-issuer: cloudflare
+                external-dns.alpha.kubernetes.io/target: 54.36.168.210
   destination:
     server: https://kubernetes.default.svc
     namespace: komga
