@@ -27,6 +27,8 @@ spec:
           value: cloudflare-api-key
         - name: env[0].valueFrom.secretKeyRef.key
           value: apiKey
+        - name: txtPrefix
+          value: "cortado-"
   destination:
     server: https://kubernetes.default.svc
     namespace: external-dns
