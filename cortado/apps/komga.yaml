@@ -18,7 +18,7 @@ spec:
             ingressClassName: nginx
   destination:
     server: https://kubernetes.default.svc
-    namespace: jackett
+    namespace: komga
   syncPolicy:
     automated:
       prune: true
