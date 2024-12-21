@@ -6,4 +6,4 @@ resources:
 - vault.yaml
 - external-secret
 - external-dns
-- cloudflare
+# - cloudflare
