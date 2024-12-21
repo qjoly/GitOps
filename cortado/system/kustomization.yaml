@@ -6,4 +6,5 @@ resources:
 - vault.yaml
 - external-secret
 - external-dns
+- ingress-argocd.yaml
 # - cloudflare

@@ -9,4 +9,5 @@ resources:
 patchesStrategicMerge:
 - argocd-repo-server.yaml
 - config.yaml
+- argocd-cmd-params.yaml
 
