@@ -16,6 +16,8 @@ spec:
             enabled: true
             hostName: komga.thoughtless.eu
             ingressClassName: nginx
+            annotations:
+              external-dns.alpha.kubernetes.io/target: 54.36.168.210
   destination:
     server: https://kubernetes.default.svc
     namespace: komga
