@@ -5,4 +5,4 @@ metadata:
   namespace: kube-system
 spec:
   blocks:
-    - cidr: 54.36.168.210/32
+    - cidr: <path:kv/cloudflared#IP>/32

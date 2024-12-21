@@ -7,4 +7,5 @@ resources:
 - external-secret
 - external-dns
 - ingress-argocd.yaml
+- ip-pool.yml
 # - cloudflare
