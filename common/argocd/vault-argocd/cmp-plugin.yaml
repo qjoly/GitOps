@@ -33,6 +33,7 @@ data:
           - "-c"
           - |
             helm repo add common https://rubxkube.github.io/common-charts &&
+            helm repo add bjw-s https://bjw-s.github.io/helm-charts &&
             helm dependency build
       generate:
         command:
