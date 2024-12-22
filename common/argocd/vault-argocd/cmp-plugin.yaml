@@ -34,6 +34,7 @@ data:
           - |
             helm repo add common https://rubxkube.github.io/common-charts &&
             helm repo add bjw-s https://bjw-s.github.io/helm-charts &&
+            helm repo add bitnami https://charts.bitnami.com/bitnami &&
             helm dependency build
       generate:
         command:
@@ -57,3 +58,4 @@ data:
           - "."
       lockRepo: false
 ---
+

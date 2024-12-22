@@ -44,7 +44,7 @@ spec:
                     SPOTIFY_SECRET: <path:kv/spotify#private>
                 nonSecret:
                   API_ENDPOINT: https://spotty-api.<path:kv/cluster#domain>
-                  CLIENT_ENDPOINT: https://spotty-api.<path:kv/cluster#domain>
+                  CLIENT_ENDPOINT: https://spotty.<path:kv/cluster#domain>
                   MONGO_ENDPOINT: mongodb://your-spotify-mongodb:27017/your_spotify
               ingress:
                 enabled: true
