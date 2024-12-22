@@ -22,9 +22,6 @@ spec:
           value: |
           controllers:
             server:
-              strategy: &strategy RollingUpdate
-              rollingUpdate: &rollingUpdate
-                unavailable: 0
               containers:
                 app:
                   image:
@@ -32,9 +29,9 @@ spec:
                     tag: 1.12.0
                   env:
                     TIMEZONE: Europe/Paris
-                    API_ENDPOINT: &api_endpoint https://spotty.<path:kv/cloudflared#domain>/api
-                    CLIENT_ENDPOINT: &client https://spotty.<path:kv/cloudflared#domain>
-                    CORS: *client
+                    API_ENDPOINT: https://spotty.<path:kv/cloudflared#domain>/api
+                    CLIENT_ENDPOINT: https://spotty.<path:kv/cloudflared#domain>
+                    #CORS: https://spotty.<path:kv/cloudflared#domain>/api
                     MONGO_ENDPOINT: mongodb://your-spotify-mongodb:27017/your_spotify #mongo sucks
                   envFrom:
                     - secretRef:
@@ -51,9 +48,6 @@ spec:
                     readOnlyRootFilesystem: false
                     capabilities: { drop: ["ALL"] }
             web:
-              strategy: *strategy
-              rollingUpdate: *rollingUpdate
-              pod: *pod
               containers:
                 app:
                   image:
@@ -62,11 +56,9 @@ spec:
                   env:
                     TIMEZONE: Europe/Paris
                     API_ENDPOINT: *api_endpoint
-                  probes: *probes
                   securityContext: *securityContext
             mongodb: #mongo still sucks
               type: statefulset
-              rollingUpdate: *rollingUpdate
               statefulset:
                 podManagementPolicy: OrderedReady
               containers:
@@ -76,7 +68,6 @@ spec:
                     tag: 6.0.4-focal
                   env:
                     TZ: Europe/Paris
-                  probes: *probes
           service:
             server:
               controller: server
