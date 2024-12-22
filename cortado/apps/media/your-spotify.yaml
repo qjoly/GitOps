@@ -12,109 +12,47 @@ spec:
     server: https://kubernetes.default.svc
     namespace: your-spotify
   source:
-    repoURL: https://bjw-s.github.io/helm-charts
-    targetRevision: "3.5.1"
-    chart: app-template
+    repoURL: https://rubxkube.github.io/charts/
+    chart: your-spotify
+    targetRevision: 0.0.1
     plugin:
       name: argocd-vault-plugin-helm
       env:
         - name: HELM_VALUES
           value: |
-          controllers:
-            server:
-              containers:
-                app:
-                  image:
-                    repository: yooooomi/your_spotify_server
-                    tag: 1.12.0
-                  env:
-                    TIMEZONE: Europe/Paris
-                    API_ENDPOINT: https://spotty.<path:kv/cloudflared#domain>/api
-                    CLIENT_ENDPOINT: https://spotty.<path:kv/cloudflared#domain>
-                    #CORS: https://spotty.<path:kv/cloudflared#domain>/api
-                    MONGO_ENDPOINT: mongodb://your-spotify-mongodb:27017/your_spotify #mongo sucks
-                  envFrom:
-                    - secretRef:
-                        name: your-spotify-secret
-                  probes: &probes
-                    liveness:
-                      enabled: true
-                    readiness:
-                      enabled: true
-                    startup:
-                      enabled: true
-                  securityContext: &securityContext
-                    allowPrivilegeEscalation: false
-                    readOnlyRootFilesystem: false
-                    capabilities: { drop: ["ALL"] }
             web:
-              containers:
-                app:
-                  image:
-                    repository: yooooomi/your_spotify_client
-                    tag: 1.12.0
-                  env:
-                    TIMEZONE: Europe/Paris
-                    API_ENDPOINT: https://spotty.<path:kv/cloudflared#domain>/api
-                  securityContext: *securityContext
-            mongodb: #mongo still sucks
-              type: statefulset
-              statefulset:
-                podManagementPolicy: OrderedReady
-              containers:
-                app:
-                  image:
-                    repository: docker.io/library/mongo
-                    tag: 6.0.4-focal
-                  env:
-                    TZ: Europe/Paris
-          service:
+              name: "web"
+              variables:
+                nonSecret:
+                  API_ENDPOINT: https://spotty-api.<path:kv/cluster#domain>
+              ingress:
+                enabled: true
+                hostName: spotty.<path:kv/cluster#domain>
+                ingressClassName: "nginx"
+                extraLabels: {}
+                tls:
+                  enabled: true
+                  secretName: spotty
+                annotations:
+                  cert-manager.io/cluster-issuer: cloudflare
+
             server:
-              controller: server
-              primary: true
-              ports:
-                http:
-                  port: 8080
-            web:
-              controller: web
-              ports:
-                http:
-                  port: 3000
-            mongodb:
-              controller: mongodb
-              ports:
-                http:
-                  port: 27017
-          ingress:
-            app:
-              className: external
-              annotations:
-                external-dns.alpha.kubernetes.io/target: external.<path:kv/cloudflared#domain>
-                nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-                nginx.ingress.kubernetes.io/proxy-body-size: 1000m
-                nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-                nginx.ingress.kubernetes.io/rewrite-target: /$1
-              hosts:
-                - host: spotty.<path:kv/cloudflared#domain>
-                  paths:
-                    - path: /?(.*)
-                      pathType: Prefix
-                      service:
-                        identifier: web
-                        port: http
-                    - path: /api/?(.*)
-                      pathType: Prefix
-                      service:
-                        identifier: server
-                        port: http
-          persistence:
-            mongo:
-              enabled: true
-              type: persistentVolumeClaim
-              accessMode: ReadWriteOnce
-              size: 3Gi
-              advancedMounts:
-                mongodb:
-                  app:
-                    - path: /data/db
-                      subPath: db
+              variables:
+                secret:
+                  data:
+                    SPOTIFY_PUBLIC: <path:kv/spotify#access>
+                    SPOTIFY_SECRET: <path:kv/spotify#private>
+                nonSecret:
+                  API_ENDPOINT: https://spotty-api.<path:kv/cluster#domain>
+                  CLIENT_ENDPOINT: https://spotty-api.<path:kv/cluster#domain>
+                  MONGO_ENDPOINT: mongodb://your-spotify-mongodb:27017/your_spotify
+              ingress:
+                enabled: true
+                ingressClassName: "nginx"
+                hostName: spotty-api.<path:kv/cluster#domain>
+                extraLabels: {}
+                tls:
+                  enabled: true
+                  secretName: spotty-api
+                annotations:
+                  cert-manager.io/cluster-issuer: cloudflare
