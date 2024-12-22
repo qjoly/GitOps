@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mylar
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://bjw-s.github.io/charts/
+    chart: app-template
+    targetRevision: 3.5.1
+    helm:
+      values: |
+        controllers:
+          mylar:
+            labels:
+              nfsMount: "true"
+            annotations:
+              reloader.stakater.com/auto: "true"
+            containers:
+              app:
+                image:
+                  repository: ghcr.io/linuxserver/mylar3
+                  tag: version-v0.7.6@sha256:0dbc84954e0b3d13cf42f5b1f42e845cb0d211d9d627642e5b9101a49cb6c0b0
+                env:
+                  TZ: ${TIMEZONE}
+                  UID: 1000
+                  GID: 1000
+                resources:
+                  requests:
+                    cpu: 15m
+                    memory: 700M
+                  limits:
+                    memory: 1200M
+        service:
+          app:
+            controller: mylar
+            ports:
+              http:
+                port: 8090
+        ingress:
+          app:
+            className: internal
+            annotations: {}
+            hosts:
+              - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
+                paths:
+                  - path: /
+                    service:
+                      identifier: app
+                      port: http
+        persistence:
+          config:
+            existingClaim: mylar
+          data:
+            type: nfs
+            server: voyager.internal
+            path: ${SECRET_NFS_DATA:=temp}
+            globalMounts:
+              - path: /data
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mylar
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+
