@@ -21,10 +21,9 @@ spec:
         - name: HELM_VALUES
           value: |
             name: "coffee-animation"
-            deployment:
-              image:
-                repository: ghcr.io/qjoly/coffee-animation/coffee-animation
-                tag: "v0.0.5"
+            image:
+              repository: ghcr.io/qjoly/coffee-animation/coffee-animation
+              tag: "v0.0.5"
             ingress:
               enabled: true
               hostName: "curl.une-tasse-de.cafe"
