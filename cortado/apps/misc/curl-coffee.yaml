@@ -13,7 +13,7 @@ spec:
     namespace: coffee-animation
   source:
     repoURL: https://rubxkube.github.io/common-charts/
-    chart: rubxkube-common
+    chart: common
     targetRevision: v0.4.0
     plugin:
       name: argocd-vault-plugin-helm
