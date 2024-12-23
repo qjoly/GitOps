@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stirling-pdf
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: stirling-pdf
+  source:
+    repoURL: https://rubxkube.github.io/charts/
+    chart: stirling-pdf
+    targetRevision: 0.0.1
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            common:
+              ingress:
+                enabled: true
+                hostName: "pdf.<path:kv/cluster#domain>"
+                ingressClassName: nginx
+                tls:
+                  enabled: true
+                  secretName: "pdf-tls"
+                annotations:
+                  cert-manager.io/cluster-issuer: cloudflare
