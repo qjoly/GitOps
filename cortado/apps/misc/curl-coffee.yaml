@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: coffee-animation
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: coffee-animation
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: rubxkube-common
+    targetRevision: v0.4.0
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            ingress:
+              enabled: true
+              hostName: "curl.une-tasse-de.cafe"
+              ingressClassName: nginx
+              tls:
+                enabled: true
+                secretName: "une-tasse-de-cafe-tls"
+              annotations:
+                cert-manager.io/cluster-issuer: cloudflare
