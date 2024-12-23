@@ -22,8 +22,8 @@ spec:
           value: |
             name: "coffee-animation"
             image:
-              repository: ghcr.io/qjoly/coffee-animation/coffee-animation
-              tag: "v0.0.2"
+              repository: ghcr.io/qjoly/coffee-animation:
+              tag: "0.0.6"
             ingress:
               enabled: true
               hostName: "curl.une-tasse-de.cafe"
