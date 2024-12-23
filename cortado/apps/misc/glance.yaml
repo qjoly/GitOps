@@ -1,0 +1,89 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: glance
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: glance
+  source:
+    repoURL: https://rubxkube.github.io/charts/
+    chart: glance
+    targetRevision: 0.0.2
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            common:
+              ingress:
+                enabled: true
+                hostName: "glance.<path:kv/cluster#domain>"
+                ingressClassName: nginx
+                tls:
+                  enabled: true
+                  secretName: "glance-tls"
+                annotations:
+                  cert-manager.io/cluster-issuer: cloudflare
+
+              configMap:
+                enabled: true
+                data:
+                  - name: "config"
+                    mountPath: "/mnt"
+                    data:
+                      - content:
+                          glance.yml: |
+                            pages:
+                              - name: Home
+                                columns:
+                                  - size: small
+                                    widgets:
+                                      - type: calendar
+
+                                      - type: rss
+                                        limit: 10
+                                        collapse-after: 3
+                                        cache: 3h
+                                        feeds:
+                                          - url: https://justingarrison.com/index.xml
+                                          - url: https://blog.zwindler.fr/index.xml
+                                          - url: https://samwho.dev/rss.xml
+                                          - url: https://blog.stonegarden.dev/index.xml
+                                          - url: http://blog.garambrogne.net/feeds/all.rss
+                                          - url: https://blog.wescale.fr/rss.xml
+                                          - url: https://fredix.xyz/index.xml
+
+                                      - type: twitch-channels
+                                        channels:
+                                          - cuistops
+
+                                  - size: full
+                                    widgets:
+                                      - type: hacker-news
+
+                                      - type: videos
+                                        channels:
+                                          - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
+                                          - UCv6J_jJa8GJqFwQNgNrMuww # ServeTheHome
+                                          - UCOk-gHyjcWZNj3Br4oxwh0A # Techno Tim
+
+                                      - type: reddit
+                                        subreddit: selfhosted
+
+                                  - size: small
+                                    widgets:
+                                      - type: weather
+                                        location: Lyon, France
+
+                                      - type: markets
+                                        markets:
+                                          - symbol: BTC-USD
+                                            name: Bitcoin
+                                          - symbol: ETH-USD
+                                            name: Ethereum
