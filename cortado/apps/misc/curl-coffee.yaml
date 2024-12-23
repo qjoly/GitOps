@@ -20,6 +20,11 @@ spec:
       env:
         - name: HELM_VALUES
           value: |
+            service:
+              servicePort: 80
+              containerPort: 8000
+            deployment:
+              port: 8000
             name: "coffee-animation"
             image:
               repository: ghcr.io/qjoly/coffee-animation
