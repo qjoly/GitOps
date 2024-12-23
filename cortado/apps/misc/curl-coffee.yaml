@@ -20,6 +20,7 @@ spec:
       env:
         - name: HELM_VALUES
           value: |
+            name: "coffee-animation"
             ingress:
               enabled: true
               hostName: "curl.une-tasse-de.cafe"
