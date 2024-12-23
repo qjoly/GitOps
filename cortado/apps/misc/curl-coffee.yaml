@@ -22,7 +22,7 @@ spec:
           value: |
             name: "coffee-animation"
             image:
-              repository: ghcr.io/qjoly/coffee-animation:
+              repository: ghcr.io/qjoly/coffee-animation
               tag: "0.0.6"
             ingress:
               enabled: true
