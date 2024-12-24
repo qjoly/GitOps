@@ -6,7 +6,7 @@ metadata:
 spec:
   sourcePVC: komga-config
   trigger:
-    schedule: "*/5 * * * *"
+    schedule: "*/30 * * * *"
   restic:
     pruneIntervalDays: 7
     repository: restic-credentials
