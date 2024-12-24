@@ -1,0 +1,29 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: restic-credentials
+  namespace: komga
+spec:
+  refreshInterval: "30s"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: restic-credentials
+  data:
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef:
+        key: restic
+        property: AWS_ACCESS_KEY_ID
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: restic
+        property: AWS_SECRET_ACCESS_KEY
+    - secretKey: RESTIC_PASSWORD
+      remoteRef:
+        key: restic
+        property: RESTIC_PASSWORD
+    - secretKey: RESTIC_REPOSITORY
+      remoteRef:
+        key: restic
+        property: RESTIC_REPOSITORY
