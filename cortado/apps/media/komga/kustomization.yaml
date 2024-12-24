@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - komga.yaml
   - restic.yaml
+  - volsync.yaml

@@ -1,0 +1,19 @@
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: komga
+  namespace: komga
+spec:
+  sourcePVC: komga-config
+  trigger:
+    schedule: "*/5 * * * *"
+  restic:
+    pruneIntervalDays: 7
+    repository: restic-credentials
+    retain:
+      hourly: 6
+      daily: 5
+      weekly: 4
+      monthly: 2
+      yearly: 1
+    copyMethod: Direct
