@@ -26,4 +26,4 @@ spec:
     - secretKey: RESTIC_REPOSITORY
       remoteRef:
         key: restic
-        property: RESTIC_REPOSITORY
+        property: RESTIC_REPOSITORY_KOMGA
