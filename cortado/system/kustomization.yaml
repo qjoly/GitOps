@@ -9,4 +9,5 @@ resources:
   - ingress-argocd.yaml
   - ip-pool.yml
   - backup.yaml
+  - monitoring
 # - cloudflare
