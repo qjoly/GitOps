@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: plex-exporter
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.4.0
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            service:
+              servicePort: 80
+              containerPort: 9000
+            deployment:
+              port: 9000
+            name: "prom-plex-exporter"
+            image:
+              repository: ghcr.io/jsclayton/prometheus-plex-exporter
+              tag: "main"
+            ingress:
+              enabled: false
+            variables:
+              secret:
+                data:
+                  PLEX_SERVER: <path:kv/plex#URL>
+                  PLEX_TOKEN: <path:kv/plex#TOKEN>

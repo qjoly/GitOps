@@ -15,7 +15,7 @@ spec:
         pod-security.kubernetes.io/warn: privileged
   destination:
     server: https://kubernetes.default.svc
-    namespace: loki-stack
+    namespace: monitoring
   source:
     repoURL: https://grafana.github.io/helm-charts
     chart: loki-stack
