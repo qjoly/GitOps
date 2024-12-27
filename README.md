@@ -43,9 +43,9 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 
 ### Cluster
 
-- **Lungo** : A cluster based on virtual machines on a Proxmox server hosted by OVH.
-- **Home** (Quite original, right?) : A cluster based on small devices (ARM and x86) at home.
-- **Arabica** (:warning: WIP) : Yet another cluster based on virtual machines on a Proxmox server hosted by OVH.
+- [**Cortado** : Single node bare-metal cluster hosted by OVH.](https://github.com/qjoly/GitOps/tree/main/cortado)
+- **Lungo** ( :warning: WIP ): Yet another cluster based on virtual machines on a Proxmox server hosted by OVH.
+- **Home** (Quite original, right? Also WIP :warning: ) : A cluster based on small devices (ARM and x86) at home.
 
 ## Usage
 

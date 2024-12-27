@@ -32,10 +32,7 @@ data:
           - bash
           - "-c"
           - |
-            helm repo add common https://rubxkube.github.io/common-charts &&
-            helm repo add bjw-s https://bjw-s.github.io/helm-charts &&
-            helm repo add bitnami https://charts.bitnami.com/bitnami &&
-            helm dependency build
+            if [ -f "./Chart.lock" ]; then cat ./Chart.lock | grep repository | awk '{print $2}' | while read -r line ; do helm repo add $line $line; done; fi
       generate:
         command:
           - bash
