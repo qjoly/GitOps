@@ -31,3 +31,13 @@ spec:
               enabled: false
             grafana:
               enabled: true
+              ingress:
+                enabled: true
+                annotations:
+                  cert-manager.io/cluster-issuer: cloudflare
+                hosts:
+                  - grafana.cortado.<path:kv/cluster#domain>
+                tls:
+                  - secretName: grafana-tls
+                    hosts:
+                     - grafana.cortado.<path:kv/cluster#domain>  
