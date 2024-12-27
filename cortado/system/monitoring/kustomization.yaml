@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - loki-stack.yaml
   - plex-monitoring.yaml
+  - prometheus.yaml
