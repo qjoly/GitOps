@@ -31,8 +31,8 @@ spec:
                 - --enable-unknown-queue-items
             name: "sonarr-exportarr"
             image:
-              repository: ghcr.io/onedr0p/exportarr:latest
-              tag: "main"
+              repository: ghcr.io/onedr0p/exportarr
+              tag: "latest"
             ingress:
               enabled: false
             variables:
