@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://bjw-s.github.io/charts/
+    repoURL: https://bjw-s.github.io/helm-charts/
     chart: app-template
     targetRevision: 3.5.1
     helm:
@@ -64,4 +64,3 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
-

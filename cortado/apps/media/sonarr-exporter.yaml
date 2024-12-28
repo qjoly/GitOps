@@ -12,7 +12,7 @@ spec:
     server: https://kubernetes.default.svc
     namespace: monitoring
   source:
-    repoURL: https://bjw-s.github.io/charts/
+    repoURL: https://bjw-s.github.io/helm-charts
     chart: app-template
     targetRevision: 3.5.1
     plugin:
