@@ -10,6 +10,10 @@ spec:
     repoURL: https://backube.github.io/helm-charts/
     chart: volsync
     targetRevision: 0.11.0
+    helm:
+      values: |
+        metrics:
+          disableAuth: true
   destination:
     server: https://kubernetes.default.svc
     namespace: volsync-system

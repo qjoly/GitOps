@@ -9,10 +9,6 @@ spec:
     repoURL: https://github.com/qjoly/gitops
     targetRevision: main
     path: cortado/system/backup
-    helm:
-      values: |
-        metrics:
-          disableAuth: true
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
