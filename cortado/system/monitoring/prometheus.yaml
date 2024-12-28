@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kube-prometheus-stack
+  name: prometheus-stack
   namespace: argocd
 spec:
   project: default
@@ -15,39 +15,13 @@ spec:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
     targetRevision: 67.5.0
-    plugin:
-      name: argocd-vault-plugin-helm
-      env:
-        - name: HELM_VALUES
-          value: |
-            prometheus:
-              prometheusSpec:
-                podMonitorSelectorNilUsesHelmValues: false
-                serviceMonitorSelectorNilUsesHelmValues: false
-            crds:
-              enabled: true
-            grafana:
-              enabled: true
-              persistence:
-                type: pvc
-                enabled: true
-              datasources:
-               datasources.yaml:
-                 apiVersion: 1
-                 datasources:
-                 - name: Prometheus
-                   type: prometheus
-                   url: http://kube-prometheus-stack-prometheus:9090
-                   access: proxy
-                   isDefault: true
-              ingress:
-                enabled: true
-                ingressClassName: nginx
-                annotations:
-                  cert-manager.io/cluster-issuer: cloudflare
-                hosts:
-                  - grafana.cortado.<path:kv/cluster#domain>
-                tls:
-                  - secretName: grafana-tls
-                    hosts:
-                     - grafana.cortado.<path:kv/cluster#domain>  
+    helm:
+      values: | 
+        prometheus:
+          prometheusSpec:
+            podMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorSelectorNilUsesHelmValues: false
+        crds:
+          enabled: true
+        grafana:
+          enabled: false
