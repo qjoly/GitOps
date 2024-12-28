@@ -17,6 +17,8 @@ spec:
       env:
         - name: HELM_VALUES
           value: |
+            adminUser: <path:kv/grafana#user>
+            adminPassword: <path:kv/grafana#pass>
             ingress:
               enabled: true
               ingressClassName: nginx
