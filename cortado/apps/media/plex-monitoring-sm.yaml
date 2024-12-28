@@ -1,0 +1,11 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: plex-exporter
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: plex-exporter
+  endpoints:
+  - targetPort: 9000

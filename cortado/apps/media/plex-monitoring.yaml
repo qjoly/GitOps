@@ -23,6 +23,10 @@ spec:
             service:
               servicePort: 80
               containerPort: 9000
+              annotations:
+                prometheus.io/scrape: "true"
+                prometheus.io/path: "/metrics"
+                prometheus.io/port: "9000"
             deployment:
               port: 9000
             name: "prom-plex-exporter"
