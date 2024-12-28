@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://bjw-s.github.io/charts/
     chart: app-template
-    targetRevision: 3.6.0
+    targetRevision: 3.5.1
     plugin:
       name: argocd-vault-plugin-helm
       env:
