@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: grafana
+    targetRevision: 8.8.2
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            ingress:
+              enabled: true
+              annotations:
+                cert-manager.io/cluster-issuer: cloudflare
+              hosts:
+                - "grafana.cortado.<path:kv/cluster#domain>"
+              tls:
+                - secretName: grafana-tls
+                  hosts:
+                    - "grafana.cortado.<path:kv/cluster#domain>"
+            persistence:
+              type: pvc
+              enabled: true
+            datasources:
+            datasources.yaml:
+              apiVersion: 1
+              datasources:
+              - name: Prometheus
+                type: prometheus
+                url: http://prometheus-stack-kube-prom-prometheus:9090
+                access: proxy
+                isDefault: true
