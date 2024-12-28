@@ -8,12 +8,6 @@ spec:
   syncPolicy:
     syncOptions:
       - ServerSideApply=true
-      - CreateNamespace=true
-    managedNamespaceMetadata:
-      labels:
-        pod-security.kubernetes.io/enforce: privileged
-        pod-security.kubernetes.io/audit: privileged
-        pod-security.kubernetes.io/warn: privileged
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
@@ -23,6 +17,10 @@ spec:
     targetRevision: 67.5.0
     helm:
       values: | 
+        prometheus:
+          prometheusSpec:
+            podMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorSelectorNilUsesHelmValues: false
         crds:
           enabled: true
         grafana:
