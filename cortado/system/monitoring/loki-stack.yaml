@@ -21,7 +21,7 @@ spec:
     chart: loki-stack
     targetRevision: 2.10.2
     helm:
-      value: |
+      values: |
         fluent-bit:
           enabled: true
         promtail:
