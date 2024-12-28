@@ -21,10 +21,10 @@ spec:
         - name: HELM_VALUES
           value: |
             service:
-              servicePort: 80
-              containerPort: 9000
+              servicePort: 9707
+              containerPort: 9707
             deployment:
-              port: 9000
+              port: 9707
               args:
                 - sonarr
                 - --enable-additional-metrics
