@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: argocd.arabica.<path:kv/cluster#domain>
+    - host: argocd.<path:kv/cluster#domain>
       http:
         paths:
           - backend:
