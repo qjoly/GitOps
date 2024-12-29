@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: radarr-exporter
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.4.0
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            service:
+              servicePort: 9707
+              containerPort: 9707
+            deployment:
+              port: 9707
+              args:
+                - radarr
+                - --enable-additional-metrics
+                - --enable-unknown-queue-items
+            name: "radarr-exportarr"
+            image:
+              repository: ghcr.io/onedr0p/exportarr
+              tag: "latest"
+            ingress:
+              enabled: false
+            variables:
+              nonSecret:
+                PORT: 9707
+              secret:
+                data:
+                  URL: <path:kv/radarr#url>
+                  APIKEY: <path:kv/radarr#token>
