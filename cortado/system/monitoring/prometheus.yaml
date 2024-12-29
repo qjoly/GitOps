@@ -16,11 +16,18 @@ spec:
     chart: kube-prometheus-stack
     targetRevision: 67.5.0
     helm:
-      values: | 
+      values: |
         prometheus:
           prometheusSpec:
             podMonitorSelectorNilUsesHelmValues: false
             serviceMonitorSelectorNilUsesHelmValues: false
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 10Gi
         crds:
           enabled: true
         grafana:
