@@ -9,5 +9,5 @@ spec:
       app.kubernetes.io/instance: sonarr-exporter
   endpoints:
     - targetPort: 9707
-      scrapeTimeout: 60s
-      scrapeInterval: 120s
+      scrapeTimeout: 40s
+      interval: 60s
