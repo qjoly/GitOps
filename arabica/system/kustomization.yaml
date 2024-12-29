@@ -6,3 +6,5 @@ resources:
   - storage
   - external-secret
   - external-dns
+  - ip-pool.yml
+  - ingress-argocd.yaml

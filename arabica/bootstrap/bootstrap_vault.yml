@@ -6,6 +6,9 @@ metadata:
 spec:
   project: default
   syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false
     syncOptions:
       - CreateNamespace=true
   destination:
@@ -14,6 +17,29 @@ spec:
   source:
     repoURL: https://github.com/qjoly/gitops
     targetRevision: main
-    path: cortado/system
+    path: arabica/system
+    plugin:
+      name: argocd-vault-plugin-kustomize
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      selfHeal: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  source:
+    repoURL: https://github.com/qjoly/gitops
+    targetRevision: main
+    path: arabica/apps
     plugin:
       name: argocd-vault-plugin-kustomize
