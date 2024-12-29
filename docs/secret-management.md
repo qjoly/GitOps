@@ -112,7 +112,21 @@ spec:
 EOF
 ```
 
+## ArgoCD Vault Plugin
 
-
-
-
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+stringData:
+  AVP_AUTH_TYPE: token
+  AVP_KV_VERSION: "1"
+  AVP_TYPE: vault
+  VAULT_ADDR: http://vault.vault.svc.cluster.local:8200
+  VAULT_TOKEN: $(jq -r ".root_token" cluster-keys.json)
+kind: Secret
+metadata:
+  name: vault-credentials
+  namespace: argocd
+type: Opaque
+EOF
+```

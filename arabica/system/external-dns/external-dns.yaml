@@ -28,7 +28,7 @@ spec:
         - name: env[0].valueFrom.secretKeyRef.key
           value: apiKey
         - name: txtPrefix
-          value: "cortado-"
+          value: "arabica-"
   destination:
     server: https://kubernetes.default.svc
     namespace: external-dns

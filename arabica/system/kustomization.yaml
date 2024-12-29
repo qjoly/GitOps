@@ -5,4 +5,4 @@ resources:
   - vault.yaml
   - storage
   - external-secret
-#  - external-dns
+  - external-dns
