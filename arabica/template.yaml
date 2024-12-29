@@ -1,0 +1,38 @@
+kind: Cluster
+name: arabica
+labels:
+  template: true
+  cni: cilium
+  kubespan: enabled
+kubernetes:
+  version: v1.31.3
+talos:
+  version: v1.9.1
+features:
+  diskEncryption: true
+  useEmbeddedDiscoveryService: true
+patches:
+   - name: kubespan-enabled
+     file: patches/kubespan.yml
+   - name: no-cni # we will install cilium in extraManifests
+     file: patches/cni.yml
+   - name: disable-kubeproxy
+     file: patches/disable-kubeproxy.yml
+   - name: manifests
+     file: patches/extraManifests.yml
+   - name: metric-server
+     file: patches/metrics-server.yml
+   - name: workload-on-cp
+     file: patches/workload-on-cp.yml
+   - name: zfs
+     file: patches/zfs.yml
+   - name: local-path-provisioner
+     file: patches/local-path-provisionner.yml
+systemExtensions:
+  - siderolabs/iscsi-tools
+  - siderolabs/zfs
+  - siderolabs/util-linux-tools
+---
+kind: ControlPlane
+machines:
+  - 00000000-0000-0000-0000-0cc47a6c07f0
