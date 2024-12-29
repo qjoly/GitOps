@@ -9,5 +9,5 @@ spec:
       app.kubernetes.io/instance: radarr-exporter
   endpoints:
     - targetPort: 9707
-      scrapeTimeout: 120s
-      scrapeInterval: 60s
+      scrapeTimeout: 60s
+      scrapeInterval: 120s
