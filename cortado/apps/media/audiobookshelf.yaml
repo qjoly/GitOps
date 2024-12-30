@@ -24,15 +24,15 @@ spec:
             image:
               repository: ghcr.io/advplyr/audiobookshelf
               tag: "latest"
-              ingress:
+            ingress:
+              enabled: true
+              hostName: "audiobookshelf.<path:kv/cloudflared#domain>"
+              ingressClassName: nginx
+              tls:
                 enabled: true
-                hostName: "audiobookshelf.<path:kv/cloudflared#domain>"
-                ingressClassName: nginx
-                tls:
-                  enabled: true
-                  secretName: "audiobookshelf-tls"
-                annotations:
-                  cert-manager.io/cluster-issuer: cloudflare
+                secretName: "audiobookshelf-tls"
+              annotations:
+                cert-manager.io/cluster-issuer: cloudflare
             variables:
               nonSecret:
                 TZ: Europe/Paris
