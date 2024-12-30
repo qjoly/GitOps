@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: audiobookshelf
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: audiobookshelf
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.4.0
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            name: "audiobookshelf"
+            image:
+              repository: ghcr.io/advplyr/audiobookshelf
+              tag: "latest"
+              ingress:
+                enabled: true
+                hostName: "audiobookshelf.<path:kv/cloudflared#domain>"
+                ingressClassName: nginx
+                tls:
+                  enabled: true
+                  secretName: "audiobookshelf-tls"
+                annotations:
+                  cert-manager.io/cluster-issuer: cloudflare
+            variables:
+              nonSecret:
+                TZ: Europe/Paris
+            persistence:
+              enabled: true
+              volumes:
+                - name: audiobooks
+                  storageClassName: "longhorn"
+                  size: "5Gi"
+                  pvcClaim: ""
+                  containerMount: "/audiobooks"
+                - name: podcasts
+                  storageClassName: "longhorn"
+                  size: "5Gi"
+                  pvcClaim: ""
+                  containerMount: "/podcasts"
+                - name: podcasts
+                  storageClassName: "config"
+                  size: "5Gi"
+                  pvcClaim: ""
+                  containerMount: "/config"
+                - name: podcasts
+                  storageClassName: "metadata"
+                  size: "5Gi"
+                  pvcClaim: ""
+                  containerMount: "/metadata"

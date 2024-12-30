@@ -5,4 +5,5 @@ resources:
   - komga.yaml
   - your-spotify.yaml
   - plex
+  - audiobookshelf.yaml
   - exportarr
