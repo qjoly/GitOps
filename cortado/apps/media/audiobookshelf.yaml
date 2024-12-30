@@ -49,13 +49,13 @@ spec:
                   size: "5Gi"
                   pvcClaim: ""
                   containerMount: "/podcasts"
-                - name: podcasts
-                  storageClassName: "config"
+                - name: config
+                  storageClassName: "longhorn"
                   size: "5Gi"
                   pvcClaim: ""
                   containerMount: "/config"
-                - name: podcasts
-                  storageClassName: "metadata"
+                - name: metadata
+                  storageClassName: "longhorn"
                   size: "5Gi"
                   pvcClaim: ""
                   containerMount: "/metadata"
