@@ -40,22 +40,22 @@ spec:
               enabled: true
               volumes:
                 - name: audiobooks
-                  storageClassName: "longhorn"
+                  storageClassName: ""
                   size: "5Gi"
                   pvcClaim: ""
                   containerMount: "/audiobooks"
                 - name: podcasts
-                  storageClassName: "longhorn"
+                  storageClassName: ""
                   size: "5Gi"
                   pvcClaim: ""
                   containerMount: "/podcasts"
                 - name: config
-                  storageClassName: "longhorn"
+                  storageClassName: ""
                   size: "5Gi"
                   pvcClaim: ""
                   containerMount: "/config"
                 - name: metadata
-                  storageClassName: "longhorn"
+                  storageClassName: ""
                   size: "5Gi"
                   pvcClaim: ""
                   containerMount: "/metadata"
