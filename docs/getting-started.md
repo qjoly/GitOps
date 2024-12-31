@@ -1,3 +1,4 @@
+# Getting Started
 # Location
 
 In most cases, I suggest you to host your services at home. It's cheaper and you have more control over your data. However, if you don't have a good internet connection or you don't want to deal with the noise and heat of the servers, you can rent a server from a cloud provider.
@@ -39,6 +40,6 @@ dd if=talos.iso of=/dev/sda bs=4M status=progress
 
 After writing the image to the disk, you can reboot the server and boot on the disk.
 
-![alt text](image.png)
+![alt text](./img/boot-from-disk.png)
 
 You should have a Talos node running on your server !
