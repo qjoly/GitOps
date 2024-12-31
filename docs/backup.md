@@ -2,7 +2,7 @@
 
 When I created the `cortado` cluster (which is a single node cluster), I used a ZFS zpool (created manually) and [local-path-provisionner](https://github.com/rancher/local-path-provisioner) to create persistent volumes on the mounted ZFS filesystem.
 
-To backup the data, I use [volsync]() to create backup and send backup (using restic) to a minio server.
+To backup the data, I use [volsync](https://github.com/backube/volsync) to create backup and send backup (using restic) to a minio server.
 
 I will have a restic repository per backup source.
 
@@ -109,3 +109,5 @@ ID        Time                 Host        Tags        Paths  Size
 ### Restore a backup
 
 Eh, eh, this is still a work in progress. I will update this section when I have more information.
+
+![](https://media.tenor.com/udq1uD9WHSQAAAAM/oops.gif)
