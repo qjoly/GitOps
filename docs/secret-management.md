@@ -1,28 +1,23 @@
-## Secret Management
+# Secret Management
 
 To avoid storing secrets in the repository, we use Vault to store them (e.g., API keys, passwords, etc.). We then use the External Secrets operator to sync the secrets stored in Vault with the Kubernetes cluster.
 
-### Vault
+## Vault
 
 Vault is a tool for securely accessing secrets. A secret is anything that you want to tightly control access to, such as API keys, passwords, or certificates. Vault provides a unified interface to any secret while providing tight access control and recording a detailed audit log.
 
 It is installed in the `vault` namespace using the ArgoCD application `vault` (see [here](https://github.com/qjoly/homelab/blob/3fc5c2fa7269afa87d6800083cbb2a0329e68cd8/lungo/system/vault.yaml) for an example).
 
 
-***Initialize the Vault cluster***
+### Initialize the Vault cluster
+
+Everytime we restart the Vault cluster, we need to unseal it. The unseal process requires a quorum of the keys to be entered. In a normal condition, we would have multiple keys and multiple people to enter them. In our case, we have only one key and we will use it to unseal the cluster (maybe not the best practice, but it's a lab and I can't handle auto unseal for now).
 
 ```bash
 kubectl exec -n vault vault-0 -- vault operator init \
     -key-shares=1 \
     -key-threshold=1 \
     -format=json > cluster-keys.json
-
-export VAULT_UNSEAL_KEY=$(jq -r ".unseal_keys_b64[]" cluster-keys.json)
-kubectl exec -n vault -ti vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
-kubectl exec -n vault -ti vault-1 -- vault operator raft join http://vault-0.vault-internal:8200
-kubectl exec -n vault -ti vault-1 -- vault operator unseal $VAULT_UNSEAL_KEY
-kubectl exec -n vault -ti vault-2 -- vault operator raft join http://vault-0.vault-internal:8200
-kubectl exec -n vault -ti vault-2 -- vault operator unseal $VAULT_UNSEAL_KEY
 ```
 
 You obtain the root token in the `cluster-keys.json` file. Ensure to keep it safe and **do not commit it to the repository** (or encrypt it if you do).
@@ -32,16 +27,33 @@ age -R ~/.ssh/id_ed25519.pub cluster-keys.json > cluster-keys.json.age # Encrypt
 age -d -i ~/.ssh/id_ed25519 cluster-keys.json.age > cluster-keys.json # Decrypt the file
 ```
 
-***Create a secret engine in Vault***
-```bash 
-kubectl port-forward -n vault svc/vault 8200:8200 
-```
+Now that our first Vault server is initialized, we need to unseal it and ask all the other Vault to join the cluster.
 
 ```bash
+export VAULT_UNSEAL_KEY=$(jq -r ".unseal_keys_b64[]" cluster-keys.json)
+kubectl exec -n vault -ti vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
+kubectl exec -n vault -ti vault-1 -- vault operator raft join http://vault-0.vault-internal:8200
+kubectl exec -n vault -ti vault-1 -- vault operator unseal $VAULT_UNSEAL_KEY
+kubectl exec -n vault -ti vault-2 -- vault operator raft join http://vault-0.vault-internal:8200
+kubectl exec -n vault -ti vault-2 -- vault operator unseal $VAULT_UNSEAL_KEY
+```
+
+
+### Enable the KV secret engine
+
+Once the Vault cluster is ready, we can enable the KV secret engine kv (I will store the secrets in the `kv` path).
+
+```bash 
+kubectl port-forward -n vault svc/vault 8200:8200 
 export VAULT_ADDR="http://localhost:8200"
 export VAULT_TOKEN=$(jq -r ".root_token" cluster-keys.json)
 vault secrets enable kv
-vault login $(jq -r ".root_token" cluster-keys.json) 
+vault login $(jq -r ".root_token" cluster-keys.json)
+```
+
+To test the Vault cluster, we can write a secret in the KV secret engine.
+
+```bash
 vault kv put kv/foo my-value=s3cr3t
 ```
 
@@ -88,7 +100,6 @@ EOF
 
 ### Test the External Secrets
 
-
 ***Create an External Secret that syncs the secret in Vault with the Kubernetes cluster***
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -114,6 +125,10 @@ EOF
 
 ## ArgoCD Vault Plugin
 
+For multiple applications, I use the ArgoCD Vault Plugin to sync the secrets stored in Vault with the Kubernetes cluster. The reason behind this is that some data I want to hide are not in secrets and ConfigMap (.e.g. I want to use a vault secret in an deployment annotation).
+
+
+***Create a secret with the Vault token for the Vault Plugin***
 ```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -130,3 +145,43 @@ metadata:
 type: Opaque
 EOF
 ```
+
+Now, we need to reinstall the ArgoCD but with the Vault Plugin enabled.
+
+```bash
+cd ./common/argocd/vault-argocd/
+kubectl apply -k . -n argocd
+```
+
+Once everything is applied, we would be able to use the Vault Plugin in the ArgoCD application (e.g. here I want to hide the domain used by the ingress)
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: glance
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: glance
+  source:
+    repoURL: https://rubxkube.github.io/charts/
+    chart: glance
+    targetRevision: 0.0.2
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            common:
+              ingress:
+                enabled: true
+                hostName: "glance.<path:kv/cluster#domain>" # Just here ! 
+                ingressClassName: nginx
+```
+

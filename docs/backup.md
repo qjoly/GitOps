@@ -105,3 +105,7 @@ ID        Time                 Host        Tags        Paths  Size
 -----------------------------------------------------------------------
 3 snapshots
 ```
+
+### Restore a backup
+
+Eh, eh, this is still a work in progress. I will update this section when I have more information.
