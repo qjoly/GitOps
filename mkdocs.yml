@@ -1,3 +1,4 @@
 site_name: GitOps
 theme:
   name: terminal
+site_url: https://qjoly.github.io/GitOps/
