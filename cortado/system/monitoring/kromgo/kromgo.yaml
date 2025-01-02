@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/common-charts/
     chart: common
-    targetRevision: v0.4.0
+    targetRevision: v0.4.1
     plugin:
       name: argocd-vault-plugin-helm
       env:
@@ -21,9 +21,14 @@ spec:
             image:
               repository: ghcr.io/kashalls/kromgo
               tag: "latest"
+            configMap:
+              enabled: false
+              existingConfigMap:
+                - name: "kromgo-configmap"
+                  mountPath: "/kromgo/config.yaml"
+                  subPath: "config.yaml"
             ingress:
               enabled: true
-              # Not hidden because it's a public service
               hostName: "kromgo.cortado.thoughtless.eu"
               ingressClassName: nginx
               tls:
