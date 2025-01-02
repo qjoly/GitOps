@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/common-charts/
     chart: common
-    targetRevision: v0.4.0
+    targetRevision: v0.4.1
     plugin:
       name: argocd-vault-plugin-helm
       env:
