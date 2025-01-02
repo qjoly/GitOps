@@ -47,6 +47,19 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 ### Cluster
 
 - [**Cortado** : Single node bare-metal cluster hosted by OVH.](https://github.com/qjoly/GitOps/tree/main/cortado)
+<div align="center">
+
+[![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Ftalos_version&style=flat-square&logo=talos&logoColor=white&color=red&label=%20)](https://talos.dev)
+[![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fkubernetes_version&style=flat-square&logo=kubernetes&logoColor=white&color=blue&label=%20)](https://kubernetes.io)&nbsp;&nbsp;
+![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_age_days&style=flat-square&label=Age)
+![Uptime-Days](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_uptime_days&style=flat-square&label=Uptime)
+![Node-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_node_count&style=flat-square&label=Nodes)
+![Pod-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_pod_count&style=flat-square&label=Pods)
+![CPU-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_cpu_usage&style=flat-square&label=CPU)
+![Memory-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_memory_usage&style=flat-square&label=Memory)
+
+</div>
+
 - [**Arabica** : Another node bare-metal cluster hosted by OVH.](https://github.com/qjoly/GitOps/tree/main/arabica), soon to be decommissioned.
 - **Lungo** ( :warning: WIP ): Yet another cluster based on virtual machines on a Proxmox server hosted by OVH.
 - **Home** (Quite original, right? Also WIP :warning: ) : A cluster based on small devices (ARM and x86) at home.
