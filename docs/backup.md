@@ -1,7 +1,6 @@
 ## Backup system
 
 When I created the `cortado` cluster (which is a single node cluster), I used a ZFS zpool (created manually) and [local-path-provisionner](https://github.com/rancher/local-path-provisioner) to create persistent volumes on the mounted ZFS filesystem.
-
 To backup the data, I use [volsync](https://github.com/backube/volsync) to create backup and send backup (using restic) to a minio server.
 
 I will have a restic repository per backup source.
@@ -11,14 +10,13 @@ I will have a restic repository per backup source.
 export AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY
 export AWS_SECRET_ACCESS_KEY=YOUR_SECRET_KEY
 export RESTIC_PASSWORD=REPOSITORY_PASSWORD
-export RESTIC_REPOSITORY=s3:http://MINIO_URL:9000/BUCKET
+export RESTIC_REPOSITORY=s3:http://MINIO_URL:9000/BUCKET # URL accessible from the cluster
 ```
 
 From your workstation, create the repository
 ```bash
 restic init
 ```
-
 
 Then, create a secret in the cluster with the credentials to access the repository
 ```bash
@@ -111,3 +109,9 @@ ID        Time                 Host        Tags        Paths  Size
 Eh, eh, this is still a work in progress. I will update this section when I have more information.
 
 ![](https://media.tenor.com/udq1uD9WHSQAAAAM/oops.gif)
+
+---
+
+# Changelog:
+- 2024-12-24: Initial version
+- 
