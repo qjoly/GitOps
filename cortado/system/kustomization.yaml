@@ -10,4 +10,4 @@ resources:
   - ip-pool.yml
   - backup.yaml
   - monitoring
-  - vault
+#  - vault
