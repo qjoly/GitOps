@@ -1,0 +1,19 @@
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: vault-config
+  namespace: vault
+spec:
+  sourcePVC: data-vault-0
+  trigger:
+    schedule: "*/30 * * * *"
+  restic:
+    pruneIntervalDays: 7
+    repository: restic-credentials
+    retain:
+      hourly: 2
+      daily: 5
+      weekly: 4
+      monthly: 2
+      yearly: 1
+    copyMethod: Direct
