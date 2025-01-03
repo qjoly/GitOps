@@ -7,8 +7,6 @@ spec:
   project: default
   syncPolicy:
     automated: {}
-    syncOptions:
-      - ServerSideApply=true
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
