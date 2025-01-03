@@ -6,6 +6,8 @@ metadata:
 spec:
   project: default
   syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
     automated: {}
   destination:
     server: https://kubernetes.default.svc
