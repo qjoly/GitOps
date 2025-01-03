@@ -38,6 +38,7 @@ kubectl exec -n vault -ti vault-2 -- vault operator raft join http://vault-0.vau
 kubectl exec -n vault -ti vault-2 -- vault operator unseal $VAULT_UNSEAL_KEY
 ```
 
+If you restart the Vault cluster, you will need to unseal it again by running the same command.
 
 ### Enable the KV secret engine
 
