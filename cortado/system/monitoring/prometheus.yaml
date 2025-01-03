@@ -17,6 +17,8 @@ spec:
     targetRevision: 67.5.0
     helm:
       values: |
+        kubeScheduler:
+          enabled: false
         prometheus:
           prometheusSpec:
             podMonitorSelectorNilUsesHelmValues: false
