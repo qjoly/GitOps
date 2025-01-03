@@ -60,7 +60,7 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 
 </div>
 
-- [**Arabica** : Another node bare-metal cluster hosted by OVH.](https://github.com/qjoly/GitOps/tree/main/arabica), soon to be decommissioned.
+- [**Arabica** : Another node bare-metal cluster hosted by OVH.](https://github.com/qjoly/GitOps/tree/main/arabica), soon to be decommissioned *(26/05/2025)* and used as staging environment.
 - **Lungo** ( :warning: WIP ): Yet another cluster based on virtual machines on a Proxmox server hosted by OVH.
 - **Home** (Quite original, right? Also WIP :warning: ) : A cluster based on small devices (ARM and x86) at home.
 
