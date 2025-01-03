@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: as-app
+  name: arabica-app
   namespace: argocd
 spec:
   goTemplate: true
