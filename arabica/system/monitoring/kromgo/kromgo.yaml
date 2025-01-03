@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kromgo
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.4.1
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            name: "kromgo"
+            image:
+              repository: ghcr.io/kashalls/kromgo
+              tag: "latest"
+            configMap:
+              enabled: false
+              existingConfigMap:
+                - name: "kromgo-configmap"
+                  mountPath: "/kromgo/config.yaml"
+                  subPath: "config.yaml"
+            ingress:
+              enabled: true
+              hostName: "kromgo.arabica.thoughtless.eu"
+              ingressClassName: nginx
+              tls:
+                enabled: true
+                secretName: "kromgo-tls"
+              annotations:
+                cert-manager.io/cluster-issuer: cloudflare
+            variables:
+              nonSecret:
+                PROMETHEUS_URL: http://prometheus-stack-kube-prom-prometheus.monitoring.svc.cluster.local:9090
+                SERVER_HOST: 0.0.0.0
+                SERVER_PORT: 80
+            persistence:
+              enabled: false
