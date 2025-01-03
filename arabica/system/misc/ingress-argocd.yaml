@@ -20,5 +20,5 @@ spec:
             pathType: Prefix
   tls:
     - hosts:
-        - argocd.arabica.<path:kv/cluster#domain>
+        - argocd.<path:kv/cluster#domain>
       secretName: argocd-tls
