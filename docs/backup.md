@@ -19,7 +19,6 @@ From your workstation, create the repository
 restic init
 ```
 
-
 Then, create a secret in the cluster with the credentials to access the repository
 ```bash
 kubectl create secret generic -n kube-system restic-credentials \
