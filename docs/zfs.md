@@ -1,7 +1,10 @@
+# ZFS
 
-- Install ZFS (by adding the siderolabs/zfs extension)
-- Enable the ZFS module 
+Since Talos doesn't support RAID yet, I use ZFS to create a RAIDZ2 pool with 3 disks. Once the pool is created, I use [local-path-provisionner](https://github.com/rancher/local-path-provisioner) to create persistent volumes on the mounted ZFS filesystem.
 
+When I installed Talos on my server, I specified the `zfs` extension to download the Talos image with ZFS support.
+
+I also had to enable the ZFS module in the kernel. Here is the patch to enable the ZFS module in the kernel:
 
 ```yaml
 machine:
@@ -10,10 +13,13 @@ machine:
       - name: zfs
 ```
 
-talosctl ls -n {your-node} /dev/disk/by-id
+Once Talos rebooted, I run a debug pod to create the ZFS pool:
+
+```bash
 kubectl -n kube-system debug -it --profile sysadmin --image=alpine node/{your-node}
+```
 
-
+To create the ZFS pool, we need to get the ID of the disk ( since name could change, we use the ID to identify the disk). We can use the `ls` command to list the disks:
 ```bash
 / # ls -lh /host/dev/disk/by-id/
 total 0
@@ -35,6 +41,21 @@ lrwxrwxrwx    1 root     root          10 Dec 17 20:33 ata-HGST_HUS726020ALA610_
 lrwxrwxrwx    1 root     root          10 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5HPPLTA-part6 -> ../../sda6
 ```
 
+Before creating the pool, we need to clean the disks by using the `wipefs` command, please be careful, this command will erase all the data on the disk:
+
+```bash
+apk add wipefs
+wipefs /dev/sdb --all --force
+wipefs /dev/sdc --all --force
+wipefs /dev/sdd --all --force
+apk add xfsprogs
+mkfs.xfs /dev/sdb
+mkfs.xfs /dev/sdc
+mkfs.xfs /dev/sdd
+```
+
+Then, we can create the pool:
+
 ```bash
 chroot /host zpool create -f \
 -o ashift=12 \
@@ -49,6 +70,8 @@ raidz2 \
 /dev/disk/by-id/ata-HGST_HUS726020ALA610_K5H64MYA \
 /dev/disk/by-id/ata-HGST_HUS726020ALA610_K5HM8S6A 
 ```
+
+Once the pool is created, we can deploy the local-path-provisionner:
 
 ```bash
 # kustomization.yaml
@@ -88,3 +111,5 @@ patches:
       labels:
         pod-security.kubernetes.io/enforce: privileged    
 ```
+
+You should now be able to generate PVC on the ZFS pool.

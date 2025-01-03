@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: plex-exporter
+  name: radarr-exporter
   namespace: argocd
 spec:
   project: default
@@ -14,25 +14,31 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/common-charts/
     chart: common
-    targetRevision: v0.4.0
+    targetRevision: v0.4.1
     plugin:
       name: argocd-vault-plugin-helm
       env:
         - name: HELM_VALUES
           value: |
             service:
-              servicePort: 80
-              containerPort: 9000
+              servicePort: 9707
+              containerPort: 9707
             deployment:
-              port: 9000
-            name: "prom-plex-exporter"
+              port: 9707
+              args:
+                - radarr
+                - --enable-additional-metrics
+                - --enable-unknown-queue-items
+            name: "radarr-exportarr"
             image:
-              repository: ghcr.io/jsclayton/prometheus-plex-exporter
-              tag: "main"
+              repository: ghcr.io/onedr0p/exportarr
+              tag: "latest"
             ingress:
               enabled: false
             variables:
+              nonSecret:
+                PORT: 9707
               secret:
                 data:
-                  PLEX_SERVER: <path:kv/plex#URL>
-                  PLEX_TOKEN: <path:kv/plex#TOKEN>
+                  URL: <path:kv/radarr#url>
+                  APIKEY: <path:kv/radarr#token>

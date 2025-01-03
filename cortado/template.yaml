@@ -7,7 +7,7 @@ labels:
 kubernetes:
   version: v1.31.3
 talos:
-  version: v1.8.3
+  version: v1.9.1
 features:
   diskEncryption: true
   useEmbeddedDiscoveryService: true

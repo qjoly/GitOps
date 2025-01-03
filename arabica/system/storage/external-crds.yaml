@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: snapshot-crds
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kubernetes-csi/external-snapshotter/
+    targetRevision: v8.2.0
+    path: client/config/crd/
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: local-path-storage

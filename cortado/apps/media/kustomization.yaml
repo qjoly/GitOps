@@ -4,5 +4,6 @@ kind: Kustomization
 resources:
   - komga.yaml
   - your-spotify.yaml
-#  - plex-monitoring-sm.yaml
-  - plex-monitoring.yaml
+  - plex
+  - audiobookshelf.yaml
+  - exportarr

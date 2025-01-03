@@ -33,17 +33,47 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 
 - [**Omni** (Self-hosted)](https://www.siderolabs.com/platform/saas-for-kubernetes/) : Manage all nodes between clusters and regions.
 - [Cilium](https://cilium.io/) as CNI and LB (ARP mode)
+- [ArgoCD](https://argoproj.github.io/argo-cd/) to manage the GitOps workflow
 - [Nginx Ingress Controller](https://kubernetes.github.io/ingress-nginx/) for Ingress management (and [Istio](https://istio.io/) deployed on some clusters)
 - [Cert Manager](https://cert-manager.io/) for TLS certificates.
 - [Longhorn](https://longhorn.io/) for storage based on nodes disks.
 - ~~[Reflector](https://github.com/emberstack/kubernetes-reflector/blob/main/README.md) to sync secrets across namespaces (requirement for External Secrets + Vault).~~ (Removed 16/12/2024)
 - [External Secrets](https://external-secrets.io/latest/) to fetch secrets from a remote store.
 - [Vault](https://www.vaultproject.io/) as a secret store to store secrets.
-- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet.
+- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet (**Only on the `home` cluster**).
+- [ZFS](https://openzfs.github.io/openzfs-docs/) + [Local-Path-Provisioner](https://github.com/rancher/local-path-provisioner) to create persistent volumes on the mounted ZFS filesystem (**Only on CloudLab cluster**).
+- [Volsync](https://github.com/backube/volsync) to create backup and send backup (using restic) to a minio server (**Only on CloudLab cluster**).
 
 ### Cluster
 
 - [**Cortado** : Single node bare-metal cluster hosted by OVH.](https://github.com/qjoly/GitOps/tree/main/cortado)
+<div align="center">
+
+[![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Ftalos_version&style=flat-square&logo=talos&logoColor=white&color=red&label=%20)](https://talos.dev)
+[![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fkubernetes_version&style=flat-square&logo=kubernetes&logoColor=white&color=blue&label=%20)](https://kubernetes.io)&nbsp;&nbsp;
+![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_age_days&style=flat-square&label=Age)
+![Uptime-Days](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_uptime_days&style=flat-square&label=Uptime)
+![Node-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_node_count&style=flat-square&label=Nodes)
+![Pod-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_pod_count&style=flat-square&label=Pods)
+![CPU-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_cpu_usage&style=flat-square&label=CPU)
+![Memory-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_memory_usage&style=flat-square&label=Memory)
+
+</div>
+
+- [**Arabica** : Another node bare-metal cluster hosted by OVH.](https://github.com/qjoly/GitOps/tree/main/arabica), soon to be decommissioned *(26/05/2025)* and used as staging environment.
+<div align="center">
+
+[![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.arabica.thoughtless.eu%2Ftalos_version&style=flat-square&logo=talos&logoColor=white&color=red&label=%20)](https://talos.dev)
+[![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.arabica.thoughtless.eu%2Fkubernetes_version&style=flat-square&logo=kubernetes&logoColor=white&color=blue&label=%20)](https://kubernetes.io)&nbsp;&nbsp;
+![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.arabica.thoughtless.eu%2Fcluster_age_days&style=flat-square&label=Age)
+![Uptime-Days](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.arabica.thoughtless.eu%2Fcluster_uptime_days&style=flat-square&label=Uptime)
+![Node-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.arabica.thoughtless.eu%2Fcluster_node_count&style=flat-square&label=Nodes)
+![Pod-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.arabica.thoughtless.eu%2Fcluster_pod_count&style=flat-square&label=Pods)
+![CPU-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.arabica.thoughtless.eu%2Fcluster_cpu_usage&style=flat-square&label=CPU)
+![Memory-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.arabica.thoughtless.eu%2Fcluster_memory_usage&style=flat-square&label=Memory)
+
+</div>
+
 - **Lungo** ( :warning: WIP ): Yet another cluster based on virtual machines on a Proxmox server hosted by OVH.
 - **Home** (Quite original, right? Also WIP :warning: ) : A cluster based on small devices (ARM and x86) at home.
 

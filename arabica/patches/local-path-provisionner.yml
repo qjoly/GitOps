@@ -1,0 +1,10 @@
+machine:
+  kubelet:
+    extraMounts:
+      - destination: /var/zfs_pool
+        type: bind
+        source: /var/zfs_pool
+        options:
+          - bind
+          - rshared
+          - rw
