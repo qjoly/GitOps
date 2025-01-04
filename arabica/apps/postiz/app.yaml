@@ -21,70 +21,70 @@ spec:
       env:
         - name: HELM_VALUES
           value: |
-          image:
-            repository: ghcr.io/gitroomhq/postiz-app
-            pullPolicy: IfNotPresent
-            tag: "latest"
+            image:
+              repository: ghcr.io/gitroomhq/postiz-app
+              pullPolicy: IfNotPresent
+              tag: "latest"
 
-          ingress:
-            enabled: true
-            className: "nginx"
-            annotations:
-              cert-manager.io/cluster-issuer: cloudflare
-            hosts:
-              - host: postiz.<path:kv/cluster#domain>
-                paths:
-                  - path: /
-                    pathType: Prefix
-                    port: 80
-            tls:
-              - secretName: postiz-tls
-                hosts:
-                  - postiz.<path:kv/cluster#domain>
+            ingress:
+              enabled: true
+              className: "nginx"
+              annotations:
+                cert-manager.io/cluster-issuer: cloudflare
+              hosts:
+                - host: postiz.<path:kv/cluster#domain>
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      port: 80
+              tls:
+                - secretName: postiz-tls
+                  hosts:
+                    - postiz.<path:kv/cluster#domain>
 
-          postgresql:
-            enabled: true
-            auth:
-              username: <path:kv/postiz#postgres-user>
-              password: <path:kv/postiz#postgres-user>
-              database: postiz
-            service:
-              ports:
-                postgresql: 5432
-
-          redis:
-            enabled: true
-            auth:
-              password: <path:kv/postiz#redis>
-            master:
+            postgresql:
+              enabled: true
+              auth:
+                username: <path:kv/postiz#postgres-user>
+                password: <path:kv/postiz#postgres-user>
+                database: postiz
               service:
                 ports:
-                  redis: 6379
+                  postgresql: 5432
 
-          env:
-            FRONTEND_URL: "http://localhost:4200"
-            NEXT_PUBLIC_BACKEND_URL: "http://localhost:3000"
-            BACKEND_INTERNAL_URL: "http://backend:3000"
-            UPLOAD_DIRECTORY: ""
-            NEXT_PUBLIC_UPLOAD_STATIC_DIRECTORY: ""
-            NX_ADD_PLUGINS: "false"
-            IS_GENERAL: "true"
+            redis:
+              enabled: true
+              auth:
+                password: <path:kv/postiz#redis>
+              master:
+                service:
+                  ports:
+                    redis: 6379
 
-          secrets:
-            DATABASE_URL: "postgresql://<path:kv/postiz#postgres-user>:<path:kv/postiz#postgres-user>@postgresql:5432/postiz"
-            REDIS_URL: ""
-            JWT_SECRET: ""
-            X_API_KEY: ""
-            X_API_SECRET: ""
-            LINKEDIN_CLIENT_ID: ""
-            LINKEDIN_CLIENT_SECRET: ""
-            REDDIT_CLIENT_ID: ""
-            REDDIT_CLIENT_SECRET: ""
-            GITHUB_CLIENT_ID: ""
-            GITHUB_CLIENT_SECRET: ""
-            RESEND_API_KEY: ""
-            CLOUDFLARE_ACCOUNT_ID: ""
-            CLOUDFLARE_ACCESS_KEY: ""
-            CLOUDFLARE_SECRET_ACCESS_KEY: ""
-            CLOUDFLARE_BUCKETNAME: ""
-            CLOUDFLARE_BUCKET_URL: ""
+            env:
+              FRONTEND_URL: "http://localhost:4200"
+              NEXT_PUBLIC_BACKEND_URL: "http://localhost:3000"
+              BACKEND_INTERNAL_URL: "http://backend:3000"
+              UPLOAD_DIRECTORY: ""
+              NEXT_PUBLIC_UPLOAD_STATIC_DIRECTORY: ""
+              NX_ADD_PLUGINS: "false"
+              IS_GENERAL: "true"
+
+            secrets:
+              DATABASE_URL: "postgresql://<path:kv/postiz#postgres-user>:<path:kv/postiz#postgres-user>@postgresql:5432/postiz"
+              REDIS_URL: ""
+              JWT_SECRET: ""
+              X_API_KEY: ""
+              X_API_SECRET: ""
+              LINKEDIN_CLIENT_ID: ""
+              LINKEDIN_CLIENT_SECRET: ""
+              REDDIT_CLIENT_ID: ""
+              REDDIT_CLIENT_SECRET: ""
+              GITHUB_CLIENT_ID: ""
+              GITHUB_CLIENT_SECRET: ""
+              RESEND_API_KEY: ""
+              CLOUDFLARE_ACCOUNT_ID: ""
+              CLOUDFLARE_ACCESS_KEY: ""
+              CLOUDFLARE_SECRET_ACCESS_KEY: ""
+              CLOUDFLARE_BUCKETNAME: ""
+              CLOUDFLARE_BUCKET_URL: ""
