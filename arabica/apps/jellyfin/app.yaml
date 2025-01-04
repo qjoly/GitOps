@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jellyfin
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: jellyfin
+  source:
+    repoURL: https://rubxkube.github.io/charts/
+    chart: jellyfin
+    targetRevision: 1.2.0
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            common:
+              ingress:
+                enabled: true
+                hostName: "jellyfin.<path:kv/cluster#domain>"
+                ingressClassName: nginx
+                tls:
+                  enabled: true
+                  secretName: "jellyfin-tls"
+                annotations:
+                  cert-manager.io/cluster-issuer: cloudflare
+              persistence:
+                enabled: true
+                volumes:
+                  - name: "data"
+                    storageClassName: ""
+                    size: "100Gi"
+                    pvcClaim: ""
+                    containerMount: "/data/"
+                  - name: "config"
+                    storageClassName: ""
+                    size: "2Gi"
+                    pvcClaim: ""
+                    containerMount: "/config/"
+                  - name: "cache"
+                    storageClassName: ""
+                    size: "5Gi"
+                    pvcClaim: ""
+                    containerMount: "/cache/"
+                    
