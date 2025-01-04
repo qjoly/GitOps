@@ -65,7 +65,7 @@ spec:
                     redis: 6379
 
             env:
-              FRONTEND_URL: "http://localhost:4200"
+              FRONTEND_URL: "https://postiz.<path:kv/cluster#domain>"
               NEXT_PUBLIC_BACKEND_URL: "http://localhost:3000"
               BACKEND_INTERNAL_URL: "http://backend:3000"
               UPLOAD_DIRECTORY: ""
