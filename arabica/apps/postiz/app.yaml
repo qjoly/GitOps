@@ -54,6 +54,9 @@ spec:
 
             redis:
               enabled: true
+              replica:
+                kind: StatefulSet
+                replicaCount: 0
               auth:
                 password: <path:kv/postiz#redis>
               master:
@@ -72,7 +75,7 @@ spec:
 
             secrets:
               DATABASE_URL: "postgresql://<path:kv/postiz#postgres-user>:<path:kv/postiz#postgres-user>@postgresql:5432/postiz"
-              REDIS_URL: ""
+              REDIS_URL: "redis://:<path:kv/postiz#redis>@redis:6379"
               JWT_SECRET: ""
               X_API_KEY: ""
               X_API_SECRET: ""
