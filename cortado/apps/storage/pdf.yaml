@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/charts/
     chart: stirling-pdf
-    targetRevision: 0.0.2
+    targetRevision: 0.0.3
     plugin:
       name: argocd-vault-plugin-helm
       env:
