@@ -17,6 +17,8 @@ spec:
       name: "as-{{.path.basename}}"
     spec:
       project: "default"
+      syncPolicy:
+        automated: {}
       source:
         repoURL: https://github.com/qjoly/gitops.git
         targetRevision: HEAD
