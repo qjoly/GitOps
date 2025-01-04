@@ -25,11 +25,11 @@ spec:
               annotations:
                 cert-manager.io/cluster-issuer: cloudflare
               hosts:
-                - "grafana.arabica.<path:kv/cluster#domain>"
+                - "grafana.<path:kv/cluster#domain>"
               tls:
                 - secretName: grafana-tls
                   hosts:
-                    - "grafana.arabica.<path:kv/cluster#domain>"
+                    - "grafana.<path:kv/cluster#domain>"
             persistence:
               type: pvc
               enabled: true
