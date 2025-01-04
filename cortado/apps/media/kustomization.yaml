@@ -7,3 +7,4 @@ resources:
   - plex
   - audiobookshelf.yaml
   - exportarr
+  - jellyfin.yaml
