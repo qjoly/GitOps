@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/charts/
     chart: komga
-    targetRevision: 0.0.1
+    targetRevision: 0.0.2
     plugin:
       name: argocd-vault-plugin-helm
       env:
