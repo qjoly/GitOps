@@ -20,41 +20,40 @@ spec:
       env:
         - name: HELM_VALUES
           value: |
-            common:
-              name: "factorio"
-              service:
-                type: NodePort
-                enabled: true
-                servicePort: 34197
-                containerPort: 34197
-                protocol: UDP
+            name: "factorio"
+            service:
+              type: NodePort
+              enabled: true
+              servicePort: 34197
+              containerPort: 34197
+              protocol: UDP
 
-              image:
-                repository: factoriotools/factorio
-                tag: 2.0.28
-                pullPolicy: Always
+            image:
+              repository: factoriotools/factorio
+              tag: 2.0.28
+              pullPolicy: Always
 
-              ingress:
-                enabled: false
+            ingress:
+              enabled: false
 
-              configMap:
-                enabled: false
+            configMap:
+              enabled: false
 
-              extraConfigMaps: []
+            extraConfigMaps: []
 
-              variables:
-                secret:
-                  data:
-                    USERNAME: <path:kv/factorio#username>
-                    TOKEN: <path:kv/factorio#token>
-                nonSecret:
-                  DLC_SPACE_AGE: false
+            variables:
+              secret:
+                data:
+                  USERNAME: <path:kv/factorio#username>
+                  TOKEN: <path:kv/factorio#token>
+              nonSecret:
+                DLC_SPACE_AGE: false
 
-              persistence:
-                enabled: true
-                volumes:
-                  - name: data
-                    storageClassName: ""
-                    size: 20Gi
-                    pvcClaim: ""
-                    containerMount: "/factorio"
+            persistence:
+              enabled: true
+              volumes:
+                - name: data
+                  storageClassName: ""
+                  size: 20Gi
+                  pvcClaim: ""
+                  containerMount: "/factorio"
