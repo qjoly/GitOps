@@ -47,7 +47,7 @@ spec:
                   USERNAME: <path:kv/factorio#username>
                   TOKEN: <path:kv/factorio#token>
               nonSecret:
-                DLC_SPACE_AGE: false
+                DLC_SPACE_AGE: true
 
             persistence:
               enabled: true
