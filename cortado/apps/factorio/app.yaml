@@ -32,6 +32,9 @@ spec:
               repository: factoriotools/factorio
               tag: 2.0.28
               pullPolicy: Always
+              
+            deployment:
+              port: 34197
 
             ingress:
               enabled: false
