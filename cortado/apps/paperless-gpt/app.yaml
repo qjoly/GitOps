@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: paperless-gpt
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: paperless-gpt
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.4.2
+    helm:
+      values: |
+        service:
+          containerPort: 8080
+        deployment:
+          port: 8080
+        name: "paperless-gpt"
+        image:
+          repository: icereed/paperless-gpt
+          tag: "latest"
+        ingress:
+          enabled: true
+          hostName: "paperless-gpt.<path:kv/cluster#domain>"
+          ingressClassName: nginx
+          tls:
+            enabled: true
+            secretName: "paperless-gpt-tls"
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+        variables:
+          nonSecret:
+            OLLAMA_HOST: 'http://ollama.ollama.svc.cluster.local:11434'
+            AUTO_OCR_TAG: 'paperless-gpt-ocr-auto'
+            VISION_LLM_MODEL: 'minicpm-v'
+            LLM_LANGUAGE: 'French'
+            LLM_PROVIDER: 'ollama'
+            VISION_LLM_PROVIDER: 'ollama'
+            OCR_LIMIT_PAGES: '5'
+            LOG_LEVEL: 'info'
+            PAPERLESS_BASE_URL:  '<path:kv/paperless#url>'
+            PAPERLESS_API_TOKEN: '<path:kv/paperless#token>'
+            PAPERLESS_PUBLIC_URL: '<path:kv/paperless#url>'
+        persistence:
+          enabled: true
+          volumes:
+            - name: "data"
+              storageClassName: ""
+              size: "10Gi"
+              pvcClaim: ""
+              containerMount: "/app/prompts"
