@@ -15,38 +15,39 @@ spec:
     repoURL: https://github.com/coder/code-server
     path: ci/helm-chart
     targetRevision: main
-    values: |
-      persistence:
-        enabled: true
-        storageClass: ""
-        size: 10Gi
-      extraInitContainers: |
-        - name: customization
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: SERVICE_URL
-              value: https://open-vsx.org/vscode/gallery
-            - name: ITEM_URL
-              value: https://open-vsx.org/vscode/item
-          command:
-            - sh
-            - -c
-            - |
-              code-server --install-extension golang.Go
-          volumeMounts:
-            - name: data
-              mountPath: /home/coder
-      ingress:
-        enabled: true
-        annotations:
-          cert-manager.io/cluster-issuer: cloudflare
-        hosts:
-          - host: code.cortado.<path:kv/cluster#domain>
-            paths:
-              - /
-        ingressClassName: "nginx"
-        tls:
-          - secretName: code-server
-            hosts:
-              - code.cortado.<path:kv/cluster#domain>
+    helm:
+      values: |
+        persistence:
+          enabled: true
+          storageClass: ""
+          size: 10Gi
+        extraInitContainers: |
+          - name: customization
+            image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: SERVICE_URL
+                value: https://open-vsx.org/vscode/gallery
+              - name: ITEM_URL
+                value: https://open-vsx.org/vscode/item
+            command:
+              - sh
+              - -c
+              - |
+                code-server --install-extension golang.Go
+            volumeMounts:
+              - name: data
+                mountPath: /home/coder
+        ingress:
+          enabled: true
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+          hosts:
+            - host: code.cortado.<path:kv/cluster#domain>
+              paths:
+                - /
+          ingressClassName: "nginx"
+          tls:
+            - secretName: code-server
+              hosts:
+                - code.cortado.<path:kv/cluster#domain>
