@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ollama
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ollama
+  source:
+    repoURL: https://otwld.github.io/ollama-helm/
+    chart: ollama
+    targetRevision: 1.1.2
+    helm:
+      values: |
+        ollama:
+          models:
+            pull:
+              - llama2
+        persistentVolume:
+          enabled: true
+        ingress:
+          enabled: true
+          className: nginx
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+          hosts:
+            - host: ollama.<path:kv/cluster#domain>
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - secretName: ollama-tls
+              hosts:
+                - ollama.<path:kv/cluster#domain>
