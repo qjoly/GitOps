@@ -43,6 +43,7 @@ spec:
             VISION_LLM_MODEL: 'gpt-4o'
             LLM_LANGUAGE: 'French'
             LLM_PROVIDER: 'openai'
+            LLM_MODEL: "gpt-4o"
             OPENAI_API_KEY: '<path:kv/paperless#openai>'
             OCR_LIMIT_PAGES: '5'
             LOG_LEVEL: 'info'
