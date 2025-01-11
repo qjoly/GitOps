@@ -43,6 +43,7 @@ spec:
             VISION_LLM_MODEL: 'minicpm-v'
             LLM_LANGUAGE: 'French'
             LLM_PROVIDER: 'ollama'
+            LLM_MODEL: "llama2"
             VISION_LLM_PROVIDER: 'ollama'
             OCR_LIMIT_PAGES: '5'
             LOG_LEVEL: 'info'
