@@ -16,4 +16,4 @@ spec:
       weekly: 4
       monthly: 3
       yearly: 3
-    copyMethod: Clone
+    copyMethod: Direct
