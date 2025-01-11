@@ -1,0 +1,19 @@
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: komga-config
+  namespace: factorio
+spec:
+  sourcePVC: factorio-data
+  trigger:
+    schedule: "0 * * * *"
+  restic:
+    pruneIntervalDays: 7
+    repository: restic-credentials
+    retain:
+      hourly: 3
+      daily: 5
+      weekly: 4
+      monthly: 2
+      yearly: 1
+    copyMethod: Clone
