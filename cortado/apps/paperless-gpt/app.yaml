@@ -28,7 +28,7 @@ spec:
           repository: icereed/paperless-gpt
           tag: "latest"
         ingress:
-          enabled: true
+          enabled: false
           hostName: "paperless-gpt.<path:kv/cluster#domain>"
           ingressClassName: nginx
           tls:
