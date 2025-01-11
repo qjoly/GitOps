@@ -41,14 +41,14 @@ spec:
             OLLAMA_HOST: 'http://ollama.ollama.svc.cluster.local:11434'
             AUTO_OCR_TAG: 'paperless-gpt-ocr-auto'
             VISION_LLM_MODEL: 'gpt-4o'
-            VISION_LLM_PROVIDER='openai'
+            VISION_LLM_PROVIDER: 'openai'
             LLM_LANGUAGE: 'French'
             LLM_PROVIDER: 'openai'
             LLM_MODEL: "gpt-4o"
             OPENAI_API_KEY: '<path:kv/paperless#openai>'
             OCR_LIMIT_PAGES: '5'
             LOG_LEVEL: 'info'
-            PAPERLESS_BASE_URL:  '<path:kv/paperless#url>'
+            PAPERLESS_BASE_URL: '<path:kv/paperless#url>'
             PAPERLESS_API_TOKEN: '<path:kv/paperless#token>'
             PAPERLESS_PUBLIC_URL: '<path:kv/paperless#url>'
         persistence:
