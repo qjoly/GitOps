@@ -41,6 +41,7 @@ spec:
             OLLAMA_HOST: 'http://ollama.ollama.svc.cluster.local:11434'
             AUTO_OCR_TAG: 'paperless-gpt-ocr-auto'
             VISION_LLM_MODEL: 'gpt-4o'
+            VISION_LLM_PROVIDER='openai'
             LLM_LANGUAGE: 'French'
             LLM_PROVIDER: 'openai'
             LLM_MODEL: "gpt-4o"
