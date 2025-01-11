@@ -1,7 +1,7 @@
 apiVersion: volsync.backube/v1alpha1
 kind: ReplicationSource
 metadata:
-  name: komga-config
+  name: factorio
   namespace: factorio
 spec:
   sourcePVC: factorio-data
