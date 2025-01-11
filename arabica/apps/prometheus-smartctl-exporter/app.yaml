@@ -13,7 +13,8 @@ spec:
         pod-security.kubernetes.io/warn: privileged
     syncOptions:
       - CreateNamespace=true
-    automated: {}
+    automated:
+      selfHeal: true
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
