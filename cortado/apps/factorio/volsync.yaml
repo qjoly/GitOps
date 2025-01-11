@@ -6,14 +6,14 @@ metadata:
 spec:
   sourcePVC: factorio-data
   trigger:
-    schedule: "0 * * * *"
+    schedule: "*/10 * * * *"
   restic:
     pruneIntervalDays: 7
     repository: restic-credentials
     retain:
-      hourly: 3
+      hourly: 2
       daily: 5
       weekly: 4
-      monthly: 2
-      yearly: 1
+      monthly: 3
+      yearly: 3
     copyMethod: Clone
