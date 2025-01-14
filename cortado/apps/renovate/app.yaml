@@ -14,7 +14,7 @@ spec:
     server: https://kubernetes.default.svc
     namespace: renovate
   source:
-    repoURL: https://docs.renovatebot.com/helm-charts
+    repoURL: https://bjw-s.github.io/helm-charts/
     chart: app-template
     targetRevision: 3.6.1
     helm:
