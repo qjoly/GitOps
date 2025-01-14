@@ -46,14 +46,12 @@ spec:
                     limits:
                       cpu: '2'
                       memory: 4Gi
-
           service:
             renovate:
               controller: renovate
               ports:
                 http:
                   port: 8080
-
           persistence:
             config:
               enabled: true
@@ -67,7 +65,6 @@ spec:
               type: emptyDir
               globalMounts:
                 - path: /tmp/renovate
-
           ingress:
             renovate:
               enabled: true
@@ -82,7 +79,6 @@ spec:
                 - secretName: renovate-tls
                   hosts:
                     - "renovate.<path:kv/cluster#domain>"
-
           configMaps:
             config:
               enabled: true
