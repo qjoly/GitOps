@@ -46,50 +46,50 @@ spec:
                     limits:
                       cpu: '2'
                       memory: 4Gi
-          service:
-            renovate:
-              controller: renovate
-              ports:
-                http:
-                  port: 8080
-          persistence:
-            config:
-              enabled: true
-              type: configMap
-              name: renovate-config
-              globalMounts:
-                - path: /usr/src/app/config.js
-                  subPath: config.js
-            cache:
-              enabled: true
-              type: emptyDir
-              globalMounts:
-                - path: /tmp/renovate
-          ingress:
-            renovate:
-              enabled: true
-              hosts:
-                - host: "renovate.<path:kv/cluster#domain>"
-                  paths:
-                    - path: /
-                      service:
-                        identifier: renovate
-                        port: http
-              tls:
-                - secretName: renovate-tls
-                  hosts:
-                    - "renovate.<path:kv/cluster#domain>"
-          configMaps:
-            config:
-              enabled: true
-              data:
-                config.js: |
-                  module.exports = {
-                    // Enter self-hosted configuration options here.
-                    // https://docs.renovatebot.com/self-hosted-configuration/
-                    autodiscover: true,
-                    cacheHardTtlMinutes: 240,
-                    onboardingConfigFileName: ".github/renovate.json",
-                    detectHostRulesFromEnv: true,
-                    onboardingRebaseCheckbox: true
-                  };
+        service:
+          renovate:
+            controller: renovate
+            ports:
+              http:
+                port: 8080
+        persistence:
+          config:
+            enabled: true
+            type: configMap
+            name: renovate-config
+            globalMounts:
+              - path: /usr/src/app/config.js
+                subPath: config.js
+          cache:
+            enabled: true
+            type: emptyDir
+            globalMounts:
+              - path: /tmp/renovate
+        ingress:
+          renovate:
+            enabled: true
+            hosts:
+              - host: "renovate.<path:kv/cluster#domain>"
+                paths:
+                  - path: /
+                    service:
+                      identifier: renovate
+                      port: http
+            tls:
+              - secretName: renovate-tls
+                hosts:
+                  - "renovate.<path:kv/cluster#domain>"
+        configMaps:
+          config:
+            enabled: true
+            data:
+              config.js: |
+                module.exports = {
+                  // Enter self-hosted configuration options here.
+                  // https://docs.renovatebot.com/self-hosted-configuration/
+                  autodiscover: true,
+                  cacheHardTtlMinutes: 240,
+                  onboardingConfigFileName: ".github/renovate.json",
+                  detectHostRulesFromEnv: true,
+                  onboardingRebaseCheckbox: true
+                };
