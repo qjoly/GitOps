@@ -32,7 +32,7 @@ spec:
           hostName: "paperless-gpt.<path:kv/cluster#domain>"
           ingressClassName: nginx
           tls:
-            enabled: true
+            enabled: false
             secretName: "paperless-gpt-tls"
           annotations:
             cert-manager.io/cluster-issuer: cloudflare
