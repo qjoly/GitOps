@@ -29,17 +29,15 @@ spec:
                     pullPolicy: IfNotPresent
                   env:
                     MEND_RNV_ACCEPT_TOS: "y"
-                    LOG_LEVEL: info
+                    LOG_LEVEL: debug
                     MEND_RNV_PLATFORM: github
                     MEND_RNV_CRON_JOB_SCHEDULER: "0 */4 * * *"
                     MEND_RNV_CRON_APP_SYNC: "0 */4 * * *"
                     MEND_RNV_AUTODISCOVER_FILTER: "qjoly/*"
                     RENOVATE_PAGINATE_ALL: "true"
-                    MEND_RNV_ADMIN_API_ENABLED: "true"
                     GITHUB_COM_TOKEN: "<path:kv/renovate#github_pat>"
                     RENOVATE_PLATFORM: 'github'
                     RENOVATE_TOKEN: "<path:kv/renovate#github_pat>"
-
                   resources:
                     requests:
                       cpu: 250m
