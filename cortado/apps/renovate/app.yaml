@@ -34,7 +34,7 @@ spec:
                     RENOVATE_PLATFORM: 'github'
                     RENOVATE_GIT_AUTHOR: 'unetassedecafe <github_second@une-pause-cafe.fr>'
                     RENOVATE_AUTODISCOVER: true
-                    RENOVATE_AUTODISCOVER_FILTER: "/qjoly/**"
+                    RENOVATE_AUTODISCOVER_FILTER: "/qjoly/^"
                   resources:
                     requests:
                       cpu: 250m
@@ -54,8 +54,8 @@ spec:
             type: configMap
             name: renovate-config
             globalMounts:
-              - path: /usr/src/app/config.js
-                subPath: config.js
+              - path: /opt/renovate/
+                subPath: config.json
           cache:
             enabled: true
             type: emptyDir
@@ -80,13 +80,8 @@ spec:
           config:
             enabled: true
             data:
-              config.js: |
-                module.exports = {
-                  // Enter self-hosted configuration options here.
-                  // https://docs.renovatebot.com/self-hosted-configuration/
-                  autodiscover: true,
-                  cacheHardTtlMinutes: 240,
-                  onboardingConfigFileName: ".github/renovate.json",
-                  detectHostRulesFromEnv: true,
-                  onboardingRebaseCheckbox: true
-                };
+              config.json: |-
+                {
+                  "repositories": ["qjoly/gitops"],
+                  "dryRun" : "full"
+                }
