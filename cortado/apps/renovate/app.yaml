@@ -68,6 +68,7 @@ spec:
         ingress:
           renovate:
             enabled: true
+            className: nginx
             hosts:
               - host: "renovate.<path:kv/cluster#domain>"
                 paths:
