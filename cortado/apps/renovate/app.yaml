@@ -46,12 +46,6 @@ spec:
                     limits:
                       cpu: '2'
                       memory: 4Gi
-                  probes:
-                    liveness: &probe
-                      enabled: true
-                      type: HTTP
-                      path: /health
-                    readiness: *probe
 
           service:
             renovate:
