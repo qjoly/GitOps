@@ -20,7 +20,7 @@ spec:
     helm:
       values: |
         controllers:
-            renovate:
+          renovate:
               containers:
                 app:
                   image:
