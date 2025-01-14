@@ -82,5 +82,5 @@ spec:
               config.json: |-
                 {
                   "autodiscoverFilter": "/qjoly/"
-                  "autodiscover": true,
+                  "autodiscover": true
                 }
