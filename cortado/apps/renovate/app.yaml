@@ -37,6 +37,7 @@ spec:
                     RENOVATE_PAGINATE_ALL: "true"
                     GITHUB_COM_TOKEN: "<path:kv/renovate#github_pat>"
                     RENOVATE_PLATFORM: 'github'
+                    RENOVATE_AUTODISCOVER: true
                     RENOVATE_TOKEN: "<path:kv/renovate#github_pat>"
                   resources:
                     requests:
