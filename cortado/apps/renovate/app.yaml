@@ -35,6 +35,7 @@ spec:
                     RENOVATE_GIT_AUTHOR: 'unetassedecafe <github_second@une-pause-cafe.fr>'
                     RENOVATE_AUTODISCOVER: false
                     # RENOVATE_AUTODISCOVER_FILTER: "/qjoly/^"
+                    RENOVATE_CONFIG_FILE: '/opt/renovate/config.json'
                   resources:
                     requests:
                       cpu: 250m
