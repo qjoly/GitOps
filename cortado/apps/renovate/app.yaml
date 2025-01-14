@@ -37,6 +37,9 @@ spec:
                     RENOVATE_PAGINATE_ALL: "true"
                     MEND_RNV_ADMIN_API_ENABLED: "true"
                     GITHUB_COM_TOKEN: "<path:kv/renovate#github_pat>"
+                    RENOVATE_PLATFORM: 'github'
+                    RENOVATE_TOKEN: "<path:kv/renovate#github_pat>"
+
                   resources:
                     requests:
                       cpu: 250m
