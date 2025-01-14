@@ -83,6 +83,5 @@ spec:
             data:
               config.json: |-
                 {
-                  "repositories": ["qjoly/gitops"],
-                  "dryRun" : "full"
+                  "repositories": ["qjoly/gitops"]
                 }
