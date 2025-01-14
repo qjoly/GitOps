@@ -1,0 +1,106 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: renovate
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      selfHeal: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: renovate
+  source:
+    repoURL: https://docs.renovatebot.com/helm-charts
+    chart: app-template
+    targetRevision: 3.6.1
+    helm:
+      values: |
+        controllers:
+            renovate:
+              containers:
+                app:
+                  image:
+                    repository: ghcr.io/mend/renovate-ce
+                    tag: 9.1.1-full@sha256:ccfdf8eefb15c09b35eb7734c607cfdc397839dde5e2a23be945bb8f49c6b0fc
+                    pullPolicy: IfNotPresent
+                  env:
+                    MEND_RNV_ACCEPT_TOS: "y"
+                    LOG_LEVEL: info
+                    MEND_RNV_PLATFORM: github
+                    MEND_RNV_CRON_JOB_SCHEDULER: "0 */4 * * *"
+                    MEND_RNV_CRON_APP_SYNC: "0 */4 * * *"
+                    MEND_RNV_AUTODISCOVER_FILTER: "qjoly/*"
+                    RENOVATE_PAGINATE_ALL: "true"
+                    MEND_RNV_ADMIN_API_ENABLED: "true"
+                    GITHUB_COM_TOKEN: '<path:kv/renovate#github_pat>'
+                    MEND_RNV_REPORTING_ENABLED: "true"
+                    MEND_RNV_SERVER_API_SECRET: <path:kv/renovate#mend_api>
+                  resources:
+                    requests:
+                      cpu: 250m
+                      memory: 500Mi
+                    limits:
+                      cpu: '2'
+                      memory: 4Gi
+                  probes:
+                    liveness: &probe
+                      enabled: true
+                      type: HTTP
+                      path: /health
+                    readiness: *probe
+
+          service:
+            renovate:
+              controller: renovate
+              ports:
+                http:
+                  port: 8080
+
+          persistence:
+            config:
+              enabled: true
+              type: configMap
+              name: renovate-config
+              globalMounts:
+                - path: /usr/src/app/config.js
+                  subPath: config.js
+            cache:
+              enabled: true
+              type: emptyDir
+              globalMounts:
+                - path: /tmp/renovate
+
+          ingress:
+            renovate:
+              enabled: true
+              hosts:
+                - host: "renovate.<path:kv/cluster#domain>"
+                  paths:
+                    - path: /
+                      service:
+                        identifier: renovate
+                        port: http
+              tls:
+                - secretName: renovate-tls
+                  hosts:
+                    - "renovate.<path:kv/cluster#domain>"
+
+          configMaps:
+            config:
+              enabled: true
+              data:
+                # language=javascript
+                config.js: |
+                  module.exports = {
+                    // Enter self-hosted configuration options here.
+                    // https://docs.renovatebot.com/self-hosted-configuration/
+                    autodiscover: true,
+                    cacheHardTtlMinutes: 240,
+                    onboardingConfigFileName: ".github/renovate.json",
+                    detectHostRulesFromEnv: true,
+                    onboardingRebaseCheckbox: true
+                  };
