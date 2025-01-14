@@ -81,7 +81,7 @@ spec:
             data:
               config.json: |-
                 {
-                  "repositories": ["qjoly/gitops"],
+                  // "repositories": ["qjoly/gitops"],
                   "autodiscover": true,
                   "autodiscoverFilter": ["qjoly/*"]
                 }
