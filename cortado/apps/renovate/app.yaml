@@ -29,8 +29,8 @@ spec:
                     pullPolicy: IfNotPresent
                   env:
                     LOG_LEVEL: debug
-                    GITHUB_COM_TOKEN: "<path:kv/renovate#github_pat>"
-                    RENOVATE_TOKEN: "<path:kv/renovate#github_pat>"
+                    GITHUB_COM_TOKEN: "<path:kv/renovate#github_token>"
+                    RENOVATE_TOKEN: "<path:kv/renovate#github_token>"
                     RENOVATE_PLATFORM: 'github'
                     RENOVATE_GIT_AUTHOR: 'unetassedecafe <github_second@une-pause-cafe.fr>'
                     RENOVATE_CONFIG_FILE: '/opt/renovate/config.json'
