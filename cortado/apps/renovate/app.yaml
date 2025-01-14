@@ -24,8 +24,8 @@ spec:
               containers:
                 app:
                   image:
-                    repository: ghcr.io/mend/renovate-ce
-                    tag: 9.1.1-full@sha256:ccfdf8eefb15c09b35eb7734c607cfdc397839dde5e2a23be945bb8f49c6b0fc
+                    repository: renovate/renovate
+                    tag: 39.104.1
                     pullPolicy: IfNotPresent
                   env:
                     MEND_RNV_ACCEPT_TOS: "y"
