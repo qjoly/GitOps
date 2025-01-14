@@ -31,7 +31,6 @@ spec:
                     LOG_LEVEL: debug
                     GITHUB_COM_TOKEN: "<path:kv/renovate#github_pat>"
                     RENOVATE_TOKEN: "<path:kv/renovate#github_pat>"
-                    RENOVATE_ENDPOINT: 'https://github.company.com/api/v3'
                     RENOVATE_PLATFORM: 'github'
                     RENOVATE_GIT_AUTHOR: 'unetassedecafe <github_second@une-pause-cafe.fr>'
                     RENOVATE_AUTODISCOVER: true
