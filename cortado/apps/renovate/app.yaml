@@ -33,8 +33,8 @@ spec:
                     RENOVATE_TOKEN: "<path:kv/renovate#github_pat>"
                     RENOVATE_PLATFORM: 'github'
                     RENOVATE_GIT_AUTHOR: 'unetassedecafe <github_second@une-pause-cafe.fr>'
-                    RENOVATE_AUTODISCOVER: false
-                    # RENOVATE_AUTODISCOVER_FILTER: "/qjoly/^"
+                    RENOVATE_AUTODISCOVER: true
+                    RENOVATE_AUTODISCOVER_FILTER: "/qjoly/^"
                     RENOVATE_CONFIG_FILE: '/opt/renovate/config.json'
                   resources:
                     requests:
@@ -55,7 +55,7 @@ spec:
             type: configMap
             name: renovate-config
             globalMounts:
-              - path: /opt/renovate/
+              - path: /opt/renovate/config.json
                 subPath: config.json
           cache:
             enabled: true
