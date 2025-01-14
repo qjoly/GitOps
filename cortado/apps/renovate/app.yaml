@@ -28,17 +28,14 @@ spec:
                     tag: 39.104.1
                     pullPolicy: IfNotPresent
                   env:
-                    MEND_RNV_ACCEPT_TOS: "y"
                     LOG_LEVEL: debug
-                    MEND_RNV_PLATFORM: github
-                    MEND_RNV_CRON_JOB_SCHEDULER: "0 */4 * * *"
-                    MEND_RNV_CRON_APP_SYNC: "0 */4 * * *"
-                    RENOVATE_AUTODISCOVER_FILTER: "qjoly/*"
-                    RENOVATE_PAGINATE_ALL: "true"
                     GITHUB_COM_TOKEN: "<path:kv/renovate#github_pat>"
-                    RENOVATE_PLATFORM: 'github'
-                    RENOVATE_AUTODISCOVER: true
                     RENOVATE_TOKEN: "<path:kv/renovate#github_pat>"
+                    RENOVATE_ENDPOINT: 'https://github.company.com/api/v3'
+                    RENOVATE_PLATFORM: 'github'
+                    RENOVATE_GIT_AUTHOR: 'unetassedecafe <github_second@une-pause-cafe.fr>'
+                    RENOVATE_AUTODISCOVER: true
+                    RENOVATE_AUTODISCOVER_FILTER: "/qjoly/.*"
                   resources:
                     requests:
                       cpu: 250m
