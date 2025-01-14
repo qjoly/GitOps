@@ -38,7 +38,7 @@ spec:
                     MEND_RNV_ADMIN_API_ENABLED: "true"
                     GITHUB_COM_TOKEN: "<path:kv/renovate#github_pat>"
                     MEND_RNV_REPORTING_ENABLED: "true"
-                    MEND_RNV_SERVER_API_SECRET: "<path:kv/renovate#mend_api>"
+                    MEND_RNV_LICENSE_KEY: "<path:kv/renovate#mend_api>"
                   resources:
                     requests:
                       cpu: 250m
