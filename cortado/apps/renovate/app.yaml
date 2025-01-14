@@ -34,7 +34,7 @@ spec:
                     RENOVATE_PLATFORM: 'github'
                     RENOVATE_GIT_AUTHOR: 'unetassedecafe <github_second@une-pause-cafe.fr>'
                     RENOVATE_AUTODISCOVER: true
-                    RENOVATE_AUTODISCOVER_FILTER: "/qjoly/.*"
+                    RENOVATE_AUTODISCOVER_FILTER: "/qjoly/**"
                   resources:
                     requests:
                       cpu: 250m
