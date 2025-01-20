@@ -33,7 +33,7 @@ spec:
 
         ingress:
           enabled: true
-          hostName: "changedetection.<path:kv/cloudflare#domain>"
+          hostName: "changedetection.<path:kv/cluster#domain>"
           ingressClassName: nginx
           tls:
              enabled: true
