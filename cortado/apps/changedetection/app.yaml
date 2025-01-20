@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: changedetection
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: factorio
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: 0.4.2
+    helm:
+      values: |
+        name: "changedetection"
+        service:
+          enabled: true
+          servicePort: 5000
+          containerPort: 5000
+
+        image:
+          repository: dgtlmoon/changedetection.io
+          tag: 0.48.06
+          pullPolicy: Always
+          
+        deployment:
+          port: 5000
+
+        ingress:
+          enabled: true
+          hostName: "changedetection.<path:kv/cloudflare#domain>"
+          ingressClassName: nginx
+          tls:
+             enabled: true
+             secretName: "changedetection-tls"
+          annotations:
+             cert-manager.io/cluster-issuer: cloudflare
+        configMap:
+          enabled: false
+
+        persistence:
+          enabled: true
+          volumes:
+            - name: data
+              storageClassName: ""
+              size: 5Gi
+              pvcClaim: ""
+              containerMount: "/datastore"
