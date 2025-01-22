@@ -10,7 +10,7 @@ spec:
       - CreateNamespace=true
   destination:
     server: https://kubernetes.default.svc
-    namespace: factorio
+    namespace: changedetection
   source:
     repoURL: https://rubxkube.github.io/common-charts/
     chart: common
@@ -42,6 +42,12 @@ spec:
              cert-manager.io/cluster-issuer: cloudflare
         configMap:
           enabled: false
+
+        variables:
+          nonSecret:
+            WEBDRIVER_URL: http://playwright-chrome:3000/wd/hub
+            PLAYWRIGHT_DRIVER_URL: ws://playwright-chrome:3000
+            HIDE_REFERER: true
 
         persistence:
           enabled: true

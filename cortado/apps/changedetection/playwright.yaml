@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: playwright
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: changedetection
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: 0.4.2
+    helm:
+      values: |
+        name: "playwright"
+        service:
+          enabled: true
+          servicePort: 3000
+          containerPort: 3000
+
+        variables:
+          nonSecret:
+            SCREEN_WIDTH: 1920
+            SCREEN_HEIGHT: 1024
+            SCREEN_DEPTH: 16
+            MAX_CONCURRENT_CHROME_PROCESSES: 10
+            STATS_REFRESH_SECONDS: 120 
+            DEFAULT_BLOCK_ADS: true
+            DEFAULT_STEALTH: true
+            PREBOOT_CHROME: true
+
+        image:
+          repository: browserless/chrome
+          tag: 1.60-chrome-stable
+          pullPolicy: Always
+          
+        deployment:
+          port: 3000
+
+
+        ingress:
+          enabled: false
+        configMap:
+          enabled: false
+
+        persistence:
+          enabled: false
