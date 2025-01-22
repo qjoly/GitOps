@@ -45,8 +45,8 @@ spec:
 
         variables:
           nonSecret:
-            WEBDRIVER_URL: http://playwright-chrome:3000/wd/hub
-            PLAYWRIGHT_DRIVER_URL: ws://playwright-chrome:3000
+            WEBDRIVER_URL: http://playwright:3000/wd/hub
+            PLAYWRIGHT_DRIVER_URL: ws://playwright:3000
             HIDE_REFERER: true
 
         persistence:
