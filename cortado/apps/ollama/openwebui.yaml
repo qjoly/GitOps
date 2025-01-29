@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openwebui
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ollama
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: 0.4.2
+    helm:
+      values: |
+        name: "openwebui"
+        service:
+          enabled: true
+          servicePort: 8080
+          containerPort: 8080
+
+        image:
+          repository: ghcr.io/open-webui/open-webui
+          tag: ollama
+          
+        deployment:
+          port: 8080
+
+        ingress:
+          enabled: true
+          hostName: "openwebui.<path:kv/cluster#domain>"
+          ingressClassName: nginx
+          tls:
+             enabled: true
+             secretName: "openwebui-tls"
+          annotations:
+             cert-manager.io/cluster-issuer: cloudflare
+
+        configMap:
+          enabled: false
+
+        extraConfigMaps: []
+
+        persistence:
+          enabled: true
+          volumes:
+            - name: data
+              storageClassName: ""
+              size: 10Gi
+              pvcClaim: ""
+              containerMount: "/app/backend/data"
+            - name: models
+              storageClassName: ""
+              size: 20Gi
+              pvcClaim: ""
+              containerMount: "/root/.ollama"
