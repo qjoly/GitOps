@@ -29,6 +29,9 @@ spec:
           
         deployment:
           port: 8080
+        variables:
+          nonSecret:
+            OLLAMA_BASE_URL=http://ollama.svc.cluster.local:11434
 
         ingress:
           enabled: true
@@ -53,8 +56,3 @@ spec:
               size: 10Gi
               pvcClaim: ""
               containerMount: "/app/backend/data"
-            - name: models
-              storageClassName: ""
-              size: 20Gi
-              pvcClaim: ""
-              containerMount: "/root/.ollama"
