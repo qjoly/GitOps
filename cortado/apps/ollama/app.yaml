@@ -21,6 +21,7 @@ spec:
           models:
             pull:
               - llama2
+              - deepseek-r1:8b
         persistentVolume:
           enabled: true
         ingress:
