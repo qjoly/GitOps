@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: languagetool
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: languagetool
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: 0.4.2
+    helm:
+      values: |
+        name: "languagetool"
+        service:
+          enabled: true
+          servicePort: 8010
+          containerPort: 8010
+
+        image:
+          repository: erikvl87/languagetool
+          tag: 6.5
+          pullPolicy: Always
+          
+        deployment:
+          port: 8010
+
+        ingress:
+          enabled: true
+          hostName: "languagetool.<path:kv/cluster#domain>"
+          ingressClassName: nginx
+          tls:
+             enabled: true
+             secretName: "languagetool-tls"
+          annotations:
+             cert-manager.io/cluster-issuer: cloudflare
+
+        configMap:
+          enabled: false
+
+        extraConfigMaps: []
+
+        variables:
+          nonSecret:
+            langtool_languageModel: /ngrams
+
+        persistence:
+          enabled: true
+          volumes:
+            - name: data
+              storageClassName: ""
+              size: 10Gi
+              pvcClaim: ""
+              containerMount: "/ngrams"
