@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://grafana.github.io/helm-charts
     chart: grafana
-    targetRevision: 8.8.6
+    targetRevision: 8.9.0
     plugin:
       name: argocd-vault-plugin-helm
       env:
