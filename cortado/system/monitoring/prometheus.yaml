@@ -15,7 +15,7 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
-    targetRevision: 68.4.5
+    targetRevision: 68.5.0
     helm:
       values: |
         defaultRules:
