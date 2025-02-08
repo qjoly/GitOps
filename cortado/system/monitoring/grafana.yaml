@@ -11,37 +11,49 @@ spec:
   source:
     repoURL: https://grafana.github.io/helm-charts
     chart: grafana
-    targetRevision: 8.8.6
-    plugin:
-      name: argocd-vault-plugin-helm
-      env:
-        - name: HELM_VALUES
-          value: |
-            adminUser: <path:kv/grafana#user>
-            adminPassword: <path:kv/grafana#pass>
-            ingress:
-              enabled: true
-              ingressClassName: nginx
-              annotations:
-                cert-manager.io/cluster-issuer: cloudflare
+    targetRevision: 8.9.0
+    helm:
+      values: |
+        adminUser: <path:kv/grafana#user>
+        adminPassword: <path:kv/grafana#pass>
+        ingress:
+          enabled: true
+          ingressClassName: nginx
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+          hosts:
+            - "grafana.cortado.<path:kv/cluster#domain>"
+          tls:
+            - secretName: grafana-tls
               hosts:
                 - "grafana.cortado.<path:kv/cluster#domain>"
-              tls:
-                - secretName: grafana-tls
-                  hosts:
-                    - "grafana.cortado.<path:kv/cluster#domain>"
-            persistence:
-              type: pvc
-              enabled: true
-            datasources:
-              datasources.yaml:
-                apiVersion: 1
-                datasources:
-                - name: Prometheus
-                  type: prometheus
-                  url: http://prometheus-stack-kube-prom-prometheus:9090
-                  access: proxy
-                  isDefault: false
-            sidecar:
-              datasources:
+        persistence:
+          type: pvc
+          enabled: true
+        grafana.ini:
+            auth:
+                signout_redirect_url: "https://authentik.une-tasse-de.cafe/application/o/<path:kv/grafana#authentik_app>/end-session/"
+                oauth_auto_login: true
+            auth.generic_oauth:
+                name: authentik
                 enabled: true
+                client_id: <path:kv/grafana#authentik_id>
+                client_secret: <path:kv/grafana#authentik_secret>
+                scopes: "openid profile email"
+                auth_url: "https://authentik.une-tasse-de.cafe/application/o/authorize/"
+                token_url: "https://authentik.une-tasse-de.cafe/application/o/token/"
+                api_url: "https://authentik.une-tasse-de.cafe/application/o/userinfo/"
+                # Optionally map user groups to Grafana roles
+                # role_attribute_path: contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
+        datasources:
+          datasources.yaml:
+            apiVersion: 1
+            datasources:
+            - name: Prometheus
+              type: prometheus
+              url: http://prometheus-stack-kube-prom-prometheus:9090
+              access: proxy
+              isDefault: false
+        sidecar:
+          datasources:
+            enabled: true
