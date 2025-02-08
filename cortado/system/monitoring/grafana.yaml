@@ -33,7 +33,7 @@ spec:
         assertNoLeakedSecrets: false
         grafana.ini:
             auth:
-                signout_redirect_url: "https://authentik.une-tasse-de.cafe/application/o/<path:kv/grafana#authentik_app>/end-session/"
+                signout_redirect_url: "https://goauthentik.une-tasse-de.cafe/application/o/<path:kv/grafana#authentik_app>/end-session/"
                 oauth_auto_login: true
             auth.generic_oauth:
                 name: authentik
@@ -41,9 +41,9 @@ spec:
                 client_id: <path:kv/grafana#authentik_id>
                 client_secret: <path:kv/grafana#authentik_secret>
                 scopes: "openid profile email"
-                auth_url: "https://authentik.une-tasse-de.cafe/application/o/authorize/"
-                token_url: "https://authentik.une-tasse-de.cafe/application/o/token/"
-                api_url: "https://authentik.une-tasse-de.cafe/application/o/userinfo/"
+                auth_url: "https://goauthentik.une-tasse-de.cafe/application/o/authorize/"
+                token_url: "https://goauthentik.une-tasse-de.cafe/application/o/token/"
+                api_url: "https://goauthentik.une-tasse-de.cafe/application/o/userinfo/"
                 # Optionally map user groups to Grafana roles
                 # role_attribute_path: contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
         datasources:
