@@ -45,10 +45,11 @@ spec:
 
         variables:
           secret:
-            GITHUB_APP_INTEGRATION_ID: <path:kv/bulldozer#github_app_id>
-            GITHUB_APP_WEBHOOK_SECRET: <path:kv/bulldozer#webhook_secret>
-            GITHUB_APP_PRIVATE_KEY: |
-              <path:kv/bulldozer#github_private_key | indent 16 >
+            data:
+              GITHUB_APP_INTEGRATION_ID: <path:kv/bulldozer#github_app_id>
+              GITHUB_APP_WEBHOOK_SECRET: <path:kv/bulldozer#webhook_secret>
+              GITHUB_APP_PRIVATE_KEY: |
+                <path:kv/bulldozer#github_private_key | indent 18 >
 
         persistence:
           enabled: false
