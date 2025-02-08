@@ -36,10 +36,10 @@ spec:
           hostName: "bulldozer.thoughtless.eu"
           ingressClassName: nginx
           tls:
-             enabled: true
-             secretName: "bulldozer-tls"
+            enabled: true
+            secretName: "bulldozer-tls"
           annotations:
-             cert-manager.io/cluster-issuer: cloudflare
+            cert-manager.io/cluster-issuer: cloudflare
         configMap:
           enabled: false
 
