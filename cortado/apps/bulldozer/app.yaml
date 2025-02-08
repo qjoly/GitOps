@@ -58,19 +58,19 @@ spec:
               data:
                 - content:
                     bulldozer.yml: |
-                    server:
-                      address: "0.0.0.0"
-                      port: 8080
+                      server:
+                        address: "0.0.0.0"
+                        port: 8080
 
-                    logging:
-                      text: false
-                      level: debug
+                      logging:
+                        text: false
+                        level: debug
 
-                    github:
-                      web_url: "https://github.com"
-                      v3_api_url: "https://api.github.com"
+                      github:
+                        web_url: "https://github.com"
+                        v3_api_url: "https://api.github.com"
 
-                    # Options for application behavior
-                    options:
-                      configuration_path: .bulldozer.yml
-                      app_name: bulldozer
+                      # Options for application behavior
+                      options:
+                        configuration_path: .bulldozer.yml
+                        app_name: bulldozer
