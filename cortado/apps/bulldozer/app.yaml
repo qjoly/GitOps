@@ -1,0 +1,78 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bulldozer
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: bulldozer
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: 0.4.2
+    helm:
+      values: |
+        name: "bulldozer"
+        service:
+          enabled: true
+          servicePort: 8080
+          containerPort: 8080
+
+        image:
+          repository: palantirtechnologies/bulldozer
+          tag: 1.19.2
+          pullPolicy: Always
+          
+        deployment:
+          port: 8080
+
+        ingress:
+          enabled: true
+          hostName: "bulldozer.thoughtless.eu"
+          ingressClassName: nginx
+          tls:
+             enabled: true
+             secretName: "bulldozer-tls"
+          annotations:
+             cert-manager.io/cluster-issuer: cloudflare
+        configMap:
+          enabled: false
+
+        variables:
+          secret:
+            GITHUB_APP_INTEGRATION_ID: <path:kv/bulldozer#github_app_id>
+            GITHUB_APP_WEBHOOK_SECRET: <path:kv/bulldozer#webhook_secret>
+            GITHUB_APP_PRIVATE_KEY: <path:kv/bulldozer#github_private_key>
+
+        persistence:
+          enabled: false
+        configMap:
+          enabled: true
+          data: 
+            - name: "config"
+              mountPath: "/secrets/"
+              data:
+                - content:
+                    bulldozer.yml: |
+                    server:
+                      address: "0.0.0.0"
+                      port: 8080
+
+                    logging:
+                      text: false
+                      level: debug
+
+                    # Options for connecting to GitHub
+                    github:
+                      web_url: "https://github.com"
+                      v3_api_url: "https://api.github.com"
+
+                    # Options for application behavior
+                    options:
+                      configuration_path: .bulldozer.yml
+                      app_name: bulldozer

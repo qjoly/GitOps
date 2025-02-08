@@ -15,18 +15,15 @@ spec:
     repoURL: https://rubxkube.github.io/charts/
     chart: komga
     targetRevision: 0.0.5
-    plugin:
-      name: argocd-vault-plugin-helm
-      env:
-        - name: HELM_VALUES
-          value: |
-            common:
-              ingress:
-                enabled: true
-                hostName: "komga.<path:kv/cloudflared#domain>"
-                ingressClassName: nginx
-                tls:
-                  enabled: true
-                  secretName: "komga-tls"
-                annotations:
-                  cert-manager.io/cluster-issuer: cloudflare
+    helm:
+      values: |
+        common:
+          ingress:
+            enabled: true
+            hostName: "komga.<path:kv/cloudflared#domain>"
+            ingressClassName: nginx
+            tls:
+              enabled: true
+              secretName: "komga-tls"
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
