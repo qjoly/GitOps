@@ -39,7 +39,7 @@ spec:
             enabled: true
             secretName: "bulldozer-tls"
           annotations:
-            cert-manager.io/cluster-issuer: cloudflare
+        cert-manager.io/cluster-issuer: cloudflare
         configMap:
           enabled: false
 
@@ -47,6 +47,8 @@ spec:
           secret:
             GITHUB_APP_INTEGRATION_ID: <path:kv/bulldozer#github_app_id>
             GITHUB_APP_WEBHOOK_SECRET: <path:kv/bulldozer#webhook_secret>
+            GITHUB_APP_PRIVATE_KEY: |
+<path:kv/bulldozer#github_private_key | indent 16 >
 
         persistence:
           enabled: false
@@ -58,19 +60,15 @@ spec:
               data:
                 - content:
                     bulldozer.yml: |
-                      server:
-                        address: "0.0.0.0"
-                        port: 8080
+                    server:
+                      address: "0.0.0.0"
+                      port: 8080
 
-                      logging:
-                        text: false
-                        level: debug
+                    logging:
+                      text: false
+                      level: debug
 
-                      github:
-                        web_url: "https://github.com"
-                        v3_api_url: "https://api.github.com"
-
-                      # Options for application behavior
-                      options:
-                        configuration_path: .bulldozer.yml
-                        app_name: bulldozer
+                    # Options for application behavior
+                    options:
+                      configuration_path: .bulldozer.yml
+                      app_name: bulldozer
