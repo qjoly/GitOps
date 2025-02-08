@@ -30,6 +30,7 @@ spec:
         persistence:
           type: pvc
           enabled: true
+        assertNoLeakedSecrets: false
         grafana.ini:
             auth:
                 signout_redirect_url: "https://authentik.une-tasse-de.cafe/application/o/<path:kv/grafana#authentik_app>/end-session/"
