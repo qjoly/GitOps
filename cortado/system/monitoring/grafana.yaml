@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://grafana.github.io/helm-charts
     chart: grafana
-    targetRevision: 8.10.0
+    targetRevision: 8.10.1
     helm:
       values: |
         adminUser: <path:kv/grafana#user>
