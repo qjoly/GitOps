@@ -8,6 +8,7 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
   destination:
     server: https://kubernetes.default.svc
     namespace: litmus
