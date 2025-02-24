@@ -30,3 +30,4 @@ spec:
             hosts:
               - name: "chaosmesh.<path:kv/cluster#domain>"
                 tls: true
+                tlsSecret: chaos-mesh-tls
