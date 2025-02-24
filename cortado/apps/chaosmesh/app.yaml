@@ -11,7 +11,7 @@ spec:
       - ServerSideApply=true
   destination:
     server: https://kubernetes.default.svc
-    namespace: litmus
+    namespace: chaos-mesh
   source:
     repoURL: https://charts.chaos-mesh.org
     chart: chaos-mesh
@@ -22,6 +22,7 @@ spec:
           runtime: containerd
           socketPath: /run/containerd/containerd.sock
         dashboard:
+          securityMode: false
           ingress:
             enabled: true
             annotations:
