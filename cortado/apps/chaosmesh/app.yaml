@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: chaos-mesh
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: litmus
+  source:
+    repoURL: https://charts.chaos-mesh.org
+    chart: chaos-mesh
+    targetRevision: 2.7.0
+    helm:
+      values: |
+        chaosDaemon:
+          runtime: containerd
+          socketPath: /run/containerd/containerd.sock
+        dashboard:
+          ingress:
+            enabled: true
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+            ingressClassName: "nginx"
+            hosts:
+              - name: "chaosmesh.<path:kv/cluster#domain>"
+                tls: true
