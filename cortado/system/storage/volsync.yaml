@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://backube.github.io/helm-charts/
     chart: volsync
-    targetRevision: 0.11.0
+    targetRevision: 0.12.0
     helm:
       values: |
         metrics:
