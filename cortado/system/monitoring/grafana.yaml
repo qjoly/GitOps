@@ -16,6 +16,8 @@ spec:
       values: |
         adminUser: <path:kv/grafana#user>
         adminPassword: <path:kv/grafana#pass>
+        plugins:
+          - chaosmeshorg-datasource
         ingress:
           enabled: true
           ingressClassName: nginx
