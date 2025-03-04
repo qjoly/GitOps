@@ -38,7 +38,7 @@ spec:
               root_url: https://grafana.cortado.<path:kv/cluster#domain>
             auth:
                 signout_redirect_url: "https://goauthentik.une-tasse-de.cafe/application/o/<path:kv/grafana#authentik_app>/end-session/"
-                oauth_auto_login: true
+                oauth_auto_login: false
             auth.generic_oauth:
                 name: authentik
                 enabled: true
