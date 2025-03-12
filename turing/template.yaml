@@ -1,9 +1,9 @@
 kind: Cluster
 name: turing
 kubernetes:
-  version: v1.31.3
+  version: v1.32.2
 talos:
-  version: v1.9.2
+  version: v1.9.4
 features:
   enableWorkloadProxy: false
   diskEncryption: false
@@ -11,14 +11,14 @@ features:
 patches:
   - name: enable-workload
     file: patches/workload-on-cp.yml
-#  - name: kubespan-enabled
-#    file: patches/kubespan.yml
-#  - name: no-cni # we will install cilium in extraManifests
-#    file: patches/cni.yml
-#  - name: disable-kubeproxy
-#    file: patches/disable-kubeproxy.yml
-#  - name: manifests
-#    file: patches/extraManifests.yml
+  - name: kubespan-enabled
+    file: patches/kubespan.yml
+  - name: no-cni # we will install cilium in extraManifests
+    file: patches/cni.yml
+  - name: disable-kubeproxy
+    file: patches/disable-kubeproxy.yml
+  - name: manifests
+    file: patches/extraManifests.yml
   - name: metric-server
     file: patches/metrics-server.yml
 #systemExtensions:

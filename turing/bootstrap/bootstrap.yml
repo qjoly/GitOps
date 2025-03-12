@@ -17,39 +17,59 @@ spec:
       - CreateNamespace=true
 ---
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
-  name: system
+  name: turing-apps
   namespace: argocd
 spec:
-  project: default
-  source:
-    repoURL: https://github.com/qjoly/gitops
-    targetRevision: main
-    path: turing/system
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
-  syncPolicy:
-    syncOptions:
-      - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/qjoly/gitops.git
+        revision: HEAD
+        directories:
+          - path: turing/apps/*
+  template:
+    metadata:
+      name: "app-{{.path.basename}}"
+    spec:
+      project: "default"
+      source:
+        repoURL: https://github.com/qjoly/gitops.git
+        targetRevision: HEAD
+        path: "{{.path.path}}"
+        plugin:
+          name: argocd-vault-plugin-kustomize
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "argocd"
 ---
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
-  name: apps
+  name: turing-system
   namespace: argocd
 spec:
-  project: default
-  source:
-    repoURL: https://github.com/qjoly/gitops
-    targetRevision: main
-    path: turing/apps
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
-  syncPolicy:
-    automated:
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/qjoly/gitops.git
+        revision: HEAD
+        directories:
+          - path: turing/system/*
+  template:
+    metadata:
+      name: "sys-{{.path.basename}}"
+    spec:
+      project: "default"
+      source:
+        repoURL: https://github.com/qjoly/gitops.git
+        targetRevision: HEAD
+        path: "{{.path.path}}"
+        plugin:
+          name: argocd-vault-plugin-kustomize
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "argocd"
