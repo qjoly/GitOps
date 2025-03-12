@@ -7,11 +7,15 @@ spec:
   project: default
   source:
     repoURL: https://github.com/spegel-org/spegel
-    chart: spegel
     targetRevision: v0.0.30
     path: charts/spegel
     helm:
       releaseName: spegel
+      values: |
+        spegel:
+          containerdRegistryConfigPath: /etc/cri/conf.d/hosts
+        image: 
+          tag: v0.0.30
   destination:
     server: https://kubernetes.default.svc
     namespace: spegel
