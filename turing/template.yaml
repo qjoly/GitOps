@@ -9,6 +9,8 @@ features:
   diskEncryption: false
   useEmbeddedDiscoveryService: true
 patches:
+  - name: spegel
+    file: patches/spegel.yaml
   - name: enable-workload
     file: patches/workload-on-cp.yml
   - name: kubespan-enabled
