@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    # cert-manager.io/cluster-issuer: cloudflare
+    cert-manager.io/cluster-issuer: cloudflare
     external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
     external-dns.alpha.kubernetes.io/hostname: argocd-turing.<path:kv/cluster#domain>
     external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflare#tunnelid>.cfargotunnel.com"
@@ -21,7 +21,7 @@ spec:
                   number: 80
             path: /
             pathType: Prefix
-  # tls:
-  #   - hosts:
-  #       - argocd-turing.<path:kv/cluster#domain>
-  #     secretName: argocd-tls
+  tls:
+    - hosts:
+        - argocd-turing.<path:kv/cluster#domain>
+      secretName: argocd-tls
