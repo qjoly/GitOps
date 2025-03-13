@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jellyfin
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: jellyfin
+  source:
+    repoURL: https://rubxkube.github.io/charts/
+    chart: jellyfin
+    targetRevision: 1.2.3
+    helm:
+      values: |
+        name: "jellyfin"
+        service:
+          enabled: true
+          servicePort: 80
+          containerPort: 80
+
+        variables:
+          secret: {}
+          nonSecret:
+            USER_UID: "1000"
+            USER_GID: "1000"
+            TZ: Europe/Paris
+
+        image:
+          repository: jellyfin/jellyfin
+          tag: "10.10.6"
+          
+        ingress:
+          enabled: true
+          hostName: "jellyfin.<path:kv/cluster#domain>"
+          ingressClassName: nginx
+          tls:
+             enabled: true
+             secretName: "jellyfin-tls"
+          annotations:
+             cert-manager.io/cluster-issuer: cloudflare
+
+        persistence:
+          enabled: true
+          volumes:
+            - name: "data"
+              storageClassName: ""
+              size: "50Gi"
+              pvcClaim: "media"
+              containerMount: "/data/"
+            - name: "config"
+              storageClassName: ""
+              size: "2Gi"
+              pvcClaim: ""
+              containerMount: "/config/"
+            - name: "cache"
+              storageClassName: ""
+              size: "5Gi"
+              pvcClaim: ""
+              containerMount: "/cache/"
