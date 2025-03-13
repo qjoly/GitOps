@@ -22,7 +22,7 @@ spec:
           tunnelId: "41bb192d-3331-40ff-b9a8-f2541630b748"
           secret: "<path:kv/cloudflare#token>"
           ingress:
-            - hostname: "*.<path:kv/cloudflare#token>"
+            - hostname: "*.<path:kv/cluster#domain>"
               service: "https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443"
               originRequest:
                 noTLSVerify: true
