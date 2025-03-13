@@ -12,9 +12,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: cloudflare
   source:
-    repoURL: https://github.com/cloudflare/helm-chart
+    repoURL: https://github.com/cloudflare/helm-charts
     targetRevision: cloudflare-tunnel-0.3.2
-    chart: cloudflare-tunnel
+    path: charts/cloudflare-tunnel
     helm:
       values: |
         cloudflare:
