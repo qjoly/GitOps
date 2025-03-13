@@ -18,47 +18,48 @@ spec:
     helm:
       values: |
         name: "jellyfin"
-        service:
-          enabled: true
-          servicePort: 80
-          containerPort: 80
+        common:
+          service:
+            enabled: true
+            servicePort: 80
+            containerPort: 80
 
-        variables:
-          secret: {}
-          nonSecret:
-            USER_UID: "1000"
-            USER_GID: "1000"
-            TZ: Europe/Paris
+          variables:
+            secret: {}
+            nonSecret:
+              USER_UID: "1000"
+              USER_GID: "1000"
+              TZ: Europe/Paris
 
-        image:
-          repository: jellyfin/jellyfin
-          tag: "10.10.6"
-          
-        ingress:
-          enabled: true
-          hostName: "jellyfin.<path:kv/cluster#domain>"
-          ingressClassName: nginx
-          tls:
-             enabled: true
-             secretName: "jellyfin-tls"
-          annotations:
-             cert-manager.io/cluster-issuer: cloudflare
+          image:
+            repository: jellyfin/jellyfin
+            tag: "10.10.6"
+            
+          ingress:
+            enabled: true
+            hostName: "jellyfin.<path:kv/cluster#domain>"
+            ingressClassName: nginx
+            tls:
+              enabled: true
+              secretName: "jellyfin-tls"
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
 
-        persistence:
-          enabled: true
-          volumes:
-            - name: "media"
-              storageClassName: ""
-              size: ""
-              pvcClaim: "media"
-              containerMount: "/data/"
-            - name: "config"
-              storageClassName: ""
-              size: "2Gi"
-              pvcClaim: ""
-              containerMount: "/config/"
-            - name: "cache"
-              storageClassName: ""
-              size: "5Gi"
-              pvcClaim: ""
-              containerMount: "/cache/"
+          persistence:
+            enabled: true
+            volumes:
+              - name: "media"
+                storageClassName: ""
+                size: ""
+                pvcClaim: "media"
+                containerMount: "/data/"
+              - name: "config"
+                storageClassName: ""
+                size: "2Gi"
+                pvcClaim: ""
+                containerMount: "/config/"
+              - name: "cache"
+                storageClassName: ""
+                size: "5Gi"
+                pvcClaim: ""
+                containerMount: "/cache/"
