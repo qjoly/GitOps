@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: isponsorblocktv
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: isponsorblocktv
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: 0.4.2
+    helm:
+      values: |
+        name: "isponsorblocktv"
+        service:
+          enabled: true
+          servicePort: 80
+          containerPort: 80
+
+        image:
+          repository: ghcr.io/dmunozv04/isponsorblocktv
+          tag: main
+          
+        variables:
+          nonSecret: {}
+
+        ingress:
+          enabled: false
+
+        configMap:
+          enabled: false
+
+        extraConfigMaps: []
+
+        persistence:
+          enabled: true
+          volumes:
+            - name: data
+              storageClassName: ""
+              size: 1Gi
+              pvcClaim: ""
+              containerMount: "/app/data"
