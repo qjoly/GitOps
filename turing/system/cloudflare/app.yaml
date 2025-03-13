@@ -20,7 +20,7 @@ spec:
         cloudflare:
           account: <path:kv/cloudflare#account>
           tunnelName: "turing-cluster"
-          tunnelId: "58c15097-f3b2-4ff7-a676-21bbeeea39d7"
+          tunnelId: "<path:kv/cloudflare#tunnelid>"
           secret: "<path:kv/cloudflare#token>"
           ingress:
             - hostname: "*.<path:kv/cluster#domain>"
