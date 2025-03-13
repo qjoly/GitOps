@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudflare-tunnel
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cloudflare
+  source:
+    repoURL: https://github.com/cloudflare/helm-chart
+    targetRevision: cloudflare-tunnel-0.3.2
+    chart: cloudflare-tunnel
+    helm:
+      values: |
+        cloudflare:
+          tunnelName: "turing-cluster"
+          tunnelId: "41bb192d-3331-40ff-b9a8-f2541630b748"
+          secret: "<path:kv/cloudflare#domain>"
+          ingress:
+            - hostname: "*.<path:kv/cloudflare#token>"
+              service: "https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443"
+              originRequest:
+                noTLSVerify: true
+
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+
+        replicaCount: 1

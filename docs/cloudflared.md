@@ -41,7 +41,7 @@ cloudflare:
   tunnelId: "2f3b093d-bd57-4708-8d54-42723da21338"
   secretName: "tunnel-credentials"
   ingress:
-    - hostname: "*.thoughtless.eu"
+    - hostname: "*.ur-domain.com"
       # Change the service name depending on the ingress controller used
       service: "https://ingress-nginx-controller.kube-system.svc.cluster.local:443"
       originRequest:
