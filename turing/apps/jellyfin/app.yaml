@@ -47,9 +47,9 @@ spec:
         persistence:
           enabled: true
           volumes:
-            - name: "data"
+            - name: "media"
               storageClassName: ""
-              size: "50Gi"
+              size: ""
               pvcClaim: "media"
               containerMount: "/data/"
             - name: "config"
