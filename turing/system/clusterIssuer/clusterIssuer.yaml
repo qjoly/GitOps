@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: cloudflare
+  namespace: cert-manager
+spec:
+  acme:
+    email: cloudflare@une-pause-cafe.fr
+    privateKeySecretRef:
+      name: cloudflare
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              key: apiKey
+              name: cloudflare-api-key
