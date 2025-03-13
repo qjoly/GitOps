@@ -18,6 +18,7 @@ spec:
     helm:
       values: |
         cloudflare:
+          account: <path:kv/cloudflare#account>
           tunnelName: "turing-cluster"
           tunnelId: "41bb192d-3331-40ff-b9a8-f2541630b748"
           secret: "<path:kv/cloudflare#token>"
