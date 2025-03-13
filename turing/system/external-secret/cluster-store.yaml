@@ -1,0 +1,15 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: vault-backend
+spec:
+  provider:
+    vault:
+      server: "http://vault.vault.svc.cluster.local:8200"
+      path: "kv"
+      version: "v1"
+      auth:
+        tokenSecretRef:
+          name: "vault-credentials"
+          key: "VAULT_TOKEN"
+          namespace: "argocd"
