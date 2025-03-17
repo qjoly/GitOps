@@ -96,7 +96,7 @@ spec:
                 external-dns.alpha.kubernetes.io/hostname: "searxng.<path:kv/cluster#domain>"
                 external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflare#tunnelid>.cfargotunnel.com"
               hosts:
-                - host: searxng.<path:kv/cluster#domain>"
+                - host: searxng.<path:kv/cluster#domain>
                   paths:
                     - path: /
                       service:
