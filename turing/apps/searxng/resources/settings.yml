@@ -15,8 +15,10 @@ search:
     - fr
     - en
     - en-US
-    - pt
-    - pt-PT
+  formats:
+    - html
+    - json
+    - csv
 
 general:
   instance_name: Search and Coffee
