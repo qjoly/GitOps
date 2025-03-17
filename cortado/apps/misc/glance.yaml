@@ -15,75 +15,86 @@ spec:
     repoURL: https://rubxkube.github.io/charts/
     chart: glance
     targetRevision: 0.0.3
-    plugin:
-      name: argocd-vault-plugin-helm
-      env:
-        - name: HELM_VALUES
-          value: |
-            common:
-              ingress:
-                enabled: true
-                hostName: "glance.<path:kv/cluster#domain>"
-                ingressClassName: nginx
-                tls:
-                  enabled: true
-                  secretName: "glance-tls"
-                annotations:
-                  cert-manager.io/cluster-issuer: cloudflare
+    helm:
+      values: |
+        common:
+          ingress:
+            enabled: true
+            hostName: "glance.<path:kv/cluster#domain>"
+            ingressClassName: nginx
+            tls:
+              enabled: true
+              secretName: "glance-tls"
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
 
-              configMap:
-                enabled: true
+          configMap:
+            enabled: true
+            data:
+              - name: "config"
+                mountPath: "/mnt"
                 data:
-                  - name: "config"
-                    mountPath: "/mnt"
-                    data:
-                      - content:
-                          glance.yml: |
-                            pages:
-                              - name: Home
-                                columns:
-                                  - size: small
-                                    widgets:
-                                      - type: calendar
+                  - content:
+                      glance.yml: |
+                        pages:
+                          - name: Home
+                            columns:
+                              - size: small
+                                widgets:
+                                  - type: calendar
 
-                                      - type: rss
-                                        limit: 10
-                                        collapse-after: 3
-                                        cache: 3h
-                                        feeds:
-                                          - url: https://justingarrison.com/index.xml
-                                          - url: https://blog.zwindler.fr/index.xml
-                                          - url: https://samwho.dev/rss.xml
-                                          - url: https://blog.stonegarden.dev/index.xml
-                                          - url: http://blog.garambrogne.net/feeds/all.rss
-                                          - url: https://blog.wescale.fr/rss.xml
-                                          - url: https://fredix.xyz/index.xml
+                                  - type: rss
+                                    limit: 20
+                                    collapse-after: 5
+                                    cache: 3h
+                                    feeds:
+                                      - url: https://justingarrison.com/index.xml
+                                      - url: https://blog.zwindler.fr/index.xml
+                                      - url: https://samwho.dev/rss.xml
+                                      - url: https://blog.stonegarden.dev/index.xml
+                                      - url: http://blog.garambrogne.net/feeds/all.rss
+                                      - url: https://blog.wescale.fr/rss.xml
+                                      - url: https://fredix.xyz/index.xml
+                                      - url: https://blog.cetinich.net/blog/atom.xml
 
-                                      - type: twitch-channels
-                                        channels:
-                                          - cuistops
+                                  - type: twitch-channels
+                                    channels:
+                                      - cuistops
+                                      - therealseboss666
+                                      - yorzian
 
-                                  - size: full
-                                    widgets:
-                                      - type: hacker-news
+                              - size: full
+                                widgets:
+                                  - type: search
+                                    search-engine: duckduckgo
+                                    bangs:
+                                      - title: YouTube
+                                        shortcut: "!yt"
+                                        url: https://www.youtube.com/results?search_query={QUERY}
+                                      - title: Github
+                                        shortcut: "!git"
+                                        url: https://github.com/search?q={QUERY}
+                                      - title: Lucca
+                                        shortcut: "!lucca"
+                                        url: https://github.com/LuccaSA/?q={QUERY}
+                                  - type: hacker-news
 
-                                      - type: videos
-                                        channels:
-                                          - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
-                                          - UCv6J_jJa8GJqFwQNgNrMuww # ServeTheHome
-                                          - UCOk-gHyjcWZNj3Br4oxwh0A # Techno Tim
+                                  - type: videos
+                                    channels:
+                                      - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
+                                      - UCv6J_jJa8GJqFwQNgNrMuww # ServeTheHome
+                                      - UCOk-gHyjcWZNj3Br4oxwh0A # Techno Tim
 
-                                      - type: reddit
-                                        subreddit: selfhosted
+                              - size: small
+                                widgets:
+                                  - type: weather
+                                    location: Lyon, France
 
-                                  - size: small
-                                    widgets:
-                                      - type: weather
-                                        location: Lyon, France
-
-                                      - type: markets
-                                        markets:
-                                          - symbol: BTC-USD
-                                            name: Bitcoin
-                                          - symbol: ETH-USD
-                                            name: Ethereum
+                                  - type: releases
+                                    show-source-icon: true
+                                    repositories:
+                                      - siderolabs/talos
+                                      - siderolabs/omni
+                                      - cilium/cilium
+                                      - kubernetes/kubernetes
+                                      - dockerhub:gotify/server
