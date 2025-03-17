@@ -5,6 +5,7 @@ resources:
   - app.yaml
 configMapGenerator:
   - name: searxng-configmap
+    namespace: searxng
     files:
       - ./resources/limiter.toml
       - ./resources/settings.yml
