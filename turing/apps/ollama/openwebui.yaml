@@ -37,6 +37,8 @@ spec:
             OAUTH_CLIENT_SECRET: <path:kv/openwebui#clientsecret>
             OPENID_PROVIDER_URL: <path:kv/openwebui#oidc_url>
             OAUTH_PROVIDER_NAME: authentik
+            OAUTH_MERGE_ACCOUNTS_BY_EMAIL: true
+            ENABLE_OAUTH_SIGNUP: true
             
         ingress:
             enabled: true
