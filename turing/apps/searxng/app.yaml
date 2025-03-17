@@ -1,0 +1,127 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: searxng
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: ghcr.io/dragonflydb/dragonfly/helm/dragonfly
+      chart: dragonfly
+      targetRevision: v1.27.2
+      helm:
+        values: |
+          storage:
+            enabled: true
+            requests: 1Gi
+
+          podSecurityContext:
+            fsGroup: 2000
+
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+    - repoURL: https://bjw-s.github.io/helm-charts/
+      chart: app-template
+      targetRevision: 3.7.3
+      helm:
+        values: |
+          controllers:
+            searxng:
+              strategy: RollingUpdate
+              annotations:
+                reloader.stakater.com/auto: "true"
+
+              containers:
+                main:
+                  image:
+                    repository: docker.io/searxng/searxng
+                    tag: 2024.6.30-39aaac40d
+                  env:
+                    SEARXNG_BASE_URL: https://searxng.<path:kv/cluster#domain>
+                    SEARXNG_URL: https://searxng.<path:kv/cluster#domain>
+                    SEARXNG_PORT: &httpPort 8080
+                    SEARXNG_REDIS_URL: redis://dragonfly:6379
+                  envFrom:
+                    - secretRef:
+                        name: searxng
+                  probes:
+                    liveness: &probes
+                      enabled: true
+                      custom: true
+                      spec:
+                        httpGet:
+                          path: /stats
+                          port: 8080
+                        initialDelaySeconds: 0
+                        periodSeconds: 10
+                        timeoutSeconds: 1
+                        failureThreshold: 3
+                    readiness: *probes
+                  resources:
+                    requests:
+                      cpu: 10m
+                      memory: 256Mi
+                    limits:
+                      memory: 2Gi
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    readOnlyRootFilesystem: true
+                    capabilities:
+                      drop:
+                        - ALL
+                      add:
+                        - CHOWN
+                        - SETGID
+                        - SETUID
+                        - DAC_OVERRIDE
+
+          service:
+            app:
+              controller: searxng
+              ports:
+                http:
+                  port: *httpPort
+
+          ingress:
+            app:
+              className: "nginx"
+              annotations:
+                cert-manager.io/cluster-issuer: cloudflare
+                external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+                external-dns.alpha.kubernetes.io/hostname: "searxng.<path:kv/cluster#domain>"
+                external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflare#tunnelid>.cfargotunnel.com"
+              hosts:
+                - host: searxng.<path:kv/cluster#domain>"
+                  paths:
+                    - path: /
+                      service:
+                        identifier: app
+                        port: http
+
+          persistence:
+            config:
+              type: configMap
+              name: searxng-configmap
+              globalMounts:
+                - path: /etc/searxng/settings.yml
+                  subPath: settings.yml
+                  readOnly: true
+                - path: /etc/searxng/limiter.toml
+                  subPath: limiter.toml
+                  readOnly: true
+            tmpfs:
+              enabled: true
+              type: emptyDir
+              globalMounts:
+                - path: /etc/searxng
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: searxng
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

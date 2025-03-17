@@ -32,7 +32,7 @@ spec:
           port: 8080
         variables:
           nonSecret:
-            OLLAMA_BASE_URL: http://ollama.ollama.svc.cluster.local:11434
+            OLLAMA_BASE_URL: http://192.168.1.134:11434
 
         ingress:
           enabled: false
