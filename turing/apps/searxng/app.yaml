@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: ghcr.io/dragonflydb/dragonfly/helm/dragonfly
+    - repoURL: ghcr.io/dragonflydb/dragonfly/helm
       chart: dragonfly
       targetRevision: v1.27.2
       helm:
