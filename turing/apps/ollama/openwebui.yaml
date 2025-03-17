@@ -22,7 +22,7 @@ spec:
           enabled: true
           servicePort: 8080
           containerPort: 8080
-          type: NodePort
+          type: ClusterIP
 
         image:
           repository: ghcr.io/open-webui/open-webui
