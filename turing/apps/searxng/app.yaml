@@ -46,6 +46,7 @@ spec:
                     SEARXNG_URL: https://searxng.<path:kv/cluster#domain>
                     SEARXNG_PORT: &httpPort 8080
                     SEARXNG_REDIS_URL: redis://searxng-dragonfly:6379
+                    SEARXNG_SECRET: <path:kv/searxng#secret>
                   probes:
                     liveness: &probes
                       enabled: true
