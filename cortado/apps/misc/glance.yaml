@@ -56,6 +56,10 @@ spec:
                                       - url: https://blog.wescale.fr/rss.xml
                                       - url: https://fredix.xyz/index.xml
                                       - url: https://blog.cetinich.net/blog/atom.xml
+                                      - url: https://littlejo.github.io/blog/index.xml # Can't wait its migration from Medium to hugo \o/
+                                      - url: https://www.itix.fr/fr/index.xml
+                                      - url: https://mickael-baron.fr/feed.xml
+                                      - url: https://blog.claneys.net/rss/
 
                                   - type: twitch-channels
                                     channels:
