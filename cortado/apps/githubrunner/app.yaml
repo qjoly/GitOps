@@ -8,6 +8,7 @@ spec:
   sources:
     - repoURL: ghcr.io/actions/actions-runner-controller-charts
       chart: gha-runner-scale-set-controller
+      targetRevision: 0.10.1
       helm:
         values: |
           storage:
