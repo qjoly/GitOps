@@ -60,6 +60,7 @@ spec:
                                       - url: https://www.itix.fr/fr/index.xml
                                       - url: https://mickael-baron.fr/feed.xml
                                       - url: https://blog.claneys.net/rss/
+                                      - url: https://www.rootisgod.com/index.xml
 
                                   - type: twitch-channels
                                     channels:
