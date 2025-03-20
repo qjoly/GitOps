@@ -15,6 +15,14 @@ spec:
           githubConfigSecret:
             github_token: <path:kv/github-runner#token>
 
+          containerMode:
+            type: "dind"  ## type can be set to dind or kubernetes
+            kubernetesModeWorkVolumeClaim:
+              accessModes: ["ReadWriteOnce"]
+              storageClassName: "local-path"
+              resources:
+                requests:
+                  storage: 5Gi
 
           controllerServiceAccount:
             name: arc-gha-rs-controller
