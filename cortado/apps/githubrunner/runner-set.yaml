@@ -14,7 +14,8 @@ spec:
           githubConfigUrl: "https://github.com/qjoly"
           githubConfigSecret:
             github_token: <path:kv/github-runner#token>
-
+          controllerServiceAccount:
+            name: arc-gha-rs-controller
           storage:
             enabled: true
             requests: 5Gi
