@@ -16,6 +16,8 @@ spec:
             github_token: <path:kv/github-runner#token>
           controllerServiceAccount:
             name: arc-gha-rs-controller
+            namespace: arc
+            
           storage:
             enabled: true
             requests: 5Gi
