@@ -13,11 +13,15 @@ spec:
         values: |
           githubConfigUrl: "https://github.com/qjoly"
           githubConfigSecret:
-            github_token: <path:kv/github-runner#token>
+            github_app_id: 1138353
+            github_app_installation_id: 62973612
+            github_app_private_key: <path:kv/github-runner#private_key>
+
+
           controllerServiceAccount:
             name: arc-gha-rs-controller
             namespace: arc
-            
+
           storage:
             enabled: true
             requests: 5Gi
