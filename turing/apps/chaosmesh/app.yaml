@@ -33,6 +33,9 @@ spec:
           create: true
         prometheus:
           create: true
+        volume:
+          storage: 2Gi
+          storageClassName: ceph-block
         dashboard:
           securityMode: false
           ingress:
