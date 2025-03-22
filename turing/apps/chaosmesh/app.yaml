@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: chaos-mesh
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: chaos-mesh
+  source:
+    repoURL: https://charts.chaos-mesh.org
+    chart: chaos-mesh
+    targetRevision: 2.7.1
+    helm:
+      values: |
+        chaosDaemon:
+          podSecurityPolicy: true
+          runtime: containerd
+          socketPath: /run/containerd/containerd.sock
+        controllerManager:
+          service:
+            type: LoadBalancer
+        bpfki:
+          create: true
+        prometheus:
+          create: true
+        dashboard:
+          securityMode: false
+          ingress:
+            enabled: true
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+            ingressClassName: "nginx"
+            hosts:
+              - name: "chaosmesh.<path:kv/cluster#domain>"
+                tls: true
+                tlsSecret: chaos-mesh-tls
