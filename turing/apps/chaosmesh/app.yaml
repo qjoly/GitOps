@@ -9,6 +9,11 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
   destination:
     server: https://kubernetes.default.svc
     namespace: chaos-mesh
@@ -19,7 +24,6 @@ spec:
     helm:
       values: |
         chaosDaemon:
-          podSecurityPolicy: true
           runtime: containerd
           socketPath: /run/containerd/containerd.sock
         controllerManager:
