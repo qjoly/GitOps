@@ -19,3 +19,7 @@ spec:
     repoURL: https://charts.longhorn.io
     chart: longhorn
     targetRevision: 1.8.1
+    helm:
+      values: |
+        preUpgradeChecker:
+          jobEnabled: false
