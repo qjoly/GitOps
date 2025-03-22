@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kubevirt-system
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/qjoly/gitops.git
+        revision: HEAD
+        directories:
+          - path: kubevirt/system/*
+  template:
+    metadata:
+      name: "sys-{{.path.basename}}"
+    spec:
+      project: "default"
+      source:
+        repoURL: https://github.com/qjoly/gitops.git
+        targetRevision: HEAD
+        path: "{{.path.path}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "argocd"

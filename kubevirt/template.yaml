@@ -14,6 +14,10 @@ patches:
     file: patches/workload-on-cp.yml
   - name: network-cidr
     file: patches/network-cidr.yml
+  - name: metrics-server
+    file: patches/metrics-server.yml
+  - name: extraManifests
+    file: patches/extraManifests.yml
 systemExtensions:
   - siderolabs/iscsi-tools
   - siderolabs/util-linux-tools
