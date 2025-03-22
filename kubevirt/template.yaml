@@ -28,3 +28,10 @@ labels:
 machineClass:
   name: kubevirt
   size: 3
+---
+kind: Workers
+labels:
+  type: workers
+machineClass:
+  name: kubevirt
+  size: 2
