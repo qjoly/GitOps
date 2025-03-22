@@ -1,0 +1,26 @@
+kind: Cluster
+name: kubevirt
+labels:
+  template: true
+kubernetes:
+  version: v1.32.2
+talos:
+  version: v1.9.5
+features:
+  diskEncryption: true
+  useEmbeddedDiscoveryService: true
+patches:
+  - name: workload-on-cp
+    file: patches/workload-on-cp.yml
+  - name: network-cidr
+    file: patches/network-cidr.yml
+systemExtensions:
+  - siderolabs/iscsi-tools
+  - siderolabs/util-linux-tools
+---
+kind: ControlPlane
+labels:
+  type: control-plane
+machineClass:
+  name: kubevirt
+  size: 3

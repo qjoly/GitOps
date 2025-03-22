@@ -1,0 +1,7 @@
+cluster:
+  network:
+    dnsDomain: cluster.local
+    podSubnets:
+      - 172.30.0.0/16
+    serviceSubnets:
+      - 198.18.0.0/15
