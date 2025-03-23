@@ -50,9 +50,12 @@ spec:
             mountPath: /opt/adguardhome/work
             accessMode: ReadWriteOnce
             size: 4Gi
-          config: |
+        config: |
             bind_host: 0.0.0.0
             bind_port: 80
+            users:
+              - name: admin
+                password: "<path:kv/adguard#password>"
             auth_attempts: 5
             block_auth_min: 15
             http_proxy: ""
