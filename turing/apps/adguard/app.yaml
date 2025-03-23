@@ -18,6 +18,11 @@ spec:
     targetRevision: 0.3.25
     helm:
       values: |
+        service:
+          main:
+            ports:
+              http:
+                port: 80
         env:
           TZ: "Europe/Paris"
         ingress: 
