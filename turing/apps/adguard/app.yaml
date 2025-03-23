@@ -55,7 +55,7 @@ spec:
             bind_port: 80
             users:
               - name: admin
-                password: <path:kv/adguard#password | quote>
+                password: <path:kv/adguard#password>
             auth_attempts: 5
             block_auth_min: 15
             http_proxy: ""
