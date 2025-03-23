@@ -15,7 +15,7 @@ spec:
   source:
     repoURL: https://charts.gabe565.com
     chart: adguard-home
-    targetRevision: 2.7.1
+    targetRevision: 0.3.25
     helm:
       values: |
         env:
