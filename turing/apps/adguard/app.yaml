@@ -11,7 +11,7 @@ spec:
       - ServerSideApply=true
   destination:
     server: https://kubernetes.default.svc
-    namespace: chaos-mesh
+    namespace: adguard
   source:
     repoURL: https://charts.gabe565.com
     chart: adguard-home
