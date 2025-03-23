@@ -5,21 +5,30 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://rubxkube.github.io/charts/
-    chart: jackett
-    targetRevision: 1.3.0
-    helm:
-      values: |
-        common:
-          ingress:
-            enabled: true
-            annotations:
-              external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-              external-dns.alpha.kubernetes.io/hostname: "indexer.<path:kv/cluster#domain>"
-              external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflare#tunnelid>.cfargotunnel.com"
-            hostName: "indexer.<path:kv/cluster#domain>"
-            ingressClassName: nginx
+  sources:
+    - repoURL: https://rubxkube.github.io/common-charts/
+      chart: common
+      targetRevision: v0.4.2
+      helm:
+        values: |
+          name: "byparr"
+          image:
+            repository: ghcr.io/thephaseless/byparr:latest
+            tag: "latest"
+    - repoURL: https://rubxkube.github.io/charts/
+      chart: jackett
+      targetRevision: 1.3.0
+      helm:
+        values: |
+          common:
+            ingress:
+              enabled: true
+              annotations:
+                external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+                external-dns.alpha.kubernetes.io/hostname: "indexer.<path:kv/cluster#domain>"
+                external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflare#tunnelid>.cfargotunnel.com"
+              hostName: "indexer.<path:kv/cluster#domain>"
+              ingressClassName: nginx
   destination:
     server: https://kubernetes.default.svc
     namespace: jackett
