@@ -20,3 +20,25 @@ spec:
       values: |
         env:
           TZ: "Europe/Paris"
+        ingress: 
+          ingress:
+            main:
+              enabled: true
+              annotations:
+                external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+                external-dns.alpha.kubernetes.io/hostname: "adguard-home.<path:kv/cluster#domain>"
+                external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflare#tunnelid>.cfargotunnel.com"
+              hosts:
+                - host: adguard-home.<path:kv/cluster#domain>
+                  paths:
+                    - path: /
+        persistence:
+          config:
+            enabled: true
+            retain: false
+            mountPath: /opt/adguardhome/conf
+            size: 4Gi
+          data:
+            enabled: true
+            retain: false
+            mountPath: /opt/adguardhome/work
