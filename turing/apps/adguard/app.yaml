@@ -21,7 +21,6 @@ spec:
         env:
           TZ: "Europe/Paris"
         ingress: 
-          ingress:
             main:
               enabled: true
               annotations:
