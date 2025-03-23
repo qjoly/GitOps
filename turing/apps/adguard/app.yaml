@@ -27,6 +27,7 @@ spec:
           TZ: "Europe/Paris"
         ingress: 
             main:
+              ingressClassName: nginx
               enabled: true
               annotations:
                 external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
