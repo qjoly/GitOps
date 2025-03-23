@@ -37,8 +37,10 @@ spec:
             enabled: true
             retain: false
             mountPath: /opt/adguardhome/conf
+            accessMode: ReadWriteOnce
             size: 4Gi
           data:
             enabled: true
             retain: false
             mountPath: /opt/adguardhome/work
+            accessMode: ReadWriteOnce
