@@ -13,7 +13,7 @@ spec:
         values: |
           name: "byparr"
           image:
-            repository: ghcr.io/thephaseless/byparr:latest
+            repository: ghcr.io/thephaseless/byparr
             tag: "latest"
     - repoURL: https://rubxkube.github.io/charts/
       chart: jackett
