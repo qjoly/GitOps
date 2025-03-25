@@ -24,7 +24,7 @@ spec:
               ingress:
                 enabled: true
                 hostName: "jellyfin.<path:kv/cluster#domain>"
-                ingressClassName: nginx
+                ingressClassName: traefik
                 tls:
                   enabled: true
                   secretName: "jellyfin-tls"
@@ -48,4 +48,4 @@ spec:
                     size: "5Gi"
                     pvcClaim: ""
                     containerMount: "/cache/"
-                    
+

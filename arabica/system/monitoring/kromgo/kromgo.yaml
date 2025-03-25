@@ -33,7 +33,7 @@ spec:
             ingress:
               enabled: true
               hostName: "kromgo.arabica.thoughtless.eu"
-              ingressClassName: nginx
+              ingressClassName: traefik
               tls:
                 enabled: true
                 secretName: "kromgo-tls"

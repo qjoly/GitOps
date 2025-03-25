@@ -6,7 +6,7 @@ metadata:
   name: argocd
   namespace: argocd
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
     - host: argocd.<path:kv/cluster#domain>
       http:
