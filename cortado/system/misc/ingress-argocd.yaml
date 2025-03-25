@@ -6,19 +6,19 @@ metadata:
   name: argocd
   namespace: argocd
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
-  - host: argocd.cortado.<path:kv/cloudflared#domain>
-    http:
-      paths:
-      - backend:
-          service:
-            name: argocd-server
-            port:
-              number: 80
-        path: /
-        pathType: Prefix
+    - host: argocd.cortado.<path:kv/cloudflared#domain>
+      http:
+        paths:
+          - backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
   tls:
-  - hosts:
-    - argocd.cortado.<path:kv/cloudflared#domain>
-    secretName: argocd-tls
+    - hosts:
+        - argocd.cortado.<path:kv/cloudflared#domain>
+      secretName: argocd-tls

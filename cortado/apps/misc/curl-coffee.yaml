@@ -32,7 +32,7 @@ spec:
             ingress:
               enabled: true
               hostName: "curl.une-tasse-de.cafe"
-              ingressClassName: nginx
+              ingressClassName: traefik
               tls:
                 enabled: true
                 secretName: "une-tasse-de-cafe-tls"

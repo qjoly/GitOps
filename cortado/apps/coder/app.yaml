@@ -46,7 +46,7 @@ spec:
             - host: code.cortado.<path:kv/cluster#domain>
               paths:
                 - /
-          ingressClassName: "nginx"
+          ingressClassName: "traefik"
           tls:
             - secretName: code-server
               hosts:

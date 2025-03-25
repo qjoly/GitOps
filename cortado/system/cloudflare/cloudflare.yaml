@@ -26,7 +26,7 @@ spec:
               secretName: "cloudflare-tunnel"
               ingress:
                 - hostname: "*.<path:kv/cloudflared#domain>"
-                  service: "https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443"
+                  service: "https://traefik.traefik.svc.cluster.local:443"
                   originRequest:
                     noTLSVerify: true
 

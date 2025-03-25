@@ -30,7 +30,7 @@ spec:
             ingress:
               enabled: true
               hostName: "kromgo.cortado.thoughtless.eu"
-              ingressClassName: nginx
+              ingressClassName: traefik
               tls:
                 enabled: true
                 secretName: "kromgo-tls"

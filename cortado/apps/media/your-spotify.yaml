@@ -28,7 +28,7 @@ spec:
               ingress:
                 enabled: true
                 hostName: spotty.<path:kv/cluster#domain>
-                ingressClassName: "nginx"
+                ingressClassName: "traefik"
                 extraLabels: {}
                 tls:
                   enabled: true
@@ -48,7 +48,7 @@ spec:
                   MONGO_ENDPOINT: mongodb://your-spotify-mongodb:27017/your_spotify
               ingress:
                 enabled: true
-                ingressClassName: "nginx"
+                ingressClassName: "traefik"
                 hostName: spotty-api.<path:kv/cluster#domain>
                 extraLabels: {}
                 tls:

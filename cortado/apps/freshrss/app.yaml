@@ -35,7 +35,7 @@ spec:
         ingress:
           enabled: true
           hostName: "freshrss.<path:kv/cluster#domain>"
-          ingressClassName: nginx
+          ingressClassName: traefik
           tls:
              enabled: true
              secretName: "freshrss-tls"

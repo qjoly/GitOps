@@ -21,7 +21,7 @@ spec:
           ingress:
             enabled: true
             hostName: "komga.<path:kv/cloudflared#domain>"
-            ingressClassName: nginx
+            ingressClassName: traefik
             tls:
               enabled: true
               secretName: "komga-tls"

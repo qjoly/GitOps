@@ -34,7 +34,7 @@ spec:
         ingress:
           enabled: true
           hostName: "changedetection.<path:kv/cluster#domain>"
-          ingressClassName: nginx
+          ingressClassName: traefik
           tls:
              enabled: true
              secretName: "changedetection-tls"

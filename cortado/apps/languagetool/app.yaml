@@ -34,7 +34,7 @@ spec:
         ingress:
           enabled: true
           hostName: "languagetool.<path:kv/cluster#domain>"
-          ingressClassName: nginx
+          ingressClassName: traefik
           tls:
              enabled: true
              secretName: "languagetool-tls"

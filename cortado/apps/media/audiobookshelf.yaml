@@ -27,7 +27,7 @@ spec:
             ingress:
               enabled: true
               hostName: "audiobookshelf.<path:kv/cloudflared#domain>"
-              ingressClassName: nginx
+              ingressClassName: traefik
               tls:
                 enabled: true
                 secretName: "audiobookshelf-tls"
