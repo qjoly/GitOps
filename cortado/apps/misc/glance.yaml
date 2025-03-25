@@ -61,6 +61,7 @@ spec:
                                       - url: https://mickael-baron.fr/feed.xml
                                       - url: https://blog.claneys.net/rss/
                                       - url: https://www.rootisgod.com/index.xml
+                                      - url: https://www.joshkasuboski.com/index.xml
 
                                   - type: twitch-channels
                                     channels:
