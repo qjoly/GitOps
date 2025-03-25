@@ -42,7 +42,7 @@ spec:
             enabled: true
             annotations:
               cert-manager.io/cluster-issuer: cloudflare
-            ingressClassName: "nginx"
+            ingressClassName: "traefik"
             hosts:
               - name: "chaosmesh.<path:kv/cluster#domain>"
                 tls: true

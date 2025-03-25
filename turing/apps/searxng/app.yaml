@@ -87,7 +87,7 @@ spec:
 
           ingress:
             app:
-              className: "nginx"
+              className: "traefik"
               annotations:
                 cert-manager.io/cluster-issuer: cloudflare
                 external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
