@@ -62,6 +62,7 @@ spec:
                                       - url: https://blog.claneys.net/rss/
                                       - url: https://www.rootisgod.com/index.xml
                                       - url: https://www.joshkasuboski.com/index.xml
+                                      - url: https://blog.paranoidpenguin.net/index.xml
 
                                   - type: twitch-channels
                                     channels:
