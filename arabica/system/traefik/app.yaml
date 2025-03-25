@@ -15,8 +15,3 @@ spec:
     repoURL: https://traefik.github.io/charts
     targetRevision: 34.4.1
     chart: traefik
-    helm:
-      values: |
-        service:
-          enabled: true
-          type: ClusterIP
