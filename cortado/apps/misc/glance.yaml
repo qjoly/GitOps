@@ -106,3 +106,30 @@ spec:
                                       - cilium/cilium
                                       - kubernetes/kubernetes
                                       - dockerhub:gotify/server
+                          - name: RSS
+                            columns:
+                              - size: full
+                                widgets:
+                                
+                                  - type: rss
+                                    limit: 40
+                                    collapse-after: 20
+                                    cache: 3h
+                                    feeds:
+                                      - url: https://justingarrison.com/index.xml
+                                      - url: https://blog.zwindler.fr/index.xml
+                                      - url: https://samwho.dev/rss.xml
+                                      - url: https://blog.stonegarden.dev/index.xml
+                                      - url: http://blog.garambrogne.net/feeds/all.rss
+                                      - url: https://blog.wescale.fr/rss.xml
+                                      - url: https://fredix.xyz/index.xml
+                                      - url: https://blog.cetinich.net/blog/atom.xml
+                                      - url: https://littlejo.github.io/blog/index.xml
+                                      - url: https://www.itix.fr/fr/index.xml
+                                      - url: https://mickael-baron.fr/feed.xml
+                                      - url: https://blog.claneys.net/rss/
+                                      - url: https://www.rootisgod.com/index.xml
+                                      - url: https://www.joshkasuboski.com/index.xml
+                                      - url: https://blog.paranoidpenguin.net/index.xml
+                                      - url: https://newsletter.developer-friendly.blog/archive.xml
+
