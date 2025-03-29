@@ -63,6 +63,7 @@ spec:
                                       - url: https://www.rootisgod.com/index.xml
                                       - url: https://www.joshkasuboski.com/index.xml
                                       - url: https://blog.paranoidpenguin.net/index.xml
+                                      - url: https://newsletter.developer-friendly.blog/archive.xml
 
                                   - type: twitch-channels
                                     channels:
