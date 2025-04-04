@@ -64,6 +64,7 @@ spec:
                                       - url: https://www.joshkasuboski.com/index.xml
                                       - url: https://blog.paranoidpenguin.net/index.xml
                                       - url: https://newsletter.developer-friendly.blog/archive.xml
+                                      - url: https://xn--gckvb8fzb.com/index.xml
 
                                   - type: twitch-channels
                                     channels:
