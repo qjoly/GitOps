@@ -27,7 +27,7 @@ spec:
             enabled: true
             annotations:
               cert-manager.io/cluster-issuer: cloudflare
-              traefik.ingress.kubernetes.io/router.middlewares: traefik-chaos-mesh-basic-auth@kubernetescrd
+              traefik.ingress.kubernetes.io/router.middlewares: chaos-mesh-basic-auth@kubernetescrd
             ingressClassName: "traefik"
             hosts:
               - name: "chaosmesh.<path:kv/cluster#domain>"
