@@ -3,7 +3,7 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: chaos-mesh-basic-auth
-  namepace: argocd
+  namepace: chaos-mesh
 spec:
   basicAuth:
     secret: chaos-mesh-basic-auth
@@ -12,7 +12,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: chaos-mesh-basic-auth
-  namespace: chaos-mesh
+  namespace: argocd
 type: kubernetes.io/basic-auth
 stringData:
   username: <path:kv/chaos-mesh#username>
