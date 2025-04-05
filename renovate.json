@@ -9,7 +9,7 @@
   "regexManagers": [
     {
       "description": "Update docker image references",
-      "fileMatch": ["\\.yaml$"],
+      "fileMatch": ["\\.yaml$", "\\.yml$"],
       "matchStrings": ["image: (?<depName>.*?):(?<currentValue>.*?)\\s+"],
       "datasourceTemplate": "docker"
     }]
