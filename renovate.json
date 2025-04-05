@@ -4,14 +4,22 @@
     "config:recommended"
   ],
   "argocd": {
-    "fileMatch": ["\\.yaml$"]
+    "fileMatch": [
+      "\\.yaml$"
+    ]
   },
-  "regexManagers": [
+  "customManagers": [
     {
+      "customType": "regex",
       "description": "Update docker image references",
-      "fileMatch": ["\\.yaml$", "\\.yml$"],
-      "matchStrings": ["image: (?<depName>.*?):(?<currentValue>.*?)\\s+"],
+      "fileMatch": [
+        "\\.yaml$",
+        "\\.yml$"
+      ],
+      "matchStrings": [
+        "image: (?<depName>.*?):(?<currentValue>.*?)\\s+"
+      ],
       "datasourceTemplate": "docker"
-    }]
-
+    }
+  ]
 }
