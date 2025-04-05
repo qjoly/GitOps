@@ -19,6 +19,19 @@ spec:
           port: 5231
         service:
           containerPort: 5231
+        ingress:
+            enabled: true
+            hostName: "slash.<path:kv/cluster#domain>"
+            ingressClassName: traefik
+            tls:
+              enabled: true
+              secretName: "slash-tls"
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+              external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+              external-dns.alpha.kubernetes.io/hostname: "slash.<path:kv/cluster#domain>"
+              external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflare#tunnelid>.cfargotunnel.com"
+
         persistence:
           enabled: true
           volumes:
