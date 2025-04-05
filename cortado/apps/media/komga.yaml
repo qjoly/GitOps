@@ -18,6 +18,9 @@ spec:
     helm:
       values: |
         common:
+          image:
+            repository: ghcr.io/gotson/komga
+            tag: 1.21.2
           ingress:
             enabled: true
             hostName: "komga.<path:kv/cloudflared#domain>"
