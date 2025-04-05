@@ -17,8 +17,6 @@ spec:
           tag: "1.0.0"
         deployment:
           port: 5231
-        service:
-          containerPort: 5231
         ingress:
             enabled: true
             hostName: "slash.<path:kv/cluster#domain>"
