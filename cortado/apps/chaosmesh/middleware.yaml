@@ -1,0 +1,19 @@
+# Declaring the user list
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: chaos-mesh-basic-auth
+  namepace: traefik
+spec:
+  basicAuth:
+    secret: chaos-mesh-basic-auth
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: chaos-mesh-basic-auth
+  namespace: chaos-mesh
+type: kubernetes.io/basic-auth
+data:
+  username: <path:kv/chaos-mesh#username>
+  password: <path:kv/chaos-mesh#password>
