@@ -5,5 +5,13 @@
   ],
   "argocd": {
     "fileMatch": ["\\.yaml$"]
-  }
+  },
+  "regexManagers": [
+    {
+      "description": "Update docker image references",
+      "fileMatch": ["\\.yaml$"],
+      "matchStrings": ["image: (?<depName>.*?):(?<currentValue>.*?)\\s+"],
+      "datasourceTemplate": "docker"
+    }]
+
 }
