@@ -14,6 +14,6 @@ metadata:
   name: chaos-mesh-basic-auth
   namespace: chaos-mesh
 type: kubernetes.io/basic-auth
-data:
+stringData:
   username: <path:kv/chaos-mesh#username>
   password: <path:kv/chaos-mesh#password>
