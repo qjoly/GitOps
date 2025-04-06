@@ -66,6 +66,7 @@ spec:
                                       - url: https://newsletter.developer-friendly.blog/archive.xml
                                       - url: https://xn--gckvb8fzb.com/index.xml
                                       - url: http://sreweekly.com/feed/
+                                      - url: https://dustri.org/b/rss.xml
 
                                   - type: twitch-channels
                                     channels:
