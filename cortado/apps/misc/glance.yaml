@@ -67,6 +67,7 @@ spec:
                                       - url: https://xn--gckvb8fzb.com/index.xml
                                       - url: http://sreweekly.com/feed/
                                       - url: https://dustri.org/b/rss.xml
+                                      - url: https://blog.squwal.com/index.xml
 
                                   - type: twitch-channels
                                     channels:
