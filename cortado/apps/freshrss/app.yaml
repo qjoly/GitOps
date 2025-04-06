@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/common-charts/
     chart: common
-    targetRevision: 0.4.2
+    targetRevision: v0.4.3
     helm:
       values: |
         name: "freshrss"
