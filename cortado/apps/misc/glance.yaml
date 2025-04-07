@@ -68,6 +68,7 @@ spec:
                                       - url: http://sreweekly.com/feed/
                                       - url: https://dustri.org/b/rss.xml
                                       - url: https://blog.squwal.com/index.xml
+                                      - url: https://alexohneander.de/atom.xml
 
                                   - type: twitch-channels
                                     channels:
