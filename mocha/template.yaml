@@ -1,0 +1,30 @@
+kind: Cluster
+name: mocha
+kubernetes:
+  version: v1.32.3
+talos:
+  version: v1.9.5
+features:
+  diskEncryption: true
+  useEmbeddedDiscoveryService: true
+patches:
+   - name: kubespan-enabled
+     file: patches/kubespan.yml
+   - name: no-cni # we will install cilium in extraManifests
+     file: patches/cni.yml
+   - name: disable-kubeproxy
+     file: patches/disable-kubeproxy.yml
+   - name: manifests
+     file: patches/extraManifests.yml
+   - name: metric-server
+     file: patches/metrics-server.yml
+   - name: workload-on-cp
+     file: patches/workload-on-cp.yml
+systemExtensions:
+  - siderolabs/iscsi-tools
+  - siderolabs/zfs
+  - siderolabs/util-linux-tools
+---
+kind: ControlPlane
+machines:
+  - 00000000-0000-0000-0000-ac1f6b028950

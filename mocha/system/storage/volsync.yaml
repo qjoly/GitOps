@@ -1,0 +1,24 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: volsync
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://backube.github.io/helm-charts/
+    chart: volsync
+    targetRevision: 0.12.1
+    helm:
+      values: |
+        metrics:
+          disableAuth: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: volsync-system
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true

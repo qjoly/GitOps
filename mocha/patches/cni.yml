@@ -1,0 +1,9 @@
+cluster:
+  network:
+    cni:
+      name: none
+machine:
+  features:
+    hostDNS:
+      enabled: true
+      forwardKubeDNSToHost: false
