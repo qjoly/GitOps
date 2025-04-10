@@ -69,6 +69,8 @@ spec:
                                       - url: https://dustri.org/b/rss.xml
                                       - url: https://blog.squwal.com/index.xml
                                       - url: https://alexohneander.de/atom.xml
+                                      - url: https://flagzeta.org/til/index.xml
+                                      - url: https://blog.scottlowe.org/feed.xml
 
                                   - type: twitch-channels
                                     channels:
