@@ -1,0 +1,35 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: cloudflare
+  namespace: cert-manager
+spec:
+  acme:
+    email: cloudflare@une-pause-cafe.fr
+    privateKeySecretRef:
+      name: cloudflare
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              key: apiKey
+              name: cloudflare-api-key
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cloudflare-api-key
+  namespace: cert-manager
+spec:
+  refreshInterval: "30s"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: cloudflare-api-key
+  data:
+  - secretKey: apiKey
+    remoteRef:
+      key: cloudflare
+      property: dnsToken
