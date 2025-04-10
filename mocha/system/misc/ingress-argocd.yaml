@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: argocd.mocha.<path:kv/cloudflared#domain>
+    - host: argocd.mocha.<path:kv/cluster#domain>
       http:
         paths:
           - backend:
@@ -20,5 +20,5 @@ spec:
             pathType: Prefix
   tls:
     - hosts:
-        - argocd.mocha.<path:kv/cloudflared#domain>
+        - argocd.mocha.<path:kv/cluster#domain>
       secretName: argocd-tls
