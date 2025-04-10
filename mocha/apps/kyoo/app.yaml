@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyoo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://rubxkube.github.io/charts/
+    chart: kyoo
+    targetRevision: 0.1.5
+    helm:
+      values: |
+        volumes:
+          media:
+            enabled: true
+        secrets:
+          kyoo:
+            name: "kyoo-secrets"
+            data:
+              kyoo-apikeys: <path:kv/kyoo#apikey>
+              tmdb-api: <path:kv/kyoo#tmdb>
+        config:
+          data:
+            LIBRARY_LANGUAGES: "fr"
+        back:
+          variables:
+            nonSecret:
+              PUBLIC_URL: "https://kyoo.<path:kv/cluster#domain>"
+
+        ingress:
+          hostName: "kyoo.<path:kv/cluster#domain>"
+          ingressClassName: "traefik"
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+          tls:
+            enabled: true
+            secretName: "kyoo-tls"
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyoo
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
