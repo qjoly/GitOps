@@ -39,7 +39,7 @@ spec:
         volumes:
           media:
             accessModes:
-              - "ReadWriteOnly"
+              - "ReadWriteOnce"
   destination:
     server: https://kubernetes.default.svc
     namespace: kyoo
