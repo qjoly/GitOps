@@ -36,7 +36,10 @@ spec:
           tls:
             enabled: true
             secretName: "kyoo-tls"
-
+        volumes:
+          media:
+            accessModes:
+              - "ReadWriteOnly"
   destination:
     server: https://kubernetes.default.svc
     namespace: kyoo
