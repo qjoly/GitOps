@@ -6,3 +6,5 @@ resources:
   - prometheus.yaml
   - grafana.yaml
   - middleware.yaml
+  - blackbox-exporter.yaml
+  - probes

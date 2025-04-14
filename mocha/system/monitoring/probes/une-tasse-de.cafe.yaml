@@ -1,0 +1,14 @@
+kind: Probe
+apiVersion: monitoring.coreos.com/v1
+metadata:
+  name: une-tasse-de-cafe
+  namespace: monitoring
+spec:
+  interval: 60s
+  module: http_2xx
+  prober:
+    url: blackbox-exporter.monitoring.svc.cluster.local:19115
+  targets:
+    staticConfig:
+      static:
+        - https://une-tasse-de.cafe
