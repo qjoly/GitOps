@@ -60,7 +60,7 @@ spec:
               access: proxy
               isDefault: false
               secureJsonData:
-                basicAuthPassword: <path:kv/grafana#:prometheus_pass>
+                basicAuthPassword: <path:kv/grafana#prometheus_pass>
                 basicAuthUser: <path:kv/grafana#prometheus_user>
         sidecar:
           datasources:
