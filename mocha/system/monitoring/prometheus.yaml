@@ -25,6 +25,10 @@ spec:
             kubeControllerManager: false
         kubeScheduler:
           enabled: false
+        prometheusOperator:
+          admissionWebhooks:
+            certManager:
+              enabled: true
         prometheus:
           prometheusSpec:
             podMonitorSelectorNilUsesHelmValues: false
