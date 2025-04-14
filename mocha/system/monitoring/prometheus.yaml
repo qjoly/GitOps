@@ -22,7 +22,7 @@ spec:
           create: true
           rules:
             kubeProxy: false
-            kubeControllerManager: false
+            kubeControllerManager: true
         kubeScheduler:
           enabled: false
         prometheusOperator:
