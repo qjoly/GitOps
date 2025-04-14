@@ -35,6 +35,7 @@ spec:
             ingressClassName: traefik
             annotations:
               cert-manager.io/cluster-issuer: cloudflare
+              traefik.ingress.kubernetes.io/router.middlewares: monitoring-basic-auth-prometheus@kubernetescrd
             hosts:
               - prometheus.<path:kv/cluster#domain>
             tls:
