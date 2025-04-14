@@ -28,14 +28,14 @@ spec:
           tls:
             - secretName: grafana-tls
               hosts:
-                - "grafana.mocha.<path:kv/cluster#domain>"
+                - "grafana.<path:kv/cluster#domain>"
         persistence:
           type: pvc
           enabled: true
         assertNoLeakedSecrets: false
         grafana.ini:
             server:
-              root_url: https://grafana.mocha.<path:kv/cluster#domain>
+              root_url: https://grafana.<path:kv/cluster#domain>
             auth:
                 signout_redirect_url: "https://goauthentik.une-tasse-de.cafe/application/o/<path:kv/grafana#authentik_app>/end-session/"
                 oauth_auto_login: false
