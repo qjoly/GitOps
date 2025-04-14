@@ -1,0 +1,32 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: basic-auth-prometheus
+  namespace: monitoring
+spec:
+  basicAuth:
+    secret: basic-auth-prometheus
+
+---
+
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: basic-auth-prometheus
+  namespace: monitoring
+spec:
+  refreshInterval: "30s"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: basic-auth-prometheus
+  data:
+  - secretKey: username
+    remoteRef:
+      key: grafana
+      property: prometheus_user
+  - secretKey: password
+    remoteRef:
+      key: grafana
+      property: prometheus_pass

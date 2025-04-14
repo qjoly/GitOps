@@ -59,6 +59,9 @@ spec:
               url: http://prometheus-stack-kube-prom-prometheus:9090
               access: proxy
               isDefault: false
+              secureJsonData:
+                basicAuthPassword: <path:kv/grafana#:prometheus_pass>
+                basicAuthUser: <path:kv/grafana#prometheus_user>
         sidecar:
           datasources:
             enabled: true

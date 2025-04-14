@@ -30,9 +30,21 @@ spec:
             certManager:
               enabled: true
         prometheus:
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+            hosts:
+              - prometheus.<path:kv/cluster#domain>
+            tls:
+              - secretName: prometheus-tls
+                hosts:
+                  - prometheus.<path:kv/cluster#domain>
           prometheusSpec:
             podMonitorSelectorNilUsesHelmValues: false
             serviceMonitorSelectorNilUsesHelmValues: false
+            enableRemoteWriteReceiver: true
             storageSpec:
               volumeClaimTemplate:
                 spec:

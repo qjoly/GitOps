@@ -5,3 +5,4 @@ resources:
   - loki-stack.yaml
   - prometheus.yaml
   - grafana.yaml
+  - middleware.yaml
