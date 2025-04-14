@@ -30,7 +30,7 @@ spec:
             podMonitorSelectorNilUsesHelmValues: false
             serviceMonitorSelectorNilUsesHelmValues: false
             remoteWrite:
-              - url: "<path:kv/grafana#monitoring_remote_write>"
+              - url: "<path:kv/prometheus#monitoring_remote_write>"
                 basicAuth: 
                   username:
                     name: basic-auth-prometheus-remote-write
