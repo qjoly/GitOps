@@ -20,7 +20,8 @@ spec:
     kind: ClusterSecretStore
   target:
     name: basic-auth-prometheus
-    type: kubernetes.io/basic-auth
+    template:
+      type: kubernetes.io/basic-auth
   data:
     - secretKey: username
       remoteRef:
