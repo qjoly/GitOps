@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: grafana
+    targetRevision: 8.11.3
+    helm:
+      values: |
+        adminUser: <path:kv/grafana#user>
+        adminPassword: <path:kv/grafana#pass>
+        plugins:
+          - chaosmeshorg-datasource
+        ingress:
+          enabled: true
+          ingressClassName: traefik
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+          hosts:
+            - "grafana.mocha.<path:kv/cluster#domain>"
+          tls:
+            - secretName: grafana-tls
+              hosts:
+                - "grafana.mocha.<path:kv/cluster#domain>"
+        persistence:
+          type: pvc
+          enabled: true
+        assertNoLeakedSecrets: false
+        grafana.ini:
+            server:
+              root_url: https://grafana.mocha.<path:kv/cluster#domain>
+            auth:
+                signout_redirect_url: "https://goauthentik.une-tasse-de.cafe/application/o/<path:kv/grafana#authentik_app>/end-session/"
+                oauth_auto_login: false
+            auth.generic_oauth:
+                name: authentik
+                enabled: true
+                client_id: <path:kv/grafana#authentik_id>
+                client_secret: <path:kv/grafana#authentik_secret>
+                scopes: "openid profile email"
+                auth_url: "https://goauthentik.une-tasse-de.cafe/application/o/authorize/"
+                token_url: "https://goauthentik.une-tasse-de.cafe/application/o/token/"
+                api_url: "https://goauthentik.une-tasse-de.cafe/application/o/userinfo/"
+                # Optionally map user groups to Grafana roles
+                # role_attribute_path: contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
+        datasources:
+          datasources.yaml:
+            apiVersion: 1
+            datasources:
+            - name: Prometheus
+              type: prometheus
+              url: http://prometheus-stack-kube-prom-prometheus:9090
+              access: proxy
+              isDefault: false
+        sidecar:
+          datasources:
+            enabled: true
