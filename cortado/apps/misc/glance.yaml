@@ -72,6 +72,7 @@ spec:
                                       - url: https://flagzeta.org/til/index.xml
                                       - url: https://blog.scottlowe.org/feed.xml
                                       - url: https://makhal.fr/index.xml
+                                      - url: https://danmanners.com/index.xml
 
                                   - type: twitch-channels
                                     channels:
