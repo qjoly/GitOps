@@ -6,3 +6,4 @@ resources:
   - prometheus.yaml
   - kromgo
   - grafana.yaml
+  - secret-remote-write.yaml

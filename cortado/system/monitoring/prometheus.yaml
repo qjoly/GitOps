@@ -29,6 +29,15 @@ spec:
           prometheusSpec:
             podMonitorSelectorNilUsesHelmValues: false
             serviceMonitorSelectorNilUsesHelmValues: false
+            remoteWrite:
+              - url: "<path:kv/grafana#monitoring_remote_write>"
+                basicAuth: 
+                  username:
+                    name: basic-auth-prometheus-remote-write
+                    key: username
+                  password:
+                    name: basic-auth-prometheus-remote-write
+                    key: password
             storageSpec:
               volumeClaimTemplate:
                 spec:
