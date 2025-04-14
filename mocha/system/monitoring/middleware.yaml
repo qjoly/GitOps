@@ -8,7 +8,6 @@ spec:
     secret: basic-auth-prometheus
 
 ---
-
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
@@ -21,12 +20,13 @@ spec:
     kind: ClusterSecretStore
   target:
     name: basic-auth-prometheus
+    type: kubernetes.io/basic-auth
   data:
-  - secretKey: username
-    remoteRef:
-      key: grafana
-      property: prometheus_user
-  - secretKey: password
-    remoteRef:
-      key: grafana
-      property: prometheus_pass
+    - secretKey: username
+      remoteRef:
+        key: grafana
+        property: prometheus_user
+    - secretKey: password
+      remoteRef:
+        key: grafana
+        property: prometheus_pass
