@@ -58,7 +58,7 @@ spec:
               type: prometheus
               url: http://prometheus-stack-kube-prom-prometheus:9090
               access: proxy
-              isDefault: true
+              isDefault: false
         sidecar:
           datasources:
             enabled: true
