@@ -8,7 +8,7 @@ spec:
   sources:
     - repoURL: https://rubxkube.github.io/common-charts/
       chart: common
-      targetRevision: v0.4.3
+      targetRevision: v0.4.4
       helm:
         values: |
           name: "byparr"
