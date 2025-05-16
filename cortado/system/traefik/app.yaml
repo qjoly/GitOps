@@ -13,5 +13,5 @@ spec:
     namespace: traefik
   source:
     repoURL: https://traefik.github.io/charts
-    targetRevision: 35.0.1
+    targetRevision: 35.2.0
     chart: traefik
