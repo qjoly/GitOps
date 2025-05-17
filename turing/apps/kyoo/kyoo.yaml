@@ -30,6 +30,7 @@ spec:
           enabled: true
           data:
             LIBRARY_LANGUAGES: "fr"
+            LIBRARY_IGNORE_PATTERN: "/data/Formations/.*"
         ingress:
           enabled: true
           hostName: "kyoo.<path:kv/cluster#domain>"
