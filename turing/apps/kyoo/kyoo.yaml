@@ -57,6 +57,7 @@ spec:
         back:
           deployment:
             memoryLimit: "4000Mi"
+            cpuLimit: "4000m"
         extraResources:
           - apiVersion: v1
             kind: PersistentVolume
