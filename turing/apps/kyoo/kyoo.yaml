@@ -62,6 +62,11 @@ spec:
           deployment:
             memoryLimit: "4000Mi"
             cpuLimit: ""
+        matcher:
+          deployment:
+            memoryLimit: "1000Mi"
+            cpuLimit: "2000m"
+
         extraResources:
           - apiVersion: v1
             kind: PersistentVolume
