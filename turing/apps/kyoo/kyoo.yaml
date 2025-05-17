@@ -1,0 +1,96 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyoo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://rubxkube.github.io/charts/
+    chart: kyoo
+    targetRevision: 0.1.5
+    helm:
+      values: |
+        secrets:
+          kyoo:
+            enabled: true
+            name: "kyoo-secrets"
+            data:
+              kyoo-apikeys: "your_api_keys"
+              tmdb-api: "your_tmdb_api"
+        config:
+          name: "kyoo-config"
+          enabled: true
+          data:
+            LIBRARY_LANGUAGES: "fr"
+        volume:
+          media:
+            enabled: false
+        ingress:
+          enabled: true
+          hostName: "kyoo.une-tasse-de.cafe"
+          ingressClassName: "traefik"
+          extraLabels: {}
+          paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: front
+                  port:
+                    number: 8901
+            - path: /api
+              pathType: Prefix
+              backend:
+                service:
+                  name: back
+                  port:
+                    number: 5000
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+            external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+            external-dns.alpha.kubernetes.io/hostname: kyoo.une-tasse-de.cafe
+            external-dns.alpha.kubernetes.io/target: 58c15097-f3b2-4ff7-a676-21bbeeea39d7.cfargotunnel.com
+          tls:
+            enabled: true
+            secretName: "kyoo-tls"
+
+        extraResources:
+          - apiVersion: v1
+            kind: PersistentVolume
+            metadata:
+              name: nfs-kyoo
+            spec:
+              capacity:
+                storage: 100Gi
+              volumeMode: Filesystem
+              accessModes:
+                - ReadOnlyMany
+              persistentVolumeReclaimPolicy: Retain
+              storageClassName: local
+              mountOptions:
+                - hard
+                - nfsvers=4.1
+              nfs:
+                path: /mnt/Stockage/Plex
+                server: 192.168.1.90
+          - apiVersion: v1
+            kind: PersistentVolumeClaim
+            metadata:
+              name: media
+            spec:
+              accessModes:
+                - ReadOnlyMany
+              volumeMode: Filesystem
+              resources:
+                requests:
+                  storage: 100Gi
+              storageClassName: local
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyoo
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
