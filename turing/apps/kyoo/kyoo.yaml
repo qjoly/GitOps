@@ -11,6 +11,10 @@ spec:
     targetRevision: 0.1.7
     helm:
       values: |
+        postgresql:
+          enabled: true
+          auth:
+            password: "<path:kv/kyoo#dbpassword>"
         volumes:
           media:
             enabled: false
@@ -57,7 +61,7 @@ spec:
         back:
           deployment:
             memoryLimit: "4000Mi"
-            cpuLimit: "4000m"
+            cpuLimit: ""
         extraResources:
           - apiVersion: v1
             kind: PersistentVolume
