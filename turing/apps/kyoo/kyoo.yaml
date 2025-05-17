@@ -11,6 +11,9 @@ spec:
     targetRevision: 0.1.7
     helm:
       values: |
+        volumes:
+          media:
+            enabled: false
         secrets:
           kyoo:
             enabled: true
@@ -23,9 +26,6 @@ spec:
           enabled: true
           data:
             LIBRARY_LANGUAGES: "fr"
-        volume:
-          media:
-            enabled: false
         ingress:
           enabled: true
           hostName: "kyoo.une-tasse-de.cafe"
