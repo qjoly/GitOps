@@ -54,7 +54,9 @@ spec:
           tls:
             enabled: true
             secretName: "kyoo-tls"
-
+        back:
+          deployment:
+            memoryLimit: "4000Mi"
         extraResources:
           - apiVersion: v1
             kind: PersistentVolume
