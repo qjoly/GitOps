@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/charts/
     chart: glance
-    targetRevision: 0.0.7
+    targetRevision: 0.0.8
     helm:
       values: |
         common:
