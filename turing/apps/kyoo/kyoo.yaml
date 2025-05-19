@@ -71,6 +71,10 @@ spec:
           deployment:
             memoryLimit: "750Mi"
             cpuLimit: "1000m"
+        transcoder:
+          deployment:
+            memoryLimit: "1Gi"
+            cpuLimit: "2000m"
 
         extraResources:
           - apiVersion: v1
