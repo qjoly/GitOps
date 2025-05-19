@@ -67,6 +67,10 @@ spec:
           deployment:
             memoryLimit: "1000Mi"
             cpuLimit: "2000m"
+        front:
+          deployment:
+            memoryLimit: "750Mi"
+            cpuLimit: "1000m"
 
         extraResources:
           - apiVersion: v1
