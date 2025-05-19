@@ -21,4 +21,4 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: prometheus-smartctl-exporter
-    targetRevision: 0.13.0
+    targetRevision: 0.15.1
