@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/charts/
     chart: jellyfin
-    targetRevision: 1.2.3
+    targetRevision: 1.2.4
     plugin:
       name: argocd-vault-plugin-helm
       env:
