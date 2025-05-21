@@ -54,7 +54,7 @@ spec:
                   accessModes: ["ReadWriteOnce"]
                   resources:
                     requests:
-                      storage: 10Gi
+                      storage: 30Gi
         crds:
           enabled: true
         grafana:
