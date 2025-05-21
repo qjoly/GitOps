@@ -8,3 +8,4 @@ resources:
   - middleware.yaml
   - blackbox-exporter.yaml
   - probes
+  - kromgo
