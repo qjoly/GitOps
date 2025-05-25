@@ -5,3 +5,4 @@ resources:
   - ingress-argocd.yaml
   - ip-pool.yml
   - cluster-issuer.yaml
+  - traefik-middleware.yaml
