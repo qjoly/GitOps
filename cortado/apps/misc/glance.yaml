@@ -76,6 +76,7 @@ spec:
                                       - url: https://blog.tbobm.dev/index.xml
                                       - url: https://searchmysite.net/api/v1/feed/search/?q=Talos
                                       - url: https://xeiaso.net/blog.rss
+                                      - url: https://perrotta.dev/index.xml
 
                                   - type: twitch-channels
                                     channels:
