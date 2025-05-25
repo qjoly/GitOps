@@ -1,0 +1,197 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog-fr
+  labels:
+    app: blog-fr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blog-fr
+  template:
+    metadata:
+      labels:
+        app: blog-fr
+    spec:
+      containers:
+        - name: anubis
+          image: ghcr.io/techarohq/anubis:latest
+          ports:
+            - containerPort: 8080
+          imagePullPolicy: Always
+          env:
+            - name: "BIND"
+              value: ":8080"
+            - name: "DIFFICULTY"
+              value: "4"
+            - name: ED25519_PRIVATE_KEY_HEX
+              valueFrom:
+                secretKeyRef:
+                  name: anubis-key
+                  key: ED25519_PRIVATE_KEY_HEX
+            - name: "METRICS_BIND"
+              value: ":9090"
+            - name: "SERVE_ROBOTS_TXT"
+              value: "true"
+            - name: "TARGET"
+              value: "http://localhost:80"
+            - name: "OG_PASSTHROUGH"
+              value: "true"
+            - name: "OG_EXPIRY_TIME"
+              value: "24h"
+            - name: POLICY_FNAME
+              value: "/etc/policies/policy.json"
+          volumeMounts:
+            - name: policy-volume
+              mountPath: /etc/policies
+              readOnly: true
+          resources:
+            limits:
+              cpu: 750m
+              memory: 256Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+
+        - name: blog
+          image: ghcr.io/une-tasse-de-cafe/blog-static:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            limits:
+              cpu: 250m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - name: policy-volume
+          configMap:
+            name: blog-fr-policy
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blog-fr-policy
+data:
+  policy.json: |
+    ## Anubis has the ability to let you import snippets of configuration into the main
+    ## configuration file. This allows you to break up your config into smaller parts
+    ## that get logically assembled into one big file.
+    ##
+    ##
+    ## Import paths can either be prefixed with (data) to import from the common/shared
+    ## rules in the data folder in the Anubis source tree or will point to absolute/relative
+    ## paths in your filesystem. If you don't have access to the Anubis source tree, check
+    ## /usr/share/docs/anubis/data or in the tarball you extracted Anubis from.
+
+    bots:
+    # Pathological bots to deny
+    - # This correlates to data/bots/deny-pathological.yaml in the source tree
+      # https://github.com/TecharoHQ/anubis/blob/main/data/bots/deny-pathological.yaml
+      import: (data)/bots/_deny-pathological.yaml
+    - import: (data)/bots/aggressive-brazilian-scrapers.yaml
+
+    # Enforce https://github.com/ai-robots-txt/ai.robots.txt
+    - import: (data)/bots/ai-robots-txt.yaml
+    - name: allow-rss-requests
+      action: ALLOW
+      expression:
+        all:
+          - 'path.startsWith("/index.xml")'
+    # Search engine crawlers to allow, defaults to:
+    #   - Google (so they don't try to bypass Anubis)
+    #   - Bing
+    #   - DuckDuckGo
+    #   - Qwant
+    #   - The Internet Archive
+    #   - Kagi
+    #   - Marginalia
+    #   - Mojeek
+    - import: (data)/crawlers/_allow-good.yaml
+
+    # Allow common "keeping the internet working" routes (well-known, favicon, robots.txt)
+    - import: (data)/common/keep-internet-working.yaml
+
+    # # Punish any bot with "bot" in the user-agent string
+    # # This is known to have a high false-positive rate, use at your own risk
+    # - name: generic-bot-catchall
+    #   user_agent_regex: (?i:bot|crawler)
+    #   action: CHALLENGE
+    #   challenge:
+    #     difficulty: 16  # impossible
+    #     report_as: 4    # lie to the operator
+    #     algorithm: slow # intentionally waste CPU cycles and time
+
+    # Generic catchall rule
+    - name: generic-browser
+      user_agent_regex: >-
+        Mozilla|Opera
+      action: CHALLENGE
+
+    dnsbl: false
+
+    # By default, send HTTP 200 back to clients that either get issued a challenge
+    # or a denial. This seems weird, but this is load-bearing due to the fact that
+    # the most aggressive scraper bots seem to really, really, want an HTTP 200 and
+    # will stop sending requests once they get it.
+    status_codes:
+      CHALLENGE: 200
+      DENY: 200 # This is the default, so you can omit this if you want
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-fr
+  labels:
+    app: blog-fr
+spec:
+  selector:
+    app: blog-fr
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blog-fr
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect@kubernetescrd
+spec:
+  rules:
+    - host: une-tasse-de.cafe
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blog-fr
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - une-tasse-de.cafe
+      secretName: blog-fr
