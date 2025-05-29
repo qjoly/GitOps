@@ -18,7 +18,6 @@ spec:
     helm:
       values: |
         image:
-            sshfs:
-                repository: ghcr.io/qjoly/sshfsplugin:
-                tag: v4.2.0-linux-amd64
-                pullPolicy: IfNotPresent
+          sshfs:
+            repository: ghcr.io/qjoly/sshfsplugin
+            tag: v4.2.0-linux-amd64
