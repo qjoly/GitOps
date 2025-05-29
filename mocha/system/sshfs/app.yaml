@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sshfs
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sshfs
+  source:
+    repoURL: https://github.com/robin-rpr/csi-driver-sshfs.git
+    targetRevision: main
+    path: charts/latest/csi-driver-sshfs
