@@ -13,5 +13,5 @@ spec:
     namespace: sshfs
   source:
     repoURL: https://github.com/robin-rpr/csi-driver-sshfs.git
-    targetRevision: main
+    targetRevision: master
     path: charts/latest/csi-driver-sshfs
