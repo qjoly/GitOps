@@ -15,3 +15,10 @@ spec:
     repoURL: https://github.com/robin-rpr/csi-driver-sshfs.git
     targetRevision: master
     path: charts/latest/csi-driver-sshfs
+    helm:
+      values: |
+        image:
+            sshfs:
+                repository: ghcr.io/qjoly/sshfsplugin:
+                tag: v4.2.0-linux-amd64
+                pullPolicy: IfNotPresent
