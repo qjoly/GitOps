@@ -34,19 +34,22 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 - [**Omni** (Self-hosted)](https://www.siderolabs.com/platform/saas-for-kubernetes/) : Manage all nodes between clusters and regions.
 - [Cilium](https://cilium.io/) as CNI and LB (ARP mode)
 - [ArgoCD](https://argoproj.github.io/argo-cd/) to manage the GitOps workflow
-- [Nginx Ingress Controller](https://kubernetes.github.io/ingress-nginx/) for Ingress management (and [Istio](https://istio.io/) deployed on some clusters)
+- ~~[Nginx Ingress Controller](https://kubernetes.github.io/ingress-nginx/) for Ingress management (and [Istio](https://istio.io/) deployed on some clusters)~~
+- [Traefik Ingress Controller](https://doc.traefik.io/traefik/getting-started/install-traefik/#use-the-helm-chart) for Ingress management (as well as for middleware management). 
 - [Cert Manager](https://cert-manager.io/) for TLS certificates.
-- [Longhorn](https://longhorn.io/) for storage based on nodes disks.
+- Storage:
+  - [Rook](https://rook.io/) for multiple nodes cluster.
+  - OpenEBS + LVM (or ZFS) for single-node cluster.
+  - [ZFS](https://openzfs.github.io/openzfs-docs/) + [Local-Path-Provisioner](https://github.com/rancher/local-path-provisioner) (**Only on Cortado cluster**).
 - ~~[Reflector](https://github.com/emberstack/kubernetes-reflector/blob/main/README.md) to sync secrets across namespaces (requirement for External Secrets + Vault).~~ (Removed 16/12/2024)
 - [External Secrets](https://external-secrets.io/latest/) to fetch secrets from a remote store.
 - [Vault](https://www.vaultproject.io/) as a secret store to store secrets.
-- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet (**Only on the `home` cluster**).
-- [ZFS](https://openzfs.github.io/openzfs-docs/) + [Local-Path-Provisioner](https://github.com/rancher/local-path-provisioner) to create persistent volumes on the mounted ZFS filesystem (**Only on CloudLab cluster**).
-- [Volsync](https://github.com/backube/volsync) to create backup and send backup (using restic) to a minio server (**Only on CloudLab cluster**).
+- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet (**Only on the `turing` cluster**).
+- [Volsync](https://github.com/backube/volsync) to create backup and send backup (using restic) to a minio server (**Only on Cortado cluster**).
 
 ### Cluster
 
-- [**Cortado** : Single node bare-metal cluster hosted by OVH.](https://github.com/qjoly/GitOps/tree/main/cortado)
+- [**Cortado** : Single node bare-metal cluster hosted by OVH.](https://github.com/qjoly/GitOps/tree/main/cortado) - This cluster is mainly used for backups and small applications (gaming, small sites, etc.).
 <div align="center">
 
 [![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Ftalos_version&style=flat-square&logo=talos&logoColor=white&color=red&label=%20)](https://talos.dev)
@@ -60,7 +63,7 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 
 </div>
 
-- [**Mocha** : Another node bare-metal cluster hosted by OVH.](https://github.com/qjoly/GitOps/tree/main/mocha), production cluster (128GB RAM, 8 CPU, 2x512Go NVMe)
+- [**Mocha** : Another node bare-metal cluster hosted by OVH](https://github.com/qjoly/GitOps/tree/main/mocha), production cluster (128GB RAM, 8 CPU, 2x512Go NVMe)
 <div align="center">
 
 [![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.mocha.thoughtless.eu%2Ftalos_version&style=flat-square&logo=talos&logoColor=white&color=red&label=%20)](https://talos.dev)
@@ -74,7 +77,7 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 
 </div>
 
-- **Turing** : A cluster based on small devices (ARM and x86) at home. This cluster is used for local hosting and testing. 
+- **Turing** : A cluster based on small devices (ARM and x86) at home. This cluster is used for local hosting and testing. (Prometheus not yet available)
 <div align="center">
 
 [![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.turing.thoughtless.eu%2Ftalos_version&style=flat-square&logo=talos&logoColor=white&color=red&label=%20)](https://talos.dev)
