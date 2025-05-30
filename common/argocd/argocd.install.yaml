@@ -23154,7 +23154,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: applicationset-controller
-          image: quay.io/argoproj/argocd:v2.13.2
+          image: quay.io/argoproj/argocd:v3.0.5
           imagePullPolicy: IfNotPresent
           args:
             - /usr/local/bin/argocd-applicationset-controller
@@ -23407,7 +23407,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: notifications-controller
-          image: quay.io/argoproj/argocd:v2.13.2
+          image: quay.io/argoproj/argocd:v3.0.5
           imagePullPolicy: IfNotPresent
           args:
             - /usr/local/bin/argocd-notifications
@@ -23535,7 +23535,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: repo-server
-        image: quay.io/argoproj/argocd:v2.13.2
+        image: quay.io/argoproj/argocd:v3.0.5
         imagePullPolicy: IfNotPresent
         args:
         - /usr/local/bin/argocd-repo-server
@@ -23813,7 +23813,7 @@ spec:
         - -n
         - /usr/local/bin/argocd
         - /var/run/argocd/argocd-cmp-server
-        image: quay.io/argoproj/argocd:v2.13.2
+        image: quay.io/argoproj/argocd:v3.0.5
         imagePullPolicy: IfNotPresent
         name: copyutil
         resources:
@@ -23912,7 +23912,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: server
-        image: quay.io/argoproj/argocd:v2.13.2
+        image: quay.io/argoproj/argocd:v3.0.5
         imagePullPolicy: IfNotPresent
         args:
         - /usr/local/bin/argocd-server
@@ -24411,7 +24411,7 @@ spec:
           mountPath: /tls
       initContainers:
       - name: copyutil
-        image: quay.io/argoproj/argocd:v2.13.2
+        image: quay.io/argoproj/argocd:v3.0.5
         imagePullPolicy: IfNotPresent
         command:
         - /bin/cp
@@ -24590,7 +24590,7 @@ spec:
       - args:
         - /usr/local/bin/argocd-application-controller
         - --metrics-port=8082
-        image: quay.io/argoproj/argocd:v2.13.2
+        image: quay.io/argoproj/argocd:v3.0.5
         imagePullPolicy: IfNotPresent
         name: application-controller
         env:
@@ -24996,7 +24996,7 @@ spec:
           - argocd
           - admin
           - redis-initial-password
-        image: quay.io/argoproj/argocd:v2.13.2
+        image: quay.io/argoproj/argocd:v3.0.5
         imagePullPolicy: IfNotPresent
         name: secret-init
         resources:
