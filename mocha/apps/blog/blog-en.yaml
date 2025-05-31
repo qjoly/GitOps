@@ -104,7 +104,7 @@ data:
     - name: allow-rss-requests
       action: ALLOW
       expression:
-        all:
+        any:
           - 'path.startsWith("/index.xml")'
           - 'path.startsWith("/robots.txt")'
 
