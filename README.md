@@ -1,4 +1,3 @@
-
 <p align="center">
     <img src="https://avatars.githubusercontent.com/u/82603435?v=4" width="140px" alt="Helm LOGO"/>
     <br>
@@ -91,6 +90,19 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 
 </div>
 
+## About the 'Kubevirt' Virtual Cluster
+
+While this repository primarily contains three physical clusters (`mocha`, `cortado`, and `turing`), a fourth cluster configuration exists in the `kubevirt` directory. This is a virtual cluster that runs as workloads on top of another cluster (primarily hosted on `mocha` due to its greater resource capacity).
+
+This virtual cluster is provisioned using [Kubevirt](https://kubevirt.io/) technology integrated with the Omni Infrastructure provider. For a detailed exploration of this setup, you can read [my article about Omni and Kubevirt integration](https://a-cup-of.coffee/blog/omni/).
+
+### Why Use a Virtual Cluster?
+
+There are two primary motivations behind maintaining a separate virtual cluster:
+
+1. **Network Isolation**: It allows for different pod CIDR and service CIDR ranges than the host cluster, preventing network overlaps that could cause routing issues.
+
+2. **Configuration Testing**: It provides an isolated environment that mirrors my production clusters with the same core components (metrics server, ArgoCD, ApplicationSet, etc.), making it perfect for testing configurations and upgrades safely.
 
 ## Usage
 
