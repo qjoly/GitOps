@@ -16,7 +16,7 @@ spec:
               key: apiKey
               name: cloudflare-api-key
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: cloudflare-api-key
@@ -29,7 +29,7 @@ spec:
   target:
     name: cloudflare-api-key
   data:
-  - secretKey: apiKey
-    remoteRef:
-      key: cloudflare
-      property: dnsToken
+    - secretKey: apiKey
+      remoteRef:
+        key: cloudflare
+        property: dnsToken
