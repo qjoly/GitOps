@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: blog-fr
+  namespace: default
   labels:
     app: blog-fr
 spec:
@@ -89,6 +90,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: blog-fr-policy
+  namespace: default
 data:
   policy.json: |
     ## Anubis has the ability to let you import snippets of configuration into the main
@@ -427,6 +429,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: blog-fr
+  namespace: default
   labels:
     app: blog-fr
 spec:
@@ -443,6 +446,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: blog-fr
+  namespace: default
   annotations:
     cert-manager.io/cluster-issuer: cloudflare
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect@kubernetescrd
