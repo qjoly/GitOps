@@ -107,6 +107,9 @@ data:
         any:
           - 'path.startsWith("/index.xml")'
           - 'path.startsWith("/robots.txt")'
+          - 'path.startsWith("/favicon")'
+          - 'path.startsWith("/img/")'
+          - 'path.startsWith("/sitemap.xml")'
 
 
     # Pathological bots to deny
