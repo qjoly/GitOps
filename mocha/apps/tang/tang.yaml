@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: slash
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.4.5
+    helm:
+      values: |
+        name: "tang"
+        image:
+          repository: padhihomelab/tang
+          tag: "latest"
+        service:
+          servicePort: 8080
+        deployment:
+          port: 8080
+        ingress:
+            enabled: true
+            hostName: "tang.mocha.<path:kv/cluster#domain>"
+            ingressClassName: traefik
+            tls:
+              enabled: true
+              secretName: "tang-tls"
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+        variables:
+          secret: {}
+          nonSecret: {}
+        persistence:
+          enabled: true
+          volumes:
+            - name: data
+              storageClassName: ""
+              size: 5Gi
+              pvcClaim: ""
+              containerMount: "/db"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tang
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
