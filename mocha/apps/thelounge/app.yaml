@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: thelounge
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.4.5
+    helm:
+      values: |
+        name: "thelounge"
+        image:
+          repository: ghcr.io/thelounge/thelounge
+          tag: "4.4.3"
+        service:
+          servicePort: 9000
+        deployment:
+          port: 9000
+        ingress:
+            enabled: true
+            hostName: "thelounge.<path:kv/cluster#domain>"
+            ingressClassName: traefik
+            tls:
+              enabled: true
+              secretName: "thelounge-tls"
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+        variables:
+          secret: {}
+          nonSecret: {}
+        persistence:
+          enabled: true
+          volumes:
+            - name: data
+              storageClassName: ""
+              size: 5Gi
+              pvcClaim: ""
+              containerMount: "/var/opt/thelounge"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tang
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
