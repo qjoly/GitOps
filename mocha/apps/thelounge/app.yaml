@@ -41,7 +41,7 @@ spec:
               containerMount: "/var/opt/thelounge"
   destination:
     server: https://kubernetes.default.svc
-    namespace: tang
+    namespace: thelounge
   syncPolicy:
     automated:
       prune: true
