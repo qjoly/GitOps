@@ -79,6 +79,7 @@ spec:
                                       - url: https://perrotta.dev/index.xml
                                       - url: https://fasterthanli.me/index.xml
                                       - url: https://leofvo.me/articles/rss.xml
+                                      - url: https://leofvo.me/articles/rss.xml
 
                                   - type: twitch-channels
                                     channels:
@@ -147,4 +148,19 @@ spec:
                                       - url: https://www.joshkasuboski.com/index.xml
                                       - url: https://blog.paranoidpenguin.net/index.xml
                                       - url: https://newsletter.developer-friendly.blog/archive.xml
+                                      - url: https://xn--gckvb8fzb.com/index.xml
+                                      - url: http://sreweekly.com/feed/
+                                      - url: https://dustri.org/b/rss.xml
+                                      - url: https://blog.squwal.com/index.xml
+                                      - url: https://alexohneander.de/atom.xml
+                                      - url: https://flagzeta.org/til/index.xml
+                                      - url: https://blog.scottlowe.org/feed.xml
+                                      - url: https://makhal.fr/index.xml
+                                      - url: https://danmanners.com/index.xml
+                                      - url: https://blog.tbobm.dev/index.xml
+                                      - url: https://searchmysite.net/api/v1/feed/search/?q=Talos
+                                      - url: https://xeiaso.net/blog.rss
+                                      - url: https://perrotta.dev/index.xml
+                                      - url: https://fasterthanli.me/index.xml
+                                      - url: https://leofvo.me/articles/rss.xml
 
