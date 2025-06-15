@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/charts/
     chart: glance
-    targetRevision: 0.0.9
+    targetRevision: 0.0.10
     helm:
       values: |
         common:
@@ -165,4 +165,3 @@ spec:
                                       - url: https://fasterthanli.me/index.xml
                                       - url: https://leofvo.me/articles/rss.xml
                                       - url: https://zoriya.dev/index.xml
-
