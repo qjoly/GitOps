@@ -26,12 +26,12 @@ kind: ControlPlane
 labels:
   type: control-plane
 machineClass:
-  name: kubevirt
+  name: mocha
   size: 3
 ---
 kind: Workers
 labels:
   type: workers
 machineClass:
-  name: kubevirt
+  name: mocha
   size: 2
