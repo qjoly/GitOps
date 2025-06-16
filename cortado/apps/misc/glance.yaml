@@ -123,6 +123,7 @@ spec:
                                       - cilium/cilium
                                       - kubernetes/kubernetes
                                       - dockerhub:gotify/server
+                                      - int128/kubelogin
                           - name: RSS
                             columns:
                               - size: full
