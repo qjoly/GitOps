@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/charts/
     chart: flaresolverr
-    targetRevision: 0.0.3
+    targetRevision: 0.0.4
     helm:
       values: |
         common:
