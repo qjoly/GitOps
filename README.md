@@ -8,7 +8,7 @@
 
   [![Blog](https://img.shields.io/badge/Blog-blue?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://a-cup-of.coffee/)
   [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.31.3-blue?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
-  [![Linux](https://img.shields.io/badge/Talos-v1.8.3-blue?style=for-the-badge&logo=linux&logoColor=white)](https://talos.dev/)
+  [![Linux](https://img.shields.io/badge/Talos-v1.9.5-blue?style=for-the-badge&logo=linux&logoColor=white)](https://talos.dev/)
 
 </div>
 
@@ -89,6 +89,9 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 ![Memory-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.turing.thoughtless.eu%2Fcluster_memory_usage&style=flat-square&label=Memory)
 
 </div>
+
+- **Kubevirt** : See below :p 
+
 
 ## About the 'Kubevirt' Virtual Cluster
 
