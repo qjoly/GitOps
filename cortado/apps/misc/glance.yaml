@@ -80,6 +80,7 @@ spec:
                                       - url: https://fasterthanli.me/index.xml
                                       - url: https://leofvo.me/articles/rss.xml
                                       - url: https://zoriya.dev/index.xml
+                                      - url: https://mcorbin.fr/feed.xml
 
                                   - type: twitch-channels
                                     channels:
@@ -166,3 +167,5 @@ spec:
                                       - url: https://fasterthanli.me/index.xml
                                       - url: https://leofvo.me/articles/rss.xml
                                       - url: https://zoriya.dev/index.xml
+                                      - url: https://mcorbin.fr/feed.xml
+
