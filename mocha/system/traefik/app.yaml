@@ -15,3 +15,9 @@ spec:
     repoURL: https://traefik.github.io/charts
     targetRevision: 36.2.0
     chart: traefik
+    helm:
+      values: |
+        service:
+          annotations:
+            lbipam.cilium.io/sharing-key: "public"
+            lbipam.cilium.io/sharing-cross-namespace: "*"
