@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://openebs.github.io/openebs
     chart: openebs
-    targetRevision: 4.3.2
+    targetRevision: 4.3.3
     helm:
       values: |
         engines:
