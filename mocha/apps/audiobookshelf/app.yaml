@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/charts/
     chart: audiobookshelf
-    targetRevision: v0.0.1
+    targetRevision: v0.0.2
     helm:
       values: |
         deployment:
