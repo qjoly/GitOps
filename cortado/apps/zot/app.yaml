@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: zot
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: zot
+  source:
+    repoURL: http://zotregistry.dev/helm-charts
+    chart: zot
+    targetRevision: v0.1.79
+    helm:
+      values: |
+        persistence: true
+        pvc:
+          create: true
+        ingress:
+          enabled: true
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+          className: "traefik"
+          pathtype: ImplementationSpecific
+          hosts:
+            - host: zot.<path:kv/cluster#domain>
+              paths:
+                - path: /
+          tls:
+            - secretName: zot-tls
+              hosts:
+                - zot.<path:kv/cluster#domain>
