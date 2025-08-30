@@ -11,23 +11,20 @@ spec:
     targetRevision: v0.0.2
     helm:
       values: |
-        deployment:
-          port: 9000
-        ingress:
-            enabled: true
-            hostName: "audiobookshelf.<path:kv/cluster#domain>"
-            ingressClassName: traefik
-            tls:
+        common:
+          ingress:
               enabled: true
-              secretName: "audiobookshelf-tls"
-            annotations:
-              cert-manager.io/cluster-issuer: cloudflare
-        variables:
-          secret: {}
-          nonSecret: 
-            TZ: "Europe/Paris"
-        persistence:
-          enabled: true
+              hostName: "audiobookshelf.<path:kv/cluster#domain>"
+              ingressClassName: traefik
+              tls:
+                enabled: true
+                secretName: "audiobookshelf-tls"
+              annotations:
+                cert-manager.io/cluster-issuer: cloudflare
+          variables:
+            secret: {}
+            nonSecret: 
+              TZ: "Europe/Paris"
   destination:
     server: https://kubernetes.default.svc
     namespace: audiobookshelf
