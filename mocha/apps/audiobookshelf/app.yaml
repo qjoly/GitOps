@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: audiobookshelf
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://rubxkube.github.io/charts/
+    chart: audiobookshelf
+    targetRevision: v0.0.1
+    helm:
+      values: |
+        deployment:
+          port: 9000
+        ingress:
+            enabled: true
+            hostName: "audiobookshelf.<path:kv/cluster#domain>"
+            ingressClassName: traefik
+            tls:
+              enabled: true
+              secretName: "audiobookshelf-tls"
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+        variables:
+          secret: {}
+          nonSecret: 
+            TZ: "Europe/Paris"
+        persistence:
+          enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: audiobookshelf
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
