@@ -17,6 +17,7 @@ spec:
     targetRevision: v0.1.79
     helm:
       values: |
+        mountSecret: true
         secretFiles:
           htpasswd: |-
             matcha:$apr1$lmwb59pt$A46lqnqnPT0MT8.2oKEp21
