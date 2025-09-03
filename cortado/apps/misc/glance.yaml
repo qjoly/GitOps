@@ -82,6 +82,8 @@ spec:
                                       - url: https://zoriya.dev/index.xml
                                       - url: https://mcorbin.fr/feed.xml
                                       - url: https://arthi-chaud.github.io/feed.xml
+                                      - url: https://ersei.net/en/blog.atom
+
 
                                   - type: twitch-channels
                                     channels:
@@ -170,4 +172,5 @@ spec:
                                       - url: https://zoriya.dev/index.xml
                                       - url: https://mcorbin.fr/feed.xml
                                       - url: https://arthi-chaud.github.io/feed.xml
+                                      - url: https://ersei.net/en/blog.atom
 
