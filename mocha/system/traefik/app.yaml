@@ -21,3 +21,15 @@ spec:
           annotations:
             lbipam.cilium.io/sharing-key: "public"
             lbipam.cilium.io/sharing-cross-namespace: "*"
+        ports:
+          websecure:
+            transport:
+              respondingTimeouts:
+                readTimeout: 300
+                writeTimeout: 300
+                idleTimeout: 300
+              lifeCycle:
+                requestAcceptGraceTimeout: 300
+                graceTimeOut: 300
+              keepAliveMaxRequests: 100
+              keepAliveMaxTime: 300
