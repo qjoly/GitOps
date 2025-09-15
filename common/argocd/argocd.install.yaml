@@ -24354,7 +24354,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: dex-server
-        image: ghcr.io/dexidp/dex:v2.42.0
+        image: ghcr.io/dexidp/dex:v2.44.0
         imagePullPolicy: IfNotPresent
         command:
         - /shared/argocd-dex
