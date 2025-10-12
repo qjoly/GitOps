@@ -18,7 +18,7 @@ spec:
   source:
     repoURL: https://charts.chaos-mesh.org
     chart: chaos-mesh
-    targetRevision: 2.7.3
+    targetRevision: 2.8.0
     helm:
       values: |
         chaosDaemon:
