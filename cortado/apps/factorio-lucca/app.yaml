@@ -1,0 +1,62 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: factorio-lucca
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: factorio-lucca
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.4.5
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            name: "factorio"
+            service:
+              type: NodePort
+              enabled: true
+              servicePort: 34195
+              containerPort: 34197
+              protocol: UDP
+
+            image:
+              repository: factoriotools/factorio
+              tag: stable
+              pullPolicy: Always
+              
+            deployment:
+              port: 34197
+
+            ingress:
+              enabled: false
+
+            configMap:
+              enabled: false
+
+            extraConfigMaps: []
+
+            variables:
+              secret:
+                data:
+                  USERNAME: <path:kv/factorio#username>
+                  TOKEN: <path:kv/factorio#token>
+              nonSecret:
+                DLC_SPACE_AGE: true
+
+            persistence:
+              enabled: true
+              volumes:
+                - name: data
+                  storageClassName: ""
+                  size: 20Gi
+                  pvcClaim: ""
+                  containerMount: "/factorio"
