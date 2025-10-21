@@ -24,7 +24,7 @@ spec:
             service:
               type: NodePort
               enabled: true
-              servicePort: 34195
+              servicePort: 34197
               containerPort: 34197
               protocol: UDP
 
