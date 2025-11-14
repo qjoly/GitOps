@@ -20,43 +20,66 @@ spec:
       env:
         - name: HELM_VALUES
           value: |
-            name: "factorio"
-            service:
-              type: NodePort
-              enabled: true
-              servicePort: 34197
-              containerPort: 34197
-              protocol: UDP
-
-            image:
-              repository: factoriotools/factorio
-              tag: latest
-              pullPolicy: Always
+              name: "factorio"
+              service:
+                type: NodePort
+                enabled: true
+                servicePort: 34197
+                containerPort: 34197
+                protocol: UDP
               
-            deployment:
-              port: 34197
-
-            ingress:
-              enabled: false
-
-            configMap:
-              enabled: false
-
-            extraConfigMaps: []
-
-            variables:
-              secret:
-                data:
-                  USERNAME: <path:kv/factorio#username>
-                  TOKEN: <path:kv/factorio#token>
-              nonSecret:
-                DLC_SPACE_AGE: true
-
-            persistence:
-              enabled: true
-              volumes:
-                - name: data
-                  storageClassName: ""
-                  size: 20Gi
-                  pvcClaim: ""
-                  containerMount: "/factorio"
+              deployment:
+                port: 34197
+                initContainers:
+                  - name: "mapshot"
+                    image: ghcr.io/qjoly/factorio-mapshot-docker:latest
+                    env:
+                          - name: MAPSHOT_MODE
+                            value: "serve"
+                          - name: MAPSHOT_FACTORIO_DATA_DIRECTORY
+                            value: "/data/factorio"
+                          - name: MAPSHOT_FACTORIO_BINARY_PATH
+                            value: "/mapshot/factorio/bin/x64/factorio"
+                          - name: FACTORIO_USERNAME
+                            valueFrom:
+                              secretKeyRef:
+                                name: factorio-username
+                                key: username
+                          - name: FACTORIO_TOKEN
+                            valueFrom:
+                              secretKeyRef:
+                                name: factorio-token
+                                key: secret          
+                    volumeMounts:
+                      - name: data
+                        mountPath: /factorio
+                        readOnly: true
+              image:
+                repository: factoriotools/factorio
+                tag: latest
+                pullPolicy: Always
+              
+              ingress:
+                enabled: false
+              
+              configMap:
+                enabled: false
+              
+              extraConfigMaps: []
+              
+              variables:
+                secret:
+                  data:
+                    USERNAME: <path:kv/factorio#username>
+                    TOKEN: <path:kv/factorio#token>
+                nonSecret:
+                  DLC_SPACE_AGE: true
+              
+              persistence:
+                enabled: true
+                volumes:
+                  - name: data
+                    storageClassName: ""
+                    size: 20Gi
+                    pvcClaim: ""
+                    containerMount: "/factorio"
