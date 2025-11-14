@@ -44,7 +44,7 @@ spec:
                             valueFrom:
                               secretKeyRef:
                                 name: factorio-username
-                                key: username
+                                key: secret
                           - name: FACTORIO_TOKEN
                             valueFrom:
                               secretKeyRef:
