@@ -30,30 +30,6 @@ spec:
               
               deployment:
                 port: 34197
-                additionalContainers:
-                  - name: "mapshot"
-                    image: ghcr.io/qjoly/factorio-mapshot-docker:latest
-                    env:
-                          - name: MAPSHOT_MODE
-                            value: "serve"
-                          - name: MAPSHOT_FACTORIO_DATA_DIRECTORY
-                            value: "/data/factorio"
-                          - name: MAPSHOT_FACTORIO_BINARY_PATH
-                            value: "/mapshot/factorio/bin/x64/factorio"
-                          - name: FACTORIO_USERNAME
-                            valueFrom:
-                              secretKeyRef:
-                                name: factorio-username
-                                key: secret
-                          - name: FACTORIO_TOKEN
-                            valueFrom:
-                              secretKeyRef:
-                                name: factorio-token
-                                key: secret          
-                    volumeMounts:
-                      - name: data
-                        mountPath: /factorio
-                        readOnly: true
               image:
                 repository: factoriotools/factorio
                 tag: latest
