@@ -19,7 +19,7 @@ spec:
   source:
     repoURL: https://grafana.github.io/helm-charts
     chart: loki-stack
-    targetRevision: 2.10.2
+    targetRevision: 2.10.3
     helm:
       values: |
         fluent-bit:
