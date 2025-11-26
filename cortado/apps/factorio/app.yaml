@@ -30,7 +30,7 @@ spec:
 
             image:
               repository: factoriotools/factorio
-              tag: stable
+              tag: latest
               pullPolicy: Always
               
             deployment:
