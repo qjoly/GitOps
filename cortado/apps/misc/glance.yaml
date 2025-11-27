@@ -117,7 +117,7 @@ spec:
                               - size: small
                                 widgets:
                                   - type: weather
-                                    location: Lyon, France
+                                    location: Nantes, France
 
                                   - type: releases
                                     show-source-icon: true
@@ -126,8 +126,6 @@ spec:
                                       - siderolabs/omni
                                       - cilium/cilium
                                       - kubernetes/kubernetes
-                                      - dockerhub:gotify/server
-                                      - int128/kubelogin
                           - name: RSS
                             columns:
                               - size: full
