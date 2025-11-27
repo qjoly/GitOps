@@ -1,0 +1,19 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: block-noobs
+spec:
+  endpointSelector:
+    matchLabels:
+      app: factorio
+  egress:
+    - toCIDRSet:
+      - cidr: 0.0.0.0/0
+        except:
+          - <path:kv/netpol#briangtn>
+
+  ingress:
+    - fromCIDRSet:
+      - cidr: 0.0.0.0/0
+        except:
+          - <path:kv/netpol#briangtn>
