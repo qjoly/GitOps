@@ -24502,7 +24502,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: redis
-        image: public.ecr.aws/docker/library/redis:7.4.1-alpine
+        image: public.ecr.aws/docker/library/redis:7.4.7-alpine
         imagePullPolicy: IfNotPresent
         args:
         - --save
