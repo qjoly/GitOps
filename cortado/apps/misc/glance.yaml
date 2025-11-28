@@ -59,11 +59,11 @@ spec:
                                       - url: https://littlejo.github.io/blog/index.xml
                                       - url: https://www.itix.fr/fr/index.xml
                                       - url: https://mickael-baron.fr/feed.xml
-                                      - url: https://blog.claneys.net/rss/
+                                      # - url: https://blog.claneys.net/rss/
                                       - url: https://www.rootisgod.com/index.xml
                                       - url: https://www.joshkasuboski.com/index.xml
                                       - url: https://blog.paranoidpenguin.net/index.xml
-                                      - url: https://newsletter.developer-friendly.blog/archive.xml
+                                      # - url: https://newsletter.developer-friendly.blog/archive.xml
                                       - url: https://xn--gckvb8fzb.com/index.xml
                                       - url: http://sreweekly.com/feed/
                                       - url: https://dustri.org/b/rss.xml
@@ -71,7 +71,7 @@ spec:
                                       - url: https://alexohneander.de/atom.xml
                                       - url: https://flagzeta.org/til/index.xml
                                       - url: https://blog.scottlowe.org/feed.xml
-                                      - url: https://makhal.fr/index.xml
+                                      # - url: https://makhal.fr/index.xml
                                       - url: https://danmanners.com/index.xml
                                       - url: https://blog.tbobm.dev/index.xml
                                       - url: https://searchmysite.net/api/v1/feed/search/?q=Talos
@@ -147,11 +147,11 @@ spec:
                                       - url: https://littlejo.github.io/blog/index.xml
                                       - url: https://www.itix.fr/fr/index.xml
                                       - url: https://mickael-baron.fr/feed.xml
-                                      - url: https://blog.claneys.net/rss/
+                                      # - url: https://blog.claneys.net/rss/
                                       - url: https://www.rootisgod.com/index.xml
                                       - url: https://www.joshkasuboski.com/index.xml
                                       - url: https://blog.paranoidpenguin.net/index.xml
-                                      - url: https://newsletter.developer-friendly.blog/archive.xml
+                                      # - url: https://newsletter.developer-friendly.blog/archive.xml
                                       - url: https://xn--gckvb8fzb.com/index.xml
                                       - url: http://sreweekly.com/feed/
                                       - url: https://dustri.org/b/rss.xml
@@ -159,7 +159,7 @@ spec:
                                       - url: https://alexohneander.de/atom.xml
                                       - url: https://flagzeta.org/til/index.xml
                                       - url: https://blog.scottlowe.org/feed.xml
-                                      - url: https://makhal.fr/index.xml
+                                      # - url: https://makhal.fr/index.xml
                                       - url: https://danmanners.com/index.xml
                                       - url: https://blog.tbobm.dev/index.xml
                                       - url: https://searchmysite.net/api/v1/feed/search/?q=Talos
