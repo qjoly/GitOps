@@ -274,3 +274,6 @@ spec:
                                             {{ end }}
                                         </div>
                                       </div>
+                              - size: full
+                                widgets:
+                                  - type: to-do
