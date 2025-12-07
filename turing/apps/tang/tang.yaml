@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/common-charts/
     chart: common
-    targetRevision: v0.4.5
+    targetRevision: v0.5.0
     helm:
       values: |
         name: "tang"
