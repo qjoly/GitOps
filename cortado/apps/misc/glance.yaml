@@ -82,6 +82,7 @@ spec:
                                       - url: https://mcorbin.fr/feed.xml
                                       - url: https://arthi-chaud.github.io/feed.xml
                                       - url: https://ersei.net/en/blog.atom
+                                      - url: https://farcaller.net/index.xml
 
 
                                   - type: twitch-channels
@@ -169,6 +170,7 @@ spec:
                                       - url: https://mcorbin.fr/feed.xml
                                       - url: https://arthi-chaud.github.io/feed.xml
                                       - url: https://ersei.net/en/blog.atom
+                                      - url: https://farcaller.net/index.xml
                           - name: Misc
                             columns:
                               - size: small
