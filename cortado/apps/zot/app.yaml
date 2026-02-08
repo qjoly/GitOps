@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: http://zotregistry.dev/helm-charts
     chart: zot
-    targetRevision: 0.1.95
+    targetRevision: 0.1.98
     helm:
       values: |
         mountSecret: true
