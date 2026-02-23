@@ -8,7 +8,7 @@ spec:
   sources:
     - repoURL: ghcr.io/dragonflydb/dragonfly/helm
       chart: dragonfly
-      targetRevision: v1.28.0
+      targetRevision: v1.37.0
       helm:
         values: |
           storage:
