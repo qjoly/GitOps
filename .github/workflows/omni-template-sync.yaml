@@ -35,7 +35,7 @@ jobs:
               | grep -E '^(turing|mocha)/(template\.yaml|patches/)' \
               | cut -d/ -f1 \
               | sort -u \
-              | jq -R -s 'split("\n") | map(select(length > 0))'
+              | jq -Rsc 'split("\n") | map(select(length > 0))'
           )
           echo "clusters=${clusters}" >> "$GITHUB_OUTPUT"
           echo "Clusters to sync: ${clusters}"
