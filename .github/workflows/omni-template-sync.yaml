@@ -7,26 +7,65 @@ on:
     paths:
       - "turing/template.yaml"
       - "turing/patches/**"
+      - "mocha/template.yaml"
+      - "mocha/patches/**"
 
 permissions:
   contents: read
 
 jobs:
-  sync:
+  # ----------------------------------------------------------------
+  # Detect which clusters were actually touched in this push.
+  # Outputs a JSON array, e.g. ["turing"] or ["mocha"] or ["turing","mocha"].
+  # ----------------------------------------------------------------
+  detect:
     runs-on: ubuntu-latest
+    outputs:
+      clusters: ${{ steps.detect.outputs.clusters }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2   # need HEAD~1 to diff against
 
-      - name: Install omnictl
+      - name: Detect changed clusters
+        id: detect
+        run: |
+          clusters=$(
+            git diff --name-only HEAD~1 HEAD \
+              | grep -E '^(turing|mocha)/(template\.yaml|patches/)' \
+              | cut -d/ -f1 \
+              | sort -u \
+              | jq -R -s 'split("\n") | map(select(length > 0))'
+          )
+          echo "clusters=${clusters}" >> "$GITHUB_OUTPUT"
+          echo "Clusters to sync: ${clusters}"
+
+  # ----------------------------------------------------------------
+  # Sync each changed cluster in parallel via matrix.
+  # Skipped entirely if no relevant cluster changed.
+  # ----------------------------------------------------------------
+  sync:
+    needs: detect
+    if: needs.detect.outputs.clusters != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cluster: ${{ fromJson(needs.detect.outputs.clusters) }}
+      fail-fast: false   # let other clusters finish even if one fails
+
+    name: Sync ${{ matrix.cluster }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install omnictl v1.7.1
         run: |
           curl -sSL -o omnictl \
             https://github.com/siderolabs/omni/releases/download/v1.7.1/omnictl-linux-amd64
           chmod +x omnictl
           sudo mv omnictl /usr/local/bin/omnictl
 
-      - name: Sync cluster template
-        working-directory: turing
+      - name: Sync ${{ matrix.cluster }} cluster template
+        working-directory: ${{ matrix.cluster }}
         env:
           OMNI_ENDPOINT: ${{ secrets.OMNI_ENDPOINT }}
           OMNI_SERVICE_ACCOUNT_KEY: ${{ secrets.OMNI_SERVICE_ACCOUNT_KEY }}
