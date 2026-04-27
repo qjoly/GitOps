@@ -1,0 +1,33 @@
+name: Omni Template Sync
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "turing/template.yaml"
+      - "turing/patches/**"
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install omnictl
+        run: |
+          curl -sSL -o omnictl \
+            https://github.com/siderolabs/omni/releases/download/v1.7.1/omnictl-linux-amd64
+          chmod +x omnictl
+          sudo mv omnictl /usr/local/bin/omnictl
+
+      - name: Sync cluster template
+        working-directory: turing
+        env:
+          OMNI_ENDPOINT: ${{ secrets.OMNI_ENDPOINT }}
+          OMNI_SERVICE_ACCOUNT_KEY: ${{ secrets.OMNI_SERVICE_ACCOUNT_KEY }}
+        run: omnictl cluster template sync -f template.yaml

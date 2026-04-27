@@ -39,8 +39,6 @@ spec:
         repoURL: https://github.com/qjoly/gitops.git
         targetRevision: HEAD
         path: "{{.path.path}}"
-        plugin:
-          name: argocd-vault-plugin-kustomize
       destination:
         server: https://kubernetes.default.svc
         namespace: "argocd"
@@ -68,8 +66,6 @@ spec:
         repoURL: https://github.com/qjoly/gitops.git
         targetRevision: HEAD
         path: "{{.path.path}}"
-        plugin:
-          name: argocd-vault-plugin-kustomize
       destination:
         server: https://kubernetes.default.svc
         namespace: "argocd"

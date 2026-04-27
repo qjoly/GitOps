@@ -1,16 +1,14 @@
 kind: Cluster
 name: turing
 kubernetes:
-  version: v1.32.2
+  version: v1.35.1
 talos:
-  version: v1.11.5
+  version: v1.13.0
 features:
   enableWorkloadProxy: false
-  diskEncryption: false
+  diskEncryption: true
   useEmbeddedDiscoveryService: true
 patches:
-  - name: spegel
-    file: patches/spegel.yaml
   - name: enable-workload
     file: patches/workload-on-cp.yml
   - name: kubespan-enabled
@@ -23,14 +21,12 @@ patches:
     file: patches/extraManifests.yml
   - name: metric-server
     file: patches/metrics-server.yml
-#systemExtensions:
-#  - siderolabs/iscsi-tools
 ---
 kind: ControlPlane
 labels:
   type: control-plane
 machineClass:
-  name: turingpi
+  name: tp2
   size: 3
 ---
 kind: Workers
@@ -38,5 +34,5 @@ name: workers
 labels:
   type: worker
 machineClass:
-  name: turingpi
+  name: tp2
   size: 1
