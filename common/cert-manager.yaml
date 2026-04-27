@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://charts.jetstack.io
     chart: cert-manager
-    targetRevision: v1.19.3
+    targetRevision: 1.20.2
     helm:
       values: |
         crds:
@@ -18,7 +18,7 @@ spec:
     namespace: cert-manager
   syncPolicy:
     automated:
-      prune: true 
+      prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
