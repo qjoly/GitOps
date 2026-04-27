@@ -1,5 +1,5 @@
 kind: Cluster
-name: turing
+name: turing # Turing Pi 2.5
 kubernetes:
   version: v1.35.1
 talos:
