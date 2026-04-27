@@ -9,13 +9,22 @@ on:
       - "turing/patches/**"
       - "mocha/template.yaml"
       - "mocha/patches/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "turing/template.yaml"
+      - "turing/patches/**"
+      - "mocha/template.yaml"
+      - "mocha/patches/**"
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   # ----------------------------------------------------------------
-  # Detect which clusters were actually touched in this push.
+  # Detect which clusters were actually touched in this push/PR.
   # Outputs a JSON array, e.g. ["turing"] or ["mocha"] or ["turing","mocha"].
   # ----------------------------------------------------------------
   detect:
@@ -25,13 +34,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2   # need HEAD~1 to diff against
+          fetch-depth: 0   # full history needed for PR base-branch diff
 
       - name: Detect changed clusters
         id: detect
         run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="origin/${{ github.base_ref }}...${{ github.sha }}"
+          else
+            range="HEAD~1..HEAD"
+          fi
           clusters=$(
-            git diff --name-only HEAD~1 HEAD \
+            git diff --name-only $range \
               | grep -E '^(turing|mocha)/(template\.yaml|patches/)' \
               | cut -d/ -f1 \
               | sort -u \
@@ -41,12 +55,98 @@ jobs:
           echo "Clusters to sync: ${clusters}"
 
   # ----------------------------------------------------------------
-  # Sync each changed cluster in parallel via matrix.
-  # Skipped entirely if no relevant cluster changed.
+  # Dry-run on PRs: run omnictl sync --dry-run and post the output
+  # as a PR comment (updated on each new commit to the PR).
+  # ----------------------------------------------------------------
+  dry-run:
+    needs: detect
+    if: github.event_name == 'pull_request' && needs.detect.outputs.clusters != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cluster: ${{ fromJson(needs.detect.outputs.clusters) }}
+      fail-fast: false
+
+    name: Dry-run ${{ matrix.cluster }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install omnictl v1.7.1
+        run: |
+          curl -sSL -o omnictl \
+            https://github.com/siderolabs/omni/releases/download/v1.7.1/omnictl-linux-amd64
+          chmod +x omnictl
+          sudo mv omnictl /usr/local/bin/omnictl
+
+      - name: Dry-run ${{ matrix.cluster }} cluster template
+        id: dry-run
+        continue-on-error: true
+        working-directory: ${{ matrix.cluster }}
+        env:
+          OMNI_ENDPOINT: ${{ secrets.OMNI_ENDPOINT }}
+          OMNI_SERVICE_ACCOUNT_KEY: ${{ secrets.OMNI_SERVICE_ACCOUNT_KEY }}
+        run: |
+          omnictl cluster template sync -f template.yaml --dry-run \
+            > /tmp/dry-run-output.txt 2>&1
+
+      - name: Post dry-run result as PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const cluster = '${{ matrix.cluster }}';
+            const outcome = '${{ steps.dry-run.outcome }}';
+            const status  = outcome === 'success' ? '✅' : '❌';
+            const output  = fs.readFileSync('/tmp/dry-run-output.txt', 'utf8').trim();
+
+            const marker = `<!-- omnictl-dry-run-${cluster} -->`;
+            const body = [
+              marker,
+              `### ${status} \`omnictl\` dry-run — \`${cluster}\``,
+              '',
+              '```',
+              output || '(no output)',
+              '```',
+              '',
+              `> commit \`${{ github.sha }}\``,
+            ].join('\n');
+
+            // Update existing comment if present, otherwise create one.
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner:      context.repo.owner,
+                repo:       context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner:        context.repo.owner,
+                repo:         context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail job if dry-run failed
+        if: steps.dry-run.outcome == 'failure'
+        run: |
+          echo "Dry-run failed. See comment on the PR for details."
+          exit 1
+
+  # ----------------------------------------------------------------
+  # Sync each changed cluster in parallel via matrix (push to main only).
   # ----------------------------------------------------------------
   sync:
     needs: detect
-    if: needs.detect.outputs.clusters != '[]'
+    if: github.event_name == 'push' && needs.detect.outputs.clusters != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
