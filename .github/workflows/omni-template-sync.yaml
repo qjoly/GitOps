@@ -95,10 +95,7 @@ jobs:
             | tar xz -C /tmp linux-amd64/helm
           sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
 
-          # helm-diff plugin (required by helmfile diff)
-          helm plugin install https://github.com/databus23/helm-diff
-
-          # helmfile
+          # helmfile (no helm-diff plugin needed — we use --dry-run instead)
           curl -fsSL \
             https://github.com/helmfile/helmfile/releases/download/v0.171.0/helmfile_0.171.0_linux_amd64.tar.gz \
             | tar xz -C /tmp helmfile
@@ -115,7 +112,7 @@ jobs:
           omnictl cluster template sync -f template.yaml --dry-run \
             > /tmp/omni-dry-run.txt 2>&1
 
-      - name: helmfile diff — ${{ matrix.cluster }}
+      - name: helmfile dry-run — ${{ matrix.cluster }}
         id: helm-diff
         continue-on-error: true
         working-directory: ${{ matrix.cluster }}
@@ -123,9 +120,11 @@ jobs:
           OMNI_ENDPOINT: ${{ secrets.OMNI_ENDPOINT }}
           OMNI_SERVICE_ACCOUNT_KEY: ${{ secrets.OMNI_SERVICE_ACCOUNT_KEY }}
         run: |
+          # Skip clusters that don't have a helmfile yet
+          [ -f helmfile.yaml ] || { echo "(no helmfile.yaml — skipping)" > /tmp/helm-diff.txt; exit 0; }
           omnictl kubeconfig --cluster ${{ matrix.cluster }} /tmp/${{ matrix.cluster }}.kubeconfig
           KUBECONFIG=/tmp/${{ matrix.cluster }}.kubeconfig \
-            helmfile diff --no-color 2>&1 \
+            helmfile apply --dry-run 2>&1 \
             | tee /tmp/helm-diff.txt
 
       - name: Post dry-run result as PR comment
@@ -158,7 +157,7 @@ jobs:
               omniOut || '(no output)',
               '```',
               '',
-              `### ${s(helmOk)} \`helmfile diff\``,
+              `### ${s(helmOk)} \`helmfile dry-run\``,
               '```diff',
               helmOut || '(no output)',
               '```',
@@ -225,7 +224,7 @@ jobs:
             | tar xz -C /tmp linux-amd64/helm
           sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
 
-          # helmfile (apply doesn't require helm-diff)
+          # helmfile
           curl -fsSL \
             https://github.com/helmfile/helmfile/releases/download/v0.171.0/helmfile_0.171.0_linux_amd64.tar.gz \
             | tar xz -C /tmp helmfile
@@ -244,5 +243,7 @@ jobs:
           OMNI_ENDPOINT: ${{ secrets.OMNI_ENDPOINT }}
           OMNI_SERVICE_ACCOUNT_KEY: ${{ secrets.OMNI_SERVICE_ACCOUNT_KEY }}
         run: |
+          # Skip clusters that don't have a helmfile yet
+          [ -f helmfile.yaml ] || { echo "No helmfile.yaml — skipping helm apply"; exit 0; }
           omnictl kubeconfig --cluster ${{ matrix.cluster }} /tmp/${{ matrix.cluster }}.kubeconfig
           KUBECONFIG=/tmp/${{ matrix.cluster }}.kubeconfig helmfile apply
