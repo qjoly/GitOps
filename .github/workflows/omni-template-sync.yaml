@@ -125,7 +125,9 @@ jobs:
               > /tmp/helm-diff.txt
             exit 0
           fi
-          omnictl kubeconfig --cluster ${{ matrix.cluster }} /tmp/${{ matrix.cluster }}.kubeconfig
+          # --service-account generates a static bearer-token kubeconfig (no oidc-login needed in CI)
+          omnictl kubeconfig --service-account --cluster ${{ matrix.cluster }} --user ci \
+            /tmp/${{ matrix.cluster }}.kubeconfig
           KUBECONFIG=/tmp/${{ matrix.cluster }}.kubeconfig \
             helmfile diff --no-color 2>&1 \
             | tee /tmp/helm-diff.txt
@@ -225,12 +227,14 @@ jobs:
         with:
           version: '3.17.0'
 
-      - name: Install helmfile
+      - name: Install helmfile + helm-diff plugin
         run: |
           curl -fsSL \
             https://github.com/helmfile/helmfile/releases/download/v0.171.0/helmfile_0.171.0_linux_amd64.tar.gz \
             | tar xz -C /tmp helmfile
           sudo mv /tmp/helmfile /usr/local/bin/helmfile
+          # Pin to v3.9.4 — pre-dates the platformHooks field that breaks older Helm parsers
+          helm plugin install https://github.com/databus23/helm-diff --version v3.9.4
 
       - name: Sync ${{ matrix.cluster }} cluster template
         working-directory: ${{ matrix.cluster }}
@@ -247,5 +251,7 @@ jobs:
         run: |
           # Skip clusters that don't have a helmfile yet
           [ -f helmfile.yaml ] || { echo "No helmfile.yaml — skipping helm apply"; exit 0; }
-          omnictl kubeconfig --cluster ${{ matrix.cluster }} /tmp/${{ matrix.cluster }}.kubeconfig
+          # --service-account generates a static bearer-token kubeconfig (no oidc-login needed in CI)
+          omnictl kubeconfig --service-account --cluster ${{ matrix.cluster }} --user ci \
+            /tmp/${{ matrix.cluster }}.kubeconfig
           KUBECONFIG=/tmp/${{ matrix.cluster }}.kubeconfig helmfile apply
