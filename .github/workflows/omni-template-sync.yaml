@@ -7,16 +7,24 @@ on:
     paths:
       - "turing/template.yaml"
       - "turing/patches/**"
+      - "turing/helmfile.yaml"
+      - "turing/helm/**"
       - "mocha/template.yaml"
       - "mocha/patches/**"
+      - "mocha/helmfile.yaml"
+      - "mocha/helm/**"
   pull_request:
     branches:
       - main
     paths:
       - "turing/template.yaml"
       - "turing/patches/**"
+      - "turing/helmfile.yaml"
+      - "turing/helm/**"
       - "mocha/template.yaml"
       - "mocha/patches/**"
+      - "mocha/helmfile.yaml"
+      - "mocha/helm/**"
 
 permissions:
   contents: read
@@ -25,6 +33,7 @@ permissions:
 jobs:
   # ----------------------------------------------------------------
   # Detect which clusters were actually touched in this push/PR.
+  # Watches both Omni template files and Helm files.
   # Outputs a JSON array, e.g. ["turing"] or ["mocha"] or ["turing","mocha"].
   # ----------------------------------------------------------------
   detect:
@@ -46,7 +55,7 @@ jobs:
           fi
           clusters=$(
             git diff --name-only $range \
-              | grep -E '^(turing|mocha)/(template\.yaml|patches/)' \
+              | grep -E '^(turing|mocha)/(template\.yaml|patches/|helmfile\.yaml|helm/)' \
               | cut -d/ -f1 \
               | sort -u \
               | jq -Rsc 'split("\n") | map(select(length > 0))'
@@ -55,8 +64,10 @@ jobs:
           echo "Clusters to sync: ${clusters}"
 
   # ----------------------------------------------------------------
-  # Dry-run on PRs: run omnictl sync --dry-run and post the output
-  # as a PR comment (updated on each new commit to the PR).
+  # Dry-run on PRs:
+  #   1. omnictl cluster template sync --dry-run
+  #   2. helmfile diff
+  # Both results posted as a single PR comment per cluster.
   # ----------------------------------------------------------------
   dry-run:
     needs: detect
@@ -71,15 +82,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install omnictl v1.7.1
+      - name: Install tools (omnictl, helm, helmfile)
         run: |
+          # omnictl
           curl -sSL -o omnictl \
             https://github.com/siderolabs/omni/releases/download/v1.7.1/omnictl-linux-amd64
-          chmod +x omnictl
-          sudo mv omnictl /usr/local/bin/omnictl
+          chmod +x omnictl && sudo mv omnictl /usr/local/bin/omnictl
 
-      - name: Dry-run ${{ matrix.cluster }} cluster template
-        id: dry-run
+          # helm
+          curl -fsSL \
+            https://get.helm.sh/helm-v3.17.0-linux-amd64.tar.gz \
+            | tar xz -C /tmp linux-amd64/helm
+          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+
+          # helm-diff plugin (required by helmfile diff)
+          helm plugin install https://github.com/databus23/helm-diff
+
+          # helmfile
+          curl -fsSL \
+            https://github.com/helmfile/helmfile/releases/download/v0.171.0/helmfile_0.171.0_linux_amd64.tar.gz \
+            | tar xz -C /tmp helmfile
+          sudo mv /tmp/helmfile /usr/local/bin/helmfile
+
+      - name: omnictl dry-run — ${{ matrix.cluster }}
+        id: omni-dry-run
         continue-on-error: true
         working-directory: ${{ matrix.cluster }}
         env:
@@ -87,7 +113,20 @@ jobs:
           OMNI_SERVICE_ACCOUNT_KEY: ${{ secrets.OMNI_SERVICE_ACCOUNT_KEY }}
         run: |
           omnictl cluster template sync -f template.yaml --dry-run \
-            > /tmp/dry-run-output.txt 2>&1
+            > /tmp/omni-dry-run.txt 2>&1
+
+      - name: helmfile diff — ${{ matrix.cluster }}
+        id: helm-diff
+        continue-on-error: true
+        working-directory: ${{ matrix.cluster }}
+        env:
+          OMNI_ENDPOINT: ${{ secrets.OMNI_ENDPOINT }}
+          OMNI_SERVICE_ACCOUNT_KEY: ${{ secrets.OMNI_SERVICE_ACCOUNT_KEY }}
+        run: |
+          omnictl kubeconfig --cluster ${{ matrix.cluster }} /tmp/${{ matrix.cluster }}.kubeconfig
+          KUBECONFIG=/tmp/${{ matrix.cluster }}.kubeconfig \
+            helmfile diff --no-color 2>&1 \
+            | tee /tmp/helm-diff.txt
 
       - name: Post dry-run result as PR comment
         if: always()
@@ -95,24 +134,38 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const cluster = '${{ matrix.cluster }}';
-            const outcome = '${{ steps.dry-run.outcome }}';
-            const status  = outcome === 'success' ? '✅' : '❌';
-            const output  = fs.readFileSync('/tmp/dry-run-output.txt', 'utf8').trim();
+            const cluster  = '${{ matrix.cluster }}';
 
+            const omniOk   = '${{ steps.omni-dry-run.outcome }}' === 'success';
+            const helmOk   = '${{ steps.helm-diff.outcome }}'    === 'success';
+
+            const omniOut  = fs.existsSync('/tmp/omni-dry-run.txt')
+              ? fs.readFileSync('/tmp/omni-dry-run.txt', 'utf8').trim()
+              : '(file not found)';
+            const helmOut  = fs.existsSync('/tmp/helm-diff.txt')
+              ? fs.readFileSync('/tmp/helm-diff.txt', 'utf8').trim()
+              : '(file not found)';
+
+            const s = (ok) => ok ? '✅' : '❌';
             const marker = `<!-- omnictl-dry-run-${cluster} -->`;
+
             const body = [
               marker,
-              `### ${status} \`omnictl\` dry-run — \`${cluster}\``,
+              `## ${s(omniOk && helmOk)} Dry-run — \`${cluster}\``,
               '',
+              `### ${s(omniOk)} \`omnictl\` template sync`,
               '```',
-              output || '(no output)',
+              omniOut || '(no output)',
+              '```',
+              '',
+              `### ${s(helmOk)} \`helmfile diff\``,
+              '```diff',
+              helmOut || '(no output)',
               '```',
               '',
               `> commit \`${{ github.sha }}\``,
             ].join('\n');
 
-            // Update existing comment if present, otherwise create one.
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo:  context.repo.repo,
@@ -135,14 +188,16 @@ jobs:
               });
             }
 
-      - name: Fail job if dry-run failed
-        if: steps.dry-run.outcome == 'failure'
+      - name: Fail job if any dry-run step failed
+        if: steps.omni-dry-run.outcome == 'failure' || steps.helm-diff.outcome == 'failure'
         run: |
-          echo "Dry-run failed. See comment on the PR for details."
+          echo "One or more dry-run steps failed. See the PR comment for details."
           exit 1
 
   # ----------------------------------------------------------------
-  # Sync each changed cluster in parallel via matrix (push to main only).
+  # Sync on push to main:
+  #   1. omnictl cluster template sync
+  #   2. helmfile apply
   # ----------------------------------------------------------------
   sync:
     needs: detect
@@ -157,12 +212,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install omnictl v1.7.1
+      - name: Install tools (omnictl, helm, helmfile)
         run: |
+          # omnictl
           curl -sSL -o omnictl \
             https://github.com/siderolabs/omni/releases/download/v1.7.1/omnictl-linux-amd64
-          chmod +x omnictl
-          sudo mv omnictl /usr/local/bin/omnictl
+          chmod +x omnictl && sudo mv omnictl /usr/local/bin/omnictl
+
+          # helm
+          curl -fsSL \
+            https://get.helm.sh/helm-v3.17.0-linux-amd64.tar.gz \
+            | tar xz -C /tmp linux-amd64/helm
+          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+
+          # helmfile (apply doesn't require helm-diff)
+          curl -fsSL \
+            https://github.com/helmfile/helmfile/releases/download/v0.171.0/helmfile_0.171.0_linux_amd64.tar.gz \
+            | tar xz -C /tmp helmfile
+          sudo mv /tmp/helmfile /usr/local/bin/helmfile
 
       - name: Sync ${{ matrix.cluster }} cluster template
         working-directory: ${{ matrix.cluster }}
@@ -170,3 +237,12 @@ jobs:
           OMNI_ENDPOINT: ${{ secrets.OMNI_ENDPOINT }}
           OMNI_SERVICE_ACCOUNT_KEY: ${{ secrets.OMNI_SERVICE_ACCOUNT_KEY }}
         run: omnictl cluster template sync -f template.yaml
+
+      - name: helmfile apply — ${{ matrix.cluster }}
+        working-directory: ${{ matrix.cluster }}
+        env:
+          OMNI_ENDPOINT: ${{ secrets.OMNI_ENDPOINT }}
+          OMNI_SERVICE_ACCOUNT_KEY: ${{ secrets.OMNI_SERVICE_ACCOUNT_KEY }}
+        run: |
+          omnictl kubeconfig --cluster ${{ matrix.cluster }} /tmp/${{ matrix.cluster }}.kubeconfig
+          KUBECONFIG=/tmp/${{ matrix.cluster }}.kubeconfig helmfile apply
