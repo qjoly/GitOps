@@ -82,24 +82,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install tools (omnictl, helm, helmfile)
+      - name: Install omnictl
         run: |
-          # omnictl
           curl -sSL -o omnictl \
             https://github.com/siderolabs/omni/releases/download/v1.7.1/omnictl-linux-amd64
           chmod +x omnictl && sudo mv omnictl /usr/local/bin/omnictl
 
-          # helm
-          curl -fsSL \
-            https://get.helm.sh/helm-v3.17.0-linux-amd64.tar.gz \
-            | tar xz -C /tmp linux-amd64/helm
-          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+      - uses: azure/setup-helm@v4
+        with:
+          version: '3.17.0'
 
-          # helmfile (no helm-diff plugin needed — we use --dry-run instead)
+      - name: Install helmfile + helm-diff plugin
+        run: |
           curl -fsSL \
             https://github.com/helmfile/helmfile/releases/download/v0.171.0/helmfile_0.171.0_linux_amd64.tar.gz \
             | tar xz -C /tmp helmfile
           sudo mv /tmp/helmfile /usr/local/bin/helmfile
+          # Pin to v3.9.4 — pre-dates the platformHooks field that breaks older Helm parsers
+          helm plugin install https://github.com/databus23/helm-diff --version v3.9.4
 
       - name: omnictl dry-run — ${{ matrix.cluster }}
         id: omni-dry-run
@@ -109,10 +109,10 @@ jobs:
           OMNI_ENDPOINT: ${{ secrets.OMNI_ENDPOINT }}
           OMNI_SERVICE_ACCOUNT_KEY: ${{ secrets.OMNI_SERVICE_ACCOUNT_KEY }}
         run: |
-          omnictl cluster template sync -f template.yaml --dry-run \
+          omnictl cluster template sync -f template.yaml -d \
             > /tmp/omni-dry-run.txt 2>&1
 
-      - name: helmfile dry-run — ${{ matrix.cluster }}
+      - name: helmfile diff — ${{ matrix.cluster }}
         id: helm-diff
         continue-on-error: true
         working-directory: ${{ matrix.cluster }}
@@ -120,11 +120,14 @@ jobs:
           OMNI_ENDPOINT: ${{ secrets.OMNI_ENDPOINT }}
           OMNI_SERVICE_ACCOUNT_KEY: ${{ secrets.OMNI_SERVICE_ACCOUNT_KEY }}
         run: |
-          # Skip clusters that don't have a helmfile yet
-          [ -f helmfile.yaml ] || { echo "(no helmfile.yaml — skipping)" > /tmp/helm-diff.txt; exit 0; }
+          if [ ! -f helmfile.yaml ]; then
+            echo "(no helmfile.yaml — helm not managed for this cluster yet)" \
+              > /tmp/helm-diff.txt
+            exit 0
+          fi
           omnictl kubeconfig --cluster ${{ matrix.cluster }} /tmp/${{ matrix.cluster }}.kubeconfig
           KUBECONFIG=/tmp/${{ matrix.cluster }}.kubeconfig \
-            helmfile apply --dry-run 2>&1 \
+            helmfile diff --no-color 2>&1 \
             | tee /tmp/helm-diff.txt
 
       - name: Post dry-run result as PR comment
@@ -157,7 +160,7 @@ jobs:
               omniOut || '(no output)',
               '```',
               '',
-              `### ${s(helmOk)} \`helmfile dry-run\``,
+              `### ${s(helmOk)} \`helmfile diff\``,
               '```diff',
               helmOut || '(no output)',
               '```',
@@ -218,13 +221,12 @@ jobs:
             https://github.com/siderolabs/omni/releases/download/v1.7.1/omnictl-linux-amd64
           chmod +x omnictl && sudo mv omnictl /usr/local/bin/omnictl
 
-          # helm
-          curl -fsSL \
-            https://get.helm.sh/helm-v3.17.0-linux-amd64.tar.gz \
-            | tar xz -C /tmp linux-amd64/helm
-          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+      - uses: azure/setup-helm@v4
+        with:
+          version: '3.17.0'
 
-          # helmfile
+      - name: Install helmfile
+        run: |
           curl -fsSL \
             https://github.com/helmfile/helmfile/releases/download/v0.171.0/helmfile_0.171.0_linux_amd64.tar.gz \
             | tar xz -C /tmp helmfile
