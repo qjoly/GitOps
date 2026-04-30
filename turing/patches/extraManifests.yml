@@ -1,8 +1,8 @@
 cluster:
   extraManifests:
     # --- Cilium Installation ---
-    - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/cilium/install-cilium.yaml
-    - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/cilium/L2Announcement.yaml
+    #    - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/cilium/install-cilium.yaml
+    #    - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/cilium/L2Announcement.yaml
     # --- ArgoCD Installation ---
     - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/argocd/argocd.namespace.yaml
     - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/argocd/argocd.install.yaml

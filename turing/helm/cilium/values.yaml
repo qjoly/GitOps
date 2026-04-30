@@ -1,0 +1,45 @@
+# Cilium values — turing cluster (Turing Pi, home lab)
+# Applied via: helmfile apply (CI) or helmfile diff (PR dry-run)
+
+# Kube-proxy is disabled in Talos (patches/disable-kubeproxy.yml);
+# Cilium handles all service routing through eBPF.
+kubeProxyReplacement: true
+
+# VXLAN tunnel — nodes are on different L2 segments (KubeSpan WireGuard overlay)
+routingMode: tunnel
+tunnelProtocol: vxlan
+autoDirectNodeRoutes: false
+
+bpf:
+  masquerade: true
+
+ipam:
+  mode: kubernetes
+
+ipv6:
+  enabled: false
+
+# L2 announcements — exposes LoadBalancer IPs on the LAN (pool: 192.168.1.200-250)
+l2announcements:
+  enabled: true
+  leaseDuration: 3s
+  leaseRenewDeadline: 1s
+  leaseRetryPeriod: 200ms
+
+externalIPs:
+  enabled: true
+
+operator:
+  # 3 control-plane nodes — keep 1 replica (bumping to 2 is safe but unnecessary)
+  replicas: 1
+
+hubble:
+  enabled: true
+  tls:
+    auto:
+      method: helm
+      certValidityDuration: 1095  # 3 years
+  relay:
+    enabled: true
+  ui:
+    enabled: false
