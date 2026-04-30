@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+     
+     
+    
+    <link rel="canonical" href="https://qjoly.github.io/GitOps/zfs/"><link rel="icon" type="image/png" sizes="192x192" href="../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>ZFS - GitOps</title>
+
+
+<link href="../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../css/normalize.css" rel="stylesheet">
+<link href="../css/terminal.css" rel="stylesheet">
+<link href="../css/theme.css" rel="stylesheet">
+<link href="../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "..",
+    shortcuts = "{}";
+</script>
+<script src="../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://qjoly.github.io/GitOps/" class="no-style">GitOps</a></div>
+        </header>
+        
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href=".." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Welcome aboard!</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../backup/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Backup</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../cloudflared/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Cloudflared</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../getting-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Getting Started</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../secret-management/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Secret Management</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="./" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">ZFS</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+                
+                    
+                    
+
+
+<li property="itemListElement" typeof="ListItem">
+    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+    </a>
+    <meta property="position" content="6">
+</li>
+                    
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="..">Welcome aboard!</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../backup/">Backup</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../cloudflared/">Cloudflared</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../getting-started/">Getting Started</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../secret-management/">Secret Management</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">ZFS</span>
+    
+    
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#zfs">ZFS</a></li>
+        
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+<section id="mkdocs-terminal-content">
+    <h1 id="zfs">ZFS</h1>
+<p>Since Talos doesn't support RAID yet, I use ZFS to create a RAIDZ2 pool with 3 disks. Once the pool is created, I use <a href="https://github.com/rancher/local-path-provisioner">local-path-provisionner</a> to create persistent volumes on the mounted ZFS filesystem.</p>
+<p>When I installed Talos on my server, I specified the <code>zfs</code> extension to download the Talos image with ZFS support.</p>
+<p>I also had to enable the ZFS module in the kernel. Here is the patch to enable the ZFS module in the kernel:</p>
+<pre><code class="language-yaml">machine:
+  kernel:
+    modules:
+      - name: zfs
+</code></pre>
+<p>Once Talos rebooted, I run a debug pod to create the ZFS pool:</p>
+<pre><code class="language-bash">kubectl -n kube-system debug -it --profile sysadmin --image=alpine node/{your-node}
+</code></pre>
+<p>To create the ZFS pool, we need to get the ID of the disk ( since name could change, we use the ID to identify the disk). We can use the <code>ls</code> command to list the disks:</p>
+<pre><code class="language-bash">/ # ls -lh /host/dev/disk/by-id/
+total 0
+lrwxrwxrwx    1 root     root           9 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5H3U3ZA -&gt; ../../sdc
+lrwxrwxrwx    1 root     root          10 Dec 17 20:34 ata-HGST_HUS726020ALA610_K5H3U3ZA-part1 -&gt; ../../sdc1
+lrwxrwxrwx    1 root     root          10 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5H3U3ZA-part9 -&gt; ../../sdc9
+lrwxrwxrwx    1 root     root           9 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5H64MYA -&gt; ../../sdd
+lrwxrwxrwx    1 root     root          10 Dec 17 20:34 ata-HGST_HUS726020ALA610_K5H64MYA-part1 -&gt; ../../sdd1
+lrwxrwxrwx    1 root     root          10 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5H64MYA-part9 -&gt; ../../sdd9
+lrwxrwxrwx    1 root     root           9 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5HM8S6A -&gt; ../../sdb
+lrwxrwxrwx    1 root     root          10 Dec 17 20:34 ata-HGST_HUS726020ALA610_K5HM8S6A-part1 -&gt; ../../sdb1
+lrwxrwxrwx    1 root     root          10 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5HM8S6A-part9 -&gt; ../../sdb9
+lrwxrwxrwx    1 root     root           9 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5HPPLTA -&gt; ../../sda
+lrwxrwxrwx    1 root     root          10 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5HPPLTA-part1 -&gt; ../../sda1
+lrwxrwxrwx    1 root     root          10 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5HPPLTA-part2 -&gt; ../../sda2
+lrwxrwxrwx    1 root     root          10 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5HPPLTA-part3 -&gt; ../../sda3
+lrwxrwxrwx    1 root     root          10 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5HPPLTA-part4 -&gt; ../../sda4
+lrwxrwxrwx    1 root     root          10 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5HPPLTA-part5 -&gt; ../../sda5
+lrwxrwxrwx    1 root     root          10 Dec 17 20:33 ata-HGST_HUS726020ALA610_K5HPPLTA-part6 -&gt; ../../sda6
+</code></pre>
+<p>Before creating the pool, we need to clean the disks by using the <code>wipefs</code> command, please be careful, this command will erase all the data on the disk:</p>
+<pre><code class="language-bash">apk add wipefs
+wipefs /dev/sdb --all --force
+wipefs /dev/sdc --all --force
+wipefs /dev/sdd --all --force
+apk add xfsprogs
+mkfs.xfs /dev/sdb
+mkfs.xfs /dev/sdc
+mkfs.xfs /dev/sdd
+</code></pre>
+<p>Then, we can create the pool:</p>
+<pre><code class="language-bash">chroot /host zpool create -f \
+-o ashift=12 \
+-O mountpoint=&quot;/var/zfs_pool&quot; \
+-O xattr=sa \
+-O compression=zstd \
+-O acltype=posixacl \
+-O atime=off \
+hdd \
+raidz2 \
+/dev/disk/by-id/ata-HGST_HUS726020ALA610_K5H3U3ZA \
+/dev/disk/by-id/ata-HGST_HUS726020ALA610_K5H64MYA \
+/dev/disk/by-id/ata-HGST_HUS726020ALA610_K5HM8S6A 
+</code></pre>
+<p>Once the pool is created, we can deploy the local-path-provisionner:</p>
+<pre><code class="language-bash"># kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- github.com/rancher/local-path-provisioner/deploy?ref=v0.0.26
+patches:
+- patch: |-
+    kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: local-path-config
+      namespace: local-path-storage
+    data:
+      config.json: |-
+        {
+                &quot;nodePathMap&quot;:[
+                {
+                        &quot;node&quot;:&quot;DEFAULT_PATH_FOR_NON_LISTED_NODES&quot;,
+                        &quot;paths&quot;:[&quot;/var/zfs_pool&quot;]
+                }
+                ]
+        }    
+- patch: |-
+    apiVersion: storage.k8s.io/v1
+    kind: StorageClass
+    metadata:
+      name: local-path
+      annotations:
+        storageclass.kubernetes.io/is-default-class: &quot;true&quot;    
+- patch: |-
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: local-path-storage
+      labels:
+        pod-security.kubernetes.io/enforce: privileged    
+</code></pre>
+<p>You should now be able to generate PVC on the ZFS pool.</p>
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>
