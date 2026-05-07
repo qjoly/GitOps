@@ -3,7 +3,7 @@ name: mocha
 kubernetes:
   version: v1.32.3
 talos:
-  version: v1.9.5
+  version: v1.11.6
 features:
   diskEncryption: true
   useEmbeddedDiscoveryService: true
