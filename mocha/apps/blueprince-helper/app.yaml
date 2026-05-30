@@ -7,14 +7,14 @@ spec:
   project: default
   source:
     repoURL: https://github.com/briangtn/blue-prince-note-helper.git
-    targetRevision: HEAD
+    targetRevision: v1.0.0
     path: chart
     helm:
       values: |
         image:
           repository: ghcr.io/briangtn/blue-prince-note-helper
-          tag: latest
-          pullPolicy: Always
+          tag: v1.0.0
+          pullPolicy: IfNotPresent
         ingress:
           enabled: true
           className: traefik
