@@ -13,7 +13,7 @@ spec:
       values: |
         image:
           repository: ghcr.io/briangtn/blue-prince-note-helper
-          tag: v1.0.0
+          tag: latest
           pullPolicy: IfNotPresent
         ingress:
           enabled: true
