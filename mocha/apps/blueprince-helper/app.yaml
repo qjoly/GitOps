@@ -28,7 +28,7 @@ spec:
           tls:
             - secretName: blueprince-helper-tls
               hosts:
-                - "blueprince.<path:kv/cluster#domain>"
+                - "blueprince.lucca.bar"
         persistence:
           enabled: true
           size: 1Gi
