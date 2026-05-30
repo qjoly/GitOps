@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: blueprince-helper
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/briangtn/blue-prince-note-helper.git
+    targetRevision: HEAD
+    path: chart
+    helm:
+      values: |
+        image:
+          repository: ghcr.io/briangtn/blue-prince-note-helper
+          tag: latest
+          pullPolicy: Always
+        ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+          hosts:
+            - host: "blueprince.<path:kv/cluster#domain>"
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific
+          tls:
+            - secretName: blueprince-helper-tls
+              hosts:
+                - "blueprince.<path:kv/cluster#domain>"
+        persistence:
+          enabled: true
+          size: 1Gi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: blueprince-helper
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
