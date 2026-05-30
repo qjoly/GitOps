@@ -21,7 +21,7 @@ spec:
           annotations:
             cert-manager.io/cluster-issuer: cloudflare
           hosts:
-            - host: "blueprince.<path:kv/cluster#domain>"
+            - host: "blueprince.lucca.bar"
               paths:
                 - path: /
                   pathType: ImplementationSpecific
