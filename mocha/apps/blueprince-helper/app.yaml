@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/briangtn/blue-prince-note-helper.git
-    targetRevision: v1.0.0
+    targetRevision: main
     path: chart
     helm:
       values: |
