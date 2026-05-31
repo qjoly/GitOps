@@ -35,11 +35,6 @@ spec:
         persistence:
           enabled: true
           size: 1Gi
-  ignoreDifferences:
-    - group: ""
-      kind: Secret
-      jsonPointers:
-        - /data
   destination:
     server: https://kubernetes.default.svc
     namespace: blueprince-helper
