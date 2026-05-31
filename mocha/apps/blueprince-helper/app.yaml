@@ -13,8 +13,8 @@ spec:
       values: |
         image:
           repository: ghcr.io/briangtn/blue-prince-note-helper
-          tag: latest
-          pullPolicy: IfNotPresent
+          tag: main
+          pullPolicy: Always
         ingress:
           enabled: true
           className: traefik
