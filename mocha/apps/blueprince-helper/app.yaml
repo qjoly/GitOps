@@ -13,8 +13,8 @@ spec:
       values: |
         image:
           repository: ghcr.io/briangtn/blue-prince-note-helper
-          tag: latest
-          pullPolicy: IfNotPresent
+          tag: main
+          pullPolicy: Always
         ingress:
           enabled: true
           className: traefik
@@ -35,11 +35,6 @@ spec:
         persistence:
           enabled: true
           size: 1Gi
-  ignoreDifferences:
-    - group: ""
-      kind: Secret
-      jsonPointers:
-        - /data
   destination:
     server: https://kubernetes.default.svc
     namespace: blueprince-helper
