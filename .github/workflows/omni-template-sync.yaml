@@ -90,7 +90,7 @@ jobs:
 
       - uses: azure/setup-helm@v4
         with:
-          version: '3.17.0'
+          version: '3.21.2'
 
       - name: Install helmfile + helm-diff plugin
         run: |
@@ -225,7 +225,7 @@ jobs:
 
       - uses: azure/setup-helm@v4
         with:
-          version: '3.17.0'
+          version: '3.21.2'
 
       - name: Install helmfile + helm-diff plugin
         run: |
