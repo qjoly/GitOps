@@ -3,6 +3,9 @@
   "extends": [
     "config:recommended"
   ],
+  "ignorePaths": [
+    "archives/**"
+  ],
   "argocd": {
     "managerFilePatterns": [
       "/\\.yaml$/"
