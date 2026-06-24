@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+     
+     
+    
+    <link rel="canonical" href="https://qjoly.github.io/GitOps/cloudflared/"><link rel="icon" type="image/png" sizes="192x192" href="../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Cloudflared - GitOps</title>
+
+
+<link href="../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../css/normalize.css" rel="stylesheet">
+<link href="../css/terminal.css" rel="stylesheet">
+<link href="../css/theme.css" rel="stylesheet">
+<link href="../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "..",
+    shortcuts = "{}";
+</script>
+<script src="../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://qjoly.github.io/GitOps/" class="no-style">GitOps</a></div>
+        </header>
+        
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href=".." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Welcome aboard!</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../backup/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Backup</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="./" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">Cloudflared</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../getting-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Getting Started</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../secret-management/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Secret Management</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../zfs/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">ZFS</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+                
+                    
+                    
+
+
+<li property="itemListElement" typeof="ListItem">
+    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+    </a>
+    <meta property="position" content="6">
+</li>
+                    
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="..">Welcome aboard!</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../backup/">Backup</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">Cloudflared</span>
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../getting-started/">Getting Started</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../secret-management/">Secret Management</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../zfs/">ZFS</a>
+        
+    
+    
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#expose-applications-securely-with-cloudflare-tunnel">Expose applications securely with Cloudflare Tunnel</a></li>
+        <li><a href="#cloudflare">Cloudflare</a></li><li><a href="#external-dns">External DNS</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+<section id="mkdocs-terminal-content">
+    <h2 id="expose-applications-securely-with-cloudflare-tunnel">Expose applications securely with Cloudflare Tunnel</h2>
+<p>To avoid exposing services directly to the internet, we use Cloudflare Tunnel to securely expose them on few clusters (e.g. <code>home</code> that can't be accessed directly since port 80 and 443 are already used by another service).</p>
+<p>Note that this is free in the Cloudflare plan, you only need to have a domain name managed by Cloudflare.</p>
+<h3 id="cloudflare">Cloudflare</h3>
+<p>Install cloudflared, this is the client that will create the tunnel between the cluster and Cloudflare. You can still use the web interface to create the tunnel, but it's easier to manage it with the CLI.</p>
+<pre><code class="language-bash">brew install cloudflared
+cloudflared login # Login to your Cloudflare account
+</code></pre>
+<p>Create a tunnel with the CLI, note the ID of the tunnel that will be used later.</p>
+<pre><code class="language-bash">cloudflared tunnel create home-cluster
+
+Tunnel credentials written to /Users/qjoly/.cloudflared/2f3b093d-bd57-4708-8d54-42723da21338.json. cloudflared chose this file based on where your origin certificate was found. Keep this file secret. To revoke these credentials, delete the tunnel.
+
+Created tunnel home-cluster with id 2f3b093d-bd57-4708-8d54-42723da21338
+</code></pre>
+<p>By creating the tunnel, you obtain a JSON file with the credentials that will be used to authenticate the tunnel with Cloudflare, keep it safe and <strong>do not commit it to the repository</strong> (or encrypt it if you do, even if it's still not recommended).</p>
+<pre><code class="language-bash">kubectl create namespace cloudflare
+kubectl create secret generic tunnel-credentials \
+  --from-file=credentials.json=/Users/qjoly/.cloudflared/2f3b093d-bd57-4708-8d54-42723da21338.json \
+  --namespace=cloudflare
+</code></pre>
+<p>Install the Cloudflare Tunnel Controller in the <code>cloudflare</code> namespace.</p>
+<p><strong><em><code>values.yaml</code></em></strong></p>
+<pre><code class="language-yaml">cloudflare:
+  tunnelName: &quot;home-cluster&quot;
+  tunnelId: &quot;2f3b093d-bd57-4708-8d54-42723da21338&quot;
+  secretName: &quot;tunnel-credentials&quot;
+  ingress:
+    - hostname: &quot;*.ur-domain.com&quot;
+      # Change the service name depending on the ingress controller used
+      service: &quot;https://ingress-nginx-controller.kube-system.svc.cluster.local:443&quot;
+      originRequest:
+        noTLSVerify: true
+
+resources:
+  limits:
+    cpu: &quot;100m&quot;
+    memory: &quot;128Mi&quot;
+  requests:
+    cpu: &quot;100m&quot;
+    memory: &quot;128Mi&quot;
+
+replicaCount: 1
+</code></pre>
+<pre><code class="language-bash">helm repo add cloudflare https://cloudflare.github.io/helm-charts
+helm repo update
+helm upgrade --install cloudflare-tunnel cloudflare/cloudflare-tunnel \
+  --namespace cloudflare \
+  --values values.yaml
+</code></pre>
+<details>
+<summary>ArgoCD Application</summary>
+
+
+<pre><code class="language-yaml">apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudflare-tunnel
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://cloudflare.github.io/helm-charts
+    chart: cloudflare-tunnel
+    targetRevision: 0.3.2
+    helm:
+      values: |
+          cloudflare:
+            tunnelName: &quot;home-cluster&quot;
+            tunnelId: &quot;2f3b093d-bd57-4708-8d54-42723da21338&quot;
+            secretName: &quot;cloudflare-tunnel&quot;
+            ingress:
+              - hostname: &quot;*.thoughtless.eu&quot;
+                service: &quot;https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443&quot;
+                originRequest:
+                  noTLSVerify: true
+
+          resources:
+            limits:
+              cpu: &quot;100m&quot;
+              memory: &quot;128Mi&quot;
+            requests:
+              cpu: &quot;100m&quot;
+              memory: &quot;128Mi&quot;
+
+          replicaCount: 1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cloudflare
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+</code></pre>
+
+
+</details>
+
+<p>If you create a CNAME record in Cloudflare pointing to <code>&lt;tunnelId&gt;.cfargotunnel.com</code>, you can access the services on the cluster using the domain name (e.g. mine is <code>2f3b093d-bd57-4708-8d54-42723da21338.cfargotunnel.com</code>)</p>
+<h3 id="external-dns">External DNS</h3>
+<p>To automatically create DNS records in Cloudflare, we use External DNS. This will create a DNS record for each Ingress resource created in the cluster.</p>
+<p><a href="https://dash.cloudflare.com/profile/api-tokens">Create an API key in Cloudflare that can edit your DNS records</a> of the domain (Zone) you configured in the Cloudflare</p>
+<p><img alt="API Dashboard Cloudflare" src="../img/cloudflare-token.png" /></p>
+<pre><code class="language-bash">kubectl create ns external-dns
+cat &lt;&lt;EOF | kubectl apply -f -
+apiVersion: v1
+stringData:
+  token: ${CF_API_TOKEN}
+kind: Secret
+metadata:
+  name: cloudflare-api-key
+  namespace: external-dns
+type: Opaque
+EOF
+</code></pre>
+<p>Then install External DNS with Helm.</p>
+<pre><code class="language-bash">helm repo add kubernetes-sigs https://kubernetes-sigs.github.io/external-dns/
+helm repo update
+helm upgrade --install external-dns kubernetes-sigs/external-dns \
+  --namespace external-dns \
+  --set sources[0]=ingress \
+  --set policy=sync \
+  --set provider.name=cloudflare \
+  --set env[0].name=CF_API_TOKEN \
+  --set env[0].valueFrom.secretKeyRef.name=cloudflare-api-key \
+  --set env[0].valueFrom.secretKeyRef.key=apiKey
+</code></pre>
+<p>Now, you can add annotations to your Ingress resources to automatically create DNS records in Cloudflare.</p>
+<pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: &quot;true&quot;
+    external-dns.alpha.kubernetes.io/hostname: nginx.thoughtless.eu
+    external-dns.alpha.kubernetes.io/target: 2f3b093d-bd57-4708-8d54-42723da21338.cfargotunnel.com
+  name: nginx
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: nginx.thoughtless.eu
+    http:
+      paths:
+      - backend:
+          service:
+            name: nginx
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+</code></pre>
+<details>
+<summary>ArgoCD Application</summary>
+
+
+<pre><code class="language-yaml">---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+  annotations:
+    # Application is needed before the secret
+    argocd.argoproj.io/sync-wave: &quot;-1&quot;
+spec:
+  project: default
+  source:
+    repoURL: https://kubernetes-sigs.github.io/external-dns/
+    chart: external-dns
+    targetRevision: 1.15.0
+    helm:
+      parameters:
+        - name: sources[0]
+          value: ingress
+        - name: policy
+          value: sync
+        - name: provider.name
+          value: cloudflare
+        - name: env[0].name
+          value: CF_API_TOKEN
+        - name: env[0].valueFrom.secretKeyRef.name
+          value: cloudflare-api-key
+        - name: env[0].valueFrom.secretKeyRef.key
+          value: apiKey
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-dns
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+</code></pre>
+
+
+
+
+</details>
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>

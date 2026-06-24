@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+     
+     
+    
+    <link rel="canonical" href="https://qjoly.github.io/GitOps/backup/"><link rel="icon" type="image/png" sizes="192x192" href="../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Backup - GitOps</title>
+
+
+<link href="../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../css/normalize.css" rel="stylesheet">
+<link href="../css/terminal.css" rel="stylesheet">
+<link href="../css/theme.css" rel="stylesheet">
+<link href="../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "..",
+    shortcuts = "{}";
+</script>
+<script src="../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://qjoly.github.io/GitOps/" class="no-style">GitOps</a></div>
+        </header>
+        
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href=".." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Welcome aboard!</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="./" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">Backup</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../cloudflared/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Cloudflared</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../getting-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Getting Started</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../secret-management/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Secret Management</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../zfs/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">ZFS</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+                
+                    
+                    
+
+
+<li property="itemListElement" typeof="ListItem">
+    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+    </a>
+    <meta property="position" content="6">
+</li>
+                    
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="..">Welcome aboard!</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">Backup</span>
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../cloudflared/">Cloudflared</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../getting-started/">Getting Started</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../secret-management/">Secret Management</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../zfs/">ZFS</a>
+        
+    
+    
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#backup-system">Backup system</a></li>
+        <li><a href="#create-a-restic-repository">Create a restic repository</a></li><li><a href="#restore-a-backup">Restore a backup</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+<section id="mkdocs-terminal-content">
+    <h2 id="backup-system">Backup system</h2>
+<p>When I created the <code>cortado</code> cluster (which is a single node cluster), I used a ZFS zpool (created manually) and <a href="https://github.com/rancher/local-path-provisioner">local-path-provisionner</a> to create persistent volumes on the mounted ZFS filesystem.</p>
+<p>To backup the data, I use <a href="https://github.com/backube/volsync">volsync</a> to create backup and send backup (using restic) to a minio server.</p>
+<p>I will have a restic repository per backup source.</p>
+<h3 id="create-a-restic-repository">Create a restic repository</h3>
+<pre><code class="language-bash">export AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY
+export AWS_SECRET_ACCESS_KEY=YOUR_SECRET_KEY
+export RESTIC_PASSWORD=REPOSITORY_PASSWORD
+export RESTIC_REPOSITORY=s3:http://MINIO_URL:9000/BUCKET
+</code></pre>
+<p>From your workstation, create the repository</p>
+<pre><code class="language-bash">restic init
+</code></pre>
+<p>Then, create a secret in the cluster with the credentials to access the repository</p>
+<pre><code class="language-bash">kubectl create secret generic -n kube-system restic-credentials \
+  --from-literal=AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+  --from-literal=AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+  --from-literal=RESTIC_PASSWORD=$RESTIC_PASSWORD \
+  --from-literal=RESTIC_REPOSITORY=$RESTIC_REPOSITORY
+</code></pre>
+<details>
+<summary>Use an ExternalSecret</summary>
+
+
+<pre><code class="language-yaml">apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: restic-credentials
+  namespace: komga
+spec:
+  refreshInterval: &quot;30s&quot;
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: restic-credentials
+  data:
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef:
+        key: restic
+        property: AWS_ACCESS_KEY_ID
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: restic
+        property: AWS_SECRET_ACCESS_KEY
+    - secretKey: RESTIC_PASSWORD
+      remoteRef:
+        key: restic
+        property: RESTIC_PASSWORD
+    - secretKey: RESTIC_REPOSITORY
+      remoteRef:
+        key: restic
+        property: RESTIC_REPOSITORY
+</code></pre>
+
+
+</details>
+
+<p>You can now create a <code>ReplicationSource</code> to backup a specific PVC.</p>
+<pre><code class="language-yaml">apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: komga
+spec:
+  # The PVC name to backup
+  sourcePVC: komga-data
+  trigger:
+    schedule: &quot;*/5 * * * *&quot;
+  restic:
+    pruneIntervalDays: 7
+    repository: restic-credentials
+    retain:
+      hourly: 6
+      daily: 5
+      weekly: 4
+      monthly: 2
+      yearly: 1
+    copyMethod: Direct
+</code></pre>
+<p>From your workstation, you can see backups</p>
+<pre><code class="language-bash">$ restic snapshots
+repository f8c8acc2 opened (version 2, compression level auto)
+created new cache in /Users/qjoly/Library/Caches/restic
+ID        Time                 Host        Tags        Paths  Size
+-----------------------------------------------------------------------
+7ebbffdd  2024-12-24 09:38:48  volsync                 /data  1.689 MiB
+8a7574a4  2024-12-24 09:55:06  volsync                 /data  1.689 MiB
+9b5b7a1a  2024-12-24 10:00:07  volsync                 /data  1.689 MiB
+-----------------------------------------------------------------------
+3 snapshots
+</code></pre>
+<h3 id="restore-a-backup">Restore a backup</h3>
+<p>Eh, eh, this is still a work in progress. I will update this section when I have more information.</p>
+<p><img alt="" src="https://media.tenor.com/udq1uD9WHSQAAAAM/oops.gif" /></p>
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>
