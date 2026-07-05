@@ -98,6 +98,21 @@ spec:
                   cs, rb = call("POST", "/api/v1/channels", channel)
                   print("channel created:", cs, rb[:200])
 
+              def rule(name, metric, tagg, sagg, op, target, sev, summary, desc, extra="", win="5m0s", freq="1m0s", absent=False):
+                  expr = "k8s.cluster.name = 'affogato'" + (" AND " + extra if extra else "")
+                  cond = {"compositeQuery": {"queryType": "builder", "panelType": "graph", "queries": [
+                      {"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "disabled": False,
+                          "aggregations": [{"metricName": metric, "timeAggregation": tagg, "spaceAggregation": sagg}],
+                          "filter": {"expression": expr}, "groupBy": []}}]},
+                      "op": op, "target": target, "matchType": "1", "selectedQueryName": "A"}
+                  if absent:
+                      cond["alertOnAbsent"] = True
+                      cond["absentFor"] = 10
+                  return {"version": "v5", "alert": name, "alertType": "METRIC_BASED_ALERT", "ruleType": "threshold_rule",
+                          "evalWindow": win, "frequency": freq, "condition": cond,
+                          "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc},
+                          "preferredChannels": ["discord"]}
+
               rules = [{
                   "version": "v5",
                   "alert": "ArgoCD applications OutOfSync",
@@ -125,7 +140,20 @@ spec:
                   "annotations": {"summary": "ArgoCD has out-of-sync applications",
                                   "description": "One or more ArgoCD applications are OutOfSync on cluster {{$labels.cluster}}."},
                   "preferredChannels": ["discord"]
-              }]
+              },
+                  rule("Backup ZFS pool not healthy", "zfs_pool_health", "latest", "max", ">", 0, "critical",
+                       "ZFS backup pool is not ONLINE",
+                       "zfs_pool_health != 0 on affogato (0=ONLINE, 1=DEGRADED, 2=FAULTED, 3=OFFLINE, 4=UNAVAIL, 6=SUSPENDED)."),
+                  rule("Backup ZFS pool low free space", "zfs_pool_free_bytes", "latest", "min", "<", 1500000000000, "warning",
+                       "Backup pool low on free space",
+                       "Less than ~1.5 TB free on the affogato ZFS pool.", freq="5m0s"),
+                  rule("Backup ZFS pool high fragmentation", "zfs_pool_fragmentation_ratio", "latest", "max", ">", 60, "warning",
+                       "Backup pool fragmentation high",
+                       "ZFS pool fragmentation above 60% on affogato.", win="15m0s", freq="5m0s"),
+                  rule("Backup server not reporting", "zfs_pool_size_bytes", "latest", "max", "<", 1, "critical",
+                       "Backup server sent no metrics",
+                       "No ZFS metrics received from affogato for 10m (collector or server down).", win="10m0s", freq="5m0s", absent=True),
+              ]
               _, rbody = call("GET", "/api/v1/rules")
               existing = {}
               for r in (json.loads(rbody).get("data", {}).get("rules") or []):
