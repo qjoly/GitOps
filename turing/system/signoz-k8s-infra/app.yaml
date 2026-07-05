@@ -39,8 +39,8 @@ spec:
               otlphttp:
                 tls:
                   insecure: false
-                  cert_file: /mtls/cert.pem
-                  key_file: /mtls/key.pem
+                  cert_file: /mtls/tls.crt
+                  key_file: /mtls/tls.key
           extraVolumes:
             - name: mtls
               secret:
@@ -55,8 +55,8 @@ spec:
               otlphttp:
                 tls:
                   insecure: false
-                  cert_file: /mtls/cert.pem
-                  key_file: /mtls/key.pem
+                  cert_file: /mtls/tls.crt
+                  key_file: /mtls/tls.key
           extraVolumes:
             - name: mtls
               secret:
