@@ -18,7 +18,7 @@ spec:
     helm:
       values: |
         additionalArguments:
-          - "--metrics.otlp.resourceAttributes.k8s.cluster.name=mocha"
+          - "--metrics.otlp.resourceAttributes.cluster=mocha"
         metrics:
           prometheus: null
           otlp:
