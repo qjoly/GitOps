@@ -20,6 +20,7 @@ configMapGenerator:
       - dashboards/kubernetes-pod-metrics-detailed.json
       - dashboards/kubernetes-pod-metrics-overall.json
       - dashboards/kubernetes-pvc-metrics.json
+      - dashboards/traefik.json
 generatorOptions:
   disableNameSuffixHash: true
   annotations:
