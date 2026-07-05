@@ -4,14 +4,14 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: cloudflare
     external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-    external-dns.alpha.kubernetes.io/hostname: argocd-turing.<path:kv/cluster#domain>
-    external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflare#tunnelid>.cfargotunnel.com"
+    external-dns.alpha.kubernetes.io/hostname: argocd-turing.thoughtless.eu
+    external-dns.alpha.kubernetes.io/target: "REPLACE_TUNNEL_ID.cfargotunnel.com"
   name: argocd
   namespace: argocd
 spec:
   ingressClassName: traefik
   rules:
-    - host: argocd-turing.<path:kv/cluster#domain>
+    - host: argocd-turing.thoughtless.eu
       http:
         paths:
           - backend:
@@ -23,5 +23,5 @@ spec:
             pathType: Prefix
   tls:
     - hosts:
-        - argocd-turing.<path:kv/cluster#domain>
+        - argocd-turing.thoughtless.eu
       secretName: argocd-tls

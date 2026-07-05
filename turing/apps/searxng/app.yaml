@@ -35,6 +35,12 @@ spec:
               strategy: RollingUpdate
               annotations:
                 reloader.stakater.com/auto: "true"
+              pod:
+                annotations:
+                  vault.security.banzaicloud.io/vault-addr: "https://vault.bank-vaults:8200"
+                  vault.security.banzaicloud.io/vault-role: "default"
+                  vault.security.banzaicloud.io/vault-path: "kubernetes"
+                  vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
 
               containers:
                 main:
@@ -42,11 +48,11 @@ spec:
                     repository: docker.io/searxng/searxng
                     tag: 2024.6.30-39aaac40d
                   env:
-                    SEARXNG_BASE_URL: https://searxng.<path:kv/cluster#domain>
-                    SEARXNG_URL: https://searxng.<path:kv/cluster#domain>
+                    SEARXNG_BASE_URL: https://searxng.thoughtless.eu
+                    SEARXNG_URL: https://searxng.thoughtless.eu
                     SEARXNG_PORT: &httpPort 8080
                     SEARXNG_REDIS_URL: redis://searxng-dragonfly:6379
-                    SEARXNG_SECRET: <path:kv/searxng#secret>
+                    SEARXNG_SECRET: vault:kv/data/searxng#secret
                   probes:
                     liveness: &probes
                       enabled: true
@@ -91,10 +97,10 @@ spec:
               annotations:
                 cert-manager.io/cluster-issuer: cloudflare
                 external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-                external-dns.alpha.kubernetes.io/hostname: "searxng.<path:kv/cluster#domain>"
-                external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflare#tunnelid>.cfargotunnel.com"
+                external-dns.alpha.kubernetes.io/hostname: "searxng.thoughtless.eu"
+                external-dns.alpha.kubernetes.io/target: "REPLACE_TUNNEL_ID.cfargotunnel.com"
               hosts:
-                - host: searxng.<path:kv/cluster#domain>
+                - host: searxng.thoughtless.eu
                   paths:
                     - path: /
                       service:

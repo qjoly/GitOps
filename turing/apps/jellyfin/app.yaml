@@ -37,7 +37,7 @@ spec:
             
           ingress:
             enabled: true
-            hostName: "jellyfin.<path:kv/cluster#domain>"
+            hostName: "jellyfin.thoughtless.eu"
             ingressClassName: traefik
             tls:
               enabled: true
@@ -45,8 +45,8 @@ spec:
             annotations:
               cert-manager.io/cluster-issuer: cloudflare
               external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-              external-dns.alpha.kubernetes.io/hostname: "jellyfin.<path:kv/cluster#domain>"
-              external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflare#tunnelid>.cfargotunnel.com"
+              external-dns.alpha.kubernetes.io/hostname: "jellyfin.thoughtless.eu"
+              external-dns.alpha.kubernetes.io/target: "REPLACE_TUNNEL_ID.cfargotunnel.com"
 
 
           persistence:

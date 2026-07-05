@@ -18,12 +18,10 @@ spec:
     helm:
       values: |
         cloudflare:
-          account: <path:kv/cloudflare#account>
           tunnelName: "turing-cluster"
-          tunnelId: "<path:kv/cloudflare#tunnelid>"
-          secret: "<path:kv/cloudflare#token>"
+          secretName: "cloudflare-tunnel-credentials"
           ingress:
-            - hostname: "*.<path:kv/cluster#domain>"
+            - hostname: "*.thoughtless.eu"
               service: "https://traefik.traefik.svc.cluster.local:443"
               originRequest:
                 noTLSVerify: true

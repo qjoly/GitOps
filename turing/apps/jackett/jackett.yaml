@@ -29,9 +29,9 @@ spec:
               enabled: true
               annotations:
                 external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-                external-dns.alpha.kubernetes.io/hostname: "indexer.<path:kv/cluster#domain>"
-                external-dns.alpha.kubernetes.io/target: "<path:kv/cloudflare#tunnelid>.cfargotunnel.com"
-              hostName: "indexer.<path:kv/cluster#domain>"
+                external-dns.alpha.kubernetes.io/hostname: "indexer.thoughtless.eu"
+                external-dns.alpha.kubernetes.io/target: "REPLACE_TUNNEL_ID.cfargotunnel.com"
+              hostName: "indexer.thoughtless.eu"
               ingressClassName: traefik
   destination:
     server: https://kubernetes.default.svc
