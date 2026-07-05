@@ -1,0 +1,53 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: signoz-mtls-selfsigned
+  namespace: traefik
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: signoz-mtls-ca
+  namespace: traefik
+spec:
+  isCA: true
+  commonName: signoz-mtls-traefik-ca
+  secretName: signoz-mtls-ca
+  duration: 87600h
+  renewBefore: 2160h
+  privateKey:
+    algorithm: RSA
+    size: 4096
+  issuerRef:
+    name: signoz-mtls-selfsigned
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: signoz-mtls-ca
+  namespace: traefik
+spec:
+  ca:
+    secretName: signoz-mtls-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: signoz-mtls-client
+  namespace: traefik
+spec:
+  commonName: turing-traefik
+  secretName: signoz-mtls-client
+  duration: 8760h
+  renewBefore: 720h
+  privateKey:
+    algorithm: RSA
+    size: 4096
+  usages:
+    - client auth
+  issuerRef:
+    name: signoz-mtls-ca
+    kind: Issuer

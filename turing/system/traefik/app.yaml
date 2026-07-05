@@ -8,15 +8,35 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
   source:
     repoURL: https://traefik.github.io/charts
-    targetRevision: 36.3.0
+    targetRevision: 41.0.1
     chart: traefik
     helm:
       values: |
         service:
           enabled: true
           type: ClusterIP
+        volumes:
+          - name: signoz-mtls-client
+            mountPath: /mtls
+            type: secret
+        metrics:
+          prometheus: null
+          otlp:
+            enabled: true
+            addEntryPointsLabels: true
+            addRoutersLabels: true
+            addServicesLabels: true
+            resourceAttributes:
+              cluster: turing
+            http:
+              enabled: true
+              endpoint: https://signoz-ingest.mocha.thoughtless.eu/v1/metrics
+              tls:
+                cert: /mtls/tls.crt
+                key: /mtls/tls.key
