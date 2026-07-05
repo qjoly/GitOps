@@ -17,7 +17,6 @@ spec:
   vaultContainerSpec:
     name: vault
     args:
-      - "server"
       - "-config=/vault/config"
 
   securityContext:
