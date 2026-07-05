@@ -5,5 +5,3 @@ resources:
   - loki-stack.yaml
   - grafana.yaml
   - middleware.yaml
-  - blackbox-exporter.yaml
-  - kromgo
