@@ -29,8 +29,9 @@ spec:
         global:
           clusterName: mocha
           deploymentEnvironment: production
-        # Collecteur SignOz interne (même cluster), OTLP gRPC en clair.
-        otelCollectorEndpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
+        # Collecteur SignOz interne (même cluster). L'agent exporte en OTLP/HTTP
+        # (exporter otlphttp) : URL avec schéma http:// et port OTLP-HTTP 4318.
+        otelCollectorEndpoint: http://signoz-otel-collector.signoz.svc.cluster.local:4318
         otelInsecure: true
         # Presets activés par défaut : logsCollection, hostMetrics,
         # kubeletMetrics, clusterMetrics, kubernetesAttributes, k8sEvents.
