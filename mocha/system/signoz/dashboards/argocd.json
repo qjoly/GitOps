@@ -693,7 +693,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace AND health_status = 'Progressing'"
+                "expression": "namespace = $namespace AND health_status = 'Progressing' AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -878,7 +878,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace AND health_status = 'Healthy'"
+                "expression": "namespace = $namespace AND health_status = 'Healthy' AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -1063,7 +1063,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace AND health_status = 'Suspended'"
+                "expression": "namespace = $namespace AND health_status = 'Suspended' AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -1248,7 +1248,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace AND health_status = 'Degraded'"
+                "expression": "namespace = $namespace AND health_status = 'Degraded' AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -1445,7 +1445,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace AND sync_status = 'Synced' AND repo = $repo"
+                "expression": "namespace = $namespace AND sync_status = 'Synced' AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -1630,7 +1630,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace AND sync_status in $sync.status"
+                "expression": "namespace = $namespace AND sync_status = 'OutOfSync' AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -1821,7 +1821,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace AND phase = 'Succeeded'"
+                "expression": "namespace = $namespace AND phase = 'Succeeded' AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -1902,7 +1902,7 @@
               "disabled": false,
               "expression": "B",
               "filter": {
-                "expression": "namespace = $namespace AND phase = 'Error'"
+                "expression": "namespace = $namespace AND phase = 'Error' AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -1983,7 +1983,7 @@
               "disabled": false,
               "expression": "C",
               "filter": {
-                "expression": "namespace = $namespace AND phase = 'Error'"
+                "expression": "namespace = $namespace AND phase = 'Error' AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -2163,7 +2163,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace"
+                "expression": "namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -2330,7 +2330,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace"
+                "expression": "namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -2497,7 +2497,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace AND repo = $repo AND health_status in $health.status AND sync_status in $sync.status"
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "functions": [],
               "groupBy": [],
@@ -2645,7 +2645,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace AND repo = $repo AND health_status in $health.status AND sync_status in $sync.status"
+                "expression": "namespace = $namespace AND health_status IN $health.status AND sync_status IN $sync.status AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -2844,7 +2844,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace"
+                "expression": "namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -3021,7 +3021,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace"
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "functions": [],
               "groupBy": [],
@@ -3169,7 +3169,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace"
+                "expression": "namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -3344,7 +3344,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": ""
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -3504,7 +3504,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": ""
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -3658,7 +3658,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": ""
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -3812,7 +3812,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": ""
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -3966,7 +3966,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": ""
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -4120,7 +4120,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": ""
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -4295,7 +4295,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": ""
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "functions": [],
               "groupBy": [
@@ -4461,7 +4461,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": ""
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "functions": [],
               "groupBy": [
@@ -4628,7 +4628,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": ""
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "functions": [],
               "groupBy": [
@@ -4794,7 +4794,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace"
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
               },
               "functions": [],
               "groupBy": [
@@ -5016,7 +5016,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace AND repo = $repo"
+                "expression": "namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [
@@ -5186,7 +5186,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "namespace = $namespace AND repo = $repo"
+                "expression": "namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name"
               },
               "filters": {
                 "items": [

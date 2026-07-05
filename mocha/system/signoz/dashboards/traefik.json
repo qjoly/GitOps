@@ -148,7 +148,10 @@
                   "spaceAggregation": "sum",
                   "reduceTo": "sum"
                 }
-              ]
+              ],
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              }
             }
           ],
           "queryFormulas": []
@@ -235,7 +238,10 @@
                   "spaceAggregation": "sum",
                   "reduceTo": "sum"
                 }
-              ]
+              ],
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              }
             }
           ],
           "queryFormulas": []
@@ -322,7 +328,10 @@
                   "spaceAggregation": "sum",
                   "reduceTo": "sum"
                 }
-              ]
+              ],
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              }
             }
           ],
           "queryFormulas": []
@@ -400,7 +409,10 @@
                   "spaceAggregation": "sum",
                   "reduceTo": "sum"
                 }
-              ]
+              ],
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              }
             }
           ],
           "queryFormulas": []
@@ -487,7 +499,10 @@
                   "spaceAggregation": "p99",
                   "reduceTo": "sum"
                 }
-              ]
+              ],
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              }
             }
           ],
           "queryFormulas": []
@@ -574,7 +589,10 @@
                   "spaceAggregation": "p50",
                   "reduceTo": "sum"
                 }
-              ]
+              ],
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              }
             }
           ],
           "queryFormulas": []
@@ -652,7 +670,10 @@
                   "spaceAggregation": "sum",
                   "reduceTo": "sum"
                 }
-              ]
+              ],
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              }
             }
           ],
           "queryFormulas": []
@@ -730,7 +751,10 @@
                   "spaceAggregation": "sum",
                   "reduceTo": "sum"
                 }
-              ]
+              ],
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              }
             }
           ],
           "queryFormulas": []
