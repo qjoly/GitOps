@@ -1,0 +1,56 @@
+---
+# Filet de sécurité pour l'activation des volumes LVM au boot.
+# Talos possède un LVM activation controller natif, mais une race condition
+# avec udevd (cf. siderolabs/talos#9505) peut laisser le VG `lvmvg` inactif
+# après un reboot, rendant les LV (`-wi-------`) et donc les PVC OpenEBS
+# lvm-localpv impossibles à monter ("/dev/lvmvg/pvc-... does not exist").
+# Ce DaemonSet ré-active idempotemment tous les VG sur chaque node.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: lvm-autoactivate
+  namespace: openebs
+  labels:
+    app.kubernetes.io/name: lvm-autoactivate
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lvm-autoactivate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: lvm-autoactivate
+    spec:
+      priorityClassName: system-node-critical
+      hostPID: true
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: lvm-autoactivate
+          image: openebs/lvm-driver:1.6.1
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -o errexit
+              while true; do
+                # -aay : autoactivation, --refresh : recrée les device-nodes manquants
+                vgchange -aay --refresh || true
+                sleep 120
+              done
+          securityContext:
+            privileged: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: device-dir
+              mountPath: /dev
+      volumes:
+        - name: device-dir
+          hostPath:
+            path: /dev
+            type: Directory
