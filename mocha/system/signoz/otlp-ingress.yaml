@@ -1,6 +1,4 @@
 ---
-# Expose le collecteur OTLP/HTTP de SignOz pour l'ingestion depuis les autres
-# clusters (ex. turing). TLS via cert-manager ; endpoint ouvert (pas d'auth).
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -8,6 +6,7 @@ metadata:
   namespace: signoz
   annotations:
     cert-manager.io/cluster-issuer: cloudflare
+    traefik.ingress.kubernetes.io/router.tls.options: signoz-mtls@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:

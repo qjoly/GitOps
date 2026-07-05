@@ -23,14 +23,14 @@ spec:
     targetRevision: 0.16.0
     helm:
       values: |
-        # Télémétrie du cluster turing → SignOz hébergé sur mocha.
-        # k8s.cluster.name=turing distingue cette source des autres clusters.
         global:
           clusterName: turing
           deploymentEnvironment: production
-        # Endpoint OTLP/HTTP public de SignOz sur mocha (TLS, cert public valide).
         otelCollectorEndpoint: https://signoz-ingest.mocha.thoughtless.eu
         otelInsecure: false
+        otelTlsSecrets:
+          enabled: true
+          existingSecretName: signoz-mtls-client
         presets:
           otlpExporter:
             enabled: true

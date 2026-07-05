@@ -1,10 +1,4 @@
 ---
-# Filet de sécurité pour l'activation des volumes LVM au boot.
-# Talos possède un LVM activation controller natif, mais une race condition
-# avec udevd (cf. siderolabs/talos#9505) peut laisser le VG `lvmvg` inactif
-# après un reboot, rendant les LV (`-wi-------`) et donc les PVC OpenEBS
-# lvm-localpv impossibles à monter ("/dev/lvmvg/pvc-... does not exist").
-# Ce DaemonSet ré-active idempotemment tous les VG sur chaque node.
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -34,7 +28,6 @@ spec:
             - |
               set -o errexit
               while true; do
-                # -aay : autoactivation, --refresh : recrée les device-nodes manquants
                 vgchange -aay --refresh || true
                 sleep 120
               done

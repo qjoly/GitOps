@@ -1,6 +1,4 @@
 ---
-# Clé d'API SignOz (à créer dans l'UI : Settings → API Keys) stockée dans Vault
-# sous kv/signoz avec la propriété `api_key`.
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
@@ -19,9 +17,6 @@ spec:
         key: signoz
         property: api_key
 ---
-# Job idempotent qui importe les dashboards k8s-infra dans SignOz via l'API.
-# Hook PostSync ArgoCD : rejoué à chaque sync, ne recrée pas les dashboards
-# déjà présents (comparaison par titre).
 apiVersion: batch/v1
 kind: Job
 metadata:
