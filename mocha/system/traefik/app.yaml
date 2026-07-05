@@ -17,8 +17,6 @@ spec:
     chart: traefik
     helm:
       values: |
-        additionalArguments:
-          - "--metrics.otlp.resourceAttributes.cluster=mocha"
         metrics:
           prometheus: null
           otlp:
