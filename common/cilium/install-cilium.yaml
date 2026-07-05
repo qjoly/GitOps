@@ -95,7 +95,7 @@ data:
   enable-metrics: "true"
   enable-envoy-config: "true"
   envoy-config-retry-interval: "15s"
-  enable-ingress-controller: "true"
+  enable-ingress-controller: "false"
   enforce-ingress-https: "true"
   enable-ingress-proxy-protocol: "false"
   enable-ingress-secrets-sync: "true"
@@ -1062,28 +1062,6 @@ spec:
     protocol: TCP
     targetPort: envoy-metrics
 ---
-# Source: cilium/templates/cilium-ingress-service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: cilium-ingress
-  namespace: kube-system
-  labels:
-    cilium.io/ingress: "true"
-    app.kubernetes.io/part-of: cilium
-spec:
-  ports:
-  - name: http
-    port: 80
-    protocol: TCP
-    nodePort: 
-  - name: https
-    port: 443
-    protocol: TCP
-    nodePort: 
-  type: LoadBalancer
-  externalTrafficPolicy: Cluster
----
 # Source: cilium/templates/hubble/peer-service.yaml
 apiVersion: v1
 kind: Service
@@ -1873,24 +1851,3 @@ spec:
       - name: cilium-config-path
         configMap:
           name: cilium-config
----
-# Source: cilium/templates/cilium-ingress-class.yaml
-apiVersion: networking.k8s.io/v1
-kind: IngressClass
-metadata:
-  name: cilium
-spec:
-  controller: cilium.io/ingress-controller
----
-# Source: cilium/templates/cilium-ingress-service.yaml
-apiVersion: v1
-kind: Endpoints
-metadata:
-  name: cilium-ingress
-  namespace: kube-system
-  labels:
-subsets:
-- addresses:
-  - ip: "192.192.192.192"
-  ports:
-  - port: 9999
