@@ -130,6 +130,37 @@ This will create a new cluster based on the configuration you have set in the `t
 omnictl kubeconfig --cluster lungo
 ```
 
+## CI/CD — Automatic cluster template sync
+
+The workflow `.github/workflows/omni-template-sync.yaml` runs `omnictl cluster template sync` automatically on every push to `main` that modifies files under `turing/` or `mocha/`.
+
+A `detect` job inspects the diff and builds a matrix of changed clusters. A parallel `sync` job then syncs each one independently — touching only `mocha/` never triggers a `turing` sync, and a failure in one cluster does not block the other.
+
+`kubevirt/` and `archives/` are intentionally excluded from CI sync.
+
+It authenticates against Omni using a **service account** (not a Kubernetes ServiceAccount — it is an Omni-native token-based credential).
+
+### Create the Omni service account (one-time setup)
+
+Run this once from a machine where `omnictl` is already configured:
+
+```bash
+omnictl serviceaccount create github-actions --role Operator --ttl 8760h
+```
+
+The command prints an `OMNI_ENDPOINT` and an `OMNI_SERVICE_ACCOUNT_KEY`. Store both as GitHub Actions secrets:
+
+| Secret name                 | Value                             |
+|-----------------------------|-----------------------------------|
+| `OMNI_ENDPOINT`             | Endpoint printed by the command   |
+| `OMNI_SERVICE_ACCOUNT_KEY`  | Key printed by the command        |
+
+> The `OMNI_SERVICE_ACCOUNT_KEY` is shown only once — save it immediately.
+
+Add them at: **Repository → Settings → Secrets and variables → Actions → New repository secret**
+
+---
+
 <details>
 <summary>Example of kubeconfig file</summary>
 
