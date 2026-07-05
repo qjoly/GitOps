@@ -113,6 +113,20 @@ spec:
                           "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc},
                           "preferredChannels": ["discord"]}
 
+              def gbk(k):
+                  return {"dataType": "string", "id": k + "--string--tag--false", "isColumn": False, "isJSON": False, "key": k, "type": "tag"}
+
+              def krule(name, metric, tagg, sagg, op, target, sev, summary, desc, groupby, win="5m0s", freq="1m0s"):
+                  return {"version": "v5", "alert": name, "alertType": "METRIC_BASED_ALERT", "ruleType": "threshold_rule",
+                          "evalWindow": win, "frequency": freq,
+                          "condition": {"compositeQuery": {"queryType": "builder", "panelType": "graph", "queries": [
+                              {"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "disabled": False,
+                                  "aggregations": [{"metricName": metric, "timeAggregation": tagg, "spaceAggregation": sagg}],
+                                  "filter": {"expression": ""}, "groupBy": [gbk(k) for k in groupby]}}]},
+                              "op": op, "target": target, "matchType": "1", "selectedQueryName": "A"},
+                          "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc},
+                          "preferredChannels": ["discord"]}
+
               rules = [{
                   "version": "v5",
                   "alert": "ArgoCD applications OutOfSync",
@@ -153,6 +167,23 @@ spec:
                   rule("Backup server not reporting", "zfs_pool_size_bytes", "latest", "max", "<", 1, "critical",
                        "Backup server sent no metrics",
                        "No ZFS metrics received from affogato for 10m (collector or server down).", win="10m0s", freq="5m0s", absent=True),
+                  krule("Kubernetes node not ready", "k8s.node.condition_ready", "latest", "min", "<", 1, "critical",
+                        "A Kubernetes node is not Ready",
+                        "k8s.node.condition_ready < 1 (node NotReady or Unknown).", ["k8s.cluster.name", "k8s.node.name"]),
+                  krule("Kubernetes node memory pressure", "k8s.node.condition_memory_pressure", "latest", "max", ">", 0, "warning",
+                        "Kubernetes node under memory pressure",
+                        "k8s.node.condition_memory_pressure is active.", ["k8s.cluster.name", "k8s.node.name"]),
+                  krule("Kubernetes node disk pressure", "k8s.node.condition_disk_pressure", "latest", "max", ">", 0, "warning",
+                        "Kubernetes node under disk pressure",
+                        "k8s.node.condition_disk_pressure is active.", ["k8s.cluster.name", "k8s.node.name"]),
+                  krule("Kubernetes container restarting", "k8s.container.restarts", "increase", "max", ">", 3, "warning",
+                        "Container restarting frequently",
+                        "More than 3 restarts over 15m (possible CrashLoopBackOff).",
+                        ["k8s.cluster.name", "k8s.pod.name", "k8s.container.name"], win="15m0s", freq="5m0s"),
+                  krule("Kubernetes container near memory limit", "k8s.container.memory_limit_utilization", "latest", "max", ">", 0.95, "warning",
+                        "Container near its memory limit",
+                        "Container memory usage above 95% of its limit (OOM risk).",
+                        ["k8s.cluster.name", "k8s.pod.name"], win="10m0s", freq="5m0s"),
               ]
               _, rbody = call("GET", "/api/v1/rules")
               existing = {}
