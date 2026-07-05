@@ -92,9 +92,51 @@ spec:
               ex = next((c for c in chans if c.get("name") == "discord"), None)
               if ex:
                   cid = ex.get("id")
-                  st, rb = call("PUT", "/api/v1/channels/" + str(cid), channel)
-                  print("channel updated:", st, rb[:200])
+                  cs, rb = call("PUT", "/api/v1/channels/" + str(cid), channel)
+                  print("channel updated:", cs, rb[:200])
               else:
-                  st, rb = call("POST", "/api/v1/channels", channel)
-                  print("channel created:", st, rb[:200])
-              raise SystemExit(0 if st < 300 else 1)
+                  cs, rb = call("POST", "/api/v1/channels", channel)
+                  print("channel created:", cs, rb[:200])
+
+              rules = [{
+                  "alert": "ArgoCD applications OutOfSync",
+                  "alertType": "METRIC_BASED_ALERT",
+                  "ruleType": "threshold_rule",
+                  "evalWindow": "5m0s",
+                  "frequency": "1m0s",
+                  "condition": {
+                      "compositeQuery": {
+                          "queryType": "builder",
+                          "panelType": "graph",
+                          "builderQueries": {
+                              "A": {
+                                  "queryName": "A", "dataSource": "metrics", "expression": "A", "disabled": False,
+                                  "aggregateAttribute": {"key": "argocd_app_info", "dataType": "float64", "type": "Gauge", "isColumn": True},
+                                  "aggregateOperator": "count", "timeAggregation": "count", "spaceAggregation": "sum",
+                                  "reduceTo": "sum", "stepInterval": 60, "groupBy": [],
+                                  "filters": {"op": "AND", "items": [
+                                      {"key": {"key": "sync_status", "dataType": "string", "type": "tag"}, "op": "=", "value": "OutOfSync"}
+                                  ]}
+                              }
+                          }
+                      },
+                      "op": ">", "target": 0, "matchType": "1"
+                  },
+                  "labels": {"severity": "warning"},
+                  "annotations": {"summary": "ArgoCD has out-of-sync applications",
+                                  "description": "One or more ArgoCD applications are OutOfSync on cluster {{$labels.cluster}}."},
+                  "preferredChannels": ["discord"]
+              }]
+              _, rbody = call("GET", "/api/v1/rules")
+              existing = {}
+              for r in (json.loads(rbody).get("data", {}).get("rules") or []):
+                  existing[r.get("alert") or (r.get("data") or {}).get("alert")] = r.get("id")
+              for rule in rules:
+                  rid = existing.get(rule["alert"])
+                  if rid:
+                      rs, rr = call("PUT", "/api/v1/rules/" + str(rid), rule)
+                      print("rule updated:", rule["alert"], rs, rr[:250])
+                  else:
+                      rs, rr = call("POST", "/api/v1/rules", rule)
+                      print("rule created:", rule["alert"], rs, rr[:250])
+              raise SystemExit(0 if cs < 300 else 1)
