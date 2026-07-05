@@ -642,16 +642,15 @@
       "textboxValue": "",
       "type": "DYNAMIC"
     },
-    "c1u5ter00-0000-4000-8000-clusterselec": {
+    "b7e3f1a2-4c8d-4e6f-9a1b-2c3d4e5f6a7b": {
       "allSelected": false,
       "customValue": "",
       "defaultValue": "",
       "description": "Name of the cluster",
       "dynamicVariablesAttribute": "cluster",
       "dynamicVariablesSource": "All telemetry",
-      "id": "c1u5ter00-0000-4000-8000-clusterselec",
-      "key": "c1u5ter00-0000-4000-8000-clusterselec",
-      "modificationUUID": "c1u5ter0-mod0-4000-8000-clusterselec",
+      "id": "b7e3f1a2-4c8d-4e6f-9a1b-2c3d4e5f6a7b",
+      "modificationUUID": "c9d8e7f6-1a2b-4c3d-8e9f-0a1b2c3d4e5f",
       "multiSelect": false,
       "name": "cluster",
       "order": 0,
@@ -659,7 +658,8 @@
       "showALLOption": true,
       "sort": "DISABLED",
       "textboxValue": "",
-      "type": "DYNAMIC"
+      "type": "DYNAMIC",
+      "haveCustomValuesSelected": false
     }
   },
   "version": "v5",
