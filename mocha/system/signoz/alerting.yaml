@@ -1,0 +1,18 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: discord-webhook
+  namespace: signoz
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: discord-webhook
+  data:
+    - secretKey: webhook
+      remoteRef:
+        key: discord
+        property: webhook
