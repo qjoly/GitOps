@@ -1,0 +1,11 @@
+[Unit]
+Description=OpenTelemetry Collector Contrib
+After=network.target zfs_exporter.service
+
+[Service]
+ExecStart=/usr/local/bin/otelcol-contrib --config /etc/otelcol/config.yaml
+User=root
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
