@@ -110,13 +110,13 @@
                     "id": "cluster-filter",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--tag--false",
+                      "id": "cluster--string--",
                       "isColumn": false,
                       "isJSON": false,
                       "key": "cluster",
-                      "type": "tag"
+                      "type": ""
                     },
-                    "op": "=",
+                    "op": "IN",
                     "value": "$cluster"
                   }
                 ],
@@ -197,13 +197,13 @@
                     "id": "cluster-filter",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--tag--false",
+                      "id": "cluster--string--",
                       "isColumn": false,
                       "isJSON": false,
                       "key": "cluster",
-                      "type": "tag"
+                      "type": ""
                     },
-                    "op": "=",
+                    "op": "IN",
                     "value": "$cluster"
                   }
                 ],
@@ -284,13 +284,13 @@
                     "id": "cluster-filter",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--tag--false",
+                      "id": "cluster--string--",
                       "isColumn": false,
                       "isJSON": false,
                       "key": "cluster",
-                      "type": "tag"
+                      "type": ""
                     },
-                    "op": "=",
+                    "op": "IN",
                     "value": "$cluster"
                   }
                 ],
@@ -371,13 +371,13 @@
                     "id": "cluster-filter",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--tag--false",
+                      "id": "cluster--string--",
                       "isColumn": false,
                       "isJSON": false,
                       "key": "cluster",
-                      "type": "tag"
+                      "type": ""
                     },
-                    "op": "=",
+                    "op": "IN",
                     "value": "$cluster"
                   }
                 ],
@@ -449,13 +449,13 @@
                     "id": "cluster-filter",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--tag--false",
+                      "id": "cluster--string--",
                       "isColumn": false,
                       "isJSON": false,
                       "key": "cluster",
-                      "type": "tag"
+                      "type": ""
                     },
-                    "op": "=",
+                    "op": "IN",
                     "value": "$cluster"
                   }
                 ],
@@ -536,13 +536,13 @@
                     "id": "cluster-filter",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--tag--false",
+                      "id": "cluster--string--",
                       "isColumn": false,
                       "isJSON": false,
                       "key": "cluster",
-                      "type": "tag"
+                      "type": ""
                     },
-                    "op": "=",
+                    "op": "IN",
                     "value": "$cluster"
                   }
                 ],
@@ -623,13 +623,13 @@
                     "id": "cluster-filter",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--tag--false",
+                      "id": "cluster--string--",
                       "isColumn": false,
                       "isJSON": false,
                       "key": "cluster",
-                      "type": "tag"
+                      "type": ""
                     },
-                    "op": "=",
+                    "op": "IN",
                     "value": "$cluster"
                   }
                 ],
@@ -701,13 +701,13 @@
                     "id": "cluster-filter",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--tag--false",
+                      "id": "cluster--string--",
                       "isColumn": false,
                       "isJSON": false,
                       "key": "cluster",
-                      "type": "tag"
+                      "type": ""
                     },
-                    "op": "=",
+                    "op": "IN",
                     "value": "$cluster"
                   }
                 ],
