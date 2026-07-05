@@ -28,11 +28,40 @@ spec:
           deploymentEnvironment: production
         otelCollectorEndpoint: https://signoz-ingest.mocha.thoughtless.eu
         otelInsecure: false
-        otelTlsSecrets:
-          enabled: true
-          existingSecretName: signoz-mtls-client
         presets:
           otlpExporter:
             enabled: true
           loggingExporter:
             enabled: false
+        otelAgent:
+          config:
+            exporters:
+              otlphttp:
+                tls:
+                  insecure: false
+                  cert_file: /mtls/cert.pem
+                  key_file: /mtls/key.pem
+          extraVolumes:
+            - name: mtls
+              secret:
+                secretName: signoz-mtls-client
+          extraVolumeMounts:
+            - name: mtls
+              mountPath: /mtls
+              readOnly: true
+        otelDeployment:
+          config:
+            exporters:
+              otlphttp:
+                tls:
+                  insecure: false
+                  cert_file: /mtls/cert.pem
+                  key_file: /mtls/key.pem
+          extraVolumes:
+            - name: mtls
+              secret:
+                secretName: signoz-mtls-client
+          extraVolumeMounts:
+            - name: mtls
+              mountPath: /mtls
+              readOnly: true
