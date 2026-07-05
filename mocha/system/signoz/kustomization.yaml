@@ -23,6 +23,7 @@ configMapGenerator:
       - dashboards/kubernetes-pvc-metrics.json
       - dashboards/argocd.json
       - dashboards/traefik.json
+      - dashboards/plex.json
 generatorOptions:
   disableNameSuffixHash: true
   annotations:
