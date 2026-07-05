@@ -33,7 +33,7 @@ spec:
             addRoutersLabels: true
             addServicesLabels: true
             resourceAttributes:
-              cluster: turing
+              k8s.cluster.name: turing
             http:
               enabled: true
               endpoint: https://signoz-ingest.mocha.thoughtless.eu/v1/metrics
