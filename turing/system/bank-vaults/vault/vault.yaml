@@ -1,0 +1,94 @@
+apiVersion: vault.banzaicloud.com/v1alpha1
+kind: Vault
+metadata:
+  name: vault
+  namespace: bank-vaults
+  labels:
+    app.kubernetes.io/name: vault
+    vault_cr: vault
+spec:
+  size: 3
+  image: openbao/openbao:2.5.5
+  serviceAccount: vault
+  serviceType: ClusterIP
+  statsdDisabled: true
+  serviceRegistrationEnabled: true
+
+  securityContext:
+    runAsUser: 100
+    runAsGroup: 1000
+    fsGroup: 1000
+
+  caNamespaces:
+    - "*"
+
+  unsealConfig:
+    options:
+      preFlightChecks: true
+      storeRootToken: true
+      secretShares: 5
+      secretThreshold: 3
+    kubernetes:
+      secretNamespace: bank-vaults
+
+  volumeClaimTemplates:
+    - metadata:
+        name: vault-raft
+      spec:
+        storageClassName: ceph-block
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 2Gi
+
+  volumeMounts:
+    - name: vault-raft
+      mountPath: /vault/file
+
+  config:
+    disable_mlock: true
+    storage:
+      raft:
+        path: /vault/file
+    listener:
+      tcp:
+        address: "0.0.0.0:8200"
+        tls_cert_file: /vault/tls/server.crt
+        tls_key_file: /vault/tls/server.key
+    api_addr: https://vault.bank-vaults:8200
+    cluster_addr: "https://${.Env.POD_NAME}:8201"
+    ui: true
+
+  resources:
+    vault:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+
+  externalConfig:
+    policies:
+      - name: reader
+        rules: |
+          path "kv/data/*" {
+            capabilities = ["read"]
+          }
+          path "kv/metadata/*" {
+            capabilities = ["read", "list"]
+          }
+    auth:
+      - type: kubernetes
+        roles:
+          - name: default
+            bound_service_account_names: ["*"]
+            bound_service_account_namespaces: ["*"]
+            policies: ["reader"]
+            ttl: 1h
+    secrets:
+      - path: kv
+        type: kv
+        description: General secrets store (KV v2)
+        options:
+          version: 2

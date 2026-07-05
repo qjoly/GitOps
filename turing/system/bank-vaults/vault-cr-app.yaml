@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bank-vaults-vault
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/qjoly/gitops.git
+    targetRevision: HEAD
+    path: turing/system/bank-vaults/vault
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: bank-vaults
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+    retry:
+      limit: 15
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 5m
