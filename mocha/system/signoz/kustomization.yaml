@@ -24,6 +24,7 @@ configMapGenerator:
       - dashboards/argocd.json
       - dashboards/traefik.json
       - dashboards/plex.json
+      - dashboards/zfs-backup.json
 generatorOptions:
   disableNameSuffixHash: true
   annotations:
