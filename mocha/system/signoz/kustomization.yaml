@@ -20,3 +20,7 @@ configMapGenerator:
       - dashboards/kubernetes-pvc-metrics.json
 generatorOptions:
   disableNameSuffixHash: true
+  annotations:
+    # ConfigMap > 256 Ko : force Server-Side Apply pour éviter la limite de
+    # l'annotation kubectl last-applied-configuration.
+    argocd.argoproj.io/sync-options: ServerSideApply=true
