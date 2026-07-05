@@ -1,0 +1,115 @@
+---
+name: signoz
+description: Manage the self-hosted SigNoz observability stack in this GitOps repo. Use when creating or editing SigNoz dashboards, wiring application metrics into SigNoz (Traefik, ArgoCD, other Prometheus/OTLP sources), configuring alerting and notification channels (Discord), or debugging why a dashboard variable filter does not work. Covers the non-obvious formats SigNoz v0.13x expects.
+---
+
+# SigNoz on this cluster
+
+SigNoz runs on the **mocha** cluster (`mocha/system/signoz/`), deployed by the `signoz`
+Helm chart via ArgoCD. Other clusters ship telemetry to it over OTLP. Every source is
+tagged with `k8s.cluster.name` so data can be told apart.
+
+Kube contexts: `omni-mocha` (SigNoz host) and `omni-turing`. The SigNoz API key lives in
+Vault at `kv/signoz#api_key`, exposed to the `signoz` namespace as the `signoz-api-key`
+secret. Call the API with the header `SIGNOZ-API-KEY: <key>` against
+`http://signoz.signoz.svc.cluster.local:8080`.
+
+## The dashboard variable filter gotcha (most important)
+
+SigNoz v0.13x applies query filters from the **`filter.expression`** field (a string),
+NOT from the legacy `filters.items` array. A dashboard whose filters only live in
+`filters.items` will render, but **variables are never substituted and the filter is
+silently ignored** (every value shows the cluster-wide total). This wasted a lot of time.
+
+Every builder query must carry a `filter` object:
+
+```json
+"filter": { "expression": "k8s.cluster.name IN $k8s.cluster.name AND namespace = $namespace" }
+```
+
+Rules for the expression string:
+- Variable reference: `key IN $varname` or `key = $varname` (no quotes around `$var`).
+- Literal value: `key = 'value'` (single quotes).
+- Join clauses with ` AND `.
+- Keys with dots are fine: `k8s.cluster.name IN $k8s.cluster.name`.
+
+Keep `filters.items` too (some UI code still reads it), but the expression is what filters.
+
+## Cluster selector on a dashboard
+
+To make a `k8s.cluster.name` selector that actually discriminates:
+
+1. The metrics must carry the `k8s.cluster.name` resource attribute (see next section).
+   Use `k8s.cluster.name`, the standard OTel key, not a custom `cluster` key: SigNoz's
+   built-in dashboards use `k8s.cluster.name` and it behaves correctly.
+2. Add a DYNAMIC variable. Its `id` and `key` MUST be a valid UUID. A made-up non-UUID id
+   breaks the variable-to-filter binding and the filter is ignored:
+
+```json
+"id": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
+"name": "k8s.cluster.name",
+"type": "DYNAMIC",
+"dynamicVariablesAttribute": "k8s.cluster.name",
+"dynamicVariablesSource": "All telemetry",
+"multiSelect": false, "showALLOption": true, "sort": "DISABLED"
+```
+
+3. Add the filter to each query's `filter.expression`:
+   `k8s.cluster.name IN $k8s.cluster.name`.
+
+The simplest way to get a working dashboard is to copy the query/variable/filter shape
+from a built-in k8s-infra dashboard (for example the "Kubernetes Node Metrics" one), which
+uses the modern format: `aggregations: [{metricName, timeAggregation, spaceAggregation,
+reduceTo, temporality}]` plus `filter.expression`. Old community dashboards use the legacy
+`aggregateAttribute` + `filters.items` shape and their variable filters will not work until
+you add `filter.expression`.
+
+## Getting application metrics into SigNoz
+
+- **Traefik** (v3.5+ only): native OTLP export. In the Helm values set
+  `metrics.otlp.enabled: true`, `metrics.otlp.http.endpoint`, and
+  `metrics.otlp.resourceAttributes` to tag the cluster. On mocha it points at the
+  in-cluster collector; on other clusters at the mTLS ingest endpoint with a client cert.
+  Note: `metrics.otlp.resourceAttributes` did not exist before Traefik v3.5 and crashes the
+  pod with `field not found`. CLI map keys with dots can be mishandled; verify the attribute
+  actually shows up in SigNoz after the change.
+- **ArgoCD and other Prometheus-only apps**: add a `prometheus` receiver to the k8s-infra
+  `otelDeployment.config` and a dedicated `metrics/<app>` pipeline, plus a `resource`
+  processor to set `k8s.cluster.name`. On mocha the argocd metrics Services exist
+  (`argocd-metrics:8082`, `argocd-server-metrics:8083`) so use `static_configs`. On turing
+  those Services are absent, so use `kubernetes_sd_configs` (role pod, namespace argocd,
+  relabel keep the port named `metrics`). Adding a new pipeline/receiver key deep-merges
+  cleanly; do not rewrite existing pipelines.
+
+## Dashboards as code
+
+JSON files in `mocha/system/signoz/dashboards/`, bundled into a ConfigMap by
+`configMapGenerator` in `kustomization.yaml` (needs `ServerSideApply=true` when the
+ConfigMap exceeds 256 KB). A PostSync Job (`dashboard-provisioner.yaml`) imports them
+through the API and **upserts** (PUT by id, fallback delete+POST), matched by title, so
+editing a JSON and re-syncing updates the live dashboard. Community dashboards come from
+`github.com/SigNoz/dashboards`.
+
+## Alerting
+
+- **Discord**: SigNoz has no native Discord channel. Discord accepts Slack-formatted
+  payloads on the `/slack` suffix of a webhook URL, so create a Slack channel pointing at
+  `<discord-webhook>/slack`. Store the webhook in Vault (`kv/discord#webhook`, `/slack`
+  suffix included) and expose it via ExternalSecret. Provision the channel with
+  `POST /api/v1/channels` (Alertmanager `slack_configs` shape). Test with
+  `POST /api/v1/testChannel` (expects 204).
+- **Alert rules**: `POST /api/v1/rules` requires the **v5 schema**, otherwise it returns
+  `version: only v5 is supported`. Shape: top-level `"version": "v5"`, and
+  `condition.compositeQuery.queries: [{type: "builder_query", spec: {name, signal, disabled,
+  aggregations: [...], filter: {expression: "..."}, groupBy: []}}]`. Set
+  `preferredChannels: ["discord"]`.
+
+## Applying changes
+
+Everything is ArgoCD. `sys-signoz` (mocha) and `sys-signoz-k8s-infra` (turing) are the
+parent apps generated by the ApplicationSets; they render the folder and update the child
+`Application` objects, which then sync the Helm charts. To push a values change to a child
+app, sync the parent first, then the child. The dashboard import Job and alerting Job are
+PostSync hooks, re-run on every sync.
+
+Do not put comments in YAML manifests in this repo (repo owner preference).
