@@ -597,7 +597,7 @@
       "modificationUUID": "b3ef6615-e20d-4d2c-9053-67394fb2b86e",
       "multiSelect": true,
       "name": "health.status",
-      "order": 0,
+      "order": 1,
       "queryValue": "",
       "showALLOption": true,
       "sort": "DISABLED",
@@ -616,7 +616,7 @@
       "modificationUUID": "940ab255-f021-437c-9c15-9826abe48b9c",
       "multiSelect": false,
       "name": "namespace",
-      "order": 0,
+      "order": 1,
       "queryValue": "",
       "showALLOption": true,
       "sort": "DISABLED",
@@ -636,7 +636,7 @@
       "modificationUUID": "f7c3baca-4bf1-4e52-913c-def8d0097a4d",
       "multiSelect": false,
       "name": "repo",
-      "order": 0,
+      "order": 1,
       "queryValue": "",
       "showALLOption": true,
       "sort": "DISABLED",
@@ -655,7 +655,26 @@
       "modificationUUID": "91b41b45-7e1c-4f4b-a97f-c1ff2409d4a8",
       "multiSelect": true,
       "name": "sync.status",
-      "order": 3,
+      "order": 4,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    },
+    "c1u5ter00-0000-4000-8000-clusterselec": {
+      "allSelected": false,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Name of the cluster",
+      "dynamicVariablesAttribute": "cluster",
+      "dynamicVariablesSource": "All telemetry",
+      "id": "c1u5ter00-0000-4000-8000-clusterselec",
+      "key": "c1u5ter00-0000-4000-8000-clusterselec",
+      "modificationUUID": "c1u5ter0-mod0-4000-8000-clusterselec",
+      "multiSelect": false,
+      "name": "cluster",
+      "order": 0,
       "queryValue": "",
       "showALLOption": true,
       "sort": "DISABLED",
@@ -723,6 +742,19 @@
                     },
                     "op": "=",
                     "value": "Progressing"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -895,6 +927,19 @@
                     },
                     "op": "=",
                     "value": "Healthy"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -1067,6 +1112,19 @@
                     },
                     "op": "=",
                     "value": "Suspended"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -1239,6 +1297,19 @@
                     },
                     "op": "=",
                     "value": "Degraded"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -1436,6 +1507,19 @@
                     },
                     "op": "=",
                     "value": "$repo"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -1608,6 +1692,19 @@
                     },
                     "op": "=",
                     "value": "OutOfSync"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -1786,6 +1883,19 @@
                     },
                     "op": "=",
                     "value": "Succeeded"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -1854,6 +1964,19 @@
                     },
                     "op": "=",
                     "value": "Error"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -1922,6 +2045,19 @@
                     },
                     "op": "=",
                     "value": "Error"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -2076,6 +2212,19 @@
                     },
                     "op": "=",
                     "value": "$namespace"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -2230,6 +2379,19 @@
                     },
                     "op": "=",
                     "value": "$namespace"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -2380,7 +2542,25 @@
               "orderBy": [],
               "queryName": "A",
               "source": "",
-              "stepInterval": 60
+              "stepInterval": 60,
+              "filters": {
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
+                "op": "AND"
+              }
             }
           ],
           "queryFormulas": []
@@ -2553,6 +2733,19 @@
                     },
                     "op": "IN",
                     "value": "$sync.status"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -2713,6 +2906,19 @@
                     },
                     "op": "=",
                     "value": "$namespace"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -2873,7 +3079,25 @@
               "orderBy": [],
               "queryName": "A",
               "source": "",
-              "stepInterval": 60
+              "stepInterval": 60,
+              "filters": {
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
+                "op": "AND"
+              }
             }
           ],
           "queryFormulas": []
@@ -3007,6 +3231,19 @@
                     },
                     "op": "=",
                     "value": "$namespace"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -3156,7 +3393,21 @@
                 "expression": ""
               },
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
                 "op": "AND"
               },
               "functions": [],
@@ -3302,7 +3553,21 @@
                 "expression": ""
               },
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
                 "op": "AND"
               },
               "functions": [],
@@ -3442,7 +3707,21 @@
                 "expression": ""
               },
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
                 "op": "AND"
               },
               "functions": [],
@@ -3582,7 +3861,21 @@
                 "expression": ""
               },
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
                 "op": "AND"
               },
               "functions": [],
@@ -3722,7 +4015,21 @@
                 "expression": ""
               },
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
                 "op": "AND"
               },
               "functions": [],
@@ -3862,7 +4169,21 @@
                 "expression": ""
               },
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
                 "op": "AND"
               },
               "functions": [],
@@ -4041,7 +4362,25 @@
               "orderBy": [],
               "queryName": "A",
               "source": "",
-              "stepInterval": 60
+              "stepInterval": 60,
+              "filters": {
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
+                "op": "AND"
+              }
             }
           ],
           "queryFormulas": []
@@ -4189,7 +4528,25 @@
               "orderBy": [],
               "queryName": "A",
               "source": "",
-              "stepInterval": 60
+              "stepInterval": 60,
+              "filters": {
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
+                "op": "AND"
+              }
             }
           ],
           "queryFormulas": []
@@ -4338,7 +4695,25 @@
               "orderBy": [],
               "queryName": "A",
               "source": "",
-              "stepInterval": 0
+              "stepInterval": 0,
+              "filters": {
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
+                "op": "AND"
+              }
             }
           ],
           "queryFormulas": []
@@ -4486,7 +4861,25 @@
               "orderBy": [],
               "queryName": "A",
               "source": "",
-              "stepInterval": 60
+              "stepInterval": 60,
+              "filters": {
+                "items": [
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
+                  }
+                ],
+                "op": "AND"
+              }
             }
           ],
           "queryFormulas": []
@@ -4698,6 +5091,19 @@
                     },
                     "op": "=",
                     "value": "$repo"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
@@ -4868,6 +5274,19 @@
                     },
                     "op": "=",
                     "value": "$repo"
+                  },
+                  {
+                    "id": "cluster-flt",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cluster--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cluster",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$cluster"
                   }
                 ],
                 "op": "AND"
