@@ -16,3 +16,85 @@ spec:
       remoteRef:
         key: discord
         property: webhook
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: signoz-alerting-provisioner
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: signoz-alerting-provisioner
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: provision
+          image: python:3.12-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: SIGNOZ_API
+              value: http://signoz.signoz.svc.cluster.local:8080
+            - name: SIGNOZ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: signoz-api-key
+                  key: api_key
+            - name: DISCORD_WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: discord-webhook
+                  key: webhook
+          command:
+            - python
+            - -c
+            - |
+              import os, json, urllib.request, urllib.error
+              API = os.environ["SIGNOZ_API"].rstrip("/")
+              H = {"SIGNOZ-API-KEY": os.environ["SIGNOZ_API_KEY"], "Content-Type": "application/json"}
+              WEBHOOK = os.environ["DISCORD_WEBHOOK"]
+
+              def call(method, path, data=None):
+                  body = json.dumps(data).encode() if data is not None else None
+                  req = urllib.request.Request(API + path, data=body, headers=H, method=method)
+                  try:
+                      with urllib.request.urlopen(req, timeout=20) as r:
+                          return r.status, r.read().decode()
+                  except urllib.error.HTTPError as e:
+                      return e.code, e.read().decode()
+
+              channel = {
+                  "name": "discord",
+                  "slack_configs": [{
+                      "send_resolved": True,
+                      "api_url": WEBHOOK,
+                      "channel": "#alerts",
+                      "title": "[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}",
+                      "text": "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ end }}"
+                  }]
+              }
+              _, body = call("GET", "/api/v1/channels")
+              chans = json.loads(body).get("data") or []
+              ex = next((c for c in chans if c.get("name") == "discord"), None)
+              if ex:
+                  cid = ex.get("id")
+                  st, rb = call("PUT", "/api/v1/channels/" + str(cid), channel)
+                  print("channel updated:", st, rb[:200])
+              else:
+                  st, rb = call("POST", "/api/v1/channels", channel)
+                  print("channel created:", st, rb[:200])
+              raise SystemExit(0 if st < 300 else 1)
