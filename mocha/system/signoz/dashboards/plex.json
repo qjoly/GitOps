@@ -98,6 +98,13 @@
       "x": 6,
       "y": 48,
       "i": "w14"
+    },
+    {
+      "h": 8,
+      "w": 12,
+      "x": 0,
+      "y": 56,
+      "i": "w15"
     }
   ],
   "name": "",
@@ -1325,6 +1332,128 @@
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
       "title": "Total plays",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w15",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "table",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "server_type = 'plex'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": [
+                  {
+                    "id": "f1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "server_type--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "server_type",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "plex"
+                  }
+                ]
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "user--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "user",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "title--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "title",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "stream_type--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "stream_type",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "stream_resolution--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "stream_resolution",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "device_type--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "device_type",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "play_seconds_total",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "sum"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w15-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Playback breakdown",
       "yAxisUnit": "short"
     }
   ]
