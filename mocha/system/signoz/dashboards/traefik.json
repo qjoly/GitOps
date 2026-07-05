@@ -73,13 +73,13 @@
       "customValue": "",
       "defaultValue": "",
       "description": "Name of the cluster",
-      "dynamicVariablesAttribute": "cluster",
+      "dynamicVariablesAttribute": "k8s.cluster.name",
       "dynamicVariablesSource": "All telemetry",
       "id": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
       "key": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
       "modificationUUID": "e8b478ea-75fd-4de4-9438-ebde87e5d1f9",
       "multiSelect": false,
-      "name": "cluster",
+      "name": "k8s.cluster.name",
       "order": 0,
       "queryValue": "",
       "showALLOption": true,
@@ -107,17 +107,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-filter",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -194,17 +194,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-filter",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -281,17 +281,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-filter",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -368,17 +368,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-filter",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -446,17 +446,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-filter",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -533,17 +533,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-filter",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -620,17 +620,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-filter",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -698,17 +698,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-filter",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"

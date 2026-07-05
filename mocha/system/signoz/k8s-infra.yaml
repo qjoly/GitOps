@@ -48,7 +48,7 @@ spec:
             processors:
               resource/cluster:
                 attributes:
-                  - key: cluster
+                  - key: k8s.cluster.name
                     value: mocha
                     action: upsert
             service:

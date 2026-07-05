@@ -26,7 +26,7 @@ spec:
             addRoutersLabels: true
             addServicesLabels: true
             resourceAttributes:
-              cluster: mocha
+              k8s.cluster.name: mocha
             http:
               enabled: true
               endpoint: http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/metrics

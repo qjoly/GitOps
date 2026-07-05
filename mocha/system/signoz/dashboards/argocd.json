@@ -642,24 +642,24 @@
       "textboxValue": "",
       "type": "DYNAMIC"
     },
-    "b7e3f1a2-4c8d-4e6f-9a1b-2c3d4e5f6a7b": {
+    "4349d5be-eea6-41d2-9c8f-853ca85f018d": {
       "allSelected": false,
       "customValue": "",
       "defaultValue": "",
       "description": "Name of the cluster",
-      "dynamicVariablesAttribute": "cluster",
+      "dynamicVariablesAttribute": "k8s.cluster.name",
       "dynamicVariablesSource": "All telemetry",
-      "id": "b7e3f1a2-4c8d-4e6f-9a1b-2c3d4e5f6a7b",
-      "modificationUUID": "c9d8e7f6-1a2b-4c3d-8e9f-0a1b2c3d4e5f",
+      "id": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
+      "key": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
+      "modificationUUID": "e8b478ea-75fd-4de4-9438-ebde87e5d1f9",
       "multiSelect": false,
-      "name": "cluster",
+      "name": "k8s.cluster.name",
       "order": 0,
       "queryValue": "",
       "showALLOption": true,
       "sort": "DISABLED",
       "textboxValue": "",
-      "type": "DYNAMIC",
-      "haveCustomValuesSelected": false
+      "type": "DYNAMIC"
     }
   },
   "version": "v5",
@@ -724,17 +724,17 @@
                     "value": "Progressing"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -909,17 +909,17 @@
                     "value": "Healthy"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -1094,17 +1094,17 @@
                     "value": "Suspended"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -1279,17 +1279,17 @@
                     "value": "Degraded"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -1476,17 +1476,17 @@
                     "value": "Synced"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -1661,17 +1661,17 @@
                     "value": "OutOfSync"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -1852,17 +1852,17 @@
                     "value": "Succeeded"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -1933,17 +1933,17 @@
                     "value": "Error"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -2014,17 +2014,17 @@
                     "value": "Error"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -2181,17 +2181,17 @@
                     "value": "$namespace"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -2348,17 +2348,17 @@
                     "value": "$namespace"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -2513,17 +2513,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -2689,17 +2689,17 @@
                     "value": "$sync.status"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -2862,17 +2862,17 @@
                     "value": "$namespace"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -3037,17 +3037,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -3187,17 +3187,17 @@
                     "value": "$namespace"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -3349,17 +3349,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -3509,17 +3509,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -3663,17 +3663,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -3817,17 +3817,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -3971,17 +3971,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -4125,17 +4125,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -4320,17 +4320,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -4486,17 +4486,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -4653,17 +4653,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -4819,17 +4819,17 @@
               "filters": {
                 "items": [
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -5034,17 +5034,17 @@
                     "value": "$namespace"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"
@@ -5204,17 +5204,17 @@
                     "value": "$namespace"
                   },
                   {
-                    "id": "cluster-flt",
+                    "id": "kcluster-flt",
                     "key": {
                       "dataType": "string",
-                      "id": "cluster--string--",
+                      "id": "k8s.cluster.name--string--",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cluster",
+                      "key": "k8s.cluster.name",
                       "type": ""
                     },
                     "op": "IN",
-                    "value": "$cluster"
+                    "value": "$k8s.cluster.name"
                   }
                 ],
                 "op": "AND"

@@ -69,7 +69,7 @@ spec:
             processors:
               resource/cluster:
                 attributes:
-                  - key: cluster
+                  - key: k8s.cluster.name
                     value: turing
                     action: upsert
             exporters:
