@@ -115,12 +115,20 @@ PostSync hooks, re-run on every sync.
 
 ## ArgoCD Server-Side Apply diff bug (K8s 1.35)
 
-Apps with `ServerSideApply=true` (traefik, signoz) can get stuck with
-`ComparisonError: ... .status.terminatingReplicas: field not declared in schema`. This is
-ArgoCD's structured-merge diff not knowing a newer Deployment status field. `compare-options:
-ServerSideDiff=false` does NOT fix it because SSA itself drives the merge. Workaround used:
-patch the live Deployment directly (the repo desired state already matches, so there is no
-drift). Proper fix is upgrading ArgoCD. It can appear transiently on any SSA app during a
-rollout.
+Apps with `ServerSideApply=true` (traefik, signoz) got stuck with
+`ComparisonError: ... .status.terminatingReplicas: field not declared in schema` on ArgoCD
+v2.14 with K8s 1.35. `compare-options: ServerSideDiff=false` does NOT fix it. **Fixed by
+upgrading ArgoCD to v3.0.5**; after the upgrade, hard-refresh the affected apps to clear the
+cached error.
+
+Upgrading ArgoCD without breaking AVP: ArgoCD is installed by Talos `extraManifests` from
+`common/argocd/argocd.install.yaml`, which is the `kubectl kustomize` render of
+`common/argocd/vault-argocd/` (base = `argo-cd//manifests/cluster-install?ref=<version>`
+plus the repo-server patch that adds the three AVP CMP sidecars). To upgrade: bump the base
+`ref`, set the AVP sidecar images in `vault-argocd/argocd-repo-server.yaml` to the SAME
+version (the cmp-server protocol must match), regenerate `argocd.install.yaml`, commit, then
+`kubectl apply --server-side --force-conflicts -f common/argocd/argocd.install.yaml`. The
+`vault-credentials` secret (real Vault token) is created out of band and is preserved. Verify
+AVP after: an app using `<path:kv/...>` (grafana, sys-signoz) must reach Synced.
 
 Do not put comments in YAML manifests in this repo (repo owner preference).
