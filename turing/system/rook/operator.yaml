@@ -16,9 +16,7 @@ spec:
         crds:
           enabled: true
         csi:
-          enableCephfsDriver: false
-          enableCephfsSnapshotter: false
-          enableRBDSnapshotter: true
+          installCsiOperator: true
         monitoring:
           enabled: false
         resources:

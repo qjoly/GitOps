@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rook-ceph-csi-drivers
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://ceph.github.io/ceph-csi-operator
+    chart: ceph-csi-drivers
+    targetRevision: 1.0.1
+    helm:
+      values: |
+        operatorConfig:
+          namespace: rook-ceph
+          driverSpecDefaults:
+            imageSet:
+              name: rook-csi-operator-image-set-configmap
+            nodePlugin:
+              priorityClassName: system-node-critical
+            controllerPlugin:
+              priorityClassName: system-cluster-critical
+        drivers:
+          rbd:
+            enabled: true
+            name: rook-ceph.rbd.csi.ceph.com
+          cephfs:
+            enabled: false
+            name: rook-ceph.cephfs.csi.ceph.com
+          nfs:
+            enabled: false
+            name: rook-ceph.nfs.csi.ceph.com
+          nvmeof:
+            enabled: false
+            name: rook-ceph.nvmeof.csi.ceph.com
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: rook-ceph
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 5m
