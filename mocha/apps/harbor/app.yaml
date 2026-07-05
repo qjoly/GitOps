@@ -23,6 +23,9 @@ spec:
             annotations:
               cert-manager.io/cluster-issuer: cloudflare
         externalURL: https://harbor.mocha.thoughtless.eu
+        metrics:
+          serviceMonitor:
+            enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: harbor 

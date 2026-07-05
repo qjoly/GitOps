@@ -29,6 +29,8 @@ spec:
           value: apiKey
         - name: txtPrefix
           value: "mocha-"
+        - name: serviceMonitor.enabled
+          value: "false"
   destination:
     server: https://kubernetes.default.svc
     namespace: external-dns
