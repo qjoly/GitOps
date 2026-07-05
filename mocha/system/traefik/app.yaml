@@ -17,6 +17,16 @@ spec:
     chart: traefik
     helm:
       values: |
+        metrics:
+          prometheus: null
+          otlp:
+            enabled: true
+            addEntryPointsLabels: true
+            addRoutersLabels: true
+            addServicesLabels: true
+            http:
+              enabled: true
+              endpoint: http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/metrics
         service:
           annotations:
             lbipam.cilium.io/sharing-key: "public"
