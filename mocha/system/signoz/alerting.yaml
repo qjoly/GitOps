@@ -84,7 +84,7 @@ spec:
                       "api_url": WEBHOOK,
                       "channel": "#alerts",
                       "title": "[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}",
-                      "text": "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ end }}"
+                      "text": "{{ range .Alerts }}*{{ .Labels.severity }}* — {{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ range .Labels.SortedPairs }}{{ if and (ne .Name \"alertname\") (ne .Name \"severity\") }}• {{ .Name }}: {{ .Value }}\n{{ end }}{{ end }}\n{{ end }}"
                   }]
               }
               _, body = call("GET", "/api/v1/channels")
@@ -98,12 +98,12 @@ spec:
                   cs, rb = call("POST", "/api/v1/channels", channel)
                   print("channel created:", cs, rb[:200])
 
-              def rule(name, metric, tagg, sagg, op, target, sev, summary, desc, extra="", win="5m0s", freq="1m0s", absent=False):
+              def rule(name, metric, tagg, sagg, op, target, sev, summary, desc, extra="", win="5m0s", freq="1m0s", absent=False, groupby=("k8s.cluster.name", "pool")):
                   expr = "k8s.cluster.name = 'affogato'" + (" AND " + extra if extra else "")
                   cond = {"compositeQuery": {"queryType": "builder", "panelType": "graph", "queries": [
                       {"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "disabled": False,
                           "aggregations": [{"metricName": metric, "timeAggregation": tagg, "spaceAggregation": sagg}],
-                          "filter": {"expression": expr}, "groupBy": []}}]},
+                          "filter": {"expression": expr}, "groupBy": [gbk(k) for k in groupby]}}]},
                       "op": op, "target": target, "matchType": "1", "selectedQueryName": "A"}
                   if absent:
                       cond["alertOnAbsent"] = True
@@ -144,7 +144,7 @@ spec:
                                   "name": "A", "signal": "metrics", "disabled": False,
                                   "aggregations": [{"metricName": "argocd_app_info", "timeAggregation": "count", "spaceAggregation": "sum"}],
                                   "filter": {"expression": "sync_status = 'OutOfSync'"},
-                                  "groupBy": []
+                                  "groupBy": [{"name": "k8s.cluster.name"}, {"name": "name"}]
                               }
                           }]
                       },
