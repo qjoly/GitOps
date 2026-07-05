@@ -7,5 +7,4 @@ resources:
   - grafana.yaml
   - middleware.yaml
   - blackbox-exporter.yaml
-  - probes
   - kromgo
