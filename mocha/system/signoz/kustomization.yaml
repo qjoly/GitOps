@@ -4,3 +4,19 @@ kind: Kustomization
 resources:
   - signoz.yaml
   - k8s-infra.yaml
+  - dashboard-provisioner.yaml
+configMapGenerator:
+  - name: signoz-dashboards
+    namespace: signoz
+    files:
+      - dashboards/host-metrics.json
+      - dashboards/k8s-events-receiver.json
+      - dashboards/kubernetes-cluster-metrics.json
+      - dashboards/kubernetes-cronjobs.json
+      - dashboards/kubernetes-node-metrics-detailed.json
+      - dashboards/kubernetes-node-metrics-overall.json
+      - dashboards/kubernetes-pod-metrics-detailed.json
+      - dashboards/kubernetes-pod-metrics-overall.json
+      - dashboards/kubernetes-pvc-metrics.json
+generatorOptions:
+  disableNameSuffixHash: true

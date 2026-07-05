@@ -1,0 +1,105 @@
+---
+# Clé d'API SignOz (à créer dans l'UI : Settings → API Keys) stockée dans Vault
+# sous kv/signoz avec la propriété `api_key`.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: signoz-api-key
+  namespace: signoz
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: signoz-api-key
+  data:
+    - secretKey: api_key
+      remoteRef:
+        key: signoz
+        property: api_key
+---
+# Job idempotent qui importe les dashboards k8s-infra dans SignOz via l'API.
+# Hook PostSync ArgoCD : rejoué à chaque sync, ne recrée pas les dashboards
+# déjà présents (comparaison par titre).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: signoz-dashboard-import
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: signoz-dashboard-import
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: import
+          image: python:3.12-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: SIGNOZ_API
+              value: http://signoz.signoz.svc.cluster.local:8080
+            - name: SIGNOZ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: signoz-api-key
+                  key: api_key
+          volumeMounts:
+            - name: dashboards
+              mountPath: /dashboards
+              readOnly: true
+          command:
+            - python
+            - -c
+            - |
+              import os, json, glob, urllib.request, urllib.error
+              API = os.environ["SIGNOZ_API"].rstrip("/")
+              KEY = os.environ["SIGNOZ_API_KEY"]
+              H = {"SIGNOZ-API-KEY": KEY, "Content-Type": "application/json"}
+
+              def call(method, path, data=None):
+                  body = json.dumps(data).encode() if data is not None else None
+                  req = urllib.request.Request(API + path, data=body, headers=H, method=method)
+                  with urllib.request.urlopen(req, timeout=20) as r:
+                      return r.status, r.read().decode()
+
+              _, body = call("GET", "/api/v1/dashboards")
+              existing = set()
+              for d in (json.loads(body).get("data") or []):
+                  t = (d.get("data") or {}).get("title")
+                  if t:
+                      existing.add(t)
+              print("existing dashboards:", len(existing))
+
+              created = skipped = failed = 0
+              for f in sorted(glob.glob("/dashboards/*.json")):
+                  dash = json.load(open(f))
+                  title = dash.get("title") or os.path.basename(f)
+                  if title in existing:
+                      print("skip (exists):", title); skipped += 1; continue
+                  try:
+                      st, _ = call("POST", "/api/v1/dashboards", dash)
+                      print("created:", title, st); created += 1
+                  except urllib.error.HTTPError as e:
+                      print("ERROR:", title, e.code, e.read().decode()[:300]); failed += 1
+              print(f"done: created={created} skipped={skipped} failed={failed}")
+              raise SystemExit(1 if failed else 0)
+      volumes:
+        - name: dashboards
+          configMap:
+            name: signoz-dashboards
