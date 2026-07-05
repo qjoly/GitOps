@@ -35,6 +35,23 @@ otelCollectorEndpoint: http://signoz-otel-collector.signoz.svc.cluster.local:431
 The agent does not produce application traces on its own. To trace an application,
 instrument it with an OpenTelemetry SDK and point it at the collector.
 
+## Application metrics
+
+Some applications ship their own metrics on top of what k8s-infra collects.
+
+Traefik exports its metrics over OTLP (`metrics.otlp` in its Helm values). On mocha
+it sends to the in-cluster collector; on other clusters it sends to the mTLS ingest
+endpoint with a client certificate. Each Traefik tags its metrics with
+`cluster=<name>` through `resourceAttributes`, which needs Traefik v3.5 or newer.
+
+ArgoCD only exposes Prometheus metrics, so a Prometheus receiver added to the
+k8s-infra deployment collector (`otelDeployment.config`) scrapes the ArgoCD metrics
+services and forwards them, tagged with `cluster=mocha`.
+
+The Traefik and ArgoCD dashboards both carry a `cluster` variable. `cluster` is a
+resource attribute, so the dashboard filters reference it with an empty type
+(`{"key":"cluster","type":""}`), not as a tag.
+
 ## Exposing SigNoz to other clusters
 
 The collector is exposed at `signoz-ingest.mocha.thoughtless.eu` (OTLP/HTTP, port
@@ -92,3 +109,26 @@ property; External Secrets exposes it to the Job.
 
 To add a dashboard, drop its JSON file in the `dashboards/` directory and add it to
 the `configMapGenerator` in `kustomization.yaml`. The next sync imports it.
+
+## Alerting
+
+Alerts go to Discord. SigNoz has no native Discord support, but Discord accepts
+Slack-formatted payloads on the `/slack` suffix of a webhook URL. A Slack channel in
+SigNoz pointing at `<discord-webhook>/slack` therefore works.
+
+The webhook lives in Vault at `kv/discord` under the `webhook` property, with the
+`/slack` suffix already included, and reaches the cluster through an ExternalSecret.
+
+`alerting.yaml` holds two things:
+
+- the ExternalSecret for the webhook,
+- a Job (ArgoCD PostSync hook) that upserts the `discord` notification channel and
+  the alert rules through the SigNoz API.
+
+Alert rules use the SigNoz v5 rule schema (`queries` with a `spec` and a
+`filter.expression`). The rule shipped here fires when ArgoCD reports out-of-sync
+applications and notifies the `discord` channel.
+
+To add an alert, append a rule object to the Job and re-sync, or create it in the UI
+and pick the `discord` channel. To test the channel, use the "Test" button on it in
+the UI, or SigNoz's `POST /api/v1/testChannel`.
