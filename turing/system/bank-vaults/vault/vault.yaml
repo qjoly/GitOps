@@ -12,7 +12,7 @@ spec:
   serviceAccount: vault
   serviceType: ClusterIP
   statsdDisabled: true
-  serviceRegistrationEnabled: true
+  serviceRegistrationEnabled: false
 
   vaultContainerSpec:
     name: vault
