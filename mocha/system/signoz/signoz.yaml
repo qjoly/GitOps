@@ -37,7 +37,6 @@ spec:
             className: traefik
             annotations:
               cert-manager.io/cluster-issuer: cloudflare
-              traefik.ingress.kubernetes.io/router.middlewares: signoz-basic-auth-signoz@kubernetescrd
             hosts:
               - host: signoz.<path:kv/cluster#domain>
                 paths:
