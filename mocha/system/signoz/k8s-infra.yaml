@@ -33,3 +33,31 @@ spec:
             enabled: true
           loggingExporter:
             enabled: false
+        otelDeployment:
+          config:
+            receivers:
+              prometheus:
+                config:
+                  scrape_configs:
+                    - job_name: argocd
+                      scrape_interval: 30s
+                      static_configs:
+                        - targets:
+                            - argocd-metrics.argocd.svc.cluster.local:8082
+                            - argocd-server-metrics.argocd.svc.cluster.local:8083
+            processors:
+              resource/cluster:
+                attributes:
+                  - key: cluster
+                    value: mocha
+                    action: upsert
+            service:
+              pipelines:
+                metrics/argocd:
+                  receivers:
+                    - prometheus
+                  processors:
+                    - resource/cluster
+                    - batch
+                  exporters:
+                    - otlphttp
