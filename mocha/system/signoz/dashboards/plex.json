@@ -1,61 +1,103 @@
 {
-  "description": "Plex media server metrics (libraries, playback, host) from prometheus-plex-exporter.",
+  "description": "Plex media server metrics (libraries, playback, devices, host) from prometheus-plex-exporter.",
   "layout": [
     {
-      "h": 6,
+      "h": 8,
       "w": 6,
       "x": 0,
       "y": 0,
       "i": "w1"
     },
     {
-      "h": 6,
+      "h": 8,
       "w": 6,
       "x": 6,
       "y": 0,
       "i": "w2"
     },
     {
-      "h": 6,
+      "h": 8,
       "w": 6,
       "x": 0,
-      "y": 6,
+      "y": 8,
       "i": "w3"
     },
     {
-      "h": 6,
+      "h": 8,
       "w": 6,
       "x": 6,
-      "y": 6,
+      "y": 8,
       "i": "w4"
     },
     {
-      "h": 6,
+      "h": 8,
       "w": 6,
       "x": 0,
-      "y": 12,
+      "y": 16,
       "i": "w5"
     },
     {
-      "h": 6,
+      "h": 8,
       "w": 6,
       "x": 6,
-      "y": 12,
+      "y": 16,
       "i": "w6"
     },
     {
       "h": 6,
       "w": 6,
       "x": 0,
-      "y": 18,
+      "y": 24,
       "i": "w7"
     },
     {
       "h": 6,
       "w": 6,
       "x": 6,
-      "y": 18,
+      "y": 24,
       "i": "w8"
+    },
+    {
+      "h": 6,
+      "w": 6,
+      "x": 0,
+      "y": 32,
+      "i": "w9"
+    },
+    {
+      "h": 6,
+      "w": 6,
+      "x": 6,
+      "y": 32,
+      "i": "w10"
+    },
+    {
+      "h": 6,
+      "w": 6,
+      "x": 0,
+      "y": 40,
+      "i": "w11"
+    },
+    {
+      "h": 6,
+      "w": 6,
+      "x": 6,
+      "y": 40,
+      "i": "w12"
+    },
+    {
+      "h": 3,
+      "w": 6,
+      "x": 0,
+      "y": 48,
+      "i": "w13"
+    },
+    {
+      "h": 3,
+      "w": 6,
+      "x": 6,
+      "y": 48,
+      "i": "w14"
     }
   ],
   "name": "",
@@ -76,7 +118,7 @@
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
-      "panelTypes": "graph",
+      "panelTypes": "pie",
       "query": {
         "builder": {
           "queryData": [
@@ -157,7 +199,7 @@
       },
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Storage by library",
+      "title": "Storage share by library",
       "yAxisUnit": "bytes"
     },
     {
@@ -166,7 +208,7 @@
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
-      "panelTypes": "graph",
+      "panelTypes": "pie",
       "query": {
         "builder": {
           "queryData": [
@@ -247,12 +289,552 @@
       },
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Duration by library",
+      "title": "Content duration share by library",
       "yAxisUnit": "ms"
     },
     {
       "description": "",
       "id": "w3",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "pie",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "server_type = 'plex'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": [
+                  {
+                    "id": "f1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "server_type--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "server_type",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "plex"
+                  }
+                ]
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "library_type--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "library_type",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{library_type}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "plays_total",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "sum"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w3-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Plays by library",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w4",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "pie",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "server_type = 'plex'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": [
+                  {
+                    "id": "f1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "server_type--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "server_type",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "plex"
+                  }
+                ]
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "stream_type--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "stream_type",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{stream_type}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "play_seconds_total",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "sum"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w4-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Watch time by stream type",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w5",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "pie",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "server_type = 'plex'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": [
+                  {
+                    "id": "f1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "server_type--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "server_type",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "plex"
+                  }
+                ]
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "device_type--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "device_type",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{device_type}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "play_seconds_total",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "sum"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w5-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Watch time by device",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w6",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "pie",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "server_type = 'plex'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": [
+                  {
+                    "id": "f1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "server_type--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "server_type",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "plex"
+                  }
+                ]
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "stream_resolution--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "stream_resolution",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{stream_resolution}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "play_seconds_total",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "sum"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w6-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Watch time by resolution",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w7",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "bar",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "server_type = 'plex'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": [
+                  {
+                    "id": "f1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "server_type--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "server_type",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "plex"
+                  }
+                ]
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "user--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "user",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{user}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "play_seconds_total",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "sum"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w7-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Watch time by user",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w8",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "bar",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "server_type = 'plex'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": [
+                  {
+                    "id": "f1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "server_type--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "server_type",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "plex"
+                  }
+                ]
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "title--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "title",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{title}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "plays_total",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "sum"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w8-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Plays by title",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w9",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -324,7 +906,7 @@
             "query": ""
           }
         ],
-        "id": "w3-q",
+        "id": "w9-q",
         "promql": [
           {
             "disabled": false,
@@ -342,259 +924,7 @@
     },
     {
       "description": "",
-      "id": "w4",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "server_type = 'plex'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": [
-                  {
-                    "id": "f1",
-                    "key": {
-                      "dataType": "string",
-                      "id": "server_type--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "server_type",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "plex"
-                  }
-                ]
-              },
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "grandchild_title--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "grandchild_title",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{grandchild_title}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60,
-              "aggregations": [
-                {
-                  "metricName": "play_seconds_total",
-                  "temporality": null,
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "sum"
-                }
-              ]
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "w4-q",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Play time rate by title",
-      "yAxisUnit": "short"
-    },
-    {
-      "description": "",
-      "id": "w5",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "server_type = 'plex'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": [
-                  {
-                    "id": "f1",
-                    "key": {
-                      "dataType": "string",
-                      "id": "server_type--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "server_type",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "plex"
-                  }
-                ]
-              },
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "cpu",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60,
-              "aggregations": [
-                {
-                  "metricName": "host_cpu_util",
-                  "temporality": null,
-                  "timeAggregation": "latest",
-                  "spaceAggregation": "avg",
-                  "reduceTo": "sum"
-                }
-              ]
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "w5-q",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Server CPU utilization",
-      "yAxisUnit": "percent"
-    },
-    {
-      "description": "",
-      "id": "w6",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "server_type = 'plex'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": [
-                  {
-                    "id": "f1",
-                    "key": {
-                      "dataType": "string",
-                      "id": "server_type--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "server_type",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "plex"
-                  }
-                ]
-              },
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "mem",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60,
-              "aggregations": [
-                {
-                  "metricName": "host_mem_util",
-                  "temporality": null,
-                  "timeAggregation": "latest",
-                  "spaceAggregation": "avg",
-                  "reduceTo": "sum"
-                }
-              ]
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "w6-q",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Server memory utilization",
-      "yAxisUnit": "percent"
-    },
-    {
-      "description": "",
-      "id": "w7",
+      "id": "w10",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -657,7 +987,7 @@
             "query": ""
           }
         ],
-        "id": "w7-q",
+        "id": "w10-q",
         "promql": [
           {
             "disabled": false,
@@ -675,7 +1005,169 @@
     },
     {
       "description": "",
-      "id": "w8",
+      "id": "w11",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "server_type = 'plex'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": [
+                  {
+                    "id": "f1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "server_type--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "server_type",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "plex"
+                  }
+                ]
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "cpu",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "host_cpu_util",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "avg",
+                  "reduceTo": "sum"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w11-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Server CPU utilization",
+      "yAxisUnit": "percent"
+    },
+    {
+      "description": "",
+      "id": "w12",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "server_type = 'plex'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": [
+                  {
+                    "id": "f1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "server_type--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "server_type",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "plex"
+                  }
+                ]
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "mem",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "host_mem_util",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "avg",
+                  "reduceTo": "sum"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w12-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Server memory utilization",
+      "yAxisUnit": "percent"
+    },
+    {
+      "description": "",
+      "id": "w13",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -738,7 +1230,7 @@
             "query": ""
           }
         ],
-        "id": "w8-q",
+        "id": "w13-q",
         "promql": [
           {
             "disabled": false,
@@ -753,6 +1245,87 @@
       "timePreferance": "GLOBAL_TIME",
       "title": "Total storage",
       "yAxisUnit": "bytes"
+    },
+    {
+      "description": "",
+      "id": "w14",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "server_type = 'plex'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": [
+                  {
+                    "id": "f1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "server_type--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "server_type",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "plex"
+                  }
+                ]
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "plays_total",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "sum"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w14-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Total plays",
+      "yAxisUnit": "short"
     }
   ]
 }
