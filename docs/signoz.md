@@ -19,24 +19,12 @@ collector and the web UI.
 mocha collects its own telemetry through the in-cluster collector. Other clusters
 push to an OTLP endpoint exposed over the internet and protected with mTLS.
 
-## Repository layout
-
-| Path | Purpose |
-| --- | --- |
-| `mocha/system/signoz/signoz.yaml` | SigNoz core (ClickHouse, collector, UI) |
-| `mocha/system/signoz/k8s-infra.yaml` | Agent collecting mocha's own telemetry |
-| `mocha/system/signoz/otlp-ingress.yaml` | Public OTLP/HTTP ingress for other clusters |
-| `mocha/system/signoz/otlp-mtls.yaml` | mTLS: trusted client CAs and Traefik TLSOption |
-| `mocha/system/signoz/dashboard-provisioner.yaml` | Job importing dashboards through the API |
-| `mocha/system/signoz/dashboards/` | Dashboard definitions (JSON) |
-| `turing/system/signoz-k8s-infra/` | turing's agent + mTLS client certificate |
-
 ## Telemetry collection
 
 Each cluster runs the `k8s-infra` chart. It ships pod logs, host and kubelet
 metrics, cluster metrics and Kubernetes events. The `global.clusterName` value sets
 the `k8s.cluster.name` resource attribute on everything the agent sends, which is
-how telemetry from mocha and turing is kept separate in the UI.
+how telemetry from each cluster is kept separate in the UI.
 
 mocha talks to its collector in-cluster over plain HTTP:
 
@@ -63,14 +51,13 @@ The trust and enforcement live in `otlp-mtls.yaml`:
 
 ## Client certificates
 
-On mocha, secrets come from Vault through the argocd-vault-plugin. turing has
-neither Vault nor External Secrets, so its mTLS client certificate is managed by
-cert-manager, which it already runs.
+On mocha, secrets come from Vault through the argocd-vault-plugin. A remote cluster
+without Vault or External Secrets can manage its mTLS client certificate with
+cert-manager instead: a self-signed CA issues a client certificate, cert-manager
+keeps both up to date, and no private key ever lands in the repository.
 
-`turing/system/signoz-k8s-infra/mtls.yaml` sets up a self-signed CA and issues a
-client certificate from it. cert-manager keeps both up to date and never writes a
-private key to the repository. The certificate is mounted into the `k8s-infra`
-agent, and the collector config points at it:
+The certificate is mounted into the `k8s-infra` agent, and the collector config
+points at it:
 
 ```
 exporters:
@@ -80,16 +67,16 @@ exporters:
       key_file: /mtls/tls.key
 ```
 
-For mocha to accept turing's certificate, turing's CA (the public certificate only)
-is copied into mocha's `signoz-mtls-ca` secret.
+For mocha to accept a cluster's certificate, that cluster's CA (the public
+certificate only) is added to mocha's `signoz-mtls-ca` secret. The `TLSOption`
+accepts several CAs, one per cluster.
 
 ## Adding a new cluster
 
-1. Copy `turing/system/signoz-k8s-infra/` and set `global.clusterName` to the new
-   cluster's name.
-2. Let cert-manager issue a per-cluster CA and client certificate.
-3. Add the new cluster's CA public certificate to mocha's `signoz-mtls-ca` secret
-   (the `TLSOption` accepts several CAs).
+1. Deploy the `k8s-infra` chart on the cluster and set `global.clusterName` to its
+   name.
+2. Let cert-manager issue a CA and a client certificate for it.
+3. Add the cluster's CA public certificate to mocha's `signoz-mtls-ca` secret.
 4. Sync both clusters.
 
 ## Dashboards
