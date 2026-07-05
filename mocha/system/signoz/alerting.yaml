@@ -99,6 +99,7 @@ spec:
                   print("channel created:", cs, rb[:200])
 
               rules = [{
+                  "version": "v5",
                   "alert": "ArgoCD applications OutOfSync",
                   "alertType": "METRIC_BASED_ALERT",
                   "ruleType": "threshold_rule",
@@ -108,19 +109,17 @@ spec:
                       "compositeQuery": {
                           "queryType": "builder",
                           "panelType": "graph",
-                          "builderQueries": {
-                              "A": {
-                                  "queryName": "A", "dataSource": "metrics", "expression": "A", "disabled": False,
-                                  "aggregateAttribute": {"key": "argocd_app_info", "dataType": "float64", "type": "Gauge", "isColumn": True},
-                                  "aggregateOperator": "count", "timeAggregation": "count", "spaceAggregation": "sum",
-                                  "reduceTo": "sum", "stepInterval": 60, "groupBy": [],
-                                  "filters": {"op": "AND", "items": [
-                                      {"key": {"key": "sync_status", "dataType": "string", "type": "tag"}, "op": "=", "value": "OutOfSync"}
-                                  ]}
+                          "queries": [{
+                              "type": "builder_query",
+                              "spec": {
+                                  "name": "A", "signal": "metrics", "disabled": False,
+                                  "aggregations": [{"metricName": "argocd_app_info", "timeAggregation": "count", "spaceAggregation": "sum"}],
+                                  "filter": {"expression": "sync_status = 'OutOfSync'"},
+                                  "groupBy": []
                               }
-                          }
+                          }]
                       },
-                      "op": ">", "target": 0, "matchType": "1"
+                      "op": ">", "target": 0, "matchType": "1", "selectedQueryName": "A"
                   },
                   "labels": {"severity": "warning"},
                   "annotations": {"summary": "ArgoCD has out-of-sync applications",
