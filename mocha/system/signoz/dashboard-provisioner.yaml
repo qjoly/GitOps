@@ -70,29 +70,43 @@ spec:
               def call(method, path, data=None):
                   body = json.dumps(data).encode() if data is not None else None
                   req = urllib.request.Request(API + path, data=body, headers=H, method=method)
-                  with urllib.request.urlopen(req, timeout=20) as r:
-                      return r.status, r.read().decode()
+                  try:
+                      with urllib.request.urlopen(req, timeout=20) as r:
+                          return r.status, r.read().decode()
+                  except urllib.error.HTTPError as e:
+                      return e.code, e.read().decode()
 
               _, body = call("GET", "/api/v1/dashboards")
-              existing = set()
+              existing = {}
               for d in (json.loads(body).get("data") or []):
                   t = (d.get("data") or {}).get("title")
+                  uid = d.get("id") or d.get("uuid")
                   if t:
-                      existing.add(t)
+                      existing[t] = uid
               print("existing dashboards:", len(existing))
 
-              created = skipped = failed = 0
+              created = updated = failed = 0
               for f in sorted(glob.glob("/dashboards/*.json")):
                   dash = json.load(open(f))
                   title = dash.get("title") or os.path.basename(f)
                   if title in existing:
-                      print("skip (exists):", title); skipped += 1; continue
-                  try:
-                      st, _ = call("POST", "/api/v1/dashboards", dash)
-                      print("created:", title, st); created += 1
-                  except urllib.error.HTTPError as e:
-                      print("ERROR:", title, e.code, e.read().decode()[:300]); failed += 1
-              print(f"done: created={created} skipped={skipped} failed={failed}")
+                      uid = existing[title]
+                      st, rb = call("PUT", "/api/v1/dashboards/" + uid, dash)
+                      if st < 300:
+                          print("updated:", title, st); updated += 1; continue
+                      dl, _ = call("DELETE", "/api/v1/dashboards/" + uid)
+                      st, rb = call("POST", "/api/v1/dashboards", dash)
+                      if st < 300:
+                          print("recreated:", title, st); updated += 1
+                      else:
+                          print("ERROR:", title, st, rb[:300]); failed += 1
+                  else:
+                      st, rb = call("POST", "/api/v1/dashboards", dash)
+                      if st < 300:
+                          print("created:", title, st); created += 1
+                      else:
+                          print("ERROR:", title, st, rb[:300]); failed += 1
+              print(f"done: created={created} updated={updated} failed={failed}")
               raise SystemExit(1 if failed else 0)
       volumes:
         - name: dashboards

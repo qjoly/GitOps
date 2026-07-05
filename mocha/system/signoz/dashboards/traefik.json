@@ -67,7 +67,27 @@
   "title": "Traefik",
   "uploadedGrafana": false,
   "uuid": "",
-  "variables": {},
+  "variables": {
+    "4349d5be-eea6-41d2-9c8f-853ca85f018d": {
+      "allSelected": false,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Name of the cluster",
+      "dynamicVariablesAttribute": "k8s.cluster.name",
+      "dynamicVariablesSource": "All telemetry",
+      "id": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
+      "key": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
+      "modificationUUID": "e8b478ea-75fd-4de4-9438-ebde87e5d1f9",
+      "multiSelect": false,
+      "name": "k8s.cluster.name",
+      "order": 0,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    }
+  },
   "version": "v4",
   "widgets": [
     {
@@ -85,7 +105,19 @@
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-filter",
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.cluster.name--string--",
+                      "key": "k8s.cluster.name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$k8s.cluster.name"
+                  }
+                ],
                 "op": "AND"
               },
               "groupBy": [
@@ -158,7 +190,19 @@
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-filter",
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.cluster.name--string--",
+                      "key": "k8s.cluster.name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$k8s.cluster.name"
+                  }
+                ],
                 "op": "AND"
               },
               "groupBy": [
@@ -231,7 +275,19 @@
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-filter",
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.cluster.name--string--",
+                      "key": "k8s.cluster.name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$k8s.cluster.name"
+                  }
+                ],
                 "op": "AND"
               },
               "groupBy": [
@@ -304,7 +360,19 @@
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-filter",
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.cluster.name--string--",
+                      "key": "k8s.cluster.name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$k8s.cluster.name"
+                  }
+                ],
                 "op": "AND"
               },
               "groupBy": [],
@@ -368,7 +436,19 @@
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-filter",
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.cluster.name--string--",
+                      "key": "k8s.cluster.name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$k8s.cluster.name"
+                  }
+                ],
                 "op": "AND"
               },
               "groupBy": [
@@ -441,7 +521,19 @@
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-filter",
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.cluster.name--string--",
+                      "key": "k8s.cluster.name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$k8s.cluster.name"
+                  }
+                ],
                 "op": "AND"
               },
               "groupBy": [
@@ -514,7 +606,19 @@
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-filter",
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.cluster.name--string--",
+                      "key": "k8s.cluster.name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$k8s.cluster.name"
+                  }
+                ],
                 "op": "AND"
               },
               "groupBy": [],
@@ -578,7 +682,19 @@
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "cluster-filter",
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.cluster.name--string--",
+                      "key": "k8s.cluster.name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$k8s.cluster.name"
+                  }
+                ],
                 "op": "AND"
               },
               "groupBy": [],
