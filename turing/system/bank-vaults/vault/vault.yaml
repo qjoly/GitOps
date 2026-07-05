@@ -14,6 +14,12 @@ spec:
   statsdDisabled: true
   serviceRegistrationEnabled: true
 
+  vaultContainerSpec:
+    name: vault
+    args:
+      - "server"
+      - "-config=/vault/config"
+
   securityContext:
     runAsUser: 100
     runAsGroup: 1000
