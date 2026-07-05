@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: signoz
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: signoz
+  source:
+    repoURL: https://charts.signoz.io
+    chart: signoz
+    targetRevision: 0.131.0
+    helm:
+      values: |
+        global:
+          storageClass: openebs-lvmpv
+        clickhouse:
+          persistence:
+            enabled: true
+            size: 40Gi
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              memory: 6Gi
+        signoz:
+          ingress:
+            enabled: true
+            className: traefik
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+              traefik.ingress.kubernetes.io/router.middlewares: signoz-basic-auth-signoz@kubernetescrd
+            hosts:
+              - host: signoz.<path:kv/cluster#domain>
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    port: 8080
+            tls:
+              - secretName: signoz-tls
+                hosts:
+                  - signoz.<path:kv/cluster#domain>

@@ -1,0 +1,33 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: basic-auth-signoz
+  namespace: signoz
+spec:
+  basicAuth:
+    secret: basic-auth-signoz
+
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: basic-auth-signoz
+  namespace: signoz
+spec:
+  refreshInterval: "30s"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: basic-auth-signoz
+    template:
+      type: kubernetes.io/basic-auth
+  data:
+    - secretKey: username
+      remoteRef:
+        key: signoz
+        property: user
+    - secretKey: password
+      remoteRef:
+        key: signoz
+        property: pass
