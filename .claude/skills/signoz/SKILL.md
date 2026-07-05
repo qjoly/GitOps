@@ -99,11 +99,18 @@ editing a JSON and re-syncing updates the live dashboard. Community dashboards c
   suffix included) and expose it via ExternalSecret. Provision the channel with
   `POST /api/v1/channels` (Alertmanager `slack_configs` shape). Test with
   `POST /api/v1/testChannel` (expects 204).
-- **Alert rules**: `POST /api/v1/rules` requires the **v5 schema**, otherwise it returns
-  `version: only v5 is supported`. Shape: top-level `"version": "v5"`, and
-  `condition.compositeQuery.queries: [{type: "builder_query", spec: {name, signal, disabled,
-  aggregations: [...], filter: {expression: "..."}, groupBy: []}}]`. Set
-  `preferredChannels: ["discord"]`.
+- **Alert rules**: `POST /api/v1/rules` (upsert PUT `/api/v1/rules/<id>`) requires the **v5
+  schema**, otherwise it returns `version: only v5 is supported`. Shape: top-level
+  `"version": "v5"`, and `condition.compositeQuery.queries: [{type: "builder_query", spec:
+  {name, signal, disabled, aggregations: [{metricName, timeAggregation, spaceAggregation}],
+  filter: {expression: "..."}, groupBy: [...]}}]`, plus `condition.op/target/matchType` and
+  `selectedQueryName`. Set `preferredChannels: ["<channel name>"]`.
+  - `groupBy` items in a v5 rule are `{"name": "<key>"}` ONLY. The dashboard groupBy shape
+    (`dataType`/`id`/`key`/`type`) is rejected with `unknown field "dataType" in query spec`.
+  - No-data alert (e.g. host down): add `condition.alertOnAbsent: true` and
+    `condition.absentFor: <minutes>`.
+  - The provisioner Job (`alerting.yaml`) upserts all rules by title on every sync; it holds
+    the ArgoCD, ZFS-backup and Kubernetes alerts, all notifying the `discord` channel.
 
 ## Applying changes
 
