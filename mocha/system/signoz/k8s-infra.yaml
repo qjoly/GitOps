@@ -45,6 +45,11 @@ spec:
                         - targets:
                             - argocd-metrics.argocd.svc.cluster.local:8082
                             - argocd-server-metrics.argocd.svc.cluster.local:8083
+                    - job_name: plex
+                      scrape_interval: 30s
+                      static_configs:
+                        - targets:
+                            - plex-exporter.plex-exporter.svc.cluster.local:9000
             processors:
               resource/cluster:
                 attributes:

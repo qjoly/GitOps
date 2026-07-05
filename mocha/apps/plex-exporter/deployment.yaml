@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plex-exporter
+  namespace: plex-exporter
+  labels:
+    app: plex-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plex-exporter
+  template:
+    metadata:
+      labels:
+        app: plex-exporter
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: plex-exporter
+          image: ghcr.io/jsclayton/prometheus-plex-exporter:latest
+          ports:
+            - name: metrics
+              containerPort: 9000
+          envFrom:
+            - secretRef:
+                name: plex-credentials
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plex-exporter
+  namespace: plex-exporter
+  labels:
+    app: plex-exporter
+spec:
+  selector:
+    app: plex-exporter
+  ports:
+    - name: metrics
+      port: 9000
+      targetPort: metrics
