@@ -1,0 +1,27 @@
+---
+# Expose le collecteur OTLP/HTTP de SignOz pour l'ingestion depuis les autres
+# clusters (ex. turing). TLS via cert-manager ; endpoint ouvert (pas d'auth).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: signoz-otlp
+  namespace: signoz
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: signoz-ingest.<path:kv/cluster#domain>
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: signoz-otel-collector
+                port:
+                  number: 4318
+  tls:
+    - secretName: signoz-otlp-tls
+      hosts:
+        - signoz-ingest.<path:kv/cluster#domain>

@@ -5,6 +5,7 @@ resources:
   - signoz.yaml
   - k8s-infra.yaml
   - dashboard-provisioner.yaml
+  - otlp-ingress.yaml
 configMapGenerator:
   - name: signoz-dashboards
     namespace: signoz

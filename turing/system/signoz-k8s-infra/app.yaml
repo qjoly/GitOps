@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: signoz-k8s-infra
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: signoz-k8s-infra
+  source:
+    repoURL: https://charts.signoz.io
+    chart: k8s-infra
+    targetRevision: 0.16.0
+    helm:
+      values: |
+        # Télémétrie du cluster turing → SignOz hébergé sur mocha.
+        # k8s.cluster.name=turing distingue cette source des autres clusters.
+        global:
+          clusterName: turing
+          deploymentEnvironment: production
+        # Endpoint OTLP/HTTP public de SignOz sur mocha (TLS, cert public valide).
+        otelCollectorEndpoint: https://signoz-ingest.mocha.thoughtless.eu
+        otelInsecure: false
+        presets:
+          otlpExporter:
+            enabled: true
+          loggingExporter:
+            enabled: false
