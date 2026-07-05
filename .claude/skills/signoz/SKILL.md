@@ -111,6 +111,10 @@ editing a JSON and re-syncing updates the live dashboard. Community dashboards c
     `condition.absentFor: <minutes>`.
   - The provisioner Job (`alerting.yaml`) upserts all rules by title on every sync; it holds
     the ArgoCD, ZFS-backup and Kubernetes alerts, all notifying the `discord` channel.
+  - To get context (cluster, pod, app, pool) in the notification, the rule must `groupBy`
+    those labels (they become alert labels) AND the channel template must print them. The
+    Discord channel `text` uses `{{ range .Labels.SortedPairs }}• {{ .Name }}: {{ .Value }}`
+    to list every label of the firing series.
 
 ## Applying changes
 
