@@ -25,6 +25,7 @@ configMapGenerator:
       - dashboards/traefik.json
       - dashboards/plex.json
       - dashboards/zfs-backup.json
+      - dashboards/proxmox.json
 generatorOptions:
   disableNameSuffixHash: true
   annotations:

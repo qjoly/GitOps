@@ -1,0 +1,5 @@
+default:
+  user: otel@pve
+  token_name: monitoring
+  token_value: REPLACE_WITH_PVE_API_TOKEN
+  verify_ssl: false

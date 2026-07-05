@@ -1,0 +1,10 @@
+[Unit]
+Description=Prometheus PVE Exporter
+After=network.target
+
+[Service]
+ExecStart=/opt/pve-exporter/bin/pve_exporter --config.file /etc/prometheus/pve.yml --web.listen-address 127.0.0.1:9221
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
