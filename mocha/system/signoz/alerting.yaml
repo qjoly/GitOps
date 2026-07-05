@@ -114,7 +114,7 @@ spec:
                           "preferredChannels": ["discord"]}
 
               def gbk(k):
-                  return {"dataType": "string", "id": k + "--string--tag--false", "isColumn": False, "isJSON": False, "key": k, "type": "tag"}
+                  return {"name": k}
 
               def krule(name, metric, tagg, sagg, op, target, sev, summary, desc, groupby, win="5m0s", freq="1m0s"):
                   return {"version": "v5", "alert": name, "alertType": "METRIC_BASED_ALERT", "ruleType": "threshold_rule",
