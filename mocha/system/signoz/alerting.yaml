@@ -67,6 +67,7 @@ spec:
               API = os.environ["SIGNOZ_API"].rstrip("/")
               H = {"SIGNOZ-API-KEY": os.environ["SIGNOZ_API_KEY"], "Content-Type": "application/json"}
               WEBHOOK = os.environ["DISCORD_WEBHOOK"]
+              PROVISIONER = "signoz-gitops-provisioner"
 
               def call(method, path, data=None):
                   body = json.dumps(data).encode() if data is not None else None
@@ -110,7 +111,7 @@ spec:
                       cond["absentFor"] = 10
                   return {"version": "v5", "alert": name, "alertType": "METRIC_BASED_ALERT", "ruleType": "threshold_rule",
                           "evalWindow": win, "frequency": freq, "condition": cond,
-                          "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc},
+                          "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc, "managed_by": PROVISIONER},
                           "preferredChannels": ["discord"]}
 
               def gbk(k):
@@ -124,7 +125,7 @@ spec:
                                   "aggregations": [{"metricName": metric, "timeAggregation": tagg, "spaceAggregation": sagg}],
                                   "filter": {"expression": ""}, "groupBy": [gbk(k) for k in groupby]}}]},
                               "op": op, "target": target, "matchType": "1", "selectedQueryName": "A"},
-                          "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc},
+                          "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc, "managed_by": PROVISIONER},
                           "preferredChannels": ["discord"]}
 
               def grule(name, metric, tagg, sagg, op, target, sev, summary, desc, expr, groupby, win="5m0s", freq="1m0s"):
@@ -135,7 +136,7 @@ spec:
                                   "aggregations": [{"metricName": metric, "timeAggregation": tagg, "spaceAggregation": sagg}],
                                   "filter": {"expression": expr}, "groupBy": [gbk(k) for k in groupby]}}]},
                               "op": op, "target": target, "matchType": "1", "selectedQueryName": "A"},
-                          "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc},
+                          "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc, "managed_by": PROVISIONER},
                           "preferredChannels": ["discord"]}
 
               rules = [
@@ -197,22 +198,25 @@ spec:
                         "Container memory usage above 95% of its limit (OOM risk).",
                         ["k8s.cluster.name", "k8s.pod.name"], win="10m0s", freq="5m0s"),
               ]
+              def field(r, k):
+                  return r.get(k) if r.get(k) is not None else (r.get("data") or {}).get(k)
+
               _, rbody = call("GET", "/api/v1/rules")
-              existing = {}
-              for r in (json.loads(rbody).get("data", {}).get("rules") or []):
-                  existing[r.get("alert") or (r.get("data") or {}).get("alert")] = r.get("id")
+              current = json.loads(rbody).get("data", {}).get("rules") or []
+              existing = {field(r, "alert"): r.get("id") for r in current}
+              desired = {r["alert"] for r in rules}
               for rule in rules:
                   rid = existing.get(rule["alert"])
                   if rid:
                       rs, rr = call("PUT", "/api/v1/rules/" + str(rid), rule)
-                      print("rule updated:", rule["alert"], rs, rr[:250])
+                      print("rule updated:", rule["alert"], rs, rr[:200])
                   else:
                       rs, rr = call("POST", "/api/v1/rules", rule)
-                      print("rule created:", rule["alert"], rs, rr[:250])
-              obsolete = ["ArgoCD application missing", "ArgoCD application degraded"]
-              for name in obsolete:
-                  oid = existing.get(name)
-                  if oid:
-                      ds, dr = call("DELETE", "/api/v1/rules/" + str(oid))
-                      print("rule deleted:", name, ds, dr[:120])
+                      print("rule created:", rule["alert"], rs, rr[:200])
+              for r in current:
+                  title = field(r, "alert")
+                  ann = field(r, "annotations") or {}
+                  if ann.get("managed_by") == PROVISIONER and title not in desired:
+                      ds, dr = call("DELETE", "/api/v1/rules/" + str(r.get("id")))
+                      print("rule deleted (orphan):", title, ds, dr[:120])
               raise SystemExit(0 if cs < 300 else 1)
