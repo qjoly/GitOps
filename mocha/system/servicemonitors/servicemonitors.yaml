@@ -1,0 +1,33 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: coredns
+  namespace: kube-system
+spec:
+  namespaceSelector:
+    matchNames:
+      - kube-system
+  selector:
+    matchLabels:
+      k8s-app: kube-dns
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: openebs-lvm-node
+  namespace: openebs
+spec:
+  namespaceSelector:
+    matchNames:
+      - openebs
+  selector:
+    matchLabels:
+      name: openebs-lvm-node
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
