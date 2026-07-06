@@ -96,27 +96,7 @@
   "title": "Proxmox VE",
   "uploadedGrafana": false,
   "uuid": "",
-  "variables": {
-    "4349d5be-eea6-41d2-9c8f-853ca85f018d": {
-      "allSelected": false,
-      "customValue": "",
-      "defaultValue": "",
-      "description": "Name of the cluster",
-      "dynamicVariablesAttribute": "k8s.cluster.name",
-      "dynamicVariablesSource": "All telemetry",
-      "id": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
-      "key": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
-      "modificationUUID": "e8b478ea-75fd-4de4-9438-ebde87e5d1f9",
-      "multiSelect": false,
-      "name": "k8s.cluster.name",
-      "order": 0,
-      "queryValue": "",
-      "showALLOption": true,
-      "sort": "DISABLED",
-      "textboxValue": "",
-      "type": "DYNAMIC"
-    }
-  },
+  "variables": {},
   "version": "v5",
   "widgets": [
     {
@@ -402,7 +382,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+                "expression": "k8s.cluster.name = 'proxmox-01'"
               },
               "filters": {
                 "op": "AND",
@@ -425,6 +405,45 @@
               "limit": null,
               "orderBy": [],
               "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "system.cpu.load_average.1m",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "avg",
+                  "reduceTo": "last"
+                }
+              ]
+            },
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "B",
+              "filter": {
+                "expression": "k8s.cluster.name = 'proxmox-02'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host.name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host.name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{host.name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "B",
               "stepInterval": 60,
               "aggregations": [
                 {
@@ -478,7 +497,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "k8s.cluster.name IN $k8s.cluster.name AND state = 'used'"
+                "expression": "k8s.cluster.name = 'proxmox-01' AND state = 'used'"
               },
               "filters": {
                 "op": "AND",
@@ -501,6 +520,45 @@
               "limit": null,
               "orderBy": [],
               "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "system.memory.usage",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "last"
+                }
+              ]
+            },
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "B",
+              "filter": {
+                "expression": "k8s.cluster.name = 'proxmox-02' AND state = 'used'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host.name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host.name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{host.name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "B",
               "stepInterval": 60,
               "aggregations": [
                 {
@@ -554,7 +612,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "k8s.cluster.name IN $k8s.cluster.name AND state = 'used'"
+                "expression": "k8s.cluster.name = 'proxmox-01' AND state = 'used'"
               },
               "filters": {
                 "op": "AND",
@@ -577,6 +635,45 @@
               "limit": null,
               "orderBy": [],
               "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "system.filesystem.usage",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "last"
+                }
+              ]
+            },
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "B",
+              "filter": {
+                "expression": "k8s.cluster.name = 'proxmox-02' AND state = 'used'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host.name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host.name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{host.name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "B",
               "stepInterval": 60,
               "aggregations": [
                 {
@@ -630,7 +727,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+                "expression": "k8s.cluster.name = 'proxmox-01'"
               },
               "filters": {
                 "op": "AND",
@@ -661,6 +758,53 @@
               "limit": null,
               "orderBy": [],
               "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "system.network.io",
+                  "temporality": null,
+                  "timeAggregation": "rate",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "last"
+                }
+              ]
+            },
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "B",
+              "filter": {
+                "expression": "k8s.cluster.name = 'proxmox-02'"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host.name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host.name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "direction--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "direction",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{host.name}} {{direction}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "B",
               "stepInterval": 60,
               "aggregations": [
                 {
