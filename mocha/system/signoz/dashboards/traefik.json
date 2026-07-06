@@ -146,7 +146,7 @@
                   "temporality": null,
                   "timeAggregation": "rate",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ],
               "filter": {
@@ -236,7 +236,7 @@
                   "temporality": null,
                   "timeAggregation": "rate",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ],
               "filter": {
@@ -326,7 +326,7 @@
                   "temporality": null,
                   "timeAggregation": "rate",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ],
               "filter": {
@@ -407,7 +407,7 @@
                   "temporality": null,
                   "timeAggregation": "latest",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ],
               "filter": {
@@ -497,7 +497,7 @@
                   "temporality": null,
                   "timeAggregation": "rate",
                   "spaceAggregation": "p99",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ],
               "filter": {
@@ -587,7 +587,7 @@
                   "temporality": null,
                   "timeAggregation": "rate",
                   "spaceAggregation": "p50",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ],
               "filter": {
@@ -668,7 +668,7 @@
                   "temporality": null,
                   "timeAggregation": "rate",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ],
               "filter": {
@@ -749,7 +749,7 @@
                   "temporality": null,
                   "timeAggregation": "rate",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ],
               "filter": {

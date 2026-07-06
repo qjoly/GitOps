@@ -155,7 +155,7 @@
                   "temporality": null,
                   "timeAggregation": "latest",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ]
             }
@@ -222,7 +222,7 @@
                   "temporality": null,
                   "timeAggregation": "latest",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ]
             }
@@ -289,7 +289,7 @@
                   "temporality": null,
                   "timeAggregation": "latest",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ]
             }
@@ -356,7 +356,7 @@
                   "temporality": null,
                   "timeAggregation": "latest",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ]
             }
@@ -432,7 +432,7 @@
                   "temporality": null,
                   "timeAggregation": "latest",
                   "spaceAggregation": "avg",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ]
             }
@@ -508,7 +508,7 @@
                   "temporality": null,
                   "timeAggregation": "latest",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ]
             }
@@ -584,7 +584,7 @@
                   "temporality": null,
                   "timeAggregation": "latest",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ]
             }
@@ -668,7 +668,7 @@
                   "temporality": null,
                   "timeAggregation": "rate",
                   "spaceAggregation": "sum",
-                  "reduceTo": "sum"
+                  "reduceTo": "last"
                 }
               ]
             }
