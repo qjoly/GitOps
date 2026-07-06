@@ -248,4 +248,21 @@ version (the cmp-server protocol must match), regenerate `argocd.install.yaml`, 
 `vault-credentials` secret (real Vault token) is created out of band and is preserved. Verify
 AVP after: an app using `<path:kv/...>` (grafana, sys-signoz) must reach Synced.
 
+### Upgrading ArgoCD on turing (vanilla, no AVP)
+
+turing runs **vanilla** ArgoCD (bank-vaults/OpenBao, not AVP) and was stuck on v2.14.21,
+hitting the same `.status.terminatingReplicas` ComparisonError (apps stuck `Unknown`). It is
+installed via Talos `extraManifests` pointing at `common/argocd/argocd.install.vanilla.yaml`
+(a plain `kubectl kustomize "argo-cd//manifests/cluster-install?ref=v3.0.5"` render) plus
+`argocd.config.yaml`. Two gotchas when applying the upgrade live:
+- The upstream `cluster-install` manifest has **no `namespace:` on resources** — you MUST
+  `kubectl apply -n argocd`, otherwise everything lands in `default` (delete the stray
+  `-l app.kubernetes.io/part-of=argocd` objects from `default` if that happens).
+- The control-plane Deployments/StatefulSet have an **immutable `spec.selector`** that differs
+  between v2.14 and v3.0.5, so `apply` fails with "field is immutable". You must
+  `kubectl -n argocd delete deploy/statefulset` for the 6 workloads, then re-apply (recreates
+  them at v3.0.5). ArgoCD is down ~1-2 min; deployed apps are unaffected. `argocd-secret` is
+  preserved (empty `data` in the manifest = server-side apply takes no ownership). Re-apply
+  `argocd.config.yaml` after to restore admin.enabled/resource.exclusions.
+
 Do not put comments in YAML manifests in this repo (repo owner preference).
