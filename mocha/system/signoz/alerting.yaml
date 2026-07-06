@@ -84,7 +84,7 @@ spec:
                       "api_url": WEBHOOK,
                       "channel": "#alerts",
                       "title": "[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}",
-                      "text": "{{ len .Alerts }} alert(s)\n{{ range .Alerts }}*{{ .Labels.severity }}* {{ .Annotations.summary }} —{{ range .Labels.SortedPairs }}{{ if and (ne .Name \"alertname\") (ne .Name \"severity\") }} {{ .Name }}={{ .Value }}{{ end }}{{ end }}\n{{ end }}"
+                      "text": "{{ len .Alerts }} alert(s)\n{{ range .Alerts }}*{{ .Labels.severity }}* {{ .Annotations.summary }} —{{ range .Labels.SortedPairs }}{{ if and (ne .Name \"alertname\") (ne .Name \"severity\") (ne .Name \"ruleSource\") }} {{ .Name }}={{ .Value }}{{ end }}{{ end }}\n{{ end }}"
                   }]
               }
               _, body = call("GET", "/api/v1/channels")

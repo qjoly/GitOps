@@ -1,0 +1,40 @@
+[tasks."vault:decrypt"]
+description = "Decrypt the Vault unseal keys/root token (age) to cluster-keys.json"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+IDENTITY="${AGE_IDENTITY:-$HOME/.ssh/id_ed25519}"
+SRC="${VAULT_KEYS_AGE:-cluster-keys.json.age}"
+DST="${VAULT_KEYS:-cluster-keys.json}"
+[ -f "$SRC" ] || { echo "missing $SRC" >&2; exit 1; }
+age -d -i "$IDENTITY" "$SRC" > "$DST"
+echo "decrypted $SRC -> $DST (gitignored)"
+'''
+
+[tasks."vault:unseal"]
+description = "Unseal every Vault pod on the target cluster (decrypts keys in-memory)"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+IDENTITY="${AGE_IDENTITY:-$HOME/.ssh/id_ed25519}"
+SRC="${VAULT_KEYS_AGE:-cluster-keys.json.age}"
+CTX="${VAULT_CONTEXT:-$(kubectl config current-context)}"
+[ -f "$SRC" ] || { echo "missing $SRC" >&2; exit 1; }
+KEY="$(age -d -i "$IDENTITY" "$SRC" | jq -r '.unseal_keys_b64[0]')"
+for pod in vault-0 vault-1 vault-2; do
+  echo "==> unseal $pod on $CTX"
+  kubectl --context "$CTX" exec -n vault "$pod" -- vault operator unseal "$KEY" || true
+done
+'''
+
+[tasks."vault:status"]
+description = "Show the seal status of every Vault pod on the target cluster"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+CTX="${VAULT_CONTEXT:-$(kubectl config current-context)}"
+for pod in vault-0 vault-1 vault-2; do
+  echo "==> $pod on $CTX"
+  kubectl --context "$CTX" exec -n vault "$pod" -- vault status || true
+done
+'''

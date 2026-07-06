@@ -52,83 +52,184 @@ The Traefik and ArgoCD dashboards both carry a `cluster` variable. `cluster` is 
 resource attribute, so the dashboard filters reference it with an empty type
 (`{"key":"cluster","type":""}`), not as a tag.
 
-## Exposing SigNoz to other clusters
+## Exposing SigNoz over the internet (mTLS)
 
-The collector is exposed at `signoz-ingest.mocha.thoughtless.eu` (OTLP/HTTP, port
-4318) through a Traefik ingress. The endpoint is protected with mTLS: a client has
-to present a certificate signed by a CA that mocha trusts, otherwise the TLS
-handshake is refused.
+The collector is exposed at `signoz-ingest.mocha.thoughtless.eu` through a Traefik
+ingress (`otlp-ingress.yaml`). Traefik terminates TLS on 443 with a cert-manager
+certificate and forwards OTLP/HTTP to the collector Service on port 4318. The
+endpoint is protected with **mutual TLS**: a sender has to present a client
+certificate signed by a CA that mocha trusts, otherwise the handshake is refused.
+
+Any sender works the same way, whether it is a Kubernetes cluster or a standalone
+machine — the only requirement is a client certificate from a trusted CA.
+
+```mermaid
+flowchart LR
+    subgraph senders["Senders (each with its own client cert)"]
+        remote["Remote cluster<br/>k8s-infra agent"]
+        machine["Standalone machine<br/>otelcol (Proxmox, backups)"]
+    end
+
+    subgraph mocha["mocha cluster"]
+        traefik["Traefik ingress<br/>signoz-ingest.mocha.thoughtless.eu:443<br/>TLSOption mtls · RequireAndVerifyClientCert"]
+        ca[("signoz-mtls-ca<br/>CA bundle")]
+        collector["signoz-otel-collector:4318"]
+        local["mocha k8s-infra agent"]
+        ch[("ClickHouse")]
+        ui["SigNoz UI"]
+    end
+
+    remote -->|"OTLP/HTTPS + client cert"| traefik
+    machine -->|"OTLP/HTTPS + client cert"| traefik
+    ca -.->|"verifies cert against<br/>trusted CAs"| traefik
+    traefik -->|"OTLP/HTTP"| collector
+    local -->|"OTLP/HTTP (in-cluster, no mTLS)"| collector
+    collector --> ch --> ui
+```
 
 The trust and enforcement live in `otlp-mtls.yaml`:
 
-- a `Secret` (`signoz-mtls-ca`) holding the CA certificates under `tls.ca`,
-- a Traefik `TLSOption` set to `RequireAndVerifyClientCert`,
-- the ingress references the option with the
-  `traefik.ingress.kubernetes.io/router.tls.options` annotation.
+- a `Secret` (`signoz-mtls-ca`) whose `tls.ca` key holds a **bundle of CA
+  certificates concatenated in PEM** (one CA per sender),
+- a Traefik `TLSOption` (`mtls`) set to `RequireAndVerifyClientCert` and pointing at
+  that secret,
+- the ingress selects the option with the annotation
+  `traefik.ingress.kubernetes.io/router.tls.options: signoz-mtls@kubernetescrd`
+  (Traefik reads a cross-namespace option as `<namespace>-<name>@kubernetescrd`).
 
-## Client certificates
+Because the CA field is a bundle, adding a sender is purely additive: append its CA
+public certificate to `tls.ca` and re-sync. No sender ever shares a key; each has
+its own CA and client cert, so one can be revoked by dropping its CA from the
+bundle. Current members: `signoz-mtls-ca`, `signoz-mtls-traefik-ca`,
+`affogato-backup-ca`, `proxmox-ca`.
 
-On mocha, secrets come from Vault through the argocd-vault-plugin. A remote cluster
-without Vault or External Secrets can manage its mTLS client certificate with
-cert-manager instead: a self-signed CA issues a client certificate, cert-manager
-keeps both up to date, and no private key ever lands in the repository.
-
-The certificate is mounted into the `k8s-infra` agent, and the collector config
-points at it:
+Inspect the bundle:
 
 ```
-exporters:
-  otlphttp:
-    tls:
-      cert_file: /mtls/tls.crt
-      key_file: /mtls/tls.key
+kubectl -n signoz get secret signoz-mtls-ca -o jsonpath='{.data.tls\.ca}' \
+  | base64 -d | openssl storeutl -noout -text /dev/stdin | grep Subject:
 ```
 
-For mocha to accept a cluster's certificate, that cluster's CA (the public
-certificate only) is added to mocha's `signoz-mtls-ca` secret. The `TLSOption`
-accepts several CAs, one per cluster.
+## Trusting a new sender
 
-## Adding a new cluster
+The steps are the same for every sender; only how the client certificate is
+produced and mounted differs (cluster vs. standalone machine, below).
 
-1. Deploy the `k8s-infra` chart on the cluster and set `global.clusterName` to its
-   name.
-2. Let cert-manager issue a CA and a client certificate for it.
-3. Add the cluster's CA public certificate to mocha's `signoz-mtls-ca` secret.
-4. Sync both clusters.
+1. **Produce a CA and a client certificate** for the sender. Keep the CA private
+   key with the sender; only its public certificate is shared.
+2. **Add the CA to mocha's trust bundle.** Append the CA public certificate (PEM) to
+   the `tls.ca` field of the `signoz-mtls-ca` secret (`otlp-mtls.yaml`). The field is
+   base64 of the concatenated PEM blocks, so append the new block and re-encode:
 
-## Dashboards
+   ```
+   { kubectl -n signoz get secret signoz-mtls-ca \
+       -o jsonpath='{.data.tls\.ca}' | base64 -d; cat new-ca.crt; } \
+     | base64 -w0
+   ```
 
-Dashboards are versioned as JSON under `mocha/system/signoz/dashboards/` and
-imported by a Job (`dashboard-provisioner.yaml`) that runs as an ArgoCD PostSync
-hook. The Job talks to the SigNoz API and skips dashboards that already exist, so
-it is safe to run on every sync.
+   Put that value back into `otlp-mtls.yaml` and let ArgoCD sync it.
+3. **Point the sender at the endpoint** with its client cert and key:
+   `https://signoz-ingest.mocha.thoughtless.eu` (OTLP/HTTP, 443).
+4. Verify data arrives in the UI, filtered on the sender's identity (for clusters,
+   `k8s.cluster.name`).
 
-The Job authenticates with a SigNoz API key. Create one in the UI under
-**Settings → API Keys** and store it in Vault at `kv/signoz` under the `api_key`
-property; External Secrets exposes it to the Job.
+### Sender is a cluster
 
-To add a dashboard, drop its JSON file in the `dashboards/` directory and add it to
-the `configMapGenerator` in `kustomization.yaml`. The next sync imports it.
+1. Deploy the `k8s-infra` chart and set `global.clusterName` — this tags everything
+   with `k8s.cluster.name` so the cluster's data is told apart.
+2. Let cert-manager issue a self-signed CA and a client certificate; it keeps both
+   renewed and no private key touches the repo.
+3. Mount the client certificate into the `k8s-infra` agent and point its exporter at
+   the mounted files:
 
-## Alerting
+   ```
+   exporters:
+     otlphttp:
+       endpoint: https://signoz-ingest.mocha.thoughtless.eu
+       tls:
+         cert_file: /mtls/tls.crt
+         key_file: /mtls/tls.key
+   ```
+
+4. Add the cluster's CA to the trust bundle (step 2 above) and sync both clusters.
+
+### Sender is a standalone machine (no Kubernetes)
+
+Used by the Proxmox host and the backup jobs. There is no k8s-infra agent; run a
+standalone OpenTelemetry Collector (or point an app's OTLP exporter) at the endpoint.
+
+1. Generate a CA and a client certificate on the machine, e.g. with `openssl` or
+   `step-cli`. Store the key locally (e.g. `/etc/otelcol/mtls/`), never in the repo.
+2. Configure the collector's `otlphttp` exporter exactly as above, with
+   `cert_file`/`key_file` pointing at the local paths and `endpoint`
+   `https://signoz-ingest.mocha.thoughtless.eu`.
+3. Set a `resource` processor to tag the source (e.g. `host.name`, or a custom
+   attribute) so its telemetry is identifiable in the UI, since there is no
+   `k8s.cluster.name`.
+4. Add the machine's CA to the trust bundle (step 2 above) and sync mocha.
+
+Quick check that the endpoint accepts the client cert:
+
+```
+curl -v https://signoz-ingest.mocha.thoughtless.eu/v1/metrics \
+  --cert client.crt --key client.key -H 'Content-Type: application/json' -d '{}'
+```
+
+A TLS handshake that completes (even with an HTTP 4xx on the empty body) means the
+certificate is trusted; a handshake failure means the CA is not in the bundle yet.
+
+## Provisioning jobs (dashboards & alerts)
+
+SigNoz stores dashboards, channels and alert rules in its own database, not in
+Kubernetes objects — so they cannot be applied with `kubectl`. Instead, two Jobs
+push them through the SigNoz REST API and keep the database in sync with the repo.
+Both share the same shape:
+
+- **ArgoCD PostSync hook** (`argocd.argoproj.io/hook: PostSync`), with
+  `hook-delete-policy: BeforeHookCreation` — the previous run is deleted and a fresh
+  one runs on **every sync**, so editing a dashboard or an alert and re-syncing
+  re-applies it. `ttlSecondsAfterFinished: 600`, `backoffLimit: 3`.
+- A minimal `python:3.12-alpine` container, non-root and `drop: [ALL]`, running an
+  inline script (no external image to maintain).
+- They call the in-cluster API at `http://signoz.signoz.svc.cluster.local:8080`
+  with the header `SIGNOZ-API-KEY`. The key comes from the `signoz-api-key`
+  ExternalSecret (Vault `kv/signoz#api_key`). Create it once in the UI under
+  **Settings → API Keys** and store it in Vault.
+
+Because they are PostSync hooks, they run *after* the chart is healthy, so the API
+is up by the time they fire.
+
+### Dashboard import job
+
+`signoz-dashboard-import` (in `dashboard-provisioner.yaml`) mounts the
+`signoz-dashboards` ConfigMap at `/dashboards` and **upserts by title**: it lists
+existing dashboards, maps `title → id`, then for each JSON file `PUT`s by id if the
+title already exists (falling back to `DELETE` + `POST` if the update is rejected),
+or `POST`s a new one otherwise. It exits non-zero if any dashboard fails, which
+**fails the ArgoCD sync** — a broken dashboard JSON is caught, not silently dropped.
+
+The ConfigMap is built from `mocha/system/signoz/dashboards/*.json` by the
+`configMapGenerator` in `kustomization.yaml`. To add a dashboard: drop its JSON in
+that directory, add it to the generator, and sync (needs `ServerSideApply=true` once
+the ConfigMap exceeds 256 KB).
+
+### Alerting job
+
+`signoz-alerting-provisioner` (in `alerting.yaml`) upserts the notification channel
+and the alert rules. It also pulls the `discord-webhook` ExternalSecret (Vault
+`kv/discord#webhook`, with the `/slack` suffix already included).
 
 Alerts go to Discord. SigNoz has no native Discord support, but Discord accepts
-Slack-formatted payloads on the `/slack` suffix of a webhook URL. A Slack channel in
-SigNoz pointing at `<discord-webhook>/slack` therefore works.
+Slack-formatted payloads on the `/slack` suffix of a webhook URL, so the job
+provisions a **Slack channel** named `discord` pointing at `<webhook>/slack`
+(`GET /api/v1/channels` → `PUT` by id if it exists, else `POST`). The channel's
+`text` template renders one compact line per firing alert; keep it short, since
+Discord rejects payloads over 4096 characters with an HTTP 400.
 
-The webhook lives in Vault at `kv/discord` under the `webhook` property, with the
-`/slack` suffix already included, and reaches the cluster through an ExternalSecret.
+Alert rules use the SigNoz **v5** rule schema (`queries` with a `spec` and a
+`filter.expression`) and each sets `preferredChannels: ["discord"]`. They are
+upserted by title on every sync.
 
-`alerting.yaml` holds two things:
-
-- the ExternalSecret for the webhook,
-- a Job (ArgoCD PostSync hook) that upserts the `discord` notification channel and
-  the alert rules through the SigNoz API.
-
-Alert rules use the SigNoz v5 rule schema (`queries` with a `spec` and a
-`filter.expression`). The rule shipped here fires when ArgoCD reports out-of-sync
-applications and notifies the `discord` channel.
-
-To add an alert, append a rule object to the Job and re-sync, or create it in the UI
-and pick the `discord` channel. To test the channel, use the "Test" button on it in
-the UI, or SigNoz's `POST /api/v1/testChannel`.
+To add an alert, append a rule object to the job's script and re-sync, or create it
+in the UI and pick the `discord` channel. To test the channel, use the "Test" button
+in the UI or `POST /api/v1/testChannel`.
