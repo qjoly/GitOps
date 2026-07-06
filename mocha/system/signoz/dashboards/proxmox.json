@@ -708,47 +708,7 @@
       "panelTypes": "table",
       "query": {
         "builder": {
-          "queryData": [
-            {
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'proxmox-01' AND id LIKE 'qemu/%'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "id",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60,
-              "aggregations": [
-                {
-                  "metricName": "pve_cpu_usage_ratio",
-                  "temporality": null,
-                  "timeAggregation": "latest",
-                  "spaceAggregation": "max",
-                  "reduceTo": "sum"
-                }
-              ]
-            }
-          ],
+          "queryData": [],
           "queryFormulas": []
         },
         "clickhouse_sql": [
@@ -763,12 +723,12 @@
         "promql": [
           {
             "disabled": false,
-            "legend": "",
+            "legend": "{{name}}",
             "name": "A",
-            "query": ""
+            "query": "pve_cpu_usage_ratio{id=~\"qemu/.*\"} * on (id) group_left(name) pve_guest_info"
           }
         ],
-        "queryType": "builder"
+        "queryType": "promql"
       },
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
@@ -784,47 +744,7 @@
       "panelTypes": "graph",
       "query": {
         "builder": {
-          "queryData": [
-            {
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'proxmox-01' AND id LIKE 'qemu/%'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "id",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{id}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60,
-              "aggregations": [
-                {
-                  "metricName": "pve_cpu_usage_ratio",
-                  "temporality": null,
-                  "timeAggregation": "latest",
-                  "spaceAggregation": "max",
-                  "reduceTo": "sum"
-                }
-              ]
-            }
-          ],
+          "queryData": [],
           "queryFormulas": []
         },
         "clickhouse_sql": [
@@ -839,12 +759,12 @@
         "promql": [
           {
             "disabled": false,
-            "legend": "",
+            "legend": "{{name}}",
             "name": "A",
-            "query": ""
+            "query": "pve_cpu_usage_ratio{id=~\"qemu/.*\"} * on (id) group_left(name) pve_guest_info"
           }
         ],
-        "queryType": "builder"
+        "queryType": "promql"
       },
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
@@ -860,47 +780,7 @@
       "panelTypes": "graph",
       "query": {
         "builder": {
-          "queryData": [
-            {
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'proxmox-01' AND id LIKE 'qemu/%'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "id",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{id}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60,
-              "aggregations": [
-                {
-                  "metricName": "pve_memory_usage_bytes",
-                  "temporality": null,
-                  "timeAggregation": "latest",
-                  "spaceAggregation": "max",
-                  "reduceTo": "sum"
-                }
-              ]
-            }
-          ],
+          "queryData": [],
           "queryFormulas": []
         },
         "clickhouse_sql": [
@@ -915,12 +795,12 @@
         "promql": [
           {
             "disabled": false,
-            "legend": "",
+            "legend": "{{name}}",
             "name": "A",
-            "query": ""
+            "query": "pve_memory_usage_bytes{id=~\"qemu/.*\"} * on (id) group_left(name) pve_guest_info"
           }
         ],
-        "queryType": "builder"
+        "queryType": "promql"
       },
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
@@ -936,47 +816,7 @@
       "panelTypes": "bar",
       "query": {
         "builder": {
-          "queryData": [
-            {
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'proxmox-01' AND id LIKE 'storage/%'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "id",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{id}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60,
-              "aggregations": [
-                {
-                  "metricName": "pve_disk_usage_bytes",
-                  "temporality": null,
-                  "timeAggregation": "latest",
-                  "spaceAggregation": "max",
-                  "reduceTo": "sum"
-                }
-              ]
-            }
-          ],
+          "queryData": [],
           "queryFormulas": []
         },
         "clickhouse_sql": [
@@ -991,12 +831,12 @@
         "promql": [
           {
             "disabled": false,
-            "legend": "",
+            "legend": "{{storage}} ({{node}})",
             "name": "A",
-            "query": ""
+            "query": "pve_disk_usage_bytes{id=~\"storage/.*\"} * on (id) group_left(storage,node) pve_storage_info"
           }
         ],
-        "queryType": "builder"
+        "queryType": "promql"
       },
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
