@@ -27,6 +27,9 @@ configMapGenerator:
       - dashboards/zfs-backup.json
       - dashboards/proxmox.json
       - dashboards/rook-ceph.json
+      - dashboards/cert-manager.json
+      - dashboards/coredns.json
+      - dashboards/openebs-lvm.json
 generatorOptions:
   disableNameSuffixHash: true
   annotations:
