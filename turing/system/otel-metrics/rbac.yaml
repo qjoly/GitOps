@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: otel-metrics-collector
+  namespace: signoz-k8s-infra
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: otel-metrics-targetallocator
+  namespace: signoz-k8s-infra
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-metrics-targetallocator
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces", "endpoints", "services", "pods", "configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["monitoring.coreos.com"]
+    resources: ["servicemonitors", "podmonitors", "probes", "scrapeconfigs"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-metrics-targetallocator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-metrics-targetallocator
+subjects:
+  - kind: ServiceAccount
+    name: otel-metrics-targetallocator
+    namespace: signoz-k8s-infra
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-metrics-collector
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "nodes/metrics", "services", "endpoints", "pods", "configmaps", "secrets", "namespaces"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics", "/metrics/cadvisor"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-metrics-collector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-metrics-collector
+subjects:
+  - kind: ServiceAccount
+    name: otel-metrics-collector
+    namespace: signoz-k8s-infra

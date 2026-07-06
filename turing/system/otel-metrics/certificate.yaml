@@ -1,0 +1,18 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: signoz-otel-mtls-client
+  namespace: signoz-k8s-infra
+spec:
+  commonName: turing
+  secretName: signoz-otel-mtls-client
+  duration: 8760h
+  renewBefore: 720h
+  privateKey:
+    algorithm: RSA
+    size: 4096
+  usages:
+    - client auth
+  issuerRef:
+    name: signoz-mtls-ca
+    kind: Issuer

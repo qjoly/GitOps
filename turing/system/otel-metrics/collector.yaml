@@ -1,0 +1,60 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-metrics
+  namespace: signoz-k8s-infra
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  mode: statefulset
+  image: otel/opentelemetry-collector-contrib:0.155.0
+  serviceAccount: otel-metrics-collector
+  env:
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+  volumes:
+    - name: mtls
+      secret:
+        secretName: signoz-otel-mtls-client
+  volumeMounts:
+    - name: mtls
+      mountPath: /mtls
+      readOnly: true
+  targetAllocator:
+    enabled: true
+    serviceAccount: otel-metrics-targetallocator
+    prometheusCR:
+      enabled: true
+      serviceMonitorSelector: {}
+      podMonitorSelector: {}
+      scrapeInterval: 30s
+  config:
+    receivers:
+      prometheus:
+        config:
+          scrape_configs: []
+        target_allocator:
+          endpoint: http://otel-metrics-targetallocator
+          interval: 30s
+          collector_id: ${env:POD_NAME}
+    processors:
+      resource/cluster:
+        attributes:
+          - key: k8s.cluster.name
+            value: turing
+            action: upsert
+      batch: {}
+    exporters:
+      otlphttp:
+        endpoint: https://signoz-ingest.mocha.thoughtless.eu
+        tls:
+          cert_file: /mtls/tls.crt
+          key_file: /mtls/tls.key
+    service:
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          processors: [resource/cluster, batch]
+          exporters: [otlphttp]
