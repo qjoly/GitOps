@@ -26,6 +26,7 @@ configMapGenerator:
       - dashboards/plex.json
       - dashboards/zfs-backup.json
       - dashboards/proxmox.json
+      - dashboards/rook-ceph.json
 generatorOptions:
   disableNameSuffixHash: true
   annotations:

@@ -1,0 +1,939 @@
+{
+  "description": "Rook-Ceph cluster health, capacity, pools and OSD throughput.",
+  "layout": [
+    {
+      "h": 3,
+      "w": 6,
+      "x": 0,
+      "y": 0,
+      "i": "w1"
+    },
+    {
+      "h": 3,
+      "w": 6,
+      "x": 6,
+      "y": 0,
+      "i": "w2"
+    },
+    {
+      "h": 3,
+      "w": 6,
+      "x": 0,
+      "y": 3,
+      "i": "w3"
+    },
+    {
+      "h": 3,
+      "w": 6,
+      "x": 6,
+      "y": 3,
+      "i": "w4"
+    },
+    {
+      "h": 3,
+      "w": 6,
+      "x": 0,
+      "y": 6,
+      "i": "w5"
+    },
+    {
+      "h": 3,
+      "w": 6,
+      "x": 6,
+      "y": 6,
+      "i": "w6"
+    },
+    {
+      "h": 6,
+      "w": 6,
+      "x": 0,
+      "y": 9,
+      "i": "w7"
+    },
+    {
+      "h": 6,
+      "w": 6,
+      "x": 6,
+      "y": 9,
+      "i": "w8"
+    },
+    {
+      "h": 6,
+      "w": 6,
+      "x": 0,
+      "y": 15,
+      "i": "w9"
+    },
+    {
+      "h": 6,
+      "w": 6,
+      "x": 6,
+      "y": 15,
+      "i": "w10"
+    },
+    {
+      "h": 6,
+      "w": 6,
+      "x": 0,
+      "y": 21,
+      "i": "w11"
+    },
+    {
+      "h": 6,
+      "w": 6,
+      "x": 6,
+      "y": 21,
+      "i": "w12"
+    },
+    {
+      "h": 6,
+      "w": 6,
+      "x": 0,
+      "y": 27,
+      "i": "w13"
+    }
+  ],
+  "name": "",
+  "panelMap": {},
+  "tags": [
+    "rook",
+    "ceph",
+    "storage"
+  ],
+  "title": "Rook-Ceph",
+  "uploadedGrafana": false,
+  "uuid": "",
+  "variables": {
+    "4349d5be-eea6-41d2-9c8f-853ca85f018d": {
+      "allSelected": true,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Name of the cluster",
+      "dynamicVariablesAttribute": "k8s.cluster.name",
+      "dynamicVariablesSource": "All telemetry",
+      "id": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
+      "key": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
+      "modificationUUID": "e8b478ea-75fd-4de4-9438-ebde87e5d1f9",
+      "multiSelect": false,
+      "name": "k8s.cluster.name",
+      "order": 0,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    }
+  },
+  "version": "v5",
+  "widgets": [
+    {
+      "description": "0 = OK, 1 = WARN, 2 = ERR",
+      "id": "w1",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "ceph_health_status",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "max",
+                  "reduceTo": "last"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w1-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Health status",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w2",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "ceph_osd_up",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "last"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w2-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "OSDs up",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w3",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "ceph_mon_quorum_status",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "last"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w3-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Mons in quorum",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w4",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "ceph_pg_total",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "max",
+                  "reduceTo": "last"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w4-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Placement groups",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w5",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "ceph_cluster_total_used_bytes",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "max",
+                  "reduceTo": "last"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w5-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Used capacity",
+      "yAxisUnit": "bytes"
+    },
+    {
+      "description": "",
+      "id": "w6",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "ceph_cluster_total_bytes",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "max",
+                  "reduceTo": "last"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w6-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Total capacity",
+      "yAxisUnit": "bytes"
+    },
+    {
+      "description": "",
+      "id": "w7",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "used",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "ceph_cluster_total_used_bytes",
+                  "temporality": null,
+                  "timeAggregation": "latest",
+                  "spaceAggregation": "max",
+                  "reduceTo": "last"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w7-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Capacity used over time",
+      "yAxisUnit": "bytes"
+    },
+    {
+      "description": "",
+      "id": "w8",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "pie",
+      "query": {
+        "builder": {
+          "queryData": [],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w8-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "{{name}}",
+            "name": "A",
+            "query": "ceph_pool_stored * on (pool_id) group_left(name) ceph_pool_metadata"
+          }
+        ],
+        "queryType": "promql"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Stored by pool",
+      "yAxisUnit": "bytes"
+    },
+    {
+      "description": "",
+      "id": "w9",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "bar",
+      "query": {
+        "builder": {
+          "queryData": [],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w9-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "{{name}}",
+            "name": "A",
+            "query": "ceph_pool_objects * on (pool_id) group_left(name) ceph_pool_metadata"
+          }
+        ],
+        "queryType": "promql"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Objects by pool",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w10",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "read",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "ceph_pool_rd_bytes",
+                  "temporality": null,
+                  "timeAggregation": "rate",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "last"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w10-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Pool read throughput",
+      "yAxisUnit": "Bps"
+    },
+    {
+      "description": "",
+      "id": "w11",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "write",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "ceph_pool_wr_bytes",
+                  "temporality": null,
+                  "timeAggregation": "rate",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "last"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w11-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Pool write throughput",
+      "yAxisUnit": "Bps"
+    },
+    {
+      "description": "",
+      "id": "w12",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "read op/s",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "ceph_osd_op_r",
+                  "temporality": null,
+                  "timeAggregation": "rate",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "last"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w12-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "OSD read ops",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "id": "w13",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "k8s.cluster.name IN $k8s.cluster.name"
+              },
+              "filters": {
+                "op": "AND",
+                "items": []
+              },
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "write op/s",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60,
+              "aggregations": [
+                {
+                  "metricName": "ceph_osd_op_w",
+                  "temporality": null,
+                  "timeAggregation": "rate",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "last"
+                }
+              ]
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "w13-q",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "OSD write ops",
+      "yAxisUnit": "short"
+    }
+  ]
+}
