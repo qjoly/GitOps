@@ -25,7 +25,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
-    - repoURL: https://bjw-s.github.io/helm-charts/
+    - repoURL: https://bjw-s-labs.github.io/helm-charts/
       chart: app-template
       targetRevision: 3.7.3
       helm:
