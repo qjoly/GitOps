@@ -127,34 +127,50 @@ spec:
                           "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc},
                           "preferredChannels": ["discord"]}
 
-              rules = [{
-                  "version": "v5",
-                  "alert": "ArgoCD applications OutOfSync",
-                  "alertType": "METRIC_BASED_ALERT",
-                  "ruleType": "threshold_rule",
-                  "evalWindow": "5m0s",
-                  "frequency": "1m0s",
-                  "condition": {
-                      "compositeQuery": {
-                          "queryType": "builder",
-                          "panelType": "graph",
-                          "queries": [{
-                              "type": "builder_query",
-                              "spec": {
-                                  "name": "A", "signal": "metrics", "disabled": False,
-                                  "aggregations": [{"metricName": "argocd_app_info", "timeAggregation": "count", "spaceAggregation": "sum"}],
-                                  "filter": {"expression": "sync_status = 'OutOfSync'"},
-                                  "groupBy": [{"name": "k8s.cluster.name"}, {"name": "name"}]
-                              }
-                          }]
-                      },
-                      "op": ">", "target": 0, "matchType": "1", "selectedQueryName": "A"
-                  },
-                  "labels": {"severity": "warning"},
-                  "annotations": {"summary": "ArgoCD has out-of-sync applications",
-                                  "description": "One or more ArgoCD applications are OutOfSync on cluster {{$labels.cluster}}."},
-                  "preferredChannels": ["discord"]
-              },
+              def grule(name, metric, tagg, sagg, op, target, sev, summary, desc, expr, groupby, win="5m0s", freq="1m0s"):
+                  return {"version": "v5", "alert": name, "alertType": "METRIC_BASED_ALERT", "ruleType": "threshold_rule",
+                          "evalWindow": win, "frequency": freq,
+                          "condition": {"compositeQuery": {"queryType": "builder", "panelType": "graph", "queries": [
+                              {"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "disabled": False,
+                                  "aggregations": [{"metricName": metric, "timeAggregation": tagg, "spaceAggregation": sagg}],
+                                  "filter": {"expression": expr}, "groupBy": [gbk(k) for k in groupby]}}]},
+                              "op": op, "target": target, "matchType": "1", "selectedQueryName": "A"},
+                          "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc},
+                          "preferredChannels": ["discord"]}
+
+              rules = [
+                  grule("ArgoCD application missing", "argocd_app_info", "latest", "max", ">", 0, "critical",
+                        "An ArgoCD application is Missing",
+                        "An ArgoCD application has health_status=Missing (resources absent).",
+                        "health_status = 'Missing'", ["k8s.cluster.name", "name"]),
+                  grule("ArgoCD application degraded", "argocd_app_info", "latest", "max", ">", 0, "critical",
+                        "An ArgoCD application is Degraded",
+                        "An ArgoCD application has health_status=Degraded.",
+                        "health_status = 'Degraded'", ["k8s.cluster.name", "name"], win="10m0s"),
+                  grule("Ceph cluster not healthy", "ceph_health_status", "latest", "max", ">", 0, "warning",
+                        "Ceph cluster is not HEALTH_OK",
+                        "ceph_health_status > 0 on turing (1=HEALTH_WARN, 2=HEALTH_ERR).",
+                        "k8s.cluster.name = 'turing'", ["k8s.cluster.name"], win="10m0s"),
+                  grule("Ceph OSD down", "ceph_osd_up", "latest", "min", "<", 1, "critical",
+                        "A Ceph OSD is down",
+                        "At least one ceph_osd_up = 0 on turing.",
+                        "k8s.cluster.name = 'turing'", ["k8s.cluster.name"]),
+                  grule("Ceph mon quorum degraded", "ceph_mon_quorum_status", "latest", "sum", "<", 3, "critical",
+                        "Ceph mon quorum degraded",
+                        "Fewer than 3 mons in quorum on turing.",
+                        "k8s.cluster.name = 'turing'", ["k8s.cluster.name"]),
+                  grule("cert-manager certificate not ready", "certmanager_certificate_ready_status", "latest", "min", "<", 1, "warning",
+                        "A cert-manager Certificate is not Ready",
+                        "certmanager_certificate_ready_status{condition=True} < 1 (renewal failed or expired).",
+                        "condition = 'True'", ["k8s.cluster.name", "namespace", "name"], win="15m0s", freq="5m0s"),
+                  grule("Proxmox node down", "pve_up", "latest", "min", "<", 1, "critical",
+                        "A Proxmox node is down",
+                        "pve_up = 0 for a Proxmox node (id node/...).",
+                        "k8s.cluster.name = 'proxmox-01' AND id LIKE 'node/%'", ["k8s.cluster.name", "id"]),
+                  grule("Proxmox storage not available", "pve_up", "latest", "min", "<", 1, "warning",
+                        "A Proxmox storage is not available",
+                        "pve_up = 0 for a Proxmox storage (id storage/...).",
+                        "k8s.cluster.name = 'proxmox-01' AND id LIKE 'storage/%'", ["k8s.cluster.name", "id"], win="10m0s", freq="5m0s"),
                   rule("Backup ZFS pool not healthy", "zfs_pool_health", "latest", "max", ">", 0, "critical",
                        "ZFS backup pool is not ONLINE",
                        "zfs_pool_health != 0 on affogato (0=ONLINE, 1=DEGRADED, 2=FAULTED, 3=OFFLINE, 4=UNAVAIL, 6=SUSPENDED)."),
@@ -197,4 +213,10 @@ spec:
                   else:
                       rs, rr = call("POST", "/api/v1/rules", rule)
                       print("rule created:", rule["alert"], rs, rr[:250])
+              obsolete = ["ArgoCD applications OutOfSync"]
+              for name in obsolete:
+                  oid = existing.get(name)
+                  if oid:
+                      ds, dr = call("DELETE", "/api/v1/rules/" + str(oid))
+                      print("rule deleted:", name, ds, dr[:120])
               raise SystemExit(0 if cs < 300 else 1)
