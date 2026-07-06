@@ -139,14 +139,10 @@ spec:
                           "preferredChannels": ["discord"]}
 
               rules = [
-                  grule("ArgoCD application missing", "argocd_app_info", "latest", "max", ">", 0, "critical",
-                        "An ArgoCD application is Missing",
-                        "An ArgoCD application has health_status=Missing (resources absent).",
-                        "health_status = 'Missing'", ["k8s.cluster.name", "name"]),
-                  grule("ArgoCD application degraded", "argocd_app_info", "latest", "max", ">", 0, "critical",
-                        "An ArgoCD application is Degraded",
-                        "An ArgoCD application has health_status=Degraded.",
-                        "health_status = 'Degraded'", ["k8s.cluster.name", "name"], win="10m0s"),
+                  grule("ArgoCD applications OutOfSync", "argocd_app_info", "count", "sum", ">", 0, "warning",
+                        "ArgoCD has out-of-sync applications",
+                        "One or more ArgoCD applications are OutOfSync.",
+                        "sync_status = 'OutOfSync'", ["k8s.cluster.name", "name"]),
                   grule("Ceph cluster not healthy", "ceph_health_status", "latest", "max", ">", 0, "warning",
                         "Ceph cluster is not HEALTH_OK",
                         "ceph_health_status > 0 on turing (1=HEALTH_WARN, 2=HEALTH_ERR).",
@@ -213,7 +209,7 @@ spec:
                   else:
                       rs, rr = call("POST", "/api/v1/rules", rule)
                       print("rule created:", rule["alert"], rs, rr[:250])
-              obsolete = ["ArgoCD applications OutOfSync"]
+              obsolete = ["ArgoCD application missing", "ArgoCD application degraded"]
               for name in obsolete:
                   oid = existing.get(name)
                   if oid:
