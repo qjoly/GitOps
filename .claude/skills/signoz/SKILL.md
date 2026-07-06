@@ -64,6 +64,28 @@ reduceTo, temporality}]` plus `filter.expression`. Old community dashboards use 
 `aggregateAttribute` + `filters.items` shape and their variable filters will not work until
 you add `filter.expression`.
 
+## Cluster selector pitfalls (shows 0 / wrong cluster)
+
+A `DYNAMIC` `k8s.cluster.name` variable sourced from "All telemetry" lists **every** cluster
+(mocha, turing, affogato, proxmox-01, proxmox-02). Two failure modes:
+
+- **Single-select (`multiSelect: false`) on a metric that only exists on some clusters**: at load
+  the selector lands on one value; if it's a cluster without that metric the whole dashboard shows
+  0/blank (e.g. Rook mons = 0 because ceph only lives on turing). Fix by scope:
+  - metric on ONE cluster (rook→turing, zfs→affogato): drop the variable, hardcode
+    `k8s.cluster.name = '<cluster>'`.
+  - metric on SEVERAL clusters (argocd, traefik on mocha+turing): set the variable to
+    `multiSelect: true` + `allSelected: true` so everything shows by default.
+- **Literal `IN`/`LIKE` on `k8s.cluster.name` are silently ignored** by the builder filter (verified:
+  `IN ('a','b')`, `IN ['a','b']`, `LIKE 'proxmox-%'` all return every cluster). Only `=` (one value)
+  and `IN $variable` (multiSelect var) actually filter. So to pin a panel to two specific clusters
+  without a variable, use **two builder queries** (A: `= 'proxmox-01'`, B: `= 'proxmox-02'`), each
+  `groupBy host.name` — not one `IN (...)` query. This is what the Proxmox host panels do, because
+  `system.*` host metrics exist on every hostmetrics source (mocha/turing/affogato too), so an
+  explicit per-cluster filter is mandatory.
+- PromQL is NOT a workaround here: metrics with dotted names (`system.cpu.load_average.1m`) aren't
+  addressable as `system_cpu_load_average_1m` in SigNoz PromQL (returns nothing).
+
 ## Getting application metrics into SigNoz
 
 - **Traefik** (v3.5+ only): native OTLP export. In the Helm values set
