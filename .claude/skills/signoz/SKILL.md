@@ -130,6 +130,42 @@ dataset (summing gave ~50 TiB on a 14.5 TiB pool) — show the pool value once
 includes its children, so a per-dataset breakdown must exclude the root (`name=~".+/.+"`) or it
 double-counts. Same idea for any parent/child or shared-resource metric.
 
+## ServiceMonitor / PodMonitor support (OTel Operator target allocator)
+
+To scrape `ServiceMonitor`/`PodMonitor` CRs (Prometheus Operator style) without running
+Prometheus, use the **OpenTelemetry Operator target allocator**. Two pieces per cluster:
+
+- `*/system/otel-operator/` — the `opentelemetry-operator` Helm chart (needs cert-manager for
+  its webhook, present on both clusters). Set `manager.collectorImage` to the contrib image.
+- `*/system/otel-metrics/` — an `OpenTelemetryCollector` (v1beta1, `mode: statefulset`) with
+  `targetAllocator.enabled` + `targetAllocator.prometheusCR.enabled` and empty selectors
+  (`serviceMonitorSelector: {}` / `podMonitorSelector: {}` = match all). Its prometheus
+  receiver has empty `scrape_configs` and a `target_allocator` block pointing at the
+  `<name>-targetallocator` service; the TA discovers the CRs and hands out targets. A
+  `resource/cluster` processor stamps `k8s.cluster.name`.
+
+RBAC is NOT created by the operator — ship two ClusterRoles+bindings (see `otel-metrics/rbac.yaml`):
+the TA SA needs `monitoring.coreos.com` (servicemonitors/podmonitors/probes/scrapeconfigs) plus
+namespaces/endpoints/services/pods/configmaps/secrets/endpointslices; the collector SA needs
+nodes/nodes-metrics/services/endpoints/pods + `/metrics` nonResourceURL. Set both via
+`spec.serviceAccount` and `spec.targetAllocator.serviceAccount`. Put `POD_NAME` (fieldRef) in
+`spec.env` and use it as `collector_id` so the TA can shard.
+
+- **mocha**: exporter `otlphttp` → `http://signoz-otel-collector.signoz.svc.cluster.local:4318`.
+- **turing**: collector lives in the `signoz-k8s-infra` namespace to reuse the existing
+  `signoz-mtls-ca` Issuer; a `Certificate` (`client auth`) is mounted at `/mtls` and the
+  `otlphttp` exporter pushes to `https://signoz-ingest.mocha.thoughtless.eu` with
+  `tls.cert_file`/`key_file`. No change to mocha's `signoz-mtls-ca` bundle is needed since the
+  cert is signed by a CA already in it.
+
+Gotchas: the collector may log one `dial tcp ... connect: operation not permitted` to the TA at
+startup (Cilium identity not ready yet); it self-heals within ~30s (`Scrape job added`). The
+contrib image has no shell, so debug from a separate curl pod, not `kubectl exec`. Verify in
+ClickHouse by the metric names the target actually exposes (e.g. kubevirt's cdi target exposes
+`controller_runtime_*`/`go_*`, not `cdi_*`). Add the `OpenTelemetryCollector` CR with
+`argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true` so it doesn't fail before
+the operator's CRD exists.
+
 ## Dashboards as code
 
 JSON files in `mocha/system/signoz/dashboards/`, bundled into a ConfigMap by
