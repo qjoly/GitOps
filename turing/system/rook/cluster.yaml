@@ -18,8 +18,7 @@ spec:
         toolbox:
           enabled: true
         monitoring:
-          enabled: true
-          createPrometheusRules: false
+          enabled: false
         cephClusterSpec:
           dataDirHostPath: /var/lib/rook
           mon:
