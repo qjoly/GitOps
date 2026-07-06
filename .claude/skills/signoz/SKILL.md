@@ -82,6 +82,25 @@ you add `filter.expression`.
   relabel keep the port named `metrics`). Adding a new pipeline/receiver key deep-merges
   cleanly; do not rewrite existing pipelines.
 
+## Showing friendly names for id-only metrics (PromQL info-metric join)
+
+Some Prometheus exporters put the human name only on a separate `*_info` metric and label the
+real metrics with an opaque id. `prometheus-pve-exporter` is the case in point: per-guest
+metrics (`pve_cpu_usage_ratio`, `pve_memory_usage_bytes`, ...) carry only `id="qemu/123"`, while
+the name lives on `pve_guest_info{id="qemu/123", name="traefik"}` (storage names on
+`pve_storage_info`). To display the name, switch that panel's query from the builder to
+**PromQL** and do an info-metric join:
+
+```promql
+pve_cpu_usage_ratio{id=~"qemu/.*"} * on (id) group_left(name) pve_guest_info
+```
+
+SigNoz's PromQL engine supports `group_left`, so this works (verified). Set the panel legend to
+`{{name}}`. In the dashboard JSON the widget uses `query.queryType: "promql"` with
+`query.promql[0] = {query, legend, name: "A", disabled: false}` and an empty
+`builder.queryData`. Builder queries cannot do this join, so keep the id-based builder shape only
+where the name does not matter (e.g. value/count panels).
+
 ## Dashboards as code
 
 JSON files in `mocha/system/signoz/dashboards/`, bundled into a ConfigMap by
