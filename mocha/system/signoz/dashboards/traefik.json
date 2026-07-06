@@ -69,7 +69,7 @@
   "uuid": "",
   "variables": {
     "4349d5be-eea6-41d2-9c8f-853ca85f018d": {
-      "allSelected": false,
+      "allSelected": true,
       "customValue": "",
       "defaultValue": "",
       "description": "Name of the cluster",
@@ -78,7 +78,7 @@
       "id": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
       "key": "4349d5be-eea6-41d2-9c8f-853ca85f018d",
       "modificationUUID": "e8b478ea-75fd-4de4-9438-ebde87e5d1f9",
-      "multiSelect": false,
+      "multiSelect": true,
       "name": "k8s.cluster.name",
       "order": 0,
       "queryValue": "",
