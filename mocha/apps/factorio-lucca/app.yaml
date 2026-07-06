@@ -30,6 +30,7 @@ spec:
               
               deployment:
                 port: 34197
+                minReplicas: 0
               image:
                 repository: factoriotools/factorio
                 tag: latest
