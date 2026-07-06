@@ -101,6 +101,35 @@ SigNoz's PromQL engine supports `group_left`, so this works (verified). Set the 
 `builder.queryData`. Builder queries cannot do this join, so keep the id-based builder shape only
 where the name does not matter (e.g. value/count panels).
 
+## reduceTo must be "last", not "sum" (inflated value/pie/bar panels)
+
+For value/pie/bar panels, each series is first reduced over the dashboard's time window by
+`reduceTo`. With `reduceTo: "sum"` the panel adds up **every sample in the window**, so the
+number is multiplied by the sample count (e.g. a 14.55 TiB pool showed ~55 TiB, "VMs running"
+showed 81 instead of 9). Always use **`reduceTo: "last"`** to show the current value. Set it in
+BOTH `queryData[].reduceTo` and each `queryData[].aggregations[].reduceTo`. This is the single
+most common cause of "the metrics look summed / the number is way too big".
+
+## The label `name` is ignored by the builder filter (use PromQL)
+
+A builder `filter.expression` on the reserved key `name` is silently dropped: `name = 'x'`,
+`name LIKE '...'` and `name != 'x'` all return every series unfiltered (verified against
+`zfs_dataset_*`, whose dataset is labelled `name`). Filtering/excluding by `name` must be done
+in **PromQL** (`queryType: "promql"`), where `name` is a normal label:
+`zfs_dataset_used_bytes{type="filesystem",name=~".+/.+"}`. Note PromQL label matchers can't use
+the dotted `k8s.cluster.name` easily, so drop that matcher when the metric only comes from one
+source. `!=` and `LIKE` on other (non-reserved) keys via the builder are also unreliable; `=`
+and `IN` and `LIKE` work on keys like `id`. When in doubt, verify with a `query_range` call.
+
+## Don't sum metrics that overlap (ZFS datasets)
+
+Some metrics represent a shared or nested resource and must never be summed across their series:
+ZFS `zfs_dataset_available_bytes` is the pool's shared free space, reported identically on every
+dataset (summing gave ~50 TiB on a 14.5 TiB pool) — show the pool value once
+(`zfs_pool_free_bytes`) instead. ZFS `zfs_dataset_used_bytes` on the pool root dataset already
+includes its children, so a per-dataset breakdown must exclude the root (`name=~".+/.+"`) or it
+double-counts. Same idea for any parent/child or shared-resource metric.
+
 ## Dashboards as code
 
 JSON files in `mocha/system/signoz/dashboards/`, bundled into a ConfigMap by
