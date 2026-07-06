@@ -42,6 +42,11 @@ spec:
       destination:
         server: https://kubernetes.default.svc
         namespace: "argocd"
+      syncPolicy:
+        automated:
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -69,3 +74,8 @@ spec:
       destination:
         server: https://kubernetes.default.svc
         namespace: "argocd"
+      syncPolicy:
+        automated:
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
