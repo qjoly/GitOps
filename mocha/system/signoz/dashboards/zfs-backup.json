@@ -201,7 +201,7 @@
                   "metricName": "zfs_pool_allocated_bytes",
                   "temporality": null,
                   "timeAggregation": "latest",
-                  "spaceAggregation": "sum",
+                  "spaceAggregation": "max",
                   "reduceTo": "sum"
                 }
               ]
@@ -376,47 +376,7 @@
       "panelTypes": "pie",
       "query": {
         "builder": {
-          "queryData": [
-            {
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'affogato' AND type = 'filesystem'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "name--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "name",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{name}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60,
-              "aggregations": [
-                {
-                  "metricName": "zfs_dataset_used_bytes",
-                  "temporality": null,
-                  "timeAggregation": "latest",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "sum"
-                }
-              ]
-            }
-          ],
+          "queryData": [],
           "queryFormulas": []
         },
         "clickhouse_sql": [
@@ -431,12 +391,12 @@
         "promql": [
           {
             "disabled": false,
-            "legend": "",
+            "legend": "{{name}}",
             "name": "A",
-            "query": ""
+            "query": "zfs_dataset_used_bytes{type=\"filesystem\",name=~\".+/.+\"}"
           }
         ],
-        "queryType": "builder"
+        "queryType": "promql"
       },
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
@@ -449,7 +409,7 @@
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
-      "panelTypes": "bar",
+      "panelTypes": "value",
       "query": {
         "builder": {
           "queryData": [
@@ -458,36 +418,27 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "k8s.cluster.name = 'affogato' AND type = 'filesystem'"
+                "expression": "k8s.cluster.name = 'affogato'"
               },
               "filters": {
                 "op": "AND",
                 "items": []
               },
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "name--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "name",
-                  "type": "tag"
-                }
-              ],
+              "groupBy": [],
               "having": {
                 "expression": ""
               },
-              "legend": "{{name}}",
+              "legend": "",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "stepInterval": 60,
               "aggregations": [
                 {
-                  "metricName": "zfs_dataset_available_bytes",
+                  "metricName": "zfs_pool_free_bytes",
                   "temporality": null,
                   "timeAggregation": "latest",
-                  "spaceAggregation": "sum",
+                  "spaceAggregation": "max",
                   "reduceTo": "sum"
                 }
               ]
@@ -516,7 +467,7 @@
       },
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Available by dataset",
+      "title": "Pool free",
       "yAxisUnit": "bytes"
     },
     {
@@ -528,47 +479,7 @@
       "panelTypes": "bar",
       "query": {
         "builder": {
-          "queryData": [
-            {
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'affogato' AND type = 'filesystem'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "name--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "name",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{name}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60,
-              "aggregations": [
-                {
-                  "metricName": "zfs_dataset_referenced_bytes",
-                  "temporality": null,
-                  "timeAggregation": "latest",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "sum"
-                }
-              ]
-            }
-          ],
+          "queryData": [],
           "queryFormulas": []
         },
         "clickhouse_sql": [
@@ -583,12 +494,12 @@
         "promql": [
           {
             "disabled": false,
-            "legend": "",
+            "legend": "{{name}}",
             "name": "A",
-            "query": ""
+            "query": "zfs_dataset_referenced_bytes{type=\"filesystem\",name=~\".+/.+\"}"
           }
         ],
-        "queryType": "builder"
+        "queryType": "promql"
       },
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
@@ -604,47 +515,7 @@
       "panelTypes": "graph",
       "query": {
         "builder": {
-          "queryData": [
-            {
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'affogato' AND type = 'filesystem'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "name--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "name",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{name}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60,
-              "aggregations": [
-                {
-                  "metricName": "zfs_dataset_written_bytes",
-                  "temporality": null,
-                  "timeAggregation": "latest",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "sum"
-                }
-              ]
-            }
-          ],
+          "queryData": [],
           "queryFormulas": []
         },
         "clickhouse_sql": [
@@ -659,12 +530,12 @@
         "promql": [
           {
             "disabled": false,
-            "legend": "",
+            "legend": "{{name}}",
             "name": "A",
-            "query": ""
+            "query": "zfs_dataset_written_bytes{type=\"filesystem\",name=~\".+/.+\"}"
           }
         ],
-        "queryType": "builder"
+        "queryType": "promql"
       },
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
