@@ -21,6 +21,14 @@ configMapGenerator:
       - dashboards/kubernetes-pod-metrics-detailed.json
       - dashboards/kubernetes-pod-metrics-overall.json
       - dashboards/kubernetes-pvc-metrics.json
+      - dashboards/kubernetes-apiserver.json
+      - dashboards/kubernetes-controller-manager.json
+      - dashboards/kubernetes-coredns.json
+      - dashboards/kubernetes-etcd.json
+      - dashboards/kubernetes-kube-proxy.json
+      - dashboards/kubernetes-kubelet.json
+      - dashboards/kubernetes-scheduler.json
+      - dashboards/kubernetes-system-overview.json
       - dashboards/argocd.json
       - dashboards/traefik.json
       - dashboards/plex.json
