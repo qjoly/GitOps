@@ -8,11 +8,18 @@ metadata:
 spec:
   provider:
     vault:
-      server: "http://vault.vault.svc.cluster.local:8200"
+      server: "https://vault.bank-vaults.svc.cluster.local:8200"
       path: "kv"
-      version: "v1"
+      version: "v2"
+      caProvider:
+        type: Secret
+        name: vault-tls
+        namespace: bank-vaults
+        key: ca.crt
       auth:
-        tokenSecretRef:
-          name: "vault-credentials"
-          key: "VAULT_TOKEN"
-          namespace: "argocd"
+        kubernetes:
+          mountPath: "kubernetes"
+          role: "default"
+          serviceAccountRef:
+            name: external-secrets
+            namespace: external-secrets
