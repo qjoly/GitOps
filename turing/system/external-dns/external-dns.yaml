@@ -4,6 +4,8 @@ kind: Application
 metadata:
   name: external-dns
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     # Application is needed before the secret
     argocd.argoproj.io/sync-wave: "-1"
