@@ -114,3 +114,7 @@ spec:
         - /spec/mon
         - /spec/resources
         - /spec/storage
+        - /spec/network
+        - /spec/removeOSDsIfOutAndSafeToRemove
+        - /spec/skipUpgradeChecks
+        - /spec/upgradeOSDRequiresHealthyPGs
