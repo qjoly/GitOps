@@ -36,6 +36,8 @@ spec:
   template:
     metadata:
       name: "app-{{.path.basename}}"
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
     spec:
       project: "default"
       source:
@@ -69,6 +71,8 @@ spec:
   template:
     metadata:
       name: "sys-{{.path.basename}}"
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
     spec:
       project: "default"
       source:
