@@ -1,8 +1,8 @@
 cluster:
   extraManifests:
-    # --- Cilium Installation ---
-    #    - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/cilium/install-cilium.yaml
-    #    - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/cilium/L2Announcement.yaml
+    # --- Cilium Installation (v1.18.2, Talos-compatible caps: no SYS_MODULE) ---
+    - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/cilium/install-cilium.yaml
+    - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/cilium/L2Announcement.yaml
     # --- ArgoCD Installation (vanilla, no AVP - turing uses bank-vaults) ---
     - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/argocd/argocd.namespace.yaml
     - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/argocd/argocd.install.vanilla.yaml
