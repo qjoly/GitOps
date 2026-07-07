@@ -14,6 +14,8 @@ spec:
     helm:
       values: |
         replicaCount: 2
+        env:
+          VAULT_ADDR_ALLOWLIST: "https://vault.bank-vaults:8200,https://vault.bank-vaults.svc:8200,https://vault.bank-vaults.svc.cluster.local:8200"
         resources:
           requests:
             cpu: 50m
