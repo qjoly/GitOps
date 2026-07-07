@@ -14,9 +14,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: cloudflare
   source:
-    repoURL: https://github.com/rubxkube/charts
-    targetRevision: main
-    path: charts/cloudflare-tunnel
+    repoURL: https://rubxkube.github.io/charts/
+    chart: cloudflare-tunnel
+    targetRevision: 0.3.3
     helm:
       values: |
         cloudflare:
