@@ -5,7 +5,6 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"
-    argocd.argoproj.io/compare-options: ServerSideDiff=true
 spec:
   project: default
   source:
@@ -100,3 +99,8 @@ spec:
         duration: 15s
         factor: 2
         maxDuration: 5m
+  ignoreDifferences:
+    - group: ceph.rook.io
+      kind: CephCluster
+      managedFieldsManagers:
+        - rook
