@@ -29,9 +29,9 @@ spec:
           resources:
             requests:
               cpu: 500m
-              memory: 4Gi
+              memory: 8Gi
             limits:
-              memory: 10Gi
+              memory: 24Gi
         signoz:
           ingress:
             enabled: true
