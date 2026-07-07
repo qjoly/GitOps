@@ -102,5 +102,15 @@ spec:
   ignoreDifferences:
     - group: ceph.rook.io
       kind: CephCluster
-      managedFieldsManagers:
-        - rook
+      jsonPointers:
+        - /spec/cephVersion
+        - /spec/cleanupPolicy
+        - /spec/continueUpgradeAfterChecksEvenIfNotHealthy
+        - /spec/crashCollector
+        - /spec/dashboard
+        - /spec/healthCheck
+        - /spec/monitoring
+        - /spec/mgr
+        - /spec/mon
+        - /spec/resources
+        - /spec/storage
