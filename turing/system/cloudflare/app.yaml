@@ -14,14 +14,15 @@ spec:
     server: https://kubernetes.default.svc
     namespace: cloudflare
   source:
-    repoURL: https://github.com/cloudflare/helm-charts
-    targetRevision: cloudflare-tunnel-0.3.2
+    repoURL: https://github.com/rubxkube/charts
+    targetRevision: main
     path: charts/cloudflare-tunnel
     helm:
       values: |
         cloudflare:
           tunnelName: "turing-cluster"
           secretName: "cloudflare-tunnel-credentials"
+          protocol: "http2"
           ingress:
             - hostname: "*.thoughtless.eu"
               service: "https://traefik.traefik.svc.cluster.local:443"
