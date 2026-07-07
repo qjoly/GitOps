@@ -22,13 +22,6 @@ spec:
     server: https://kubernetes.default.svc
     namespace: spegel
   syncPolicy:
-    managedNamespaceMetadata:
-      labels:
-        pod-security.kubernetes.io/enforce: privileged
-        pod-security.kubernetes.io/audit: privileged
-        pod-security.kubernetes.io/warn: privileged
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
