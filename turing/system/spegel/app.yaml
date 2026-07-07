@@ -16,6 +16,8 @@ spec:
       values: |
         spegel:
           containerdRegistryConfigPath: /etc/cri/conf.d/hosts
+        image:
+          tag: v0.6.0
   destination:
     server: https://kubernetes.default.svc
     namespace: spegel
