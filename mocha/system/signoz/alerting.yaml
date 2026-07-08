@@ -128,22 +128,22 @@ spec:
                           "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc, "managed_by": PROVISIONER},
                           "preferredChannels": ["discord"]}
 
-              def grule(name, metric, tagg, sagg, op, target, sev, summary, desc, expr, groupby, win="5m0s", freq="1m0s"):
+              def grule(name, metric, tagg, sagg, op, target, sev, summary, desc, expr, groupby, win="5m0s", freq="1m0s", match="1"):
                   return {"version": "v5", "alert": name, "alertType": "METRIC_BASED_ALERT", "ruleType": "threshold_rule",
                           "evalWindow": win, "frequency": freq,
                           "condition": {"compositeQuery": {"queryType": "builder", "panelType": "graph", "queries": [
                               {"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "disabled": False,
                                   "aggregations": [{"metricName": metric, "timeAggregation": tagg, "spaceAggregation": sagg}],
                                   "filter": {"expression": expr}, "groupBy": [gbk(k) for k in groupby]}}]},
-                              "op": op, "target": target, "matchType": "1", "selectedQueryName": "A"},
+                              "op": op, "target": target, "matchType": match, "selectedQueryName": "A"},
                           "labels": {"severity": sev}, "annotations": {"summary": summary, "description": desc, "managed_by": PROVISIONER},
                           "preferredChannels": ["discord"]}
 
               rules = [
                   grule("ArgoCD applications OutOfSync", "argocd_app_info", "count", "sum", ">", 0, "warning",
                         "ArgoCD has out-of-sync applications",
-                        "One or more ArgoCD applications are OutOfSync.",
-                        "sync_status = 'OutOfSync'", ["k8s.cluster.name", "name"]),
+                        "One or more ArgoCD applications have been OutOfSync for over 10m (not a transient auto-sync).",
+                        "sync_status = 'OutOfSync'", ["k8s.cluster.name", "name"], win="10m0s", freq="2m0s", match="2"),
                   grule("Ceph cluster not healthy", "ceph_health_status", "latest", "max", ">", 0, "warning",
                         "Ceph cluster is not HEALTH_OK",
                         "ceph_health_status > 0 on turing (1=HEALTH_WARN, 2=HEALTH_ERR).",
