@@ -47,6 +47,7 @@ spec:
     namespace: tang
   syncPolicy:
     automated:
+      selfHeal: true
       prune: true
     syncOptions:
       - CreateNamespace=true

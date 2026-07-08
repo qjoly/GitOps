@@ -48,6 +48,7 @@ spec:
     namespace: slash
   syncPolicy:
     automated:
+      selfHeal: true
       prune: true
     syncOptions:
       - CreateNamespace=true

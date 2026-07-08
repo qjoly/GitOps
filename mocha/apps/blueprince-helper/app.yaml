@@ -40,6 +40,7 @@ spec:
     namespace: blueprince-helper
   syncPolicy:
     automated:
+      selfHeal: true
       prune: true
     syncOptions:
       - CreateNamespace=true

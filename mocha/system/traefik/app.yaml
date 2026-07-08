@@ -6,6 +6,8 @@ metadata:
 spec:
   project: default
   syncPolicy:
+    automated:
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
