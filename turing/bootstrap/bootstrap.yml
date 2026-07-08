@@ -53,6 +53,11 @@ spec:
           prune: true
         syncOptions:
           - CreateNamespace=true
+      ignoreDifferences:
+        - group: argoproj.io
+          kind: Application
+          jsonPointers:
+            - /metadata/finalizers
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -88,3 +93,8 @@ spec:
           prune: true
         syncOptions:
           - CreateNamespace=true
+      ignoreDifferences:
+        - group: argoproj.io
+          kind: Application
+          jsonPointers:
+            - /metadata/finalizers
