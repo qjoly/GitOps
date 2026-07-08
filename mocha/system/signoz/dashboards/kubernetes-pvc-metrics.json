@@ -50,7 +50,12 @@
     }
   ],
   "panelMap": {},
-  "tags": ["pvc", "pod", "volume", "k8s"],
+  "tags": [
+    "pvc",
+    "pod",
+    "volume",
+    "k8s"
+  ],
   "title": "Kubernetes PVC Metrics",
   "uploadedGrafana": false,
   "variables": {
@@ -132,7 +137,7 @@
               "aggregations": [
                 {
                   "metricName": "k8s.volume.available",
-                  "reduceTo": "sum",
+                  "reduceTo": "last",
                   "spaceAggregation": "sum",
                   "temporality": null,
                   "timeAggregation": "avg"
@@ -142,7 +147,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "(k8s.cluster.name IN $k8s.cluster.name  AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name)"
+                "expression": "(k8s.cluster.name IN $k8s.cluster.name  AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name) AND k8s.volume.type = 'persistentVolumeClaim'"
               },
               "filters": {
                 "items": [
@@ -178,6 +183,17 @@
                     },
                     "op": "IN",
                     "value": "$k8s.namespace.name"
+                  },
+                  {
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.volume.type--string--",
+                      "key": "k8s.volume.type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "persistentVolumeClaim",
+                    "id": "voltype-0-0"
                   }
                 ],
                 "op": "AND"
@@ -193,13 +209,15 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "k8s.pod.name--string--tag--false",
+                  "id": "k8s.persistentvolumeclaim.name--string--tag--false",
                   "isColumn": false,
-                  "key": "k8s.pod.name",
+                  "key": "k8s.persistentvolumeclaim.name",
                   "type": "tag"
                 }
               ],
-              "having": { "expression": "" },
+              "having": {
+                "expression": ""
+              },
               "legend": "{{k8s.namespace.name}}-{{k8s.pod.name}}",
               "limit": null,
               "orderBy": [],
@@ -210,11 +228,21 @@
           "queryFormulas": []
         },
         "clickhouse_sql": [
-          { "disabled": false, "legend": "", "name": "A", "query": "" }
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
         ],
         "id": "1f0f6b32-2d31-473c-9d09-8ff5ec235e55",
         "promql": [
-          { "disabled": false, "legend": "", "name": "A", "query": "" }
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
         ],
         "queryType": "builder"
       },
@@ -247,7 +275,7 @@
               "aggregations": [
                 {
                   "metricName": "k8s.volume.capacity",
-                  "reduceTo": "sum",
+                  "reduceTo": "last",
                   "spaceAggregation": "sum",
                   "temporality": null,
                   "timeAggregation": "avg"
@@ -257,7 +285,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "(k8s.cluster.name IN $k8s.cluster.name  AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name)"
+                "expression": "(k8s.cluster.name IN $k8s.cluster.name  AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name) AND k8s.volume.type = 'persistentVolumeClaim'"
               },
               "filters": {
                 "items": [
@@ -293,6 +321,17 @@
                     },
                     "op": "IN",
                     "value": "$k8s.namespace.name"
+                  },
+                  {
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.volume.type--string--",
+                      "key": "k8s.volume.type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "persistentVolumeClaim",
+                    "id": "voltype-1-0"
                   }
                 ],
                 "op": "AND"
@@ -308,13 +347,15 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "k8s.pod.name--string--tag--false",
+                  "id": "k8s.persistentvolumeclaim.name--string--tag--false",
                   "isColumn": false,
-                  "key": "k8s.pod.name",
+                  "key": "k8s.persistentvolumeclaim.name",
                   "type": "tag"
                 }
               ],
-              "having": { "expression": "" },
+              "having": {
+                "expression": ""
+              },
               "legend": "{{k8s.namespace.name}}-{{k8s.pod.name}}",
               "limit": null,
               "orderBy": [],
@@ -325,11 +366,21 @@
           "queryFormulas": []
         },
         "clickhouse_sql": [
-          { "disabled": false, "legend": "", "name": "A", "query": "" }
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
         ],
         "id": "2b9730b5-864c-47da-b2f6-b8991b52814b",
         "promql": [
-          { "disabled": false, "legend": "", "name": "A", "query": "" }
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
         ],
         "queryType": "builder"
       },
@@ -357,7 +408,7 @@
               "aggregations": [
                 {
                   "metricName": "k8s.volume.inodes",
-                  "reduceTo": "sum",
+                  "reduceTo": "last",
                   "spaceAggregation": "sum",
                   "temporality": null,
                   "timeAggregation": "avg"
@@ -367,7 +418,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "(k8s.cluster.name IN $k8s.cluster.name  AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name)"
+                "expression": "(k8s.cluster.name IN $k8s.cluster.name  AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name) AND k8s.volume.type = 'persistentVolumeClaim'"
               },
               "filters": {
                 "items": [
@@ -403,6 +454,17 @@
                     },
                     "op": "IN",
                     "value": "$k8s.namespace.name"
+                  },
+                  {
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.volume.type--string--",
+                      "key": "k8s.volume.type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "persistentVolumeClaim",
+                    "id": "voltype-2-0"
                   }
                 ],
                 "op": "AND"
@@ -417,13 +479,15 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "k8s.pod.name--string--tag--false",
+                  "id": "k8s.persistentvolumeclaim.name--string--tag--false",
                   "isColumn": false,
-                  "key": "k8s.pod.name",
+                  "key": "k8s.persistentvolumeclaim.name",
                   "type": "tag"
                 }
               ],
-              "having": { "expression": "" },
+              "having": {
+                "expression": ""
+              },
               "legend": "{{k8s.namespace.name}}-{{k8s.pod.name}}",
               "limit": null,
               "orderBy": [],
@@ -434,11 +498,21 @@
           "queryFormulas": []
         },
         "clickhouse_sql": [
-          { "disabled": false, "legend": "", "name": "A", "query": "" }
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
         ],
         "id": "fe9f67bd-b820-48f1-8676-e7505fa28834",
         "promql": [
-          { "disabled": false, "legend": "", "name": "A", "query": "" }
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
         ],
         "queryType": "builder"
       },
@@ -460,7 +534,7 @@
               "aggregations": [
                 {
                   "metricName": "k8s.volume.inodes.free",
-                  "reduceTo": "sum",
+                  "reduceTo": "last",
                   "spaceAggregation": "sum",
                   "temporality": null,
                   "timeAggregation": "avg"
@@ -470,7 +544,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "(k8s.cluster.name IN $k8s.cluster.name  AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name)"
+                "expression": "(k8s.cluster.name IN $k8s.cluster.name  AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name) AND k8s.volume.type = 'persistentVolumeClaim'"
               },
               "filters": {
                 "items": [
@@ -506,6 +580,17 @@
                     },
                     "op": "IN",
                     "value": "$k8s.namespace.name"
+                  },
+                  {
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.volume.type--string--",
+                      "key": "k8s.volume.type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "persistentVolumeClaim",
+                    "id": "voltype-3-0"
                   }
                 ],
                 "op": "AND"
@@ -520,13 +605,15 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "k8s.pod.name--string--tag--false",
+                  "id": "k8s.persistentvolumeclaim.name--string--tag--false",
                   "isColumn": false,
-                  "key": "k8s.pod.name",
+                  "key": "k8s.persistentvolumeclaim.name",
                   "type": "tag"
                 }
               ],
-              "having": { "expression": "" },
+              "having": {
+                "expression": ""
+              },
               "legend": "{{k8s.namespace.name}}-{{k8s.pod.name}}",
               "limit": null,
               "orderBy": [],
@@ -537,11 +624,21 @@
           "queryFormulas": []
         },
         "clickhouse_sql": [
-          { "disabled": false, "legend": "", "name": "A", "query": "" }
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
         ],
         "id": "5662eaa7-159f-4007-b35d-08983d5c8602",
         "promql": [
-          { "disabled": false, "legend": "", "name": "A", "query": "" }
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
         ],
         "queryType": "builder"
       },
@@ -563,7 +660,7 @@
               "aggregations": [
                 {
                   "metricName": "k8s.volume.inodes.used",
-                  "reduceTo": "sum",
+                  "reduceTo": "last",
                   "spaceAggregation": "sum",
                   "temporality": null,
                   "timeAggregation": "avg"
@@ -573,7 +670,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "(k8s.cluster.name IN $k8s.cluster.name  AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name)"
+                "expression": "(k8s.cluster.name IN $k8s.cluster.name  AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name) AND k8s.volume.type = 'persistentVolumeClaim'"
               },
               "filters": {
                 "items": [
@@ -609,6 +706,17 @@
                     },
                     "op": "IN",
                     "value": "$k8s.namespace.name"
+                  },
+                  {
+                    "key": {
+                      "dataType": "string",
+                      "id": "k8s.volume.type--string--",
+                      "key": "k8s.volume.type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "persistentVolumeClaim",
+                    "id": "voltype-4-0"
                   }
                 ],
                 "op": "AND"
@@ -623,13 +731,15 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "k8s.pod.name--string--tag--false",
+                  "id": "k8s.persistentvolumeclaim.name--string--tag--false",
                   "isColumn": false,
-                  "key": "k8s.pod.name",
+                  "key": "k8s.persistentvolumeclaim.name",
                   "type": "tag"
                 }
               ],
-              "having": { "expression": "" },
+              "having": {
+                "expression": ""
+              },
               "legend": "{{k8s.namespace.name}}-{{k8s.pod.name}}",
               "limit": null,
               "orderBy": [],
@@ -640,11 +750,21 @@
           "queryFormulas": []
         },
         "clickhouse_sql": [
-          { "disabled": false, "legend": "", "name": "A", "query": "" }
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
         ],
         "id": "4db01126-3a7f-4b27-8c91-fd822ac453e8",
         "promql": [
-          { "disabled": false, "legend": "", "name": "A", "query": "" }
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
         ],
         "queryType": "builder"
       },
