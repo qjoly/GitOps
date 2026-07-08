@@ -218,7 +218,7 @@
               "having": {
                 "expression": ""
               },
-              "legend": "{{k8s.namespace.name}}-{{k8s.pod.name}}",
+              "legend": "{{k8s.namespace.name}}-{{k8s.persistentvolumeclaim.name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
@@ -356,7 +356,7 @@
               "having": {
                 "expression": ""
               },
-              "legend": "{{k8s.namespace.name}}-{{k8s.pod.name}}",
+              "legend": "{{k8s.namespace.name}}-{{k8s.persistentvolumeclaim.name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
@@ -488,7 +488,7 @@
               "having": {
                 "expression": ""
               },
-              "legend": "{{k8s.namespace.name}}-{{k8s.pod.name}}",
+              "legend": "{{k8s.namespace.name}}-{{k8s.persistentvolumeclaim.name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
@@ -614,7 +614,7 @@
               "having": {
                 "expression": ""
               },
-              "legend": "{{k8s.namespace.name}}-{{k8s.pod.name}}",
+              "legend": "{{k8s.namespace.name}}-{{k8s.persistentvolumeclaim.name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
@@ -740,7 +740,7 @@
               "having": {
                 "expression": ""
               },
-              "legend": "{{k8s.namespace.name}}-{{k8s.pod.name}}",
+              "legend": "{{k8s.namespace.name}}-{{k8s.persistentvolumeclaim.name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
