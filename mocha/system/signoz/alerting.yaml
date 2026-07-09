@@ -193,10 +193,6 @@ spec:
                         "Container restarting frequently",
                         "More than 3 restarts over 15m (possible CrashLoopBackOff).",
                         ["k8s.cluster.name", "k8s.pod.name", "k8s.container.name"], win="15m0s", freq="5m0s"),
-                  krule("Kubernetes container near memory limit", "k8s.container.memory_limit_utilization", "latest", "max", ">", 0.95, "warning",
-                        "Container near its memory limit",
-                        "Container memory usage above 95% of its limit (OOM risk).",
-                        ["k8s.cluster.name", "k8s.pod.name"], win="10m0s", freq="5m0s"),
               ]
               def field(r, k):
                   return r.get(k) if r.get(k) is not None else (r.get("data") or {}).get(k)
