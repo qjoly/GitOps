@@ -32,6 +32,7 @@ spec:
               # schéma OTel standard attendu par le plugin → otel désactivé, on requête au
               # query builder SQL. Activer le mode OTel casserait (colonnes différentes).
               - name: SigNoz ClickHouse
+                uid: signoz-clickhouse
                 type: grafana-clickhouse-datasource
                 access: proxy
                 jsonData:
@@ -80,6 +81,8 @@ spec:
                 # role_attribute_path: contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
         sidecar:
           datasources:
+            enabled: true
+          dashboards:
             enabled: true
         serviceMonitor:
           enabled: false

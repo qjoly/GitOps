@@ -1,0 +1,132 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "title": "Kubernetes (SigNoz / ClickHouse)",
+  "uid": "k8s-signoz-clickhouse",
+  "tags": ["kubernetes", "signoz", "clickhouse"],
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "1m",
+  "templating": {
+    "list": [
+      {
+        "name": "cluster",
+        "label": "Cluster",
+        "type": "query",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+        "query": {
+          "refId": "A",
+          "queryType": "table",
+          "rawSql": "SELECT DISTINCT JSONExtractString(labels,'k8s.cluster.name') FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='k8s.node.cpu.usage' ORDER BY 1"
+        },
+        "refresh": 1,
+        "sort": 1,
+        "includeAll": false,
+        "multi": false,
+        "current": { "text": "mocha", "value": "mocha", "selected": true },
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    { "type": "row", "title": "Nodes", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "id": 1 },
+    {
+      "type": "timeseries",
+      "title": "Node CPU usage (cores)",
+      "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT toStartOfInterval(toDateTime(unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, node, avg(value) AS value FROM (SELECT s.unix_milli AS unix_milli, s.value AS value, JSONExtractString(t.labels,'k8s.node.name') AS node, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='k8s.node.cpu.usage' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='k8s.node.cpu.usage' AND $__timeFilter(toDateTime(s.unix_milli/1000))) WHERE cluster='$cluster' GROUP BY time, node ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Node memory usage",
+      "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT toStartOfInterval(toDateTime(unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, node, avg(value) AS value FROM (SELECT s.unix_milli AS unix_milli, s.value AS value, JSONExtractString(t.labels,'k8s.node.name') AS node, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='k8s.node.memory.usage' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='k8s.node.memory.usage' AND $__timeFilter(toDateTime(s.unix_milli/1000))) WHERE cluster='$cluster' GROUP BY time, node ORDER BY time"
+        }
+      ]
+    },
+    { "type": "row", "title": "Pods", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }, "id": 4 },
+    {
+      "type": "table",
+      "title": "Top pods by CPU (cores, avg over range)",
+      "id": 5,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "cpu_cores", "desc": true }] },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 1,
+          "rawSql": "SELECT namespace, pod, round(avg(value),3) AS cpu_cores FROM (SELECT s.value AS value, JSONExtractString(t.labels,'k8s.namespace.name') AS namespace, JSONExtractString(t.labels,'k8s.pod.name') AS pod, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='k8s.pod.cpu.usage' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='k8s.pod.cpu.usage' AND $__timeFilter(toDateTime(s.unix_milli/1000))) WHERE cluster='$cluster' GROUP BY namespace, pod ORDER BY cpu_cores DESC LIMIT 20"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Top pods by memory (avg over range)",
+      "id": 6,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": {}, "overrides": [{ "matcher": { "id": "byName", "options": "mem_bytes" }, "properties": [{ "id": "unit", "value": "bytes" }] }] },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "mem_bytes", "desc": true }] },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 1,
+          "rawSql": "SELECT namespace, pod, avg(value) AS mem_bytes FROM (SELECT s.value AS value, JSONExtractString(t.labels,'k8s.namespace.name') AS namespace, JSONExtractString(t.labels,'k8s.pod.name') AS pod, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='k8s.pod.memory.usage' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='k8s.pod.memory.usage' AND $__timeFilter(toDateTime(s.unix_milli/1000))) WHERE cluster='$cluster' GROUP BY namespace, pod ORDER BY mem_bytes DESC LIMIT 20"
+        }
+      ]
+    },
+    { "type": "row", "title": "Health", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 }, "id": 7 },
+    {
+      "type": "table",
+      "title": "Container restarts",
+      "id": 8,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 19 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "restarts", "desc": true }] },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 1,
+          "rawSql": "SELECT namespace, pod, container, toUInt64(max(value)) AS restarts FROM (SELECT s.value AS value, JSONExtractString(t.labels,'k8s.namespace.name') AS namespace, JSONExtractString(t.labels,'k8s.pod.name') AS pod, JSONExtractString(t.labels,'k8s.container.name') AS container, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='k8s.container.restarts' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='k8s.container.restarts' AND $__timeFilter(toDateTime(s.unix_milli/1000))) WHERE cluster='$cluster' GROUP BY namespace, pod, container HAVING restarts > 0 ORDER BY restarts DESC LIMIT 20"
+        }
+      ]
+    }
+  ]
+}

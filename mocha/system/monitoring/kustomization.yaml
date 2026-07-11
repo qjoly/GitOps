@@ -5,3 +5,14 @@ resources:
   - loki-stack.yaml
   - grafana.yaml
   - middleware.yaml
+configMapGenerator:
+  - name: grafana-dashboard-k8s-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/k8s-clickhouse.json
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
