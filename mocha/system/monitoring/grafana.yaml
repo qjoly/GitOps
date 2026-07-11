@@ -23,6 +23,25 @@ spec:
         adminPassword: <path:kv/grafana#pass>
         plugins:
           - chaosmeshorg-datasource
+          - grafana-clickhouse-datasource
+        datasources:
+          datasources.yaml:
+            apiVersion: 1
+            datasources:
+              # ponytail: schéma SigNoz (signoz_traces/signoz_logs/signoz_metrics), PAS le
+              # schéma OTel standard attendu par le plugin → otel désactivé, on requête au
+              # query builder SQL. Activer le mode OTel casserait (colonnes différentes).
+              - name: SigNoz ClickHouse
+                type: grafana-clickhouse-datasource
+                access: proxy
+                jsonData:
+                  host: signoz-clickhouse.signoz.svc.cluster.local
+                  port: 9000
+                  protocol: native
+                  secure: false
+                  username: admin
+                secureJsonData:
+                  password: <path:kv/signoz-clickhouse#password>
         ingress:
           enabled: true
           ingressClassName: traefik
