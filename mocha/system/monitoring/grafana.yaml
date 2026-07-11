@@ -74,6 +74,7 @@ spec:
                 auth_url: "https://oidc.home.une-tasse-de.cafe/application/o/authorize/"
                 token_url: "https://oidc.home.une-tasse-de.cafe/application/o/token/"
                 api_url: "https://oidc.home.une-tasse-de.cafe/application/o/userinfo/"
+                role_attribute_path: "'Admin'"
                 # Optionally map user groups to Grafana roles
                 # role_attribute_path: contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
         sidecar:
