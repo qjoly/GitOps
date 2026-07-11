@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  admin.enabled: "true"
+  application.instanceLabelKey: argocd.argoproj.io/instance
+  exec.enabled: "false"
+  server.rbac.log.enforce.enable: "false"
+  statusbadge.enabled: "false"
+  timeout.hard.reconciliation: 0s
+  timeout.reconciliation: 180s
+  url: https://argocd.mocha.thoughtless.eu
+  accounts.brian: apiKey, login
+  dex.config: |
+    connectors:
+    - config:
+        issuer: https://oidc.home.une-tasse-de.cafe/application/o/argocd-mocha/
+        clientID: 0ErFEH07XOcuRf6uNC5dEwcHSIC0b2WfMK0fH2M6
+        clientSecret: $dex.authentik.clientSecret
+        insecureEnableGroups: true
+        scopes:
+          - openid
+          - profile
+          - email
+          - groups
+      name: authentik
+      type: oidc
+      id: authentik
+  resource.exclusions: |
+    - apiGroups:
+      - cilium.io
+      kinds:
+      - CiliumIdentity
+      clusters:
+      - "*"
+  resource.customizations.ignoreResourceUpdates.all: |
+    jsonPointers:
+      - /status
+  resource.customizations.ignoreResourceUpdates.ConfigMap: |
+    jqPathExpressions:
+      - '.metadata.annotations."cluster-autoscaler.kubernetes.io/last-updated"'
+      - '.metadata.annotations."control-plane.alpha.kubernetes.io/leader"'
+  resource.customizations.ignoreResourceUpdates.Endpoints: |
+    jsonPointers:
+      - /metadata
+      - /subsets
+  resource.customizations.ignoreResourceUpdates.apps_ReplicaSet: |
+    jqPathExpressions:
+      - '.metadata.annotations."deployment.kubernetes.io/desired-replicas"'
+      - '.metadata.annotations."deployment.kubernetes.io/max-replicas"'
+      - '.metadata.annotations."rollout.argoproj.io/desired-replicas"'
+  resource.customizations.ignoreResourceUpdates.argoproj.io_Application: |
+    jqPathExpressions:
+      - '.metadata.annotations."notified.notifications.argoproj.io"'
+      - '.metadata.annotations."argocd.argoproj.io/refresh"'
+      - '.metadata.annotations."argocd.argoproj.io/hydrate"'
+      - '.operation'
+  resource.customizations.ignoreResourceUpdates.argoproj.io_Rollout: |
+    jqPathExpressions:
+      - '.metadata.annotations."notified.notifications.argoproj.io"'
+  resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscaler: |
+    jqPathExpressions:
+      - '.metadata.annotations."autoscaling.alpha.kubernetes.io/behavior"'
+      - '.metadata.annotations."autoscaling.alpha.kubernetes.io/conditions"'
+      - '.metadata.annotations."autoscaling.alpha.kubernetes.io/metrics"'
+      - '.metadata.annotations."autoscaling.alpha.kubernetes.io/current-metrics"'
+  resource.customizations.ignoreResourceUpdates.discovery.k8s.io_EndpointSlice: |
+    jsonPointers:
+      - /metadata
+      - /endpoints
+      - /ports
