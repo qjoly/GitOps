@@ -56,6 +56,10 @@ spec:
         persistence:
           type: pvc
           enabled: true
+        # ponytail: PVC RWO (openebs-lvmpv) non montable 2x → Recreate tue l'ancien pod
+        # avant de lancer le nouveau. RollingUpdate deadlock sur ce storage.
+        deploymentStrategy:
+          type: Recreate
         assertNoLeakedSecrets: false
         grafana.ini:
             server:
