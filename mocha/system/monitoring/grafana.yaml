@@ -19,6 +19,8 @@ spec:
     targetRevision: 10.5.8
     helm:
       values: |
+        annotations:
+          reloader.stakater.com/auto: "true"
         adminUser: <path:kv/grafana#user>
         adminPassword: <path:kv/grafana#pass>
         plugins:
