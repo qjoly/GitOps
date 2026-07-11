@@ -10,6 +10,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/k8s-clickhouse.json
+  - name: grafana-dashboard-rook-ceph-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/rook-ceph-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
