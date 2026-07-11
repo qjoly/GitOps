@@ -27,10 +27,6 @@ spec:
         datasources:
           datasources.yaml:
             apiVersion: 1
-            # supprime l'ancienne datasource (uid auto) avant de la recréer avec uid fixe
-            deleteDatasources:
-              - name: SigNoz ClickHouse
-                orgId: 1
             datasources:
               # ponytail: schéma SigNoz (signoz_traces/signoz_logs/signoz_metrics), PAS le
               # schéma OTel standard attendu par le plugin → otel désactivé, on requête au
