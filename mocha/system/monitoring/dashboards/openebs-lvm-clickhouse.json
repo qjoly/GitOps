@@ -1,0 +1,187 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "title": "OpenEBS LVM (SigNoz / ClickHouse)",
+  "uid": "openebs-lvm-signoz-clickhouse",
+  "description": "OpenEBS LVM volume group, physical volumes and volumes (mocha).",
+  "tags": ["openebs", "lvm", "storage", "signoz", "clickhouse"],
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "1m",
+  "templating": {
+    "list": [
+      {
+        "name": "cluster",
+        "label": "Cluster",
+        "type": "query",
+        "multi": true,
+        "includeAll": true,
+        "current": { "text": "All", "value": "$__all", "selected": true },
+        "options": [],
+        "refresh": 1,
+        "sort": 1,
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+        "query": {
+          "refId": "A",
+          "queryType": "table",
+          "rawSql": "SELECT DISTINCT JSONExtractString(labels,'k8s.cluster.name') FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='lvm_vg_total_size_bytes' AND JSONExtractString(labels,'k8s.cluster.name')!='' ORDER BY 1"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "VG total size",
+      "id": 1,
+      "gridPos": { "h": 3, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "area" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, max(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='lvm_vg_total_size_bytes' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='lvm_vg_total_size_bytes' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "VG free size",
+      "id": 2,
+      "gridPos": { "h": 3, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "area" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, max(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='lvm_vg_free_size_bytes' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='lvm_vg_free_size_bytes' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Logical volumes",
+      "id": 3,
+      "gridPos": { "h": 3, "w": 6, "x": 0, "y": 3 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "area" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, max(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='lvm_vg_lv_count' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='lvm_vg_lv_count' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Physical volumes",
+      "id": 4,
+      "gridPos": { "h": 3, "w": 6, "x": 6, "y": 3 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "area" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, max(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='lvm_vg_pv_count' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='lvm_vg_pv_count' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "VG free over time",
+      "id": 5,
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 6 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "last"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, name, max(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'name') AS name, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='lvm_vg_free_size_bytes' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='lvm_vg_free_size_bytes' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, name, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, name ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "PV used by device",
+      "id": 6,
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 6 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 1,
+          "rawSql": "SELECT name, max(v) AS value FROM (SELECT s.fingerprint AS fp, JSONExtractString(t.labels,'name') AS name, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='lvm_pv_used_size_bytes' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='lvm_pv_used_size_bytes' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY fp, name, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY name ORDER BY value DESC"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "PV free by device",
+      "id": 7,
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 12 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "last"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, name, max(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'name') AS name, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='lvm_pv_free_size_bytes' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='lvm_pv_free_size_bytes' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, name, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, name ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Volume sizes",
+      "id": 8,
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 12 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 1,
+          "rawSql": "SELECT volumename, max(v) AS value FROM (SELECT s.fingerprint AS fp, JSONExtractString(t.labels,'volumename') AS volumename, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='openebs_size_of_volume' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='openebs_size_of_volume' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY fp, volumename, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY volumename ORDER BY value DESC"
+        }
+      ]
+    }
+  ]
+}

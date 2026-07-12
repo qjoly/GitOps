@@ -34,6 +34,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/host-metrics-clickhouse.json
+  - name: grafana-dashboard-openebs-lvm-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/openebs-lvm-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
