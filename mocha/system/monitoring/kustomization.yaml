@@ -22,6 +22,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/argocd-clickhouse.json
+  - name: grafana-dashboard-cert-manager-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/cert-manager-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
