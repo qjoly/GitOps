@@ -30,6 +30,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/coredns-clickhouse.json
+  - name: grafana-dashboard-host-metrics-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/host-metrics-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
