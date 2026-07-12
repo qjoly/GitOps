@@ -1,0 +1,319 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "title": "Plex (SigNoz / ClickHouse)",
+  "uid": "plex-signoz-clickhouse",
+  "tags": ["plex", "media", "signoz", "clickhouse"],
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "1m",
+  "templating": {
+    "list": [
+      {
+        "name": "cluster",
+        "label": "Cluster",
+        "type": "query",
+        "multi": true,
+        "includeAll": true,
+        "current": { "text": "All", "value": "$__all", "selected": true },
+        "options": [],
+        "refresh": 1,
+        "sort": 1,
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+        "query": {
+          "refId": "A",
+          "queryType": "table",
+          "rawSql": "SELECT DISTINCT JSONExtractString(labels,'k8s.cluster.name') FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='play_seconds_total' AND JSONExtractString(labels,'k8s.cluster.name')!='' ORDER BY 1"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "piechart",
+      "title": "Storage share by library",
+      "id": 1,
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "values": ["value"] }, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "pieType": "pie" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, library, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'library') AS library, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='library_storage_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='library_storage_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, library, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time, library ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Content duration share by library",
+      "id": 2,
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "values": ["value"] }, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "pieType": "pie" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, library, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'library') AS library, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='library_duration_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='library_duration_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, library, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time, library ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Plays by library",
+      "id": 3,
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 8 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "values": ["value"] }, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "pieType": "pie" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, library_type, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'library_type') AS library_type, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='plays_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='plays_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, library_type, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time, library_type ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Watch time by stream type",
+      "id": 4,
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 8 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "values": ["value"] }, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "pieType": "pie" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, stream_type, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'stream_type') AS stream_type, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='play_seconds_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='play_seconds_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, stream_type, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time, stream_type ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Watch time by device",
+      "id": 5,
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 16 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "values": ["value"] }, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "pieType": "pie" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, device_type, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'device_type') AS device_type, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='play_seconds_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='play_seconds_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, device_type, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time, device_type ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Watch time by resolution",
+      "id": 6,
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 16 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "values": ["value"] }, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "pieType": "pie" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, stream_resolution, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'stream_resolution') AS stream_resolution, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='play_seconds_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='play_seconds_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, stream_resolution, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time, stream_resolution ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Watch time by user",
+      "id": 7,
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 24 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "xTickLabelRotation": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 1,
+          "rawSql": "SELECT user, sum(v) AS value FROM (SELECT s.fingerprint AS fp, JSONExtractString(t.labels,'user') AS user, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='play_seconds_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='play_seconds_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY fp, user, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY user ORDER BY value DESC"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Plays by title",
+      "id": 8,
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 24 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "xTickLabelRotation": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 1,
+          "rawSql": "SELECT title, sum(v) AS value FROM (SELECT s.fingerprint AS fp, JSONExtractString(t.labels,'title') AS title, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='plays_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='plays_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY fp, title, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY title ORDER BY value DESC"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Active play time rate by user",
+      "id": 9,
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 32 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "last"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, user, sum(r) AS value FROM (SELECT time, fp, user, cluster, server_type, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'user') AS user, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='play_seconds_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='play_seconds_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, user, cluster, server_type)) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time, user ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Estimated transmit rate",
+      "id": 10,
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 32 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] }, "tooltip": { "mode": "single" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, sum(r) AS value FROM (SELECT time, fp, cluster, server_type, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='estimated_transmit_bytes_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='estimated_transmit_bytes_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, server_type)) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Server CPU utilization",
+      "id": 11,
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 40 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "percent", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] }, "tooltip": { "mode": "single" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, avg(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='host_cpu_util' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='host_cpu_util' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Server memory utilization",
+      "id": 12,
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 40 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "percent", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] }, "tooltip": { "mode": "single" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, avg(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='host_mem_util' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='host_mem_util' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total storage",
+      "id": 13,
+      "gridPos": { "h": 3, "w": 6, "x": 0, "y": 48 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "area" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='library_storage_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='library_storage_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total plays",
+      "id": 14,
+      "gridPos": { "h": 3, "w": 6, "x": 6, "y": 48 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "area" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='plays_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='plays_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY time ORDER BY time"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Playback breakdown",
+      "id": 15,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 56 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 1,
+          "rawSql": "SELECT user, title, stream_type, stream_resolution, device_type, sum(v) AS value FROM (SELECT s.fingerprint AS fp, JSONExtractString(t.labels,'user') AS user, JSONExtractString(t.labels,'title') AS title, JSONExtractString(t.labels,'stream_type') AS stream_type, JSONExtractString(t.labels,'stream_resolution') AS stream_resolution, JSONExtractString(t.labels,'device_type') AS device_type, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, JSONExtractString(t.labels,'server_type') AS server_type, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='play_seconds_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='play_seconds_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY fp, user, title, stream_type, stream_resolution, device_type, cluster, server_type) WHERE cluster IN (${cluster:singlequote}) AND server_type='plex' GROUP BY user, title, stream_type, stream_resolution, device_type ORDER BY value DESC"
+        }
+      ]
+    }
+  ]
+}

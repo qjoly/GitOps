@@ -46,6 +46,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/proxmox-clickhouse.json
+  - name: grafana-dashboard-plex-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/plex-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
