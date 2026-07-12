@@ -21,6 +21,8 @@ patches:
     file: patches/extraManifests.yml
   - name: metric-server
     file: patches/metrics-server.yml
+  - name: kubelet-imagegc
+    file: patches/kubelet-imagegc.yml
 ---
 kind: ControlPlane
 labels:
