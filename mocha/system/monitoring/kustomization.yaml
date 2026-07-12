@@ -14,6 +14,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/rook-ceph-clickhouse.json
+  - name: grafana-dashboard-traefik-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/traefik-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
