@@ -18,6 +18,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/traefik-clickhouse.json
+  - name: grafana-dashboard-argocd-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/argocd-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
