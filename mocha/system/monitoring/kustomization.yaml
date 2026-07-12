@@ -38,6 +38,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/openebs-lvm-clickhouse.json
+  - name: grafana-dashboard-zfs-backup-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/zfs-backup-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
