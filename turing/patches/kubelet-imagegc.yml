@@ -2,5 +2,5 @@ machine:
   kubelet:
     extraConfig:
       imageMaximumGCAge: 72h
-      imageGCHighThresholdPercent: 75
+      imageGCHighThresholdPercent: 65
       imageGCLowThresholdPercent: 60
