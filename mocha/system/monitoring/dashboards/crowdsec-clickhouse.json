@@ -1,0 +1,124 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "version": 1,
+  "title": "CrowdSec (SigNoz / ClickHouse)",
+  "uid": "crowdsec-signoz-clickhouse",
+  "tags": ["crowdsec", "security", "signoz", "clickhouse"],
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "1m",
+  "templating": { "list": [] },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Requêtes bouncer LAPI (req/s)",
+      "id": 1,
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "area", "textMode": "auto" },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" }, "editorType": "sql", "queryType": "timeseries", "format": 0, "rawSql": "SELECT time, 'bouncer' AS metric, sum(r) AS value FROM (SELECT time, fp, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='cs_lapi_bouncer_requests_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='cs_lapi_bouncer_requests_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp)) GROUP BY time ORDER BY time" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Décisions actives (bans)",
+      "id": 2,
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "area", "textMode": "auto" },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" }, "editorType": "sql", "queryType": "timeseries", "format": 0, "rawSql": "SELECT time, 'bans' AS metric, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='cs_active_decisions' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='cs_active_decisions' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp) GROUP BY time ORDER BY time" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Buckets actifs",
+      "id": 3,
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "area", "textMode": "auto" },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" }, "editorType": "sql", "queryType": "timeseries", "format": 0, "rawSql": "SELECT time, 'buckets' AS metric, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='cs_buckets' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='cs_buckets' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp) GROUP BY time ORDER BY time" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Lignes parsées (lignes/s)",
+      "id": 4,
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "area", "textMode": "auto" },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" }, "editorType": "sql", "queryType": "timeseries", "format": 0, "rawSql": "SELECT time, 'parsed' AS metric, sum(r) AS value FROM (SELECT time, fp, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='cs_parser_hits_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='cs_parser_hits_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp)) GROUP BY time ORDER BY time" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Parsing OK vs KO (lignes/s)",
+      "id": 5,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" }, "editorType": "sql", "queryType": "timeseries", "format": 0, "rawSql": "SELECT time, 'ok' AS metric, sum(r) AS value FROM (SELECT time, fp, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='cs_parser_hits_ok_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='cs_parser_hits_ok_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp)) GROUP BY time ORDER BY time" },
+        { "refId": "B", "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" }, "editorType": "sql", "queryType": "timeseries", "format": 0, "rawSql": "SELECT time, 'ko' AS metric, sum(r) AS value FROM (SELECT time, fp, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='cs_parser_hits_ko_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='cs_parser_hits_ko_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp)) GROUP BY time ORDER BY time" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Événements versés par scénario (evt/s)",
+      "id": 6,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" }, "editorType": "sql", "queryType": "timeseries", "format": 0, "rawSql": "SELECT time, lbl AS metric, sum(r) AS value FROM (SELECT time, fp, lbl, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'name') AS lbl, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='cs_bucket_poured_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='cs_bucket_poured_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, lbl)) GROUP BY time, metric ORDER BY time" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Overflows / attaques détectées par scénario (evt/s)",
+      "id": 7,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 20, "showPoints": "auto" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" }, "editorType": "sql", "queryType": "timeseries", "format": 0, "rawSql": "SELECT time, lbl AS metric, sum(r) AS value FROM (SELECT time, fp, lbl, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'name') AS lbl, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='cs_bucket_overflowed_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='cs_bucket_overflowed_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, lbl)) GROUP BY time, metric ORDER BY time" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Requêtes bouncer LAPI par bouncer (req/s)",
+      "id": 8,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" }, "editorType": "sql", "queryType": "timeseries", "format": 0, "rawSql": "SELECT time, lbl AS metric, sum(r) AS value FROM (SELECT time, fp, lbl, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'bouncer') AS lbl, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='cs_lapi_bouncer_requests_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='cs_lapi_bouncer_requests_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, lbl)) GROUP BY time, metric ORDER BY time" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Requêtes LAPI par route (req/s)",
+      "id": 9,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "grafana-clickhouse-datasource", "uid": "signoz-clickhouse" }, "editorType": "sql", "queryType": "timeseries", "format": 0, "rawSql": "SELECT time, lbl AS metric, sum(r) AS value FROM (SELECT time, fp, lbl, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'route') AS lbl, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='cs_lapi_route_requests_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='cs_lapi_route_requests_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, lbl)) GROUP BY time, metric ORDER BY time" }
+      ]
+    }
+  ]
+}

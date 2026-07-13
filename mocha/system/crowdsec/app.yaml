@@ -38,6 +38,9 @@ spec:
                 enabled: true
                 storageClassName: openebs-lvmpv
                 size: 100Mi
+            metrics:
+              serviceMonitor:
+                enabled: true
           lapi:
             env:
               - name: BOUNCER_KEY_traefik
@@ -54,6 +57,9 @@ spec:
                 enabled: true
                 storageClassName: openebs-lvmpv
                 size: 100Mi
+            metrics:
+              serviceMonitor:
+                enabled: true
     - repoURL: https://github.com/qjoly/gitops.git
       targetRevision: HEAD
       path: mocha/system/crowdsec/manifests

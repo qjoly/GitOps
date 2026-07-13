@@ -50,6 +50,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/plex-clickhouse.json
+  - name: grafana-dashboard-crowdsec-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/crowdsec-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
