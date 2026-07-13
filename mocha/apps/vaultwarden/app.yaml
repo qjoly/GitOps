@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vaultwarden
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vaultwarden
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.6.0
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+              name: "vaultwarden"
+              image:
+                repository: vaultwarden/server
+                tag: "1.36.0"
+              service:
+                servicePort: 80
+                containerPort: 80
+              deployment:
+                port: 80
+              ingress:
+                enabled: true
+                hostName: "vaultwarden.<path:kv/cluster#domain>"
+                ingressClassName: traefik
+                tls:
+                  enabled: true
+                  secretName: "vaultwarden-tls"
+                annotations:
+                  cert-manager.io/cluster-issuer: cloudflare
+              variables:
+                secret:
+                  data:
+                    ADMIN_TOKEN: <path:kv/vaultwarden#admin_token>
+                nonSecret:
+                  DOMAIN: "https://vaultwarden.<path:kv/cluster#domain>"
+                  SIGNUPS_ALLOWED: "false"
+              persistence:
+                enabled: true
+                volumes:
+                  - name: data
+                    storageClassName: ""
+                    size: 5Gi
+                    pvcClaim: ""
+                    containerMount: "/data"
