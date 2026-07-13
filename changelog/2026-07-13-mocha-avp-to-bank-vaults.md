@@ -98,11 +98,26 @@ Method notes (for reproducing / auditing):
       ExternalSecrets `SecretSynced` against OpenBao (cert-manager & external-dns cloudflare-api-key,
       monitoring basic-auth-prometheus, signoz discord-webhook & signoz-api-key).
 
-### Phase 4 — Replace all 34 `<path:>` placeholders
-- [ ] 4a Non-secrets → hardcode (`mocha.thoughtless.eu`, real LB IP, authentik_app UUID).
-- [ ] 4b Real secrets → ExternalSecret (authentik, grafana, plex-exporter, vaultwarden, factorio).
+### Phase 4 — Replace all 34 `<path:>` placeholders (app by app, verify each)
+- [x] 4a domain (non-secret) hardcoded to `mocha.thoughtless.eu` in ingress hostnames:
+      thelounge, tang, jackett, argocd ingress, signoz, signoz otlp-ingress. All Synced/Healthy.
+- [x] 4b plex-exporter: static Secret `plex-credentials` → ExternalSecret (same secret name,
+      PLEX_SERVER/PLEX_TOKEN). ES SecretSynced, pod Running.
+- [x] 4b vaultwarden: domain hardcoded; `admin_token` moved to an ExternalSecret
+      (`vaultwarden-secrets`) declared via the chart's `extraResources`, consumed through
+      `variables.secret.existingSecret`. Deleted the now-orphaned old `vaultwarden-admin-token`
+      Secret (app has no prune). Synced/Healthy, pod Running, ADMIN_TOKEN sourced from ES secret.
+- [ ] 4b authentik (secret_key, pg_password) + domain host.
+- [ ] 4b grafana (user, pass, clickhouse password, authentik_id/secret) + domain + authentik_app.
+- [ ] 4b factorio (username, token) — will also leave an orphaned chart Secret to clean up.
 - [ ] 4c Delete the factorio CiliumNetworkPolicy using `kv/netpol#briangtn`.
-- [ ] 4d Optionally use the webhook for env-var-based apps instead of mounted Secrets.
+- [ ] 4a/ip-pool `kv/cluster#IP` — SPECIAL CASE, decided NOT to hardcode. Still open: it sits in
+      a CiliumLoadBalancerIPPool CRD field (external-secrets/webhook can't fill it), and `patches/`
+      is also public. Handle last.
+
+Reusable pattern for rubxkube `common` chart apps: declare the ExternalSecret in `extraResources`
+and consume it via `variables.secret.existingSecret: [{envName,name,key}]`. Remember to delete the
+old `<name>-<key>` Secret the chart previously generated from `variables.secret.data`.
 
 ### Phase 5 — Remove AVP (only after Phase 4 verified)
 - [ ] Strip the 3 AVP sidecars + initContainer from `common/argocd/vault-argocd/`.
