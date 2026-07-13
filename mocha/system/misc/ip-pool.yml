@@ -5,4 +5,4 @@ metadata:
   namespace: kube-system
 spec:
   blocks:
-    - cidr: <path:kv/cluster#IP>/32
+    - cidr: 5.196.80.72/32
