@@ -5,6 +5,17 @@ metadata:
   namespace: argocd
 spec:
   project: default
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: authentik-postgresql
+      jsonPointers:
+        - /spec/persistentVolumeClaimRetentionPolicy
+        - /spec/podManagementPolicy
+        - /spec/revisionHistoryLimit
+      jqPathExpressions:
+        - '.spec.volumeClaimTemplates[].spec.volumeMode'
+        - '.spec.volumeClaimTemplates[].status'
   syncPolicy:
     automated:
       selfHeal: true
