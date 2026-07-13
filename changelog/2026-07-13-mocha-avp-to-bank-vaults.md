@@ -2,7 +2,8 @@
 
 **Started:** 2026-07-13
 **Scope:** `mocha` cluster only. `turing` is already on bank-vaults and must not be affected.
-**Status:** Phases 1–3 done and verified. Phases 4–6 pending.
+**Status:** Phases 1–4 done and verified — zero `<path:>` placeholders remain in mocha/.
+Ready for Phase 5 (remove AVP). Phases 5–6 pending.
 
 ## Goal
 
@@ -129,9 +130,10 @@ Method notes (for reproducing / auditing):
       Synced/Healthy.
 - [x] 4c Deleted the factorio CiliumNetworkPolicy `block-noobs` (used `kv/netpol#briangtn`).
       It lived in the `argocd` namespace with no matching endpoints, so it had no real effect.
-- [ ] 4a/ip-pool `kv/cluster#IP` — SPECIAL CASE, decided NOT to hardcode. Still open: it sits in
-      a CiliumLoadBalancerIPPool CRD field (external-secrets/webhook can't fill it), and `patches/`
-      is also public. Handle last.
+- [x] 4a/ip-pool `kv/cluster#IP`: after weighing options, user chose to hardcode it after all
+      (the IP is already public via DNS, so hiding it from the repo added little). Set to
+      `5.196.80.72/32` in ip-pool.yml. sys-misc Synced/Healthy.
+- [x] Verified: `grep -rn "<path:" mocha/` returns nothing — all 34 placeholders removed.
 
 Reusable pattern for rubxkube `common` chart apps: declare the ExternalSecret in `extraResources`
 and consume it via `variables.secret.existingSecret: [{envName,name,key}]`. Remember to delete the
