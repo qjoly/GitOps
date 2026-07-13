@@ -48,11 +48,37 @@ spec:
               
               variables:
                 secret:
-                  data:
-                    USERNAME: <path:kv/factorio#username>
-                    TOKEN: <path:kv/factorio#token>
+                  existingSecret:
+                    - envName: USERNAME
+                      name: factorio-secrets
+                      key: username
+                    - envName: TOKEN
+                      name: factorio-secrets
+                      key: token
                 nonSecret:
                   DLC_SPACE_AGE: true
+              extraResources:
+                - apiVersion: external-secrets.io/v1
+                  kind: ExternalSecret
+                  metadata:
+                    name: factorio-secrets
+                  spec:
+                    refreshInterval: "1h"
+                    secretStoreRef:
+                      name: vault-backend
+                      kind: ClusterSecretStore
+                    target:
+                      name: factorio-secrets
+                      creationPolicy: Owner
+                    data:
+                      - secretKey: username
+                        remoteRef:
+                          key: factorio
+                          property: username
+                      - secretKey: token
+                        remoteRef:
+                          key: factorio
+                          property: token
               
               persistence:
                 enabled: true
