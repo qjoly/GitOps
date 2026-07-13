@@ -21,7 +21,7 @@ spec:
         - operator: Exists
       containers:
         - name: lvm-autoactivate
-          image: openebs/lvm-driver:1.6.1
+          image: openebs/lvm-driver:1.9.1
           command:
             - /bin/sh
             - -c
