@@ -165,6 +165,19 @@ old `<name>-<key>` Secret the chart previously generated from `variables.secret.
 - [ ] Delete the old Vault (namespace `vault`) and the `vault-token` secret.
 - [ ] Update `docs/secret-management.md`.
 
+### Cosmetic OutOfSync cleanup (post Phase 5, via admin kubeconfig ~/kubeconfig.mocha)
+- [x] authentik ExternalSecret: pinned the controller-added remoteRef defaults
+      (`conversionStrategy: Default`, `decodingStrategy: None`, `metadataPolicy: None`) in the
+      manifest → Synced.
+- [x] authentik postgres StatefulSet: OutOfSync was server-side defaults not normalized by ArgoCD
+      (`persistentVolumeClaimRetentionPolicy`, `podManagementPolicy`, `revisionHistoryLimit`,
+      `volumeClaimTemplates[].spec.volumeMode` + `.status`; `kubectl diff` was empty). Added a
+      targeted `ignoreDifferences` on the authentik Application → Synced.
+- [x] grafana: deleted the orphaned `grafana` admin Secret (chart no longer renders it under
+      `admin.existingSecret`; pod only references `grafana-secrets`) → Synced.
+- [x] Final state: 45 apps Synced+Healthy; only `openebs` remains OutOfSync/Missing (preexisting,
+      unrelated to this migration).
+
 ## Progress log
 
 - 2026-07-13 — Plan drafted and recorded. No changes applied yet.
