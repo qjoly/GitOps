@@ -20,6 +20,26 @@ spec:
     chart: traefik
     helm:
       values: |
+        accessLog:
+          enabled: true
+          format: json
+        experimental:
+          plugins:
+            bouncer:
+              moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+              version: v1.6.0
+        additionalArguments:
+          - "--entrypoints.websecure.http.middlewares=traefik-crowdsec-bouncer@kubernetescrd"
+        deployment:
+          additionalVolumes:
+            - name: crowdsec-bouncer-key
+              secret:
+                secretName: crowdsec-bouncer
+                optional: true
+        additionalVolumeMounts:
+          - name: crowdsec-bouncer-key
+            mountPath: /etc/traefik/crowdsec
+            readOnly: true
         metrics:
           prometheus: null
           otlp:
