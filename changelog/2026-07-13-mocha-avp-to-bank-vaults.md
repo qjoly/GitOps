@@ -1,0 +1,108 @@
+# Migration: argocd-vault-plugin (AVP) → bank-vaults / OpenBao — cluster `mocha`
+
+**Started:** 2026-07-13
+**Scope:** `mocha` cluster only. `turing` is already on bank-vaults and must not be affected.
+**Status:** Phase 1 committed to the repo (not yet synced to the cluster).
+
+## Goal
+
+Replace the HashiCorp Vault + argocd-vault-plugin (AVP) secret workflow on `mocha`
+with the same bank-vaults + OpenBao + external-secrets stack already running on `turing`.
+
+## Decisions
+
+- **Backend:** deploy a fresh OpenBao cluster via the bank-vaults operator (GitOps),
+  then migrate the existing secrets into it. The current out-of-GitOps Vault
+  (namespace `vault`, KV v1) is decommissioned at the end.
+- **Non-secret values** (cluster domain, LB IP, Authentik app UUID): hardcoded in
+  clear text in the manifests (same approach as turing). Domain = `mocha.thoughtless.eu`.
+- **Secret injection:** both external-secrets (ExternalSecret → K8s Secret) and the
+  bank-vaults `vault-secrets-webhook` (in-pod `vault:kv/...#prop` injection) are available.
+- **`kv/netpol#briangtn`** (an IP embedded in a CiliumNetworkPolicy — not a Secret,
+  not injectable): the network policy is simply **deleted**, no replacement.
+
+## Safety constraints
+
+- AVP and external-secrets already coexist on mocha → migrate progressively.
+- **AVP is removed LAST**, only after every `<path:>` placeholder is replaced and verified.
+- `common/argocd/kustomization.yaml` (+ `vault-argocd/` overlays) is consumed by mocha only;
+  turing loads `argocd.install.vanilla.yaml` via Talos `extraManifests`, so editing the
+  AVP overlays / the shared kustomization does **not** impact turing.
+- Commit cadence: never two commits less than 2h apart (work hours only) → migration
+  spread across multiple sessions.
+
+## Inventory (source data)
+
+34 `<path:>` placeholders found under `mocha/`:
+- **18 non-secret**: `kv/cluster#domain` (16×), `kv/cluster#IP` (1×), `kv/grafana#authentik_app` (1×)
+- **16 real secrets** across 13 Vault keys: authentik (secret_key, pg_password),
+  grafana (user, pass, authentik_id, authentik_secret), signoz-clickhouse#password,
+  plex (server, token), vaultwarden#admin_token, factorio (username, token), netpol#briangtn.
+
+Existing ExternalSecrets already using `vault-backend` (must keep resolving after cutover):
+cloudflare (external-dns, cert-manager), grafana#prometheus_user/pass (monitoring middleware).
+
+## Plan
+
+### Phase 0 — Preparation (read-only)
+- [ ] Read real values from the existing Vault for the hardcoded non-secrets:
+      `kv/cluster#domain`, `kv/cluster#IP`, `kv/grafana#authentik_app`.
+- [ ] Dump all 13 secret keys for re-injection in Phase 2.
+
+### Phase 1 — Deploy bank-vaults + OpenBao (non-destructive)
+- [x] Create `mocha/system/bank-vaults/` mirroring turing:
+      operator (vault-operator 1.24.0, wave 0), webhook (vault-secrets-webhook 1.23.1, wave 1),
+      Vault CR (openbao/openbao:2.5.5, Raft HA, KV v2, kubernetes auth, K8s auto-unseal, wave 2),
+      namespace / repo (OCI) / rbac / kustomizations.
+- [x] Adapt to mocha: `storageClassName` → `openebs-lvmpv` (only diff from turing besides the CR app path).
+- [x] Apply turing gotchas: `serviceRegistrationEnabled: false`,
+      `args: -config=/vault/config` only, full `VAULT_ADDR_ALLOWLIST`.
+- [x] `kubectl kustomize` renders cleanly for both the parent dir and the `vault/` subdir.
+- [ ] Verify `sys-bank-vaults` Synced/Healthy, OpenBao initialized & unsealed (after sync).
+
+Files created (all under `mocha/system/bank-vaults/`):
+`kustomization.yaml`, `namespace.yaml`, `repo.yaml`, `rbac.yaml`, `operator.yaml`,
+`webhook.yaml`, `vault-cr-app.yaml`, `vault/kustomization.yaml`, `vault/vault.yaml`.
+
+Notes / things to watch when syncing:
+- The `mocha/system/*` ApplicationSet renders through the AVP kustomize plugin. These files
+  contain no `<path:>` placeholders, so AVP passes them through untouched during coexistence.
+- OpenBao runs 3 Raft replicas on `openebs-lvmpv` (node-local storage) → needs at least 3
+  schedulable nodes; confirm on mocha or reduce `size` if fewer.
+- The operator auto-generates the `vault-tls` secret in `bank-vaults`; Phase 3 consumes it as
+  the external-secrets `caProvider`.
+
+### Phase 2 — Migrate secrets into OpenBao (KV v2)
+- [ ] Write the 13 secret keys + the keys used by existing ExternalSecrets
+      (cloudflare, grafana#prometheus_*) into OpenBao.
+
+### Phase 3 — Point external-secrets at OpenBao
+- [ ] Edit `mocha/system/external-secret/cluster-store.yaml`:
+      server → `https://vault.bank-vaults.svc.cluster.local:8200`, version v1 → **v2**,
+      auth tokenSecretRef → **kubernetes** (SA external-secrets, role default, caProvider vault-tls).
+- [ ] Fix `remoteRef.key`/`path` on existing ExternalSecrets for the KV v1→v2 change.
+
+### Phase 4 — Replace all 34 `<path:>` placeholders
+- [ ] 4a Non-secrets → hardcode (`mocha.thoughtless.eu`, real LB IP, authentik_app UUID).
+- [ ] 4b Real secrets → ExternalSecret (authentik, grafana, plex-exporter, vaultwarden, factorio).
+- [ ] 4c Delete the factorio CiliumNetworkPolicy using `kv/netpol#briangtn`.
+- [ ] 4d Optionally use the webhook for env-var-based apps instead of mounted Secrets.
+
+### Phase 5 — Remove AVP (only after Phase 4 verified)
+- [ ] Strip the 3 AVP sidecars + initContainer from `common/argocd/vault-argocd/`.
+- [ ] Point `common/argocd/kustomization.yaml` to the vanilla install / drop vault-argocd overlays.
+- [ ] Remove the AVP plugin from `as-system.yml` / `as-app.yml` and the 2 helm-plugin apps
+      (vaultwarden, factorio).
+
+### Phase 6 — Decommission
+- [ ] Confirm all apps Synced/Healthy without AVP.
+- [ ] Delete the old Vault (namespace `vault`) and the `vault-token` secret.
+- [ ] Update `docs/secret-management.md`.
+
+## Progress log
+
+- 2026-07-13 — Plan drafted and recorded. No changes applied yet.
+- 2026-07-13 — Phase 1 done in-repo: created `mocha/system/bank-vaults/` (9 files) mirroring
+  turing, storageClass adapted to `openebs-lvmpv`. Both kustomizations validated with
+  `kubectl kustomize`. Not yet synced to the cluster. netpol decision recorded: the factorio
+  CiliumNetworkPolicy using `kv/netpol#briangtn` will be deleted in Phase 4c (no replacement).

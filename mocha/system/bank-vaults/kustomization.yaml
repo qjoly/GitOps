@@ -1,0 +1,10 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - repo.yaml
+  - rbac.yaml
+  - operator.yaml
+  - webhook.yaml
+  - vault-cr-app.yaml
