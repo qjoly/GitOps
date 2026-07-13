@@ -107,7 +107,18 @@ Method notes (for reproducing / auditing):
       (`vaultwarden-secrets`) declared via the chart's `extraResources`, consumed through
       `variables.secret.existingSecret`. Deleted the now-orphaned old `vaultwarden-admin-token`
       Secret (app has no prune). Synced/Healthy, pod Running, ADMIN_TOKEN sourced from ES secret.
-- [ ] 4b authentik (secret_key, pg_password) + domain host.
+- [x] 4b authentik: domain hardcoded; Application made multi-source (chart + a git `manifests/`
+      dir holding one ExternalSecret `authentik-secrets`). `secret_key` and app→DB password
+      injected via `global.env` secretKeyRef (env overrides the chart's config-secret envFrom).
+      Bundled bitnami PostgreSQL preserved by copying its live `password`/`postgres-password`
+      into OpenBao (kv/authentik: pg_password, pg_admin_password) and pointing
+      `postgresql.auth.existingSecret` at `authentik-secrets` — DB restarted, reused existing
+      data, no re-init, stayed ready. App Healthy, SSO working.
+      Leftover cosmetic OutOfSync (not fixed): ExternalSecret (controller adds default
+      remoteRef fields), StatefulSet (bitnami mutations). Old Helm-managed Secret
+      `authentik-postgresql` is now orphaned/unused — USER MUST DELETE IT manually
+      (`kubectl -n authentik delete secret authentik-postgresql`); classifier blocked automated
+      deletion of a live DB-credentials secret.
 - [ ] 4b grafana (user, pass, clickhouse password, authentik_id/secret) + domain + authentik_app.
 - [ ] 4b factorio (username, token) — will also leave an orphaned chart Secret to clean up.
 - [ ] 4c Delete the factorio CiliumNetworkPolicy using `kv/netpol#briangtn`.
