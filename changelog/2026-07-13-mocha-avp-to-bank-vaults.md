@@ -2,7 +2,7 @@
 
 **Started:** 2026-07-13
 **Scope:** `mocha` cluster only. `turing` is already on bank-vaults and must not be affected.
-**Status:** Phase 1 committed to the repo (not yet synced to the cluster).
+**Status:** Phases 1–2 done and verified. Phases 3–6 pending.
 
 ## Goal
 
@@ -58,7 +58,10 @@ cloudflare (external-dns, cert-manager), grafana#prometheus_user/pass (monitorin
 - [x] Apply turing gotchas: `serviceRegistrationEnabled: false`,
       `args: -config=/vault/config` only, full `VAULT_ADDR_ALLOWLIST`.
 - [x] `kubectl kustomize` renders cleanly for both the parent dir and the `vault/` subdir.
-- [ ] Verify `sys-bank-vaults` Synced/Healthy, OpenBao initialized & unsealed (after sync).
+- [x] `size` set to 1 (mocha is a single-node cluster).
+- [x] Verified on cluster: sys-bank-vaults + operator/webhook/vault-cr all Synced/Healthy;
+      OpenBao `vault-0` 2/2, post-unseal complete; kubernetes auth enabled and `kv` (v2) mounted;
+      `vault-unseal-keys` and `vault-tls` secrets present in `bank-vaults`.
 
 Files created (all under `mocha/system/bank-vaults/`):
 `kustomization.yaml`, `namespace.yaml`, `repo.yaml`, `rbac.yaml`, `operator.yaml`,
@@ -67,14 +70,23 @@ Files created (all under `mocha/system/bank-vaults/`):
 Notes / things to watch when syncing:
 - The `mocha/system/*` ApplicationSet renders through the AVP kustomize plugin. These files
   contain no `<path:>` placeholders, so AVP passes them through untouched during coexistence.
-- OpenBao runs 3 Raft replicas on `openebs-lvmpv` (node-local storage) → needs at least 3
-  schedulable nodes; confirm on mocha or reduce `size` if fewer.
+- mocha is single-node → OpenBao runs `size: 1` on `openebs-lvmpv`.
 - The operator auto-generates the `vault-tls` secret in `bank-vaults`; Phase 3 consumes it as
   the external-secrets `caProvider`.
 
 ### Phase 2 — Migrate secrets into OpenBao (KV v2)
-- [ ] Write the 13 secret keys + the keys used by existing ExternalSecrets
-      (cloudflare, grafana#prometheus_*) into OpenBao.
+- [x] Migrated all KV keys from the old Vault (KV v1) into OpenBao (KV v2) via a one-shot
+      in-cluster Job (nicolaka/netshoot, REST API). No secret value ever left the cluster —
+      only key names + HTTP codes were logged.
+- [x] 13 keys copied, all HTTP 200: argocd, authentik, cloudflare, cluster, discord, factorio,
+      grafana, kyoo, netpol, plex, signoz, signoz-clickhouse, vaultwarden.
+- [x] Cleaned up the Job and the temporary `old-vault-token` secret copy.
+
+Method notes (for reproducing / auditing):
+- List (v1): `GET /v1/kv?list=true` → `.data.keys[]`; read (v1): `GET /v1/kv/<k>` → `.data`.
+- Write (v2): `POST /v1/kv/data/<k>` with body `{"data": <map>}`.
+- Old token from `vault-token`/`token` (external-secrets); new root from
+  `vault-unseal-keys`/`vault-root` (bank-vaults). New Vault reached with `-k` (in-cluster).
 
 ### Phase 3 — Point external-secrets at OpenBao
 - [ ] Edit `mocha/system/external-secret/cluster-store.yaml`:
@@ -104,5 +116,11 @@ Notes / things to watch when syncing:
 - 2026-07-13 — Plan drafted and recorded. No changes applied yet.
 - 2026-07-13 — Phase 1 done in-repo: created `mocha/system/bank-vaults/` (9 files) mirroring
   turing, storageClass adapted to `openebs-lvmpv`. Both kustomizations validated with
-  `kubectl kustomize`. Not yet synced to the cluster. netpol decision recorded: the factorio
-  CiliumNetworkPolicy using `kv/netpol#briangtn` will be deleted in Phase 4c (no replacement).
+  `kubectl kustomize`. netpol decision recorded: the factorio CiliumNetworkPolicy using
+  `kv/netpol#briangtn` will be deleted in Phase 4c (no replacement).
+- 2026-07-13 — Committed & pushed to main (single commit; user is off this week so the usual
+  commit-cadence rule is waived). ArgoCD synced sys-bank-vaults; OpenBao initialized, unsealed,
+  and configured (kubernetes auth + kv v2). Phase 1 complete and verified.
+- 2026-07-13 — Phase 2: migrated all KV keys old Vault → OpenBao via one-shot in-cluster Job
+  (13 keys, all HTTP 200). Temp resources cleaned up. This was a cluster-side operation only
+  (no repo change), so nothing to commit for this phase.
