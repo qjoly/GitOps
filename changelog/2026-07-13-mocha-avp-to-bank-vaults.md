@@ -2,8 +2,8 @@
 
 **Started:** 2026-07-13
 **Scope:** `mocha` cluster only. `turing` is already on bank-vaults and must not be affected.
-**Status:** Phases 1–4 done and verified — zero `<path:>` placeholders remain in mocha/.
-Ready for Phase 5 (remove AVP). Phases 5–6 pending.
+**Status:** Phases 1–5 done. AVP fully removed from mocha at runtime and in git. One infra
+follow-up (re-apply mocha's Omni/Talos machine config) + Phase 6 (decommission old Vault) pending.
 
 ## Goal
 
@@ -139,11 +139,26 @@ Reusable pattern for rubxkube `common` chart apps: declare the ExternalSecret in
 and consume it via `variables.secret.existingSecret: [{envName,name,key}]`. Remember to delete the
 old `<name>-<key>` Secret the chart previously generated from `variables.secret.data`.
 
-### Phase 5 — Remove AVP (only after Phase 4 verified)
-- [ ] Strip the 3 AVP sidecars + initContainer from `common/argocd/vault-argocd/`.
-- [ ] Point `common/argocd/kustomization.yaml` to the vanilla install / drop vault-argocd overlays.
-- [ ] Remove the AVP plugin from `as-system.yml` / `as-app.yml` and the 2 helm-plugin apps
-      (vaultwarden, factorio).
+### Phase 5 — Remove AVP (done)
+- [x] 5a Converted vaultwarden + factorio from `plugin: argocd-vault-plugin-helm` to native
+      `helm.values`. Both Synced/Healthy (renders identical, no pod churn).
+- [x] 5b Removed `plugin: argocd-vault-plugin-kustomize` from both ApplicationSets
+      (`as-system.yml`, `as-app.yml`) → native kustomize render. These ApplicationSets are NOT
+      GitOps-managed (no tracking label), so they were re-applied manually with `kubectl apply`.
+      All sys-*/app-* apps stayed Synced/Healthy.
+- [x] 5c Removed AVP from the running ArgoCD: patched `argocd-repo-server` to the vanilla spec
+      (1 container + `copyutil` init, no avp-helm/avp-kustomize/avp, no download-tools). Deleted
+      orphaned `cmp-plugin` ConfigMap and `vault-credentials` Secret.
+- [x] 5c KEY FINDING: mocha does NOT install ArgoCD via `common/argocd/kustomization.yaml`; it
+      boots it through Talos `extraManifests` (mocha/patches/extraManifests.yml) pulling
+      `common/argocd/argocd.install.yaml` (the AVP build) from GitHub raw. That file is SHARED by
+      kubevirt + home, so it must not be edited. Fix: repointed mocha's extraManifests to
+      `argocd.install.vanilla.yaml` (already used by turing). Reverted the earlier stray edit to
+      `common/argocd/kustomization.yaml`.
+- [ ] INFRA FOLLOW-UP (user/Omni): re-apply mocha's machine config so Talos boots ArgoCD from the
+      vanilla manifest. Until the live machine config is updated, a Talos config reconcile / node
+      reboot could re-push the AVP `argocd.install.yaml` and bring the sidecars back (the runtime
+      patch is not authoritative). Runtime is currently correct and stable.
 
 ### Phase 6 — Decommission
 - [ ] Confirm all apps Synced/Healthy without AVP.
