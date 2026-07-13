@@ -20,6 +20,8 @@ patches:
      file: patches/metrics-server.yml
    - name: workload-on-cp
      file: patches/workload-on-cp.yml
+   - name: load-zfs-module
+     file: patches/zfs-module.yml
 systemExtensions:
   - siderolabs/iscsi-tools
   - siderolabs/zfs
