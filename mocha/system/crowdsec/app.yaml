@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crowdsec
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crowdsec
+  sources:
+    - repoURL: https://crowdsecurity.github.io/helm-charts
+      chart: crowdsec
+      targetRevision: 0.24.0
+      helm:
+        values: |
+          container_runtime: containerd
+          agent:
+            acquisition:
+              - namespace: traefik
+                podName: traefik-*
+                program: traefik
+            env:
+              - name: COLLECTIONS
+                value: "crowdsecurity/traefik crowdsecurity/base-http-scenarios"
+            persistentVolume:
+              config:
+                enabled: true
+                storageClassName: openebs-lvmpv
+                size: 100Mi
+          lapi:
+            env:
+              - name: BOUNCER_KEY_traefik
+                valueFrom:
+                  secretKeyRef:
+                    name: crowdsec-bouncer
+                    key: key
+            persistentVolume:
+              data:
+                enabled: true
+                storageClassName: openebs-lvmpv
+                size: 1Gi
+              config:
+                enabled: true
+                storageClassName: openebs-lvmpv
+                size: 100Mi
+    - repoURL: https://github.com/qjoly/gitops.git
+      targetRevision: HEAD
+      path: mocha/system/crowdsec/manifests
