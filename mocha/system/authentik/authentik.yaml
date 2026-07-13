@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: authentik
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: authentik
+  source:
+    repoURL: https://charts.goauthentik.io
+    chart: authentik
+    targetRevision: 2026.5.4
+    helm:
+      values: |
+        authentik:
+          secret_key: <path:kv/authentik#secret_key>
+          error_reporting:
+            enabled: false
+          postgresql:
+            password: <path:kv/authentik#pg_password>
+        server:
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+            hosts:
+              - authentik.<path:kv/cluster#domain>
+            tls:
+              - secretName: authentik-tls
+                hosts:
+                  - authentik.<path:kv/cluster#domain>
+        postgresql:
+          enabled: true
+          auth:
+            password: <path:kv/authentik#pg_password>
+          primary:
+            persistence:
+              enabled: true
+              storageClass: openebs-lvmpv
+              size: 8Gi
