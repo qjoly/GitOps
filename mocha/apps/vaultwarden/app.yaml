@@ -33,7 +33,7 @@ spec:
                 port: 80
               ingress:
                 enabled: true
-                hostName: "vaultwarden.<path:kv/cluster#domain>"
+                hostName: "vaultwarden.mocha.thoughtless.eu"
                 ingressClassName: traefik
                 tls:
                   enabled: true
@@ -42,11 +42,31 @@ spec:
                   cert-manager.io/cluster-issuer: cloudflare
               variables:
                 secret:
-                  data:
-                    ADMIN_TOKEN: <path:kv/vaultwarden#admin_token>
+                  existingSecret:
+                    - envName: ADMIN_TOKEN
+                      name: vaultwarden-secrets
+                      key: admin_token
                 nonSecret:
-                  DOMAIN: "https://vaultwarden.<path:kv/cluster#domain>"
+                  DOMAIN: "https://vaultwarden.mocha.thoughtless.eu"
                   SIGNUPS_ALLOWED: "false"
+              extraResources:
+                - apiVersion: external-secrets.io/v1
+                  kind: ExternalSecret
+                  metadata:
+                    name: vaultwarden-secrets
+                  spec:
+                    refreshInterval: "1h"
+                    secretStoreRef:
+                      name: vault-backend
+                      kind: ClusterSecretStore
+                    target:
+                      name: vaultwarden-secrets
+                      creationPolicy: Owner
+                    data:
+                      - secretKey: admin_token
+                        remoteRef:
+                          key: vaultwarden
+                          property: admin_token
               persistence:
                 enabled: true
                 volumes:
