@@ -13,6 +13,13 @@ autoDirectNodeRoutes: false
 bpf:
   masquerade: true
 
+securityContext:
+  capabilities:
+    cleanCiliumState:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+
 ipam:
   mode: kubernetes
 
