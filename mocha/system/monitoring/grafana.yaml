@@ -21,8 +21,27 @@ spec:
       values: |
         annotations:
           reloader.stakater.com/auto: "true"
-        adminUser: <path:kv/grafana#user>
-        adminPassword: <path:kv/grafana#pass>
+        admin:
+          existingSecret: grafana-secrets
+          userKey: admin-user
+          passwordKey: admin-password
+        envValueFrom:
+          CH_PASSWORD:
+            secretKeyRef:
+              name: grafana-secrets
+              key: CH_PASSWORD
+          OIDC_CLIENT_ID:
+            secretKeyRef:
+              name: grafana-secrets
+              key: OIDC_CLIENT_ID
+          OIDC_CLIENT_SECRET:
+            secretKeyRef:
+              name: grafana-secrets
+              key: OIDC_CLIENT_SECRET
+          AUTHENTIK_APP:
+            secretKeyRef:
+              name: grafana-secrets
+              key: AUTHENTIK_APP
         plugins:
           - chaosmeshorg-datasource
           - grafana-clickhouse-datasource
@@ -30,9 +49,6 @@ spec:
           datasources.yaml:
             apiVersion: 1
             datasources:
-              # ponytail: schéma SigNoz (signoz_traces/signoz_logs/signoz_metrics), PAS le
-              # schéma OTel standard attendu par le plugin → otel désactivé, on requête au
-              # query builder SQL. Activer le mode OTel casserait (colonnes différentes).
               - name: SigNoz ClickHouse
                 uid: signoz-clickhouse
                 type: grafana-clickhouse-datasource
@@ -44,18 +60,18 @@ spec:
                   secure: false
                   username: admin
                 secureJsonData:
-                  password: <path:kv/signoz-clickhouse#password>
+                  password: $__env{CH_PASSWORD}
         ingress:
           enabled: true
           ingressClassName: traefik
           annotations:
             cert-manager.io/cluster-issuer: cloudflare
           hosts:
-            - "grafana.<path:kv/cluster#domain>"
+            - "grafana.mocha.thoughtless.eu"
           tls:
             - secretName: grafana-tls
               hosts:
-                - "grafana.<path:kv/cluster#domain>"
+                - "grafana.mocha.thoughtless.eu"
         persistence:
           type: pvc
           enabled: true
@@ -64,23 +80,21 @@ spec:
         assertNoLeakedSecrets: false
         grafana.ini:
             server:
-              root_url: https://grafana.<path:kv/cluster#domain>
+              root_url: https://grafana.mocha.thoughtless.eu
             auth:
-                signout_redirect_url: "https://oidc.home.une-tasse-de.cafe/application/o/<path:kv/grafana#authentik_app>/end-session/"
+                signout_redirect_url: "https://oidc.home.une-tasse-de.cafe/application/o/$__env{AUTHENTIK_APP}/end-session/"
                 oauth_auto_login: false
             auth.generic_oauth:
                 name: authentik
                 enabled: true
-                client_id: <path:kv/grafana#authentik_id>
-                client_secret: <path:kv/grafana#authentik_secret>
+                client_id: $__env{OIDC_CLIENT_ID}
+                client_secret: $__env{OIDC_CLIENT_SECRET}
                 scopes: "openid profile email"
                 auth_url: "https://oidc.home.une-tasse-de.cafe/application/o/authorize/"
                 token_url: "https://oidc.home.une-tasse-de.cafe/application/o/token/"
                 api_url: "https://oidc.home.une-tasse-de.cafe/application/o/userinfo/"
                 allow_assign_grafana_admin: true
                 role_attribute_path: "contains(groups[*], 'authentik Admins') && 'GrafanaAdmin' || 'Viewer'"
-                # Optionally map user groups to Grafana roles
-                # role_attribute_path: contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
         sidecar:
           datasources:
             enabled: true
@@ -88,3 +102,41 @@ spec:
             enabled: true
         serviceMonitor:
           enabled: false
+        extraObjects:
+          - apiVersion: external-secrets.io/v1
+            kind: ExternalSecret
+            metadata:
+              name: grafana-secrets
+            spec:
+              refreshInterval: "1h"
+              secretStoreRef:
+                name: vault-backend
+                kind: ClusterSecretStore
+              target:
+                name: grafana-secrets
+                creationPolicy: Owner
+              data:
+                - secretKey: admin-user
+                  remoteRef:
+                    key: grafana
+                    property: user
+                - secretKey: admin-password
+                  remoteRef:
+                    key: grafana
+                    property: pass
+                - secretKey: CH_PASSWORD
+                  remoteRef:
+                    key: signoz-clickhouse
+                    property: password
+                - secretKey: OIDC_CLIENT_ID
+                  remoteRef:
+                    key: grafana
+                    property: authentik_id
+                - secretKey: OIDC_CLIENT_SECRET
+                  remoteRef:
+                    key: grafana
+                    property: authentik_secret
+                - secretKey: AUTHENTIK_APP
+                  remoteRef:
+                    key: grafana
+                    property: authentik_app
