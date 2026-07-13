@@ -119,9 +119,16 @@ Method notes (for reproducing / auditing):
       `authentik-postgresql` is now orphaned/unused — USER MUST DELETE IT manually
       (`kubectl -n authentik delete secret authentik-postgresql`); classifier blocked automated
       deletion of a live DB-credentials secret.
-- [ ] 4b grafana (user, pass, clickhouse password, authentik_id/secret) + domain + authentik_app.
-- [ ] 4b factorio (username, token) — will also leave an orphaned chart Secret to clean up.
-- [ ] 4c Delete the factorio CiliumNetworkPolicy using `kv/netpol#briangtn`.
+- [x] 4b grafana: all secrets (admin user/pass, clickhouse password, OIDC id/secret) + the
+      authentik_app UUID moved into one ExternalSecret `grafana-secrets` declared via the chart's
+      `extraObjects`. admin via `admin.existingSecret`; the rest injected as env (`envValueFrom`)
+      and referenced in grafana.ini / datasource with `$__env{...}`. Domain hardcoded. ES
+      SecretSynced (6 keys), pod 3/3 Running, Healthy.
+- [x] 4b factorio: username/token via ExternalSecret (`extraResources` + `existingSecret`, same
+      pattern as vaultwarden). Cleaned up orphaned chart Secrets `factorio-username`/`factorio-token`.
+      Synced/Healthy.
+- [x] 4c Deleted the factorio CiliumNetworkPolicy `block-noobs` (used `kv/netpol#briangtn`).
+      It lived in the `argocd` namespace with no matching endpoints, so it had no real effect.
 - [ ] 4a/ip-pool `kv/cluster#IP` — SPECIAL CASE, decided NOT to hardcode. Still open: it sits in
       a CiliumLoadBalancerIPPool CRD field (external-secrets/webhook can't fill it), and `patches/`
       is also public. Handle last.
