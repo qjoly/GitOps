@@ -2,7 +2,7 @@
 
 **Started:** 2026-07-13
 **Scope:** `mocha` cluster only. `turing` is already on bank-vaults and must not be affected.
-**Status:** Phases 1–2 done and verified. Phases 3–6 pending.
+**Status:** Phases 1–3 done and verified. Phases 4–6 pending.
 
 ## Goal
 
@@ -89,10 +89,14 @@ Method notes (for reproducing / auditing):
   `vault-unseal-keys`/`vault-root` (bank-vaults). New Vault reached with `-k` (in-cluster).
 
 ### Phase 3 — Point external-secrets at OpenBao
-- [ ] Edit `mocha/system/external-secret/cluster-store.yaml`:
+- [x] Edited `mocha/system/external-secret/cluster-store.yaml`:
       server → `https://vault.bank-vaults.svc.cluster.local:8200`, version v1 → **v2**,
-      auth tokenSecretRef → **kubernetes** (SA external-secrets, role default, caProvider vault-tls).
-- [ ] Fix `remoteRef.key`/`path` on existing ExternalSecrets for the KV v1→v2 change.
+      auth tokenSecretRef → **kubernetes** (SA external-secrets, role default, caProvider vault-tls ca.crt).
+- [x] No ExternalSecret edits needed: none hard-code `data/` in `remoteRef`, so external-secrets
+      handles the v1→v2 path translation transparently.
+- [x] Verified: ClusterSecretStore `vault-backend` → `Ready=True store validated`; all 5
+      ExternalSecrets `SecretSynced` against OpenBao (cert-manager & external-dns cloudflare-api-key,
+      monitoring basic-auth-prometheus, signoz discord-webhook & signoz-api-key).
 
 ### Phase 4 — Replace all 34 `<path:>` placeholders
 - [ ] 4a Non-secrets → hardcode (`mocha.thoughtless.eu`, real LB IP, authentik_app UUID).
@@ -124,3 +128,6 @@ Method notes (for reproducing / auditing):
 - 2026-07-13 — Phase 2: migrated all KV keys old Vault → OpenBao via one-shot in-cluster Job
   (13 keys, all HTTP 200). Temp resources cleaned up. This was a cluster-side operation only
   (no repo change), so nothing to commit for this phase.
+- 2026-07-13 — Phase 3: switched ClusterSecretStore to OpenBao (KV v2, kubernetes auth).
+  Committed & pushed; ArgoCD synced; store re-validated and all 5 ExternalSecrets SecretSynced.
+  The old Vault is now unused by external-secrets (AVP still uses it — removed in Phase 5).
