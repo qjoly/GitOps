@@ -27,7 +27,7 @@ spec:
           common:
             ingress:
               enabled: true
-              hostName: "indexer.<path:kv/cluster#domain>"
+              hostName: "indexer.mocha.thoughtless.eu"
               ingressClassName: traefik
   destination:
     server: https://kubernetes.default.svc

@@ -38,7 +38,7 @@ spec:
             annotations:
               cert-manager.io/cluster-issuer: cloudflare
             hosts:
-              - host: signoz.<path:kv/cluster#domain>
+              - host: signoz.mocha.thoughtless.eu
                 paths:
                   - path: /
                     pathType: Prefix
@@ -46,4 +46,4 @@ spec:
             tls:
               - secretName: signoz-tls
                 hosts:
-                  - signoz.<path:kv/cluster#domain>
+                  - signoz.mocha.thoughtless.eu

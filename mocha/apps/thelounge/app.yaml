@@ -21,7 +21,7 @@ spec:
           port: 9000
         ingress:
             enabled: true
-            hostName: "thelounge.<path:kv/cluster#domain>"
+            hostName: "thelounge.mocha.thoughtless.eu"
             ingressClassName: traefik
             tls:
               enabled: true

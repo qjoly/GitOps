@@ -21,7 +21,7 @@ spec:
           port: 8080
         ingress:
             enabled: true
-            hostName: "tang.<path:kv/cluster#domain>"
+            hostName: "tang.mocha.thoughtless.eu"
             ingressClassName: traefik
             tls:
               enabled: true

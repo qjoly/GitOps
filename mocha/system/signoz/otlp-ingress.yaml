@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: signoz-ingest.<path:kv/cluster#domain>
+    - host: signoz-ingest.mocha.thoughtless.eu
       http:
         paths:
           - path: /
@@ -23,4 +23,4 @@ spec:
   tls:
     - secretName: signoz-otlp-tls
       hosts:
-        - signoz-ingest.<path:kv/cluster#domain>
+        - signoz-ingest.mocha.thoughtless.eu
