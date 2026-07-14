@@ -41,7 +41,7 @@ jobs:
     outputs:
       clusters: ${{ steps.detect.outputs.clusters }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # full history needed for PR base-branch diff
 
@@ -80,7 +80,7 @@ jobs:
 
     name: Dry-run ${{ matrix.cluster }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install omnictl
         run: |
@@ -220,7 +220,7 @@ jobs:
 
     name: Sync ${{ matrix.cluster }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install tools (omnictl, helm, helmfile, kubectl)
         run: |
