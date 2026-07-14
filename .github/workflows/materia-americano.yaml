@@ -4,7 +4,7 @@ on:
     branches:
       - main
     paths:
-      - Americano/**
+      - americano/**
       - .github/workflows/materia-americano.yaml
   workflow_dispatch: {}
 permissions:
@@ -14,15 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Publish Americano/ to the root of the 'americano' branch
+      - name: Publish americano/ to the root of the 'americano' branch
         run: |
           set -euo pipefail
           tmp="$(mktemp -d)"
-          cp -a "$GITHUB_WORKSPACE/Americano/." "$tmp/"
+          cp -a "$GITHUB_WORKSPACE/americano/." "$tmp/"
           cd "$tmp"
           git init -q -b americano
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
-          git commit -q -m "sync Americano/ from ${GITHUB_SHA}"
+          git commit -q -m "sync americano/ from ${GITHUB_SHA}"
           git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" americano
