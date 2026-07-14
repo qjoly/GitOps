@@ -58,6 +58,9 @@ spec:
             lbipam.cilium.io/sharing-cross-namespace: "*"
         ports:
           websecure:
+            forwardedHeaders:
+              trustedIPs:
+                - 85.17.65.41/32
             transport:
               respondingTimeouts:
                 readTimeout: 300
