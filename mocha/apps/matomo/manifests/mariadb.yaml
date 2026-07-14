@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: matomo-db
+  labels:
+    app: matomo-db
+spec:
+  clusterIP: None
+  selector:
+    app: matomo-db
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: matomo-db
+spec:
+  serviceName: matomo-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matomo-db
+  template:
+    metadata:
+      labels:
+        app: matomo-db
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:10.11
+          args:
+            - --max-allowed-packet=64MB
+          env:
+            - name: MARIADB_DATABASE
+              value: matomo
+            - name: MARIADB_USER
+              value: matomo
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: matomo-db
+                  key: db_password
+            - name: MARIADB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: matomo-db
+                  key: db_root_password
+            - name: MARIADB_AUTO_UPGRADE
+              value: "1"
+            - name: MARIADB_DISABLE_UPGRADE_BACKUP
+              value: "1"
+            - name: MARIADB_INITDB_SKIP_TZINFO
+              value: "1"
+          ports:
+            - name: mysql
+              containerPort: 3306
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          livenessProbe:
+            exec:
+              command: ["healthcheck.sh", "--connect", "--innodb_initialized"]
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command: ["healthcheck.sh", "--connect", "--innodb_initialized"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: openebs-lvmpv
+        resources:
+          requests:
+            storage: 8Gi
