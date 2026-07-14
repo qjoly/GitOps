@@ -88,7 +88,7 @@ jobs:
             https://github.com/siderolabs/omni/releases/download/v1.7.1/omnictl-linux-amd64
           chmod +x omnictl && sudo mv omnictl /usr/local/bin/omnictl
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: '3.21.3'
 
@@ -234,7 +234,7 @@ jobs:
             "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
           chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: '3.21.3'
 
