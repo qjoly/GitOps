@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
         - name: mariadb
-          image: mariadb:10.11
+          image: mariadb:12.3
           args:
             - --max-allowed-packet=64MB
           env:
