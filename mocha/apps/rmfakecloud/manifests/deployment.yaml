@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rmfakecloud-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: openebs-lvmpv
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rmfakecloud
+  labels:
+    app: rmfakecloud
+spec:
+  selector:
+    app: rmfakecloud
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rmfakecloud
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: rmfakecloud
+  template:
+    metadata:
+      labels:
+        app: rmfakecloud
+    spec:
+      containers:
+        - name: rmfakecloud
+          image: ddvk/rmfakecloud:latest
+          env:
+            - name: STORAGE_URL
+              value: https://rm.mocha.thoughtless.eu
+            - name: RM_SMTP_SERVER
+              value: mail.infomaniak.com:465
+            - name: RM_SMTP_USERNAME
+              value: no-reply@une-pause-cafe.fr
+            - name: RM_SMTP_FROM
+              value: no-reply@une-pause-cafe.fr
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rmfakecloud
+                  key: jwt_secret
+            - name: RM_SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rmfakecloud
+                  key: smtp_password
+          ports:
+            - name: http
+              containerPort: 3000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: rmfakecloud-data
