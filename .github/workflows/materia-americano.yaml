@@ -14,15 +14,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Publish americano/ to the root of the 'americano' branch
         run: |
           set -euo pipefail
-          tmp="$(mktemp -d)"
-          cp -a "$GITHUB_WORKSPACE/americano/." "$tmp/"
-          cd "$tmp"
-          git init -q -b americano
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          tmp="$(mktemp -d)"
+          cp -a "$GITHUB_WORKSPACE/americano/." "$tmp/"
+          if git ls-remote --exit-code --heads origin americano >/dev/null 2>&1; then
+            git checkout -B americano origin/americano
+          else
+            git checkout --orphan americano
+          fi
+          git rm -rfq . >/dev/null 2>&1 || true
+          cp -a "$tmp/." .
           git add -A
-          git commit -q -m "sync americano/ from ${GITHUB_SHA}"
-          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" americano
+          git diff --cached --quiet || git commit -q -m "sync americano/ from ${GITHUB_SHA}"
+          git push origin americano
