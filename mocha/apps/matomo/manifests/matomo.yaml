@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
         - name: matomo
-          image: matomo:5.5.2
+          image: matomo:5.11.2
           env:
             - name: MATOMO_DATABASE_HOST
               value: matomo-db
