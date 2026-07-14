@@ -1,0 +1,2 @@
+[Hosts.Americano]
+components = ["nginx", "sonarr", "radarr", "overseerr"]

@@ -1,0 +1,20 @@
+[Unit]
+Description=Nginx
+After=network-online.target traefik.service
+
+[Container]
+Image=docker.io/library/nginx:latest
+ContainerName=nginx
+HostName=nginx
+Network=traefik.network
+Label=traefik.enable=true
+Label=traefik.http.routers.nginx.entrypoints=secure
+Label=traefik.http.routers.nginx.rule=Host(`nginx.americano.thoughtless.eu`)
+Label=traefik.http.routers.nginx.tls.certresolver=letsencrypt
+Label=traefik.http.services.nginx.loadbalancer.server.port=80
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target default.target

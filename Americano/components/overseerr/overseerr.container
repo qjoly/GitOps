@@ -1,0 +1,26 @@
+[Unit]
+Description=Overseerr
+After=network-online.target traefik.service
+
+[Container]
+Image=docker.io/sctx/overseerr:latest
+ContainerName=overseerr
+Label=io.containers.autoupdate=registry
+HostName=overseerr
+Network=traefik.network
+Environment=LOG_LEVEL=debug
+Environment=TZ=Europe/Paris
+Environment=PORT=5055
+Volume=/data/apps/overseerr/config:/app/config
+PublishPort=127.0.0.1:5055:5055
+Label=traefik.enable=true
+Label=traefik.http.routers.overseerr.entrypoints=secure
+Label=traefik.http.routers.overseerr.rule=Host(`overseerr.americano.thoughtless.eu`)
+Label=traefik.http.services.overseerr.loadbalancer.server.port=5055
+Label=traefik.http.routers.overseerr.tls.certresolver=letsencrypt
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target default.target

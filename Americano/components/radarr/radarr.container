@@ -1,0 +1,27 @@
+[Unit]
+Description=Radarr
+After=network-online.target traefik.service
+
+[Container]
+Image=lscr.io/linuxserver/radarr:latest
+ContainerName=radarr
+Label=io.containers.autoupdate=registry
+HostName=radarr
+Network=traefik.network
+Environment=PUID=1000
+Environment=PGID=1000
+Environment=TZ=Etc/UTC
+Volume=/data/apps/radarr/data:/config
+Volume=/data/media:/media
+PublishPort=127.0.0.1:7878:7878
+Label=traefik.enable=true
+Label=traefik.http.routers.radarr.entrypoints=secure
+Label=traefik.http.routers.radarr.rule=Host(`radarr.americano.thoughtless.eu`)
+Label=traefik.http.routers.radarr.tls.certresolver=letsencrypt
+Label=traefik.http.routers.radarr.middlewares=authentik@file
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target default.target
