@@ -1,0 +1,26 @@
+[Unit]
+Description=Prowlarr
+After=network-online.target traefik.service
+
+[Container]
+Image=lscr.io/linuxserver/prowlarr:latest
+ContainerName=prowlarr
+HostName=prowlarr
+Network=traefik.network
+Environment=PUID=1000
+Environment=PGID=1000
+Environment=TZ=Europe/Paris
+Volume=/data/apps/prowlarr/config:/config
+PublishPort=127.0.0.1:9696:9696
+Label=traefik.enable=true
+Label=traefik.http.routers.prowlarr.entrypoints=secure
+Label=traefik.http.routers.prowlarr.rule=Host(`prowlarr.americano.thoughtless.eu`)
+Label=traefik.http.services.prowlarr.loadbalancer.server.port=9696
+Label=traefik.http.routers.prowlarr.tls.certresolver=letsencrypt
+Label=traefik.http.routers.prowlarr.middlewares=authentik@file
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target default.target

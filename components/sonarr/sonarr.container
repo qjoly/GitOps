@@ -1,0 +1,27 @@
+[Unit]
+Description=Sonarr
+After=network-online.target traefik.service
+
+[Container]
+Image=lscr.io/linuxserver/sonarr:latest
+ContainerName=sonarr
+Label=io.containers.autoupdate=registry
+HostName=sonarr
+Network=traefik.network
+Environment=PUID=1000
+Environment=PGID=1000
+Environment=TZ=Etc/UTC
+Volume=/data/apps/sonarr/config:/config
+Volume=/data/media:/media
+Label=traefik.enable=true
+Label=traefik.http.routers.sonarr.entrypoints=secure
+Label=traefik.http.routers.sonarr.rule=Host(`sonarr.americano.thoughtless.eu`)
+Label=traefik.http.services.sonarr.loadbalancer.server.port=8989
+Label=traefik.http.routers.sonarr.tls.certresolver=letsencrypt
+Label=traefik.http.routers.sonarr.middlewares=authentik@file
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target default.target
