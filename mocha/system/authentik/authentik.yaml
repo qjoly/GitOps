@@ -113,6 +113,16 @@ spec:
                 scopes: [email, offline_access, profile, openid]
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/vaultwarden.svg
+              - slug: argocd-turing
+                name: Provider for ArgoCD (turing)
+                appName: ArgoCD Turing
+                clientType: confidential
+                redirectURIs:
+                  - https://argocd-turing.thoughtless.eu/auth/callback
+                scopes: [email, profile, openid]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/argo-cd.svg
+                secretName: oidc-argocd-turing
             proxyProviders:
               - slug: prowlarr
                 name: Prowlarr
