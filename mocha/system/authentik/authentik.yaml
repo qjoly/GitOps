@@ -92,7 +92,7 @@ spec:
               existingSecret: authentik-secrets
               key: bootstrap-token
           rbac:
-            create: false
+            create: true
           job:
             helmHook: false
             argocdHook: PostSync
