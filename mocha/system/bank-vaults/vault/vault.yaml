@@ -8,7 +8,7 @@ metadata:
     vault_cr: vault
 spec:
   size: 1
-  image: openbao/openbao:2.5.5
+  image: openbao/openbao:2.6.0
   serviceAccount: vault
   serviceType: ClusterIP
   statsdDisabled: true
