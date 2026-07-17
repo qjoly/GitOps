@@ -24,7 +24,7 @@ spec:
         clickhouse:
           persistence:
             enabled: true
-            size: 40Gi
+            size: 100Gi
           resources:
             requests:
               cpu: 500m

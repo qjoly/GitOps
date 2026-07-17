@@ -43,3 +43,4 @@ parameters:
   storage: "lvm"
   volgroup: "lvmvg"
 provisioner: local.csi.openebs.io
+allowVolumeExpansion: true
