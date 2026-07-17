@@ -46,6 +46,12 @@ spec:
                   secretKeyRef:
                     name: authentik-secrets
                     key: password
+              # Bootstraps the akadmin API token; reused by authentik-provisioner.
+              - name: AUTHENTIK_BOOTSTRAP_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: authentik-secrets
+                    key: bootstrap-token
           server:
             ingress:
               enabled: true
@@ -73,3 +79,56 @@ spec:
     - repoURL: https://github.com/qjoly/gitops.git
       targetRevision: HEAD
       path: mocha/system/authentik/manifests
+    # authentik-provisioner: declaratively configures applications/providers.
+    # Runs as an ArgoCD PostSync hook on every sync (idempotent).
+    - repoURL: ghcr.io/qjoly/charts
+      chart: authentik-provisioner
+      targetRevision: 0.3.0
+      helm:
+        values: |
+          authentik:
+            url: http://authentik-server
+            token:
+              existingSecret: authentik-secrets
+              key: bootstrap-token
+          rbac:
+            create: false
+          job:
+            helmHook: false
+            argocdHook: PostSync
+          config:
+            managedBy: gitops-provisioner
+            pruneGroups: false
+            defaults:
+              authorizationFlow: default-provider-authorization-implicit-consent
+              invalidationFlow: default-provider-invalidation-flow
+              subMode: user_email
+            oauth2Providers:
+              - slug: vaultwarden
+                name: Provider for Vaultwarden
+                appName: Vaultwarden
+                clientType: confidential
+                redirectURIs:
+                  - https://vaultwarden.mocha.thoughtless.eu/identity/connect/oidc-signin
+                scopes: [email, offline_access, profile, openid]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/vaultwarden.svg
+            proxyProviders:
+              - slug: prowlarr
+                name: Prowlarr
+                mode: forward_single
+                externalHost: https://prowlarr.americano.thoughtless.eu
+                accessTokenValidity: hours=24
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/prowlarr.svg
+              - slug: radarr
+                name: Radarr
+                mode: forward_single
+                externalHost: https://radarr.americano.thoughtless.eu
+                accessTokenValidity: hours=24
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/radarr.svg
+              - slug: sonarr
+                name: Sonarr
+                mode: forward_single
+                externalHost: https://sonarr.americano.thoughtless.eu
+                accessTokenValidity: hours=24
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/sonarr.svg
