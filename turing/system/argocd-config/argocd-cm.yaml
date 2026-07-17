@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  url: https://argocd-turing.thoughtless.eu
+  dex.config: |
+    connectors:
+    - config:
+        issuer: https://authentik.mocha.thoughtless.eu/application/o/argocd-turing/
+        clientID: NWYUtMoswD0v3bCqLphzQjUbQK6JHGcTxkSAUv6B
+        clientSecret: $dex.authentik.clientSecret
+        insecureEnableGroups: true
+        scopes:
+          - openid
+          - profile
+          - email
+          - groups
+      name: authentik
+      type: oidc
+      id: authentik
