@@ -118,7 +118,7 @@ spec:
                 appName: ArgoCD Turing
                 clientType: confidential
                 redirectURIs:
-                  - https://argocd-turing.thoughtless.eu/auth/callback
+                  - https://argocd-turing.thoughtless.eu/api/dex/callback
                 scopes: [email, profile, openid]
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/argo-cd.svg
