@@ -18,6 +18,10 @@ spec:
           replicated:
             mayastor:
               enabled: false
+        loki:
+          enabled: false
+        alloy:
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: openebs
