@@ -123,6 +123,18 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/argo-cd.svg
                 secretName: oidc-argocd-turing
+              - slug: immich
+                name: Provider for Immich (turing)
+                appName: Immich
+                clientType: confidential
+                redirectURIs:
+                  - https://immich.thoughtless.eu/auth/login
+                  - https://immich.thoughtless.eu/user-settings
+                  - app.immich:///oauth-callback
+                scopes: [email, profile, openid]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/immich.svg
+                secretName: oidc-immich
             proxyProviders:
               - slug: prowlarr
                 name: Prowlarr
