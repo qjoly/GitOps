@@ -1,0 +1,35 @@
+# Cilium values — mocha cluster (OVH bare-metal, single node)
+# Applied via: helmfile apply (CI) or helmfile diff (PR dry-run)
+
+# Kube-proxy is disabled in Talos (patches/disable-kubeproxy.yml);
+# Cilium handles all service routing through eBPF.
+kubeProxyReplacement: true
+
+# VXLAN tunnel — consistent with other clusters, safe on OVH networking
+routingMode: tunnel
+tunnelProtocol: vxlan
+autoDirectNodeRoutes: false
+
+bpf:
+  masquerade: true
+
+ipam:
+  mode: kubernetes
+
+ipv6:
+  enabled: false
+
+operator:
+  # Single-node cluster — 1 replica is sufficient
+  replicas: 1
+
+hubble:
+  enabled: true
+  tls:
+    auto:
+      method: helm
+      certValidityDuration: 1095 # 3 years
+  relay:
+    enabled: true
+  ui:
+    enabled: true
