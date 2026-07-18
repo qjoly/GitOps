@@ -30,6 +30,8 @@ spec:
           persistence:
             library:
               existingClaim: immich-library
+          configurationKind: Secret
+          existingConfiguration: immich-oauth-config
 
         valkey:
           enabled: true

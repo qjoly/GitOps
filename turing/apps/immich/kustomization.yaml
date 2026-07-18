@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - secret.yaml
+  - oauth-config-secret.yaml
   - postgres.yaml
   - library-pvc.yaml
   - app.yaml
