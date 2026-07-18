@@ -99,7 +99,7 @@ jobs:
             | tar xz -C /tmp helmfile
           sudo mv /tmp/helmfile /usr/local/bin/helmfile
           # Pin to v3.9.4 — pre-dates the platformHooks field that breaks older Helm parsers
-          helm plugin install https://github.com/databus23/helm-diff --version v3.9.4
+          helm plugin install https://github.com/databus23/helm-diff --version v3.9.4 --verify=false
 
       - name: omnictl dry-run — ${{ matrix.cluster }}
         id: omni-dry-run
@@ -245,7 +245,7 @@ jobs:
             | tar xz -C /tmp helmfile
           sudo mv /tmp/helmfile /usr/local/bin/helmfile
           # Pin to v3.9.4 — pre-dates the platformHooks field that breaks older Helm parsers
-          helm plugin install https://github.com/databus23/helm-diff --version v3.9.4
+          helm plugin install https://github.com/databus23/helm-diff --version v3.9.4 --verify=false
 
       - name: Sync ${{ matrix.cluster }} cluster template
         id: sync-cluster
