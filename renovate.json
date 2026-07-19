@@ -9,6 +9,14 @@
     "archives/**",
     "common/argocd/**"
   ],
+  "packageRules": [
+    {
+      "description": "Immich Postgres: block major bumps, PG major upgrade needs a manual dump/restore (vector extensions)",
+      "matchPackageNames": ["ghcr.io/immich-app/postgres"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ],
   "argocd": {
     "managerFilePatterns": [
       "/\\.yaml$/"

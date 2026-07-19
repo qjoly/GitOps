@@ -30,7 +30,8 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: ghcr.io/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0
+          # ponytail: pinned to PG14 — data dir initialized by PG14, a PG16 major upgrade needs a dump/restore (vectorchord/pgvecto.rs extensions), not an image bump. Do the migration then move to 16.
+          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
           env:
             - name: POSTGRES_USER
               value: immich
