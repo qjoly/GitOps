@@ -92,7 +92,7 @@ jobs:
         with:
           # helm 4 breaks helmfile v0.171.0 (removed `helm version --client`)
           # and the helm-diff plugin (new plugin system). Pin to 3.x.
-          version: '3.21.3'
+          version: '4.2.3'
 
       - name: Install helmfile + helm-diff plugin
         run: |
@@ -240,7 +240,7 @@ jobs:
         with:
           # helm 4 breaks helmfile v0.171.0 (removed `helm version --client`)
           # and the helm-diff plugin (new plugin system). Pin to 3.x.
-          version: '3.21.3'
+          version: '4.2.3'
 
       - name: Install helmfile + helm-diff plugin
         run: |
