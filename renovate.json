@@ -6,7 +6,8 @@
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "ignorePaths": [
-    "archives/**"
+    "archives/**",
+    "common/argocd/**"
   ],
   "argocd": {
     "managerFilePatterns": [
