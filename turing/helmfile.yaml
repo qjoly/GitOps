@@ -1,3 +1,4 @@
+# Appliqué en CI avec helm 3.x (helmfile v0.171.0 incompatible helm 4).
 repositories:
   - name: cilium
     url: https://helm.cilium.io/

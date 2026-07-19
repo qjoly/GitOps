@@ -90,7 +90,9 @@ jobs:
 
       - uses: azure/setup-helm@v5
         with:
-          version: '4.2.3'
+          # helm 4 casse helmfile v0.171.0 (retrait de `helm version --client`)
+          # et le plugin helm-diff (nouveau système de plugins). Pin sur 3.x.
+          version: '3.21.3'
 
       - name: Install helmfile + helm-diff plugin
         run: |
@@ -99,7 +101,7 @@ jobs:
             | tar xz -C /tmp helmfile
           sudo mv /tmp/helmfile /usr/local/bin/helmfile
           # Pin to v3.9.4 — pre-dates the platformHooks field that breaks older Helm parsers
-          helm plugin install https://github.com/databus23/helm-diff --version v3.9.4 --verify=false
+          helm plugin install https://github.com/databus23/helm-diff --version v3.9.4
 
       - name: omnictl dry-run — ${{ matrix.cluster }}
         id: omni-dry-run
@@ -236,7 +238,9 @@ jobs:
 
       - uses: azure/setup-helm@v5
         with:
-          version: '4.2.3'
+          # helm 4 casse helmfile v0.171.0 (retrait de `helm version --client`)
+          # et le plugin helm-diff (nouveau système de plugins). Pin sur 3.x.
+          version: '3.21.3'
 
       - name: Install helmfile + helm-diff plugin
         run: |
@@ -245,7 +249,7 @@ jobs:
             | tar xz -C /tmp helmfile
           sudo mv /tmp/helmfile /usr/local/bin/helmfile
           # Pin to v3.9.4 — pre-dates the platformHooks field that breaks older Helm parsers
-          helm plugin install https://github.com/databus23/helm-diff --version v3.9.4 --verify=false
+          helm plugin install https://github.com/databus23/helm-diff --version v3.9.4
 
       - name: Sync ${{ matrix.cluster }} cluster template
         id: sync-cluster
