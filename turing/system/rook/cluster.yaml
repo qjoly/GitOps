@@ -113,7 +113,6 @@ spec:
         - /spec/monitoring
         - /spec/mgr
         - /spec/mon
-        - /spec/resources
         - /spec/storage
         - /spec/network
         - /spec/removeOSDsIfOutAndSafeToRemove
