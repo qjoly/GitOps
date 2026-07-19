@@ -90,8 +90,8 @@ jobs:
 
       - uses: azure/setup-helm@v5
         with:
-          # helm 4 casse helmfile v0.171.0 (retrait de `helm version --client`)
-          # et le plugin helm-diff (nouveau système de plugins). Pin sur 3.x.
+          # helm 4 breaks helmfile v0.171.0 (removed `helm version --client`)
+          # and the helm-diff plugin (new plugin system). Pin to 3.x.
           version: '3.21.3'
 
       - name: Install helmfile + helm-diff plugin
@@ -238,8 +238,8 @@ jobs:
 
       - uses: azure/setup-helm@v5
         with:
-          # helm 4 casse helmfile v0.171.0 (retrait de `helm version --client`)
-          # et le plugin helm-diff (nouveau système de plugins). Pin sur 3.x.
+          # helm 4 breaks helmfile v0.171.0 (removed `helm version --client`)
+          # and the helm-diff plugin (new plugin system). Pin to 3.x.
           version: '3.21.3'
 
       - name: Install helmfile + helm-diff plugin

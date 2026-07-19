@@ -56,10 +56,10 @@ hubble:
   enabled: true
   tls:
     auto:
-      # cronJob = cilium-certgen (natif chart) : réutilise le secret cilium-ca
-      # existant et re-signe server+relay depuis CETTE CA, avec rotation auto.
-      # method: helm régénérait une CA aléatoire à chaque render → relay cert
-      # signé par une CA morte → agent le rejette (tls: unknown certificate authority).
+      # cronJob = cilium-certgen (built-in): owns the CA + server/relay certs
+      # and rotates them automatically. method: helm regenerated a random CA on
+      # every render, leaving the relay cert signed by a dead CA -> the agent
+      # rejected it (tls: unknown certificate authority) -> relay CrashLoop.
       method: cronJob
       certValidityDuration: 1095  # 3 years
   relay:
