@@ -44,6 +44,44 @@ spec:
                   insecure: false
                   cert_file: /mtls/tls.crt
                   key_file: /mtls/tls.key
+            receivers:
+              prometheus:
+                config:
+                  scrape_configs:
+                    - job_name: cadvisor-oom
+                      scheme: https
+                      scrape_interval: 30s
+                      metrics_path: /metrics/cadvisor
+                      authorization:
+                        credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      tls_config:
+                        insecure_skip_verify: true
+                      static_configs:
+                        - targets:
+                            - ${env:K8S_HOST_IP}:10250
+                      metric_relabel_configs:
+                        - source_labels: [__name__]
+                          regex: container_oom_events_total
+                          action: keep
+                        - source_labels: [pod]
+                          regex: .+
+                          action: keep
+            processors:
+              resource/cluster:
+                attributes:
+                  - key: k8s.cluster.name
+                    value: turing
+                    action: upsert
+            service:
+              pipelines:
+                metrics/cadvisor:
+                  receivers:
+                    - prometheus
+                  processors:
+                    - resource/cluster
+                    - batch
+                  exporters:
+                    - otlphttp
           extraVolumes:
             - name: mtls
               secret:
