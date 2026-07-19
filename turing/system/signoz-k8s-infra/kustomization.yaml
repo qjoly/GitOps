@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - app.yaml
   - mtls.yaml
+  - oom-rbac.yaml

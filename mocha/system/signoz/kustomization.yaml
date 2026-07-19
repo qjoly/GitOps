@@ -8,6 +8,7 @@ resources:
   - otlp-ingress.yaml
   - otlp-mtls.yaml
   - alerting.yaml
+  - oom-rbac.yaml
 configMapGenerator:
   - name: signoz-dashboards
     namespace: signoz
