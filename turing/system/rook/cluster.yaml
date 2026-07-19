@@ -45,7 +45,8 @@ spec:
                 cpu: 250m
                 memory: 512Mi
               limits:
-                memory: 1Gi
+                # 1Gi OOMKilled the active mgr on transient module spikes (dashboard/prometheus/pg_autoscaler)
+                memory: 2Gi
             mon:
               requests:
                 cpu: 250m
