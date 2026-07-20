@@ -135,6 +135,16 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/immich.svg
                 secretName: oidc-immich
+              - slug: paperless
+                name: Provider for Paperless (turing)
+                appName: Paperless
+                clientType: confidential
+                redirectURIs:
+                  - https://paperless.thoughtless.eu/accounts/oidc/authentik/login/callback/
+                scopes: [email, profile, openid]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/paperless-ngx.svg
+                secretName: oidc-paperless
             proxyProviders:
               - slug: prowlarr
                 name: Prowlarr
