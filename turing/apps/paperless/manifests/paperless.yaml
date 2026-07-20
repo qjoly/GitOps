@@ -24,6 +24,13 @@ spec:
             - secretRef:
                 name: paperless-oidc
           env:
+            # NFS (nfs-turing) dirs are owned by 65534:65534 with 0755 and the
+            # export is no_root_squash — run as root so paperless can write to
+            # media/consume, same as immich on this storage class.
+            - name: USERMAP_UID
+              value: "0"
+            - name: USERMAP_GID
+              value: "0"
             - name: PAPERLESS_URL
               value: https://paperless.thoughtless.eu
             - name: PAPERLESS_REDIS
