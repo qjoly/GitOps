@@ -14,6 +14,10 @@ spec:
       labels:
         app: paperless
     spec:
+      # The Service named "paperless" otherwise injects PAPERLESS_PORT=tcp://<ip>:8000
+      # (legacy service links), which collides with paperless-ngx's own
+      # PAPERLESS_PORT config and crashes granian at boot.
+      enableServiceLinks: false
       containers:
         - name: paperless
           image: ghcr.io/paperless-ngx/paperless-ngx:2.20.15
