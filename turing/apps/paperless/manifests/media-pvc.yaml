@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-media
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-turing
+  resources:
+    requests:
+      storage: 50Gi

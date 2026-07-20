@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: paperless
+  template:
+    metadata:
+      labels:
+        app: paperless
+    spec:
+      containers:
+        - name: paperless
+          image: ghcr.io/paperless-ngx/paperless-ngx:2.20.15
+          ports:
+            - containerPort: 8000
+          envFrom:
+            # provides PAPERLESS_SECRET_KEY + PAPERLESS_SOCIALACCOUNT_PROVIDERS
+            - secretRef:
+                name: paperless-oidc
+          env:
+            - name: PAPERLESS_URL
+              value: https://paperless.thoughtless.eu
+            - name: PAPERLESS_REDIS
+              value: redis://paperless-redis:6379
+            - name: PAPERLESS_DBHOST
+              value: paperless-postgres
+            - name: PAPERLESS_DBNAME
+              value: paperless
+            - name: PAPERLESS_DBUSER
+              value: paperless
+            - name: PAPERLESS_DBPASS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-db-credentials
+                  key: password
+            - name: PAPERLESS_TIME_ZONE
+              value: Europe/Paris
+            - name: PAPERLESS_OCR_LANGUAGE
+              value: fra+eng
+            - name: PAPERLESS_ENABLE_ALLAUTH
+              value: "true"
+            - name: PAPERLESS_APPS
+              value: allauth.socialaccount.providers.openid_connect
+            - name: PAPERLESS_ACCOUNT_ALLOW_SIGNUPS
+              value: "false"
+            - name: PAPERLESS_SOCIAL_AUTO_SIGNUP
+              value: "true"
+            - name: PAPERLESS_REDIRECT_LOGIN_PAGE_URL
+              value: /accounts/oidc/authentik/login/?process=login
+          volumeMounts:
+            - name: data
+              mountPath: /usr/src/paperless/data
+            - name: media
+              mountPath: /usr/src/paperless/media
+            - name: consume
+              mountPath: /usr/src/paperless/consume
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: paperless-data
+        - name: media
+          persistentVolumeClaim:
+            claimName: paperless-media
+        - name: consume
+          persistentVolumeClaim:
+            claimName: paperless-consume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless
+spec:
+  selector:
+    app: paperless
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: paperless
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+    external-dns.alpha.kubernetes.io/hostname: paperless.thoughtless.eu
+    external-dns.alpha.kubernetes.io/target: "58c15097-f3b2-4ff7-a676-21bbeeea39d7.cfargotunnel.com"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: paperless.thoughtless.eu
+      http:
+        paths:
+          - path: "/"
+            pathType: Prefix
+            backend:
+              service:
+                name: paperless
+                port:
+                  number: 8000
+  tls:
+    - secretName: paperless-tls
+      hosts:
+        - paperless.thoughtless.eu

@@ -1,0 +1,32 @@
+# ponytail: no persistence — Redis is only the Celery broker. Restarting it
+# drops in-flight consume tasks, acceptable for a homelab. Add a PVC if not.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless-redis
+  template:
+    metadata:
+      labels:
+        app: paperless-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-redis
+spec:
+  selector:
+    app: paperless-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
