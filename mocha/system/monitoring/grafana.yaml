@@ -38,10 +38,6 @@ spec:
             secretKeyRef:
               name: grafana-secrets
               key: OIDC_CLIENT_SECRET
-          AUTHENTIK_APP:
-            secretKeyRef:
-              name: grafana-secrets
-              key: AUTHENTIK_APP
         plugins:
           - chaosmeshorg-datasource
           - grafana-clickhouse-datasource
@@ -82,7 +78,7 @@ spec:
             server:
               root_url: https://grafana.mocha.thoughtless.eu
             auth:
-                signout_redirect_url: "https://oidc.home.une-tasse-de.cafe/application/o/$__env{AUTHENTIK_APP}/end-session/"
+                signout_redirect_url: "https://authentik.mocha.thoughtless.eu/application/o/grafana/end-session/"
                 oauth_auto_login: false
             auth.generic_oauth:
                 name: authentik
@@ -90,9 +86,9 @@ spec:
                 client_id: $__env{OIDC_CLIENT_ID}
                 client_secret: $__env{OIDC_CLIENT_SECRET}
                 scopes: "openid profile email"
-                auth_url: "https://oidc.home.une-tasse-de.cafe/application/o/authorize/"
-                token_url: "https://oidc.home.une-tasse-de.cafe/application/o/token/"
-                api_url: "https://oidc.home.une-tasse-de.cafe/application/o/userinfo/"
+                auth_url: "https://authentik.mocha.thoughtless.eu/application/o/authorize/"
+                token_url: "https://authentik.mocha.thoughtless.eu/application/o/token/"
+                api_url: "https://authentik.mocha.thoughtless.eu/application/o/userinfo/"
                 allow_assign_grafana_admin: true
                 role_attribute_path: "contains(groups[*], 'authentik Admins') && 'GrafanaAdmin' || 'Viewer'"
         sidecar:
@@ -136,7 +132,3 @@ spec:
                   remoteRef:
                     key: grafana
                     property: authentik_secret
-                - secretKey: AUTHENTIK_APP
-                  remoteRef:
-                    key: grafana
-                    property: authentik_app

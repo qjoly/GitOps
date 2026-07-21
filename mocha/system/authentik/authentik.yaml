@@ -145,6 +145,16 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/paperless-ngx.svg
                 secretName: oidc-paperless
+              - slug: grafana
+                name: Provider for Grafana (mocha)
+                appName: Grafana
+                clientType: confidential
+                redirectURIs:
+                  - https://grafana.mocha.thoughtless.eu/login/generic_oauth
+                scopes: [email, profile, openid]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/grafana.svg
+                secretName: oidc-grafana
             proxyProviders:
               - slug: prowlarr
                 name: Prowlarr
