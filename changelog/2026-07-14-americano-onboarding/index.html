@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+     
+     
+    
+    <link rel="canonical" href="https://qjoly.github.io/GitOps/changelog/2026-07-14-americano-onboarding/"><link rel="icon" type="image/png" sizes="192x192" href="../../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Onboarding: Americano — the first podman / Materia host in this GitOps - GitOps</title>
+
+
+<link href="../../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../../css/normalize.css" rel="stylesheet">
+<link href="../../css/terminal.css" rel="stylesheet">
+<link href="../../css/theme.css" rel="stylesheet">
+<link href="../../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "../..",
+    shortcuts = "{}";
+</script>
+<script src="../../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://qjoly.github.io/GitOps/" class="no-style">GitOps</a></div>
+        </header>
+        
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../.." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Welcome aboard!</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../backup/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Backup</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../cloudflared/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Cloudflared</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../getting-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Getting Started</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../secret-management/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Secret Management</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../signoz/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">SigNoz</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../zfs/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">ZFS</span>
+                    </a>
+                    <meta property="position" content="6">
+                </li>
+                
+                
+                
+                    
+                    
+
+
+<li property="itemListElement" typeof="ListItem">
+    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+    </a>
+    <meta property="position" content="7">
+</li>
+                    
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../..">Welcome aboard!</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../backup/">Backup</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../cloudflared/">Cloudflared</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../getting-started/">Getting Started</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../secret-management/">Secret Management</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../signoz/">SigNoz</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../zfs/">ZFS</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        <span class="
+        
+    terminal-mkdocs-side-nav-item--active terminal-mkdocs-side-nav-section-no-index">Changelog</span>
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../2026-07-13-mocha-avp-to-bank-vaults/">Migration: argocd-vault-plugin (AVP) → bank-vaults / OpenBao — cluster mocha</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">Onboarding: Americano — the first podman / Materia host in this GitOps</span>
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#onboarding-americano-the-first-podman-materia-host-in-this-gitops">Onboarding: Americano — the first podman / Materia host in this GitOps</a></li>
+        <li><a href="#why-this-one-is-different">Why this one is different</a></li><li><a href="#what-was-done-three-chunks">What was done (three chunks)</a></li><li><a href="#decisions">Decisions</a></li><li><a href="#follow-ups-notes">Follow-ups / notes</a></li><li><a href="#progress-log">Progress log</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+<section id="mkdocs-terminal-content">
+    <h1 id="onboarding-americano-the-first-podman-materia-host-in-this-gitops">Onboarding: <code>Americano</code> — the first podman / Materia host in this GitOps</h1>
+<p><strong>Started:</strong> 2026-07-14
+<strong>Scope:</strong> new standalone host <code>Americano</code> (<code>sonarr.americano.thoughtless.eu</code>, <code>85.17.65.41</code>).
+No impact on the <code>mocha</code> / <code>turing</code> Kubernetes clusters.
+<strong>Status:</strong> Done. SSO live on sonarr/radarr, Overseerr installed + migrated, old instance
+redirected, and the host's quadlets brought under Materia GitOps sourced from this repo.</p>
+<h2 id="why-this-one-is-different">Why this one is different</h2>
+<p><code>mocha</code> and <code>turing</code> are Talos Kubernetes clusters reconciled by <strong>ArgoCD</strong> from this repo.
+<code>Americano</code> is <strong>not a cluster</strong>: it is a bare host running the media stack (sonarr, radarr,
+overseerr, plex, prowlarr, deluge, …) as <strong>podman quadlets</strong>, fronted by a local <strong>Traefik</strong>
+(docker provider reading the podman socket + a file provider for dynamic config).</p>
+<p>Its GitOps engine is <strong><a href="https://github.com/stryan/materia">Materia</a></strong> (GitOps for quadlets),
+not ArgoCD. Materia clones a repo and expects <code>MANIFEST.toml</code> <strong>at the repo root</strong> — it has no
+"source subdirectory" option. To still keep everything in <code>qjoly/gitops</code>, the human-readable
+tree lives in <a href="../../americano/"><code>americano/</code></a> on <code>main</code>, and a GitHub Action republishes that
+folder's contents to the <strong>root of the <code>americano</code> branch</strong>, which Materia consumes. See
+<a href="../../americano/README.md"><code>americano/README.md</code></a> for the mechanics.</p>
+<h2 id="what-was-done-three-chunks">What was done (three chunks)</h2>
+<h3 id="1-authentik-sso-in-front-of-sonarr-radarr">1. Authentik SSO in front of sonarr / radarr</h3>
+<p>sonarr and radarr have no native SSO, so a <strong>Proxy Provider in <code>forward_single</code> mode</strong> was used
+(the classic Proxy mode is impossible here: the embedded outpost runs on <code>mocha</code> and cannot reach
+the app ports on this host).</p>
+<ul>
+<li>authentik (<code>mocha</code>): created 2 Proxy Providers + Applications (Sonarr, Radarr) and assigned
+  them to the embedded outpost. Access <strong>restricted to user <code>qjoly</code></strong> via a per-application
+  PolicyBinding. Objects created imperatively via <code>ak shell</code> (consistent with the existing
+  non-GitOps authentik config). Gotcha: creating a ProxyProvider through the ORM leaves
+  <code>redirect_uris</code> empty → "mismatching redirect_uri"; fixed with <code>set_oauth_defaults()</code>.</li>
+<li>Traefik (Americano, file provider <code>/data/apps/traefik/config/static.yml</code>): a <code>forwardAuth</code>
+  middleware to the mocha outpost + per-host <code>/outpost.goauthentik.io/</code> routers
+  (<code>service authentik-outpost</code>, <code>passHostHeader: false</code>). The middleware is attached to the app
+  routers via the quadlet label <code>traefik.http.routers.&lt;app&gt;.middlewares=authentik@file</code>.</li>
+<li>sonarr/radarr <code>config.xml</code>: <code>AuthenticationMethod</code> <code>Forms</code> → <strong><code>External</code></strong> (delegate auth to
+  the proxy; the exporters keep working via their API key).</li>
+<li><strong>Central gotcha:</strong> the mocha Traefik ingress <strong>rewrites <code>X-Forwarded-Host</code></strong>, so the outpost
+  saw <code>authentik.mocha…</code> and returned 404. Fixed in <code>mocha/system/traefik/app.yaml</code> by trusting
+  the Americano egress IP: <code>ports.websecure.forwardedHeaders.trustedIPs: [85.17.65.41/32]</code>.</li>
+</ul>
+<h3 id="2-overseerr-new-install-migration-off-headscale">2. Overseerr — new install + migration off <code>headscale</code></h3>
+<ul>
+<li>Installed Overseerr as a quadlet (<code>docker.io/sctx/overseerr:latest</code>, config in
+  <code>/data/apps/overseerr/config</code>) exposed at <code>https://overseerr.americano.thoughtless.eu</code>
+  (wildcard <code>*.americano.thoughtless.eu</code> DNS → no DNS change needed).</li>
+<li>Migrated the full config/DB from the old instance on <code>headscale</code>
+  (<code>/root/JellySeer/config</code>): both instances stopped for a consistent SQLite snapshot, streamed
+  via <code>tar</code> through the operator's machine, restarted. Users, requests and Plex config carried
+  over.</li>
+<li>Repointed the sonarr/radarr connections <strong>from their public URLs to the internal container
+  names</strong> (<code>http://sonarr:8989</code>, <code>http://radarr:7878</code>) — the public URLs are now behind the SSO
+  added in chunk 1, which would block Overseerr's API. Set <code>applicationUrl</code>.</li>
+<li>Old instance: replaced by a <strong>redirect service</strong>. On <code>headscale</code>'s Traefik file provider, a
+  router on <code>Host(request.thoughtless.eu)</code> with <code>service noop@internal</code> + a <code>redirectRegex</code>
+  middleware → <code>https://overseerr.americano.thoughtless.eu</code> (path + query preserved, HTTP 308).
+  No container needed. Old Overseerr container left stopped.</li>
+</ul>
+<h3 id="3-materia-gitops-onboarding">3. Materia GitOps onboarding</h3>
+<ul>
+<li>Discovered Materia was already installed but its <strong>cron was broken</strong>: the binary is at
+  <code>/usr/local/bin/materia</code>, absent from cron's <code>PATH</code>, so <code>materia update</code> failed every 15 min
+  (<code>env: 'materia': No such file or directory</code>). Nothing had been reconciling. Fixed with the
+  absolute path.</li>
+<li>Repointed Materia's source from the standalone <code>quadlet.coffee.gitops</code> to <strong>this repo</strong>
+  (<code>MATERIA_SOURCE__URL=github.com/qjoly/gitops</code>, <code>MATERIA_GIT__BRANCH=americano</code>).</li>
+<li>Created the <code>americano/</code> Materia tree (components <code>nginx</code>, <code>sonarr</code>, <code>radarr</code>, <code>overseerr</code>)
+  and the publish workflow <code>.github/workflows/materia-americano.yaml</code>.</li>
+<li>Cutover: the previously hand-written flat quadlets
+  (<code>/etc/containers/systemd/{sonarr,radarr,overseerr}.container</code>) were removed (backed up to
+  <code>/root/quadlet-flat-backup/</code>) and <code>materia update</code> redeployed them as Materia-managed
+  components under <code>/etc/containers/systemd/&lt;comp&gt;/</code> (each with a <code>.materia_managed</code> marker).
+  <code>materia plan</code> now reports <strong>"No changes made"</strong>.</li>
+</ul>
+<h2 id="decisions">Decisions</h2>
+<ul>
+<li><strong>Not ArgoCD.</strong> A podman host doesn't fit the cluster/ApplicationSet model; Materia is the
+  right tool and was already bootstrapped on the box.</li>
+<li><strong>Folder on <code>main</code> + CI-published branch</strong>, rather than a dedicated repo or an orphan branch
+  edited by hand. Keeps the config in <code>qjoly/gitops</code>, readable and reviewable on <code>main</code>, while
+  satisfying Materia's "manifest at root" requirement. Chosen by the user over a separate repo.</li>
+<li><strong><code>Cleanup</code> stays off</strong> in Materia: it only manages the four declared components; every other
+  app on the host (plex, prowlarr, traefik, …) stays as a manual flat quadlet, untouched.</li>
+<li><strong>Host-key casing:</strong> the folder and branch are lowercase <code>americano</code>, but <code>[Hosts.Americano]</code>
+  in <code>MANIFEST.toml</code> and <code>attributes/Americano.toml</code> keep the capital <code>A</code> — Materia matches them
+  against the real hostname (<code>Americano</code>); lowercasing them would break component selection.</li>
+</ul>
+<h2 id="follow-ups-notes">Follow-ups / notes</h2>
+<ul>
+<li>The Americano host and its Traefik/authentik-side changes (except the mocha <code>trustedIPs</code>
+  tweak) are <strong>not</strong> otherwise represented in git — they live on the box and are now, for the
+  four onboarded apps, reproducible via Materia.</li>
+<li>A stale Radarr entry (<code>server937.seedhost.eu</code>) remains in Overseerr's settings from the old
+  setup; it errors on sync and should be removed from the UI.</li>
+</ul>
+<h2 id="progress-log">Progress log</h2>
+<ul>
+<li>2026-07-14 — authentik SSO wired for sonarr/radarr (forward_single + Traefik forwardAuth),
+  mocha <code>trustedIPs</code> fix committed &amp; deployed, access restricted to <code>qjoly</code>. Verified end to end
+  (302 → authentik, callback path 204).</li>
+<li>2026-07-14 — Overseerr installed, DB migrated from headscale, sonarr/radarr repointed to
+  internal names, old URL redirected (308).</li>
+<li>2026-07-14 — Materia onboarding: <code>americano/</code> tree + publish workflow committed &amp; pushed
+  (branch <code>americano</code> produced by CI), Materia repointed to this repo, cron fixed, flat quadlets
+  cut over to Materia-managed components. <code>materia plan</code> clean.</li>
+</ul>
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>
