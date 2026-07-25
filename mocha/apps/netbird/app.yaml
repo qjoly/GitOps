@@ -17,11 +17,13 @@ spec:
   sources:
     - repoURL: https://netbirdio.github.io/helms
       chart: netbird
-      targetRevision: 1.8.0
+      targetRevision: 1.9.0
       helm:
         values: |
           fullnameOverride: netbird
           management:
+            image:
+              tag: 0.75.0
             persistentVolume:
               enabled: true
               size: 256Mi
@@ -115,7 +117,12 @@ spec:
                   "TrustedPeers": null
                 }
               }
+          signal:
+            image:
+              tag: 0.75.0
           relay:
+            image:
+              tag: 0.75.0
             envFromSecret:
               NB_AUTH_SECRET: netbird/relayPassword
             env:
@@ -123,6 +130,8 @@ spec:
               NB_LISTEN_ADDRESS: ":33080"
               NB_EXPOSED_ADDRESS: "rels://netbird.mocha.thoughtless.eu:443/relay"
           dashboard:
+            image:
+              tag: v2.90.7
             env:
               NETBIRD_MGMT_API_ENDPOINT: https://netbird.mocha.thoughtless.eu:443
               NETBIRD_MGMT_GRPC_API_ENDPOINT: https://netbird.mocha.thoughtless.eu:443
