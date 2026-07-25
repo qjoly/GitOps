@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coturn
+  labels:
+    app: coturn
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coturn
+  template:
+    metadata:
+      labels:
+        app: coturn
+    spec:
+      containers:
+        - name: coturn
+          image: coturn/coturn:4.15.0
+          command:
+            - sh
+            - -c
+            - >-
+              turnserver
+              -n
+              --listening-port=3478
+              --min-port=49152
+              --max-port=49162
+              --realm=netbird.mocha.thoughtless.eu
+              --lt-cred-mech
+              --user=netbird:$(TURN_PASSWORD)
+              --no-cli
+              --no-tls
+              --no-dtls
+              --fingerprint
+              --log-file=stdout
+          env:
+            - name: TURN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbird
+                  key: turnPassword
+          ports:
+            - name: turn-udp
+              containerPort: 3478
+              protocol: UDP
+            - name: relay-49152
+              containerPort: 49152
+              protocol: UDP
+            - name: relay-49153
+              containerPort: 49153
+              protocol: UDP
+            - name: relay-49154
+              containerPort: 49154
+              protocol: UDP
+            - name: relay-49155
+              containerPort: 49155
+              protocol: UDP
+            - name: relay-49156
+              containerPort: 49156
+              protocol: UDP
+            - name: relay-49157
+              containerPort: 49157
+              protocol: UDP
+            - name: relay-49158
+              containerPort: 49158
+              protocol: UDP
+            - name: relay-49159
+              containerPort: 49159
+              protocol: UDP
+            - name: relay-49160
+              containerPort: 49160
+              protocol: UDP
+            - name: relay-49161
+              containerPort: 49161
+              protocol: UDP
+            - name: relay-49162
+              containerPort: 49162
+              protocol: UDP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coturn
+  annotations:
+    lbipam.cilium.io/sharing-key: "public"
+    lbipam.cilium.io/sharing-cross-namespace: "*"
+spec:
+  type: LoadBalancer
+  selector:
+    app: coturn
+  ports:
+    - name: turn-udp
+      port: 3478
+      targetPort: 3478
+      protocol: UDP
+    - name: relay-49152
+      port: 49152
+      targetPort: 49152
+      protocol: UDP
+    - name: relay-49153
+      port: 49153
+      targetPort: 49153
+      protocol: UDP
+    - name: relay-49154
+      port: 49154
+      targetPort: 49154
+      protocol: UDP
+    - name: relay-49155
+      port: 49155
+      targetPort: 49155
+      protocol: UDP
+    - name: relay-49156
+      port: 49156
+      targetPort: 49156
+      protocol: UDP
+    - name: relay-49157
+      port: 49157
+      targetPort: 49157
+      protocol: UDP
+    - name: relay-49158
+      port: 49158
+      targetPort: 49158
+      protocol: UDP
+    - name: relay-49159
+      port: 49159
+      targetPort: 49159
+      protocol: UDP
+    - name: relay-49160
+      port: 49160
+      targetPort: 49160
+      protocol: UDP
+    - name: relay-49161
+      port: 49161
+      targetPort: 49161
+      protocol: UDP
+    - name: relay-49162
+      port: 49162
+      targetPort: 49162
+      protocol: UDP

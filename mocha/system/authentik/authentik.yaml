@@ -113,6 +113,18 @@ spec:
                 scopes: [email, offline_access, profile, openid]
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/vaultwarden.svg
+              - slug: netbird
+                name: Provider for Netbird
+                appName: Netbird
+                clientType: public
+                clientID: netbird
+                redirectURIs:
+                  - https://netbird.mocha.thoughtless.eu/nb-auth
+                  - https://netbird.mocha.thoughtless.eu/nb-silent-auth
+                  - http://localhost:53000
+                scopes: [email, offline_access, profile, openid]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/netbird.svg
               - slug: argocd-turing
                 name: Provider for ArgoCD (turing)
                 appName: ArgoCD Turing
