@@ -17,7 +17,7 @@ spec:
   sources:
     - repoURL: https://netbirdio.github.io/helms
       chart: netbird
-      targetRevision: 1.8.0
+      targetRevision: 1.9.0
       helm:
         values: |
           fullnameOverride: netbird
