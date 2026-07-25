@@ -1,0 +1,49 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: netbird-tls
+spec:
+  secretName: netbird-tls
+  dnsNames:
+    - netbird.mocha.thoughtless.eu
+  issuerRef:
+    name: cloudflare
+    kind: ClusterIssuer
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: netbird
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`netbird.mocha.thoughtless.eu`) && !PathPrefix(`/api`) && !PathPrefix(`/management`) && !PathPrefix(`/signalexchange`) && !PathPrefix(`/relay`)
+      services:
+        - name: netbird-dashboard
+          port: 80
+    - kind: Rule
+      match: Host(`netbird.mocha.thoughtless.eu`) && PathPrefix(`/api`)
+      services:
+        - name: netbird-management
+          port: 80
+    - kind: Rule
+      match: Host(`netbird.mocha.thoughtless.eu`) && PathPrefix(`/management`)
+      services:
+        - name: netbird-management
+          port: 80
+          scheme: h2c
+    - kind: Rule
+      match: Host(`netbird.mocha.thoughtless.eu`) && PathPrefix(`/signalexchange`)
+      services:
+        - name: netbird-signal
+          port: 80
+          scheme: h2c
+    - kind: Rule
+      match: Host(`netbird.mocha.thoughtless.eu`) && PathPrefix(`/relay`)
+      services:
+        - name: netbird-relay
+          port: 33080
+  tls:
+    secretName: netbird-tls

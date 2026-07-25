@@ -4,4 +4,4 @@ namespace: netbird
 resources:
   - externalsecret.yaml
   - coturn.yaml
-  - ingress.yaml
+  - ingressroute.yaml

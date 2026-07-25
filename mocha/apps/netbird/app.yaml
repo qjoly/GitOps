@@ -26,9 +26,6 @@ spec:
               enabled: true
               size: 256Mi
               storageClass: openebs-lvmpv
-            service:
-              annotations:
-                traefik.ingress.kubernetes.io/service.serversscheme: h2c
             envFromSecret:
               RELAY_PASSWORD: netbird/relayPassword
               DATASTORE_ENCRYPTION_KEY: netbird/datastoreEncryptionKey
@@ -118,10 +115,6 @@ spec:
                   "TrustedPeers": null
                 }
               }
-          signal:
-            service:
-              annotations:
-                traefik.ingress.kubernetes.io/service.serversscheme: h2c
           relay:
             envFromSecret:
               NB_AUTH_SECRET: netbird/relayPassword
