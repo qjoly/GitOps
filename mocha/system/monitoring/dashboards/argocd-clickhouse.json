@@ -1,5 +1,5 @@
 {
-  "annotations": { "list": [] },
+  "annotations": { "list": [{"builtIn": 0, "datasource": {"type": "grafana", "uid": "-- Grafana --"}, "enable": true, "hide": false, "iconColor": "rgba(255, 96, 96, 1)", "name": "GitOps merges", "target": {"limit": 100, "matchAny": true, "tags": ["gitops"], "type": "tags"}, "type": "tags"}] },
   "editable": true,
   "graphTooltip": 1,
   "schemaVersion": 39,
