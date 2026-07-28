@@ -159,6 +159,11 @@ spec:
                 # after basic so basic is evaluated (and can challenge) first.
                 primary: true
                 order: 5
+                # wazuh: chart default scope ("openid profile email address
+                # phone") doesn't match the Authentik provider, which only
+                # has [email, profile, openid] configured (same list as
+                # every other app's provider in this repo). Match it exactly.
+                scope: "openid profile email"
                 url: "https://authentik.mocha.thoughtless.eu/application/o/wazuh/.well-known/openid-configuration"
                 logoutUrl: "https://authentik.mocha.thoughtless.eu/application/o/wazuh/end-session/"
                 baseRedirectUrl: "https://wazuh.mocha.thoughtless.eu"
