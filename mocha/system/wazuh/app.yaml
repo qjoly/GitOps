@@ -31,13 +31,25 @@ spec:
               enabled: true
             cred:
               existingSecret: indexer-cred
+              # wazuh: existingSecret only feeds the runtime password (env var).
+              # The security-config bootstrap reads passwordHash via a Helm
+              # `lookup()` that ArgoCD's helm-template rendering never
+              # resolves (always nil) - it silently falls back to this
+              # literal, so it has to be set explicitly and kept in sync
+              # with the plaintext password stored in Vault (kv/wazuh).
+              passwordHash: "$2y$12$UqIPAgI.ZHTbsohMG3BfJ.SUafFj0OuYymAcMCoWZtzr2VacKXLIa"
             # wazuh: chart's securityadmin Job defaults to a Helm-native hook
-            # (post-install/post-upgrade), which ArgoCD's helm-template
-            # rendering never executes - switch it to an ArgoCD-native hook.
+            # (post-install/post-upgrade), inert under ArgoCD's helm-template
+            # rendering. A PostSync hook doesn't work either: ArgoCD only runs
+            # PostSync once every plain Sync-phase resource is Healthy, and
+            # wazuh-dashboard can never become healthy until this job has run
+            # (deadlock). Use a plain sync-wave instead, ahead of the
+            # dashboard's wave, with Replace so the immutable Job re-applies
+            # cleanly on every sync.
             job:
               annotations:
-                argocd.argoproj.io/hook: PostSync
-                argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
+                argocd.argoproj.io/sync-wave: "1"
+                argocd.argoproj.io/sync-options: Replace=true
             networkPolicy:
               extraEgresses:
                 - ports:
@@ -48,8 +60,15 @@ spec:
                         cidr: 0.0.0.0/0
           dashboard:
             replicas: 1
+            # wazuh: wait for the securityadmin job (wave 1) to push the real
+            # credentials before starting - otherwise it crashloops forever
+            # trying to authenticate against an unconfigured security index.
+            annotations:
+              argocd.argoproj.io/sync-wave: "2"
             cred:
               existingSecret: dashboard-cred
+              # wazuh: same lookup() caveat as indexer.cred above.
+              passwordHash: "$2y$12$fFtpHyW5kmsRVt2dM1yA..7T.AppZZOQ9ku.juID6xGSHQBOPoU0S"
             ingress:
               enabled: true
               className: traefik
