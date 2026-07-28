@@ -164,6 +164,16 @@ spec:
                 baseRedirectUrl: "https://wazuh.mocha.thoughtless.eu"
                 issuer: "https://authentik.mocha.thoughtless.eu/application/o/wazuh/"
                 existingSecret: wazuh-oidc-cred
+                # wazuh: chart defaults (subjectKey: preferred_username,
+                # rolesKey: roles) don't match Authentik's id_token claims -
+                # Authentik's default "profile" scope mapping emits "groups"
+                # (not "roles"), and with subMode: user_email the stable,
+                # always-present claim is "sub" (email), not
+                # preferred_username (which the token never carried, causing
+                # "Authentication finally failed for null" on the indexer).
+                config:
+                  subjectKey: "sub"
+                  rolesKey: "groups"
                 roleMappings:
                   allAccess:
                     backendRoles: ["authentik Admins"]
