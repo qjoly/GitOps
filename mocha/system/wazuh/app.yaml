@@ -64,9 +64,14 @@ spec:
                 # ClusterIP - Cilium treats a plain 0.0.0.0/0 CIDR rule as
                 # "world"/external only and excludes cluster-internal
                 # Service/Pod ranges. Allow Traefik explicitly by identity.
+                # Port 8443 (not just the Service's 443) because Cilium's
+                # socket-based LB rewrites the destination to the backend
+                # port before NetworkPolicy enforcement sees the packet.
                 - ports:
                     - protocol: TCP
                       port: 443
+                    - protocol: TCP
+                      port: 8443
                   to:
                     - namespaceSelector:
                         matchLabels:
@@ -120,9 +125,14 @@ spec:
                 # ClusterIP - Cilium treats a plain 0.0.0.0/0 CIDR rule as
                 # "world"/external only and excludes cluster-internal
                 # Service/Pod ranges. Allow Traefik explicitly by identity.
+                # Port 8443 (not just the Service's 443) because Cilium's
+                # socket-based LB rewrites the destination to the backend
+                # port before NetworkPolicy enforcement sees the packet.
                 - ports:
                     - protocol: TCP
                       port: 443
+                    - protocol: TCP
+                      port: 8443
                   to:
                     - namespaceSelector:
                         matchLabels:
