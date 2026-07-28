@@ -51,7 +51,11 @@ spec:
             job:
               annotations:
                 argocd.argoproj.io/sync-wave: "1"
-                argocd.argoproj.io/sync-options: Replace=true
+                # wazuh: Replace=true alone still goes through kubectl
+                # replace, which the API server rejects for the Job's
+                # immutable spec.selector/template - Force=true is what
+                # actually makes ArgoCD delete+recreate on that conflict.
+                argocd.argoproj.io/sync-options: Replace=true,Force=true
             networkPolicy:
               extraEgresses:
                 - ports:
