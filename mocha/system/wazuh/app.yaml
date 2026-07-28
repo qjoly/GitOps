@@ -112,13 +112,14 @@ spec:
             # own openid plugin tries to set a header literally named "",
             # which is invalid and throws before the request ever reaches the
             # indexer (confirmed: zero Bearer/openid-domain checks ever
-            # logged there across every login attempt). multiple_auth_enabled
-            # also needs to be forced true for two auth types to coexist,
-            # same as Authentik's own Wazuh/SAML integration guide requires.
+            # logged there across every login attempt).
+            # Note: multiple_auth_enabled is already rendered by the chart's
+            # own template - adding it here duplicates the YAML key and
+            # crashes the dashboard at startup (js-yaml rejects duplicate
+            # mapping keys), so it's NOT overridden here.
             server:
               extraConf:
                 opensearch_security.openid.header: "Authorization"
-                opensearch_security.auth.multiple_auth_enabled: true
             ingress:
               enabled: true
               className: traefik
