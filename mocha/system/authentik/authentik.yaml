@@ -167,6 +167,16 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/grafana.svg
                 secretName: oidc-grafana
+              - slug: wazuh
+                name: Provider for Wazuh (mocha)
+                appName: Wazuh
+                clientType: confidential
+                redirectURIs:
+                  - https://wazuh.mocha.thoughtless.eu/auth/openid/login
+                scopes: [email, profile, openid]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/wazuh.svg
+                secretName: oidc-wazuh
               - slug: omni
                 name: Provider for Omni
                 appName: Omni
