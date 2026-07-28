@@ -60,6 +60,19 @@ spec:
                   to:
                     - ipBlock:
                         cidr: 0.0.0.0/0
+            # wazuh: authentik.mocha.thoughtless.eu resolves to mocha's own
+            # node IP - a pod reaching it hits the hairpin-NAT problem
+            # (single-node cluster, no loopback for a pod calling its own
+            # node's public IP) and the OIDC discovery/JWKS fetch just times
+            # out. Route it to Traefik's ClusterIP instead - same Host-based
+            # routing, no round-trip through the public IP. Update this IP if
+            # the traefik Service in mocha/system/traefik is ever recreated.
+            extraSpec:
+              pod:
+                hostAliases:
+                  - ip: "10.107.215.8"
+                    hostnames:
+                      - "authentik.mocha.thoughtless.eu"
           dashboard:
             replicas: 1
             # wazuh: wait for the securityadmin job (wave 1) to push the real
@@ -89,6 +102,13 @@ spec:
                   to:
                     - ipBlock:
                         cidr: 0.0.0.0/0
+            # wazuh: same hairpin-NAT workaround as indexer.extraSpec.pod above.
+            extraSpec:
+              pod:
+                hostAliases:
+                  - ip: "10.107.215.8"
+                    hostnames:
+                      - "authentik.mocha.thoughtless.eu"
             sso:
               oidc:
                 enabled: true
