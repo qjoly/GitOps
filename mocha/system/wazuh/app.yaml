@@ -107,6 +107,18 @@ spec:
               existingSecret: dashboard-cred
               # wazuh: same lookup() caveat as indexer.cred above.
               passwordHash: "$2a$12$fFtpHyW5kmsRVt2dM1yA..7T.AppZZOQ9ku.juID6xGSHQBOPoU0S"
+            # wazuh: the chart never exposes opensearch_security.openid.header,
+            # so authHeaderName defaults to "" (empty string) - the dashboard's
+            # own openid plugin tries to set a header literally named "",
+            # which is invalid and throws before the request ever reaches the
+            # indexer (confirmed: zero Bearer/openid-domain checks ever
+            # logged there across every login attempt). multiple_auth_enabled
+            # also needs to be forced true for two auth types to coexist,
+            # same as Authentik's own Wazuh/SAML integration guide requires.
+            server:
+              extraConf:
+                opensearch_security.openid.header: "Authorization"
+                opensearch_security.auth.multiple_auth_enabled: true
             ingress:
               enabled: true
               className: traefik
