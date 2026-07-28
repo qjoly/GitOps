@@ -31,6 +31,13 @@ spec:
               enabled: true
             cred:
               existingSecret: indexer-cred
+            # wazuh: chart's securityadmin Job defaults to a Helm-native hook
+            # (post-install/post-upgrade), which ArgoCD's helm-template
+            # rendering never executes - switch it to an ArgoCD-native hook.
+            job:
+              annotations:
+                argocd.argoproj.io/hook: PostSync
+                argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
             networkPolicy:
               extraEgresses:
                 - ports:
