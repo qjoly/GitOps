@@ -1,0 +1,90 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wazuh
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: wazuh
+  sources:
+    - repoURL: https://morgoved.github.io/wazuh-helm/
+      chart: wazuh
+      targetRevision: 2.0.3
+      helm:
+        values: |
+          indexer:
+            replicas: 1
+            storageClass: openebs-lvmpv
+            sysctlImage:
+              enabled: true
+            cred:
+              existingSecret: indexer-cred
+            networkPolicy:
+              extraEgresses:
+                - ports:
+                    - protocol: TCP
+                      port: 443
+                  to:
+                    - ipBlock:
+                        cidr: 0.0.0.0/0
+          dashboard:
+            replicas: 1
+            cred:
+              existingSecret: dashboard-cred
+            ingress:
+              enabled: true
+              className: traefik
+              annotations:
+                cert-manager.io/cluster-issuer: cloudflare
+              host: wazuh.mocha.thoughtless.eu
+              tls:
+                - secretName: wazuh-tls
+                  hosts:
+                    - wazuh.mocha.thoughtless.eu
+            networkPolicy:
+              extraEgresses:
+                - ports:
+                    - protocol: TCP
+                      port: 443
+                  to:
+                    - ipBlock:
+                        cidr: 0.0.0.0/0
+            sso:
+              oidc:
+                enabled: true
+                url: "https://authentik.mocha.thoughtless.eu/application/o/wazuh/.well-known/openid-configuration"
+                logoutUrl: "https://authentik.mocha.thoughtless.eu/application/o/wazuh/end-session/"
+                baseRedirectUrl: "https://wazuh.mocha.thoughtless.eu"
+                issuer: "https://authentik.mocha.thoughtless.eu/application/o/wazuh/"
+                existingSecret: wazuh-oidc-cred
+                roleMappings:
+                  allAccess:
+                    backendRoles: ["authentik Admins"]
+          wazuh:
+            # wazuh: chart v2.0.3 has no existingSecret hook for the cluster key (baked
+            # straight into a Secret from this literal value) - low risk here since
+            # worker.enabled is false, so there's no cluster peer to authenticate against.
+            key: "9a82c16c4ab23e4d0fa55693324c37df"
+            apiCred:
+              existingSecret: wazuh-api-cred
+            authd:
+              existingSecret: wazuh-authd-pass
+            master:
+              storageClass: openebs-lvmpv
+            worker:
+              enabled: false
+    - repoURL: https://github.com/qjoly/gitops.git
+      targetRevision: HEAD
+      path: mocha/system/wazuh/manifests
