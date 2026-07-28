@@ -60,6 +60,20 @@ spec:
                   to:
                     - ipBlock:
                         cidr: 0.0.0.0/0
+                # wazuh: the ipBlock rule above doesn't reach Traefik's
+                # ClusterIP - Cilium treats a plain 0.0.0.0/0 CIDR rule as
+                # "world"/external only and excludes cluster-internal
+                # Service/Pod ranges. Allow Traefik explicitly by identity.
+                - ports:
+                    - protocol: TCP
+                      port: 443
+                  to:
+                    - namespaceSelector:
+                        matchLabels:
+                          kubernetes.io/metadata.name: traefik
+                      podSelector:
+                        matchLabels:
+                          app.kubernetes.io/name: traefik
             # wazuh: authentik.mocha.thoughtless.eu resolves to mocha's own
             # node IP - a pod reaching it hits the hairpin-NAT problem
             # (single-node cluster, no loopback for a pod calling its own
@@ -102,6 +116,20 @@ spec:
                   to:
                     - ipBlock:
                         cidr: 0.0.0.0/0
+                # wazuh: the ipBlock rule above doesn't reach Traefik's
+                # ClusterIP - Cilium treats a plain 0.0.0.0/0 CIDR rule as
+                # "world"/external only and excludes cluster-internal
+                # Service/Pod ranges. Allow Traefik explicitly by identity.
+                - ports:
+                    - protocol: TCP
+                      port: 443
+                  to:
+                    - namespaceSelector:
+                        matchLabels:
+                          kubernetes.io/metadata.name: traefik
+                      podSelector:
+                        matchLabels:
+                          app.kubernetes.io/name: traefik
             # wazuh: same hairpin-NAT workaround as indexer.extraSpec.pod above.
             extraSpec:
               pod:
