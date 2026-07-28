@@ -150,6 +150,15 @@ spec:
             sso:
               oidc:
                 enabled: true
+                # wazuh: basic_internal_auth_domain is hardcoded by the chart
+                # at order 4 / challenge:true. With oidc also challenge:true
+                # at a lower order (the chart default), it wins the 401
+                # challenge and basic auth stops working entirely for every
+                # user, per OpenSearch's own docs on combining auth domains.
+                # primary:true flips oidc to challenge:false; order puts it
+                # after basic so basic is evaluated (and can challenge) first.
+                primary: true
+                order: 5
                 url: "https://authentik.mocha.thoughtless.eu/application/o/wazuh/.well-known/openid-configuration"
                 logoutUrl: "https://authentik.mocha.thoughtless.eu/application/o/wazuh/end-session/"
                 baseRedirectUrl: "https://wazuh.mocha.thoughtless.eu"
