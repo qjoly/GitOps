@@ -37,7 +37,9 @@ spec:
               # resolves (always nil) - it silently falls back to this
               # literal, so it has to be set explicitly and kept in sync
               # with the plaintext password stored in Vault (kv/wazuh).
-              passwordHash: "$2y$12$UqIPAgI.ZHTbsohMG3BfJ.SUafFj0OuYymAcMCoWZtzr2VacKXLIa"
+              # Must be $2a$/$2b$ - OpenSearch Security silently blanks out
+              # $2y$ hashes (e.g. from `htpasswd -B`) instead of rejecting them.
+              passwordHash: "$2a$12$UqIPAgI.ZHTbsohMG3BfJ.SUafFj0OuYymAcMCoWZtzr2VacKXLIa"
             # wazuh: chart's securityadmin Job defaults to a Helm-native hook
             # (post-install/post-upgrade), inert under ArgoCD's helm-template
             # rendering. A PostSync hook doesn't work either: ArgoCD only runs
@@ -68,7 +70,7 @@ spec:
             cred:
               existingSecret: dashboard-cred
               # wazuh: same lookup() caveat as indexer.cred above.
-              passwordHash: "$2y$12$fFtpHyW5kmsRVt2dM1yA..7T.AppZZOQ9ku.juID6xGSHQBOPoU0S"
+              passwordHash: "$2a$12$fFtpHyW5kmsRVt2dM1yA..7T.AppZZOQ9ku.juID6xGSHQBOPoU0S"
             ingress:
               enabled: true
               className: traefik
