@@ -107,27 +107,15 @@ spec:
               existingSecret: dashboard-cred
               # wazuh: same lookup() caveat as indexer.cred above.
               passwordHash: "$2a$12$fFtpHyW5kmsRVt2dM1yA..7T.AppZZOQ9ku.juID6xGSHQBOPoU0S"
-            # wazuh: the chart never exposes opensearch_security.openid.header,
-            # so authHeaderName defaults to "" (empty string) - the dashboard's
-            # own openid plugin tries to set a header literally named "",
-            # which is invalid and throws before the request ever reaches the
-            # indexer (confirmed: zero Bearer/openid-domain checks ever
-            # logged there across every login attempt).
-            # Note: multiple_auth_enabled is already rendered by the chart's
-            # own template - adding it here duplicates the YAML key and
-            # crashes the dashboard at startup (js-yaml rejects duplicate
-            # mapping keys), so it's NOT overridden here.
-            # wazuh: Authentik's own Wazuh integration guide sets
-            # opensearch_security.session.keepalive: false explicitly for
-            # SSO - but the chart only ever renders that key when SAML is
-            # enabled, never for OIDC, leaving it on the plugin's own
-            # default (keepalive on) for our setup. Not a duplicate: the
-            # chart's own occurrence is inside `if dashboard.sso.saml.enabled`,
-            # which is false here.
-            server:
-              extraConf:
-                opensearch_security.openid.header: "Authorization"
-                opensearch_security.session.keepalive: false
+            # wazuh: basic_internal_auth_domain's order/challenge are actually
+            # configurable here (not hardcoded, despite an earlier comment in
+            # this file claiming otherwise) - both Authentik's and Wazuh's
+            # official SSO integration guides put basic first with
+            # challenge:false, so the SSO domain (order 1, challenge:true by
+            # default) owns the passive 401 challenge instead of basic.
+            basicAuth:
+              order: 0
+              challenge: false
             ingress:
               enabled: true
               className: traefik
@@ -173,40 +161,29 @@ spec:
                     hostnames:
                       - "authentik.mocha.thoughtless.eu"
             sso:
-              oidc:
+              # wazuh: OIDC abandoned - the wazuh-security-dashboards-plugin's
+              # openid flow never got past the dashboard's own Bearer
+              # authinfo call to the indexer (confirmed via debug logs: zero
+              # trace of it, across every config combination tried: scope,
+              # subjectKey/rolesKey, auth-domain order/challenge, the
+              # openid.header fix, session.keepalive). Neither Authentik's
+              # nor Wazuh's own integration docs cover OIDC for this pairing
+              # - SAML is the only officially documented path, so that's
+              # what's wired up here instead.
+              saml:
                 enabled: true
-                # wazuh: basic_internal_auth_domain is hardcoded by the chart
-                # at order 4 / challenge:true. With oidc also challenge:true
-                # at a lower order (the chart default), it wins the 401
-                # challenge and basic auth stops working entirely for every
-                # user, per OpenSearch's own docs on combining auth domains.
-                # primary:true flips oidc to challenge:false; order puts it
-                # after basic so basic is evaluated (and can challenge) first.
-                primary: true
-                order: 5
-                # wazuh: chart default scope ("openid profile email address
-                # phone") doesn't match the Authentik provider, which only
-                # has [email, profile, openid] configured (same list as
-                # every other app's provider in this repo). Match it exactly.
-                scope: "openid profile email"
-                url: "https://authentik.mocha.thoughtless.eu/application/o/wazuh/.well-known/openid-configuration"
-                logoutUrl: "https://authentik.mocha.thoughtless.eu/application/o/wazuh/end-session/"
-                baseRedirectUrl: "https://wazuh.mocha.thoughtless.eu"
-                issuer: "https://authentik.mocha.thoughtless.eu/application/o/wazuh/"
-                existingSecret: wazuh-oidc-cred
-                # wazuh: chart defaults (subjectKey: preferred_username,
-                # rolesKey: roles) don't match Authentik's id_token claims -
-                # Authentik's default "profile" scope mapping emits "groups"
-                # (not "roles"), and with subMode: user_email the stable,
-                # always-present claim is "sub" (email), not
-                # preferred_username (which the token never carried, causing
-                # "Authentication finally failed for null" on the indexer).
-                config:
-                  subjectKey: "sub"
-                  rolesKey: "groups"
+                metadataUrl: "https://authentik.mocha.thoughtless.eu/application/saml/wazuh-saml/metadata/"
+                idpEntityId: "https://authentik.mocha.thoughtless.eu/application/saml/wazuh-saml/metadata/"
+                spEntityId: "wazuh-saml"
+                kibanaUrl: "https://wazuh.mocha.thoughtless.eu"
+                # wazuh: chart has no existingSecret hook for this field
+                # either (same limitation as wazuh.key below) - value is
+                # also recorded in Vault (kv/wazuh#saml_exchange_key) as the
+                # canonical record.
+                exchangeKey: "93813f573ae8289a2510392771f48a13c245b881bd0b6d61b223ff49a0062ba4"
                 roleMappings:
                   allAccess:
-                    backendRoles: ["authentik Admins"]
+                    backendRoles: ["wazuh-admin"]
           wazuh:
             # wazuh: chart v2.0.3 has no existingSecret hook for the cluster key (baked
             # straight into a Secret from this literal value) - low risk here since
