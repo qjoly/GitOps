@@ -117,9 +117,17 @@ spec:
             # own template - adding it here duplicates the YAML key and
             # crashes the dashboard at startup (js-yaml rejects duplicate
             # mapping keys), so it's NOT overridden here.
+            # wazuh: Authentik's own Wazuh integration guide sets
+            # opensearch_security.session.keepalive: false explicitly for
+            # SSO - but the chart only ever renders that key when SAML is
+            # enabled, never for OIDC, leaving it on the plugin's own
+            # default (keepalive on) for our setup. Not a duplicate: the
+            # chart's own occurrence is inside `if dashboard.sso.saml.enabled`,
+            # which is false here.
             server:
               extraConf:
                 opensearch_security.openid.header: "Authorization"
+                opensearch_security.session.keepalive: false
             ingress:
               enabled: true
               className: traefik
