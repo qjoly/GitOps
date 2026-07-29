@@ -195,8 +195,34 @@ spec:
               existingSecret: wazuh-authd-pass
             master:
               storageClass: openebs-lvmpv
+              # wazuh: the chart's own ingress rules only allow
+              # dashboard/agent/worker pod selectors - external
+              # LoadBalancer traffic (arbitrary source IP) matches none of
+              # them and would be dropped without this.
+              networkPolicy:
+                extraIngresses:
+                  - ports:
+                      - protocol: TCP
+                        port: 1515
+                      - protocol: TCP
+                        port: 1514
+                    from:
+                      - ipBlock:
+                          cidr: 0.0.0.0/0
             worker:
               enabled: false
+            # wazuh: expose agent enrollment (1515) and event ingestion
+            # (1514) to external, non-cluster agents (e.g. americano's
+            # host). Shares mocha's single LB IP with Traefik via Cilium's
+            # IP-sharing annotations - same mechanism traefik's own Service
+            # already uses (lbipam.cilium.io/sharing-key: public), no new
+            # external IP needed. Public exposure accepted knowingly; the
+            # authd password (kv/wazuh#authd_pass) gates enrollment.
+            loadBalancer:
+              enabled: true
+              annotations:
+                lbipam.cilium.io/sharing-key: "public"
+                lbipam.cilium.io/sharing-cross-namespace: "*"
     - repoURL: https://github.com/qjoly/gitops.git
       targetRevision: HEAD
       path: mocha/system/wazuh/manifests
