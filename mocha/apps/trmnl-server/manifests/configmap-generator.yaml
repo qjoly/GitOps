@@ -140,95 +140,128 @@ data:
         return text if len(text) <= max_chars else text[: max_chars - 1] + "…"
 
 
+    def section_header(draw, x, y, w, title, font, pad=6):
+        """Filled black bar with white text - reads as a strong section label on e-ink."""
+        h = font.size + pad * 2
+        draw.rectangle((x, y, x + w, y + h), fill=0)
+        draw.text((x + pad, y + pad - 1), title, font=font, fill=1)
+        return y + h
+
+
+    def bullet_row(draw, x, y, w, mark, text, font, mark_fill=0):
+        """A small square/triangle marker followed by a line of text, wrapped to width."""
+        box = font.size - 6
+        box_y = y + (font.size - box) // 2
+        if mark == "square":
+            draw.rectangle((x, box_y, x + box, box_y + box), fill=mark_fill)
+        elif mark == "dash":
+            draw.rectangle((x, y + font.size // 2, x + box, y + font.size // 2 + 2), fill=mark_fill)
+        text_x = x + box + 10
+        draw.text((text_x, y), text, font=font, fill=0)
+        return text_x, y + font.size + 8
+
+
+    def empty_row(draw, x, y, font, label="Nothing to report"):
+        draw.text((x, y), label, font=font, fill=0)
+        return y + font.size + 8
+
+
     def render(alerts, nodes, restarts, prs):
         img = Image.new("1", (WIDTH, HEIGHT), 1)  # 1 = white
         draw = ImageDraw.Draw(img)
 
-        font_title = ImageFont.load_default(size=26)
-        font_h2 = ImageFont.load_default(size=20)
+        font_title = ImageFont.load_default(size=30)
+        font_meta = ImageFont.load_default(size=15)
+        font_h2 = ImageFont.load_default(size=18)
         font_body = ImageFont.load_default(size=16)
 
-        margin = 16
-        col_w = (WIDTH - margin * 3) // 2
+        margin = 18
+        gutter = 20
+        col_w = (WIDTH - margin * 2 - gutter) // 2
         left_x = margin
-        right_x = margin * 2 + col_w
+        right_x = margin + col_w + gutter
+        content_bottom = HEIGHT - 34
 
-        draw.text((margin, margin), "mocha dashboard", font=font_title, fill=0)
-        draw.text(
-            (WIDTH - margin - 140, margin + 4),
-            time.strftime("%Y-%m-%d %H:%M"),
-            font=font_body,
-            fill=0,
-        )
-        draw.line((margin, 44, WIDTH - margin, 44), fill=0, width=2)
+        # outer frame
+        draw.rectangle((0, 0, WIDTH - 1, HEIGHT - 1), outline=0, width=2)
 
-        y = 56
+        # --- header ---
+        draw.text((margin, 14), "mocha", font=font_title, fill=0)
+        subtitle = "cluster dashboard"
+        draw.text((margin + 92, 22), subtitle, font=font_meta, fill=0)
+        ts = time.strftime("%a %d %b, %H:%M")
+        tw = draw.textlength(ts, font=font_meta)
+        draw.text((WIDTH - margin - tw, 24), ts, font=font_meta, fill=0)
+        draw.line((margin, 54, WIDTH - margin, 54), fill=0, width=3)
 
-        # --- left column: alerts, nodes, restarts ---
-        draw.text((left_x, y), "Active alerts", font=font_h2, fill=0)
-        y += 26
+        top = 66
+
+        # --- left column ---
+        y = top
+        alert_title = f"ALERTS ({len(alerts)})" if alerts else "ALERTS"
+        y = section_header(draw, left_x, y, col_w, alert_title, font_h2) + 10
         if alerts:
-            for a in alerts[:5]:
-                draw.text((left_x + 8, y), f"! {truncate(a, 38)}", font=font_body, fill=0)
-                y += 20
+            for a in alerts[:4]:
+                _, y = bullet_row(draw, left_x + 4, y, col_w, "square", truncate(a, 44), font_body)
         else:
-            draw.text((left_x + 8, y), "None", font=font_body, fill=0)
-            y += 20
+            y = empty_row(draw, left_x + 4, y, font_body, "All clear")
+        y += 14
 
-        y += 12
-        draw.text((left_x, y), "Nodes", font=font_h2, fill=0)
-        y += 26
+        y = section_header(draw, left_x, y, col_w, "NODES", font_h2) + 10
         for name, stats in sorted(nodes.items()):
             cpu = stats.get("cpu_cores")
             mem = stats.get("mem_gb")
             cpu_s = f"{cpu:.1f} cores" if cpu is not None else "n/a"
             mem_s = f"{mem:.1f} GB" if mem is not None else "n/a"
-            draw.text(
-                (left_x + 8, y),
-                f"{truncate(name, 20)}: {cpu_s}, {mem_s}",
-                font=font_body,
-                fill=0,
+            _, y = bullet_row(
+                draw, left_x + 4, y, col_w, "dash", f"{truncate(name, 18)}", font_body
             )
-            y += 20
+            draw.text((left_x + 4 + 24, y - 8), f"{cpu_s}  /  {mem_s}", font=font_meta, fill=0)
+            y += 12
+        if not nodes:
+            y = empty_row(draw, left_x + 4, y, font_body, "No data")
+        y += 14
 
-        y += 12
-        draw.text((left_x, y), "Recent pod restarts", font=font_h2, fill=0)
-        y += 26
+        restart_title = f"POD RESTARTS ({len(restarts)})" if restarts else "POD RESTARTS"
+        y = section_header(draw, left_x, y, col_w, restart_title, font_h2) + 10
         if restarts:
-            for pod, delta in restarts[:5]:
-                draw.text(
-                    (left_x + 8, y), f"{truncate(pod, 32)} (+{delta})", font=font_body, fill=0
+            for pod, delta in restarts[:4]:
+                if y > content_bottom - font_body.size:
+                    break
+                _, y = bullet_row(
+                    draw, left_x + 4, y, col_w, "square", f"{truncate(pod, 28)} +{delta}", font_body
                 )
-                y += 20
         else:
-            draw.text((left_x + 8, y), "None", font=font_body, fill=0)
-            y += 20
+            y = empty_row(draw, left_x + 4, y, font_body, "All clear")
 
-        # --- right column: PRs awaiting review ---
-        ry = 56
-        draw.text((right_x, ry), "PRs awaiting review", font=font_h2, fill=0)
-        ry += 26
+        # --- right column ---
+        ry = top
+        pr_title = f"PRs AWAITING REVIEW ({len(prs)})" if prs else "PRs AWAITING REVIEW"
+        ry = section_header(draw, right_x, ry, col_w, pr_title, font_h2) + 10
         if prs:
-            for pr in prs[:10]:
-                draw.text(
-                    (right_x + 8, ry),
-                    f"#{pr['number']} {truncate(pr['title'], 34)}",
-                    font=font_body,
-                    fill=0,
+            for pr in prs[:8]:
+                if ry > content_bottom - (font_body.size + font_meta.size):
+                    break
+                _, ry = bullet_row(
+                    draw,
+                    right_x + 4,
+                    ry,
+                    col_w,
+                    "square",
+                    truncate(f"#{pr['number']} {pr['title']}", 42),
+                    font_body,
                 )
-                ry += 18
-                draw.text((right_x + 16, ry), truncate(pr["repo"], 40), font=font_body, fill=0)
-                ry += 22
+                draw.text((right_x + 4 + 24, ry - 8), truncate(pr["repo"], 40), font=font_meta, fill=0)
+                ry += 12
         else:
-            draw.text((right_x + 8, ry), "None", font=font_body, fill=0)
+            ry = empty_row(draw, right_x + 4, ry, font_body, "Nothing pending")
 
-        draw.line((margin, HEIGHT - 24, WIDTH - margin, HEIGHT - 24), fill=0, width=1)
-        draw.text(
-            (margin, HEIGHT - 20),
-            "generated by trmnl-server cronjob",
-            font=font_body,
-            fill=0,
-        )
+        # vertical divider between columns
+        draw.line((margin + col_w + gutter // 2, top, margin + col_w + gutter // 2, content_bottom), fill=0, width=1)
+
+        # --- footer ---
+        draw.line((margin, HEIGHT - 30, WIDTH - margin, HEIGHT - 30), fill=0, width=1)
+        draw.text((margin, HEIGHT - 24), "trmnl-server · refreshed every 15 min", font=font_meta, fill=0)
         return img
 
 
