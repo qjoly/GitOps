@@ -38,7 +38,7 @@ spec:
             - name: data
               mountPath: /app
         - name: deps
-          image: python:3.12-slim
+          image: python:3.14-slim
           workingDir: /app
           command:
             - sh
@@ -49,7 +49,7 @@ spec:
               mountPath: /app
       containers:
         - name: trmnl-server
-          image: python:3.12-slim
+          image: python:3.14-slim
           workingDir: /app
           command:
             - python
