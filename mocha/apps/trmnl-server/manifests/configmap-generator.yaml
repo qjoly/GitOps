@@ -28,8 +28,10 @@ data:
     CLUSTER_NAME = os.environ.get("CLUSTER_NAME", "mocha")
     GH_TOKEN = os.environ["GITHUB_TOKEN"]
     GH_USERNAME = os.environ.get("GITHUB_USERNAME", "qjoly")
+    SLOT = os.environ.get("SLOT", "0")  # "0" -> screen.bmp, "1" -> screen1.bmp
     UPLOAD_URL = os.environ.get(
-        "UPLOAD_URL", "https://trmnl-server.trmnl-server.svc.cluster.local:443/custom/upload_screen"
+        "UPLOAD_URL",
+        f"https://trmnl-server.trmnl-server.svc.cluster.local:443/custom/upload_screen?slot={SLOT}",
     )
     UPLOAD_TOKEN = os.environ["UPLOAD_TOKEN"]
 
@@ -201,9 +203,10 @@ data:
         draw.rectangle((0, 0, WIDTH - 1, HEIGHT - 1), outline=0, width=2)
 
         # --- header ---
-        draw.text((margin, 14), "mocha", font=font_title, fill=0)
+        draw.text((margin, 14), CLUSTER_NAME, font=font_title, fill=0)
+        title_w = draw.textlength(CLUSTER_NAME, font=font_title)
         subtitle = "cluster dashboard"
-        draw.text((margin + 92, 22), subtitle, font=font_meta, fill=0)
+        draw.text((margin + title_w + 12, 22), subtitle, font=font_meta, fill=0)
         ts = time.strftime("%a %d %b, %H:%M")
         tw = draw.textlength(ts, font=font_meta)
         draw.text((WIDTH - margin - tw, 24), ts, font=font_meta, fill=0)

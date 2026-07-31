@@ -16,7 +16,7 @@ spec:
         spec:
           restartPolicy: Never
           containers:
-            - name: generate
+            - name: generate-mocha
               image: python:3.12-slim
               command:
                 - sh
@@ -37,6 +37,45 @@ spec:
                   value: "qjoly"
                 - name: CLUSTER_NAME
                   value: "mocha"
+                - name: SLOT
+                  value: "0"
+                - name: UPLOAD_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: trmnl-upload-token
+                      key: token
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 256Mi
+            - name: generate-turing
+              image: python:3.12-slim
+              command:
+                - sh
+                - -c
+                - pip install --quiet --no-cache-dir requests pillow && python /script/generate_image.py
+              env:
+                - name: SIGNOZ_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: signoz-api-key
+                      key: api_key
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-credentials
+                      key: token
+                - name: GITHUB_USERNAME
+                  value: "qjoly"
+                - name: CLUSTER_NAME
+                  value: "turing"
+                - name: SLOT
+                  value: "1"
                 - name: UPLOAD_TOKEN
                   valueFrom:
                     secretKeyRef:

@@ -223,6 +223,10 @@ data:
             # In-memory object to store the last sent image as a blob
             "current_orig_image": None,
             "current_send_image": BytesIO(),
+            # Second slot, served at /image/screen1.bmp - lets bmp_send_switch
+            # alternate between two genuinely different images (e.g. one
+            # dashboard per cluster) instead of showing the same buffer twice.
+            "current_send_image_1": BytesIO(),
         },
         "server": {"uptime": 0, "cpu_load": 0, "current_time": 0},
         "client": {"battery_voltage": 0, "battery_voltage_max": 0},
@@ -731,7 +735,7 @@ data:
             "[API] /image/screen1.bmp - serving image for IP: %s", request.remote_addr
         )
         return send_file(
-            BytesIO(global_state["image"]["current_send_image"].getvalue()),
+            BytesIO(global_state["image"]["current_send_image_1"].getvalue()),
             mimetype="image/bmp",
         )
 
@@ -929,23 +933,29 @@ data:
             "action": "",
         }
         # generate the footer image as a in memory image as time of requested at client if configured
+        # slot 0 -> images/screen.bmp (served at /image/screen.bmp), slot 1 ->
+        # images/screen1.bmp (served at /image/screen1.bmp) - lets bmp_send_switch
+        # alternate between two independently-updated dashboards.
+        serving_slot_1 = global_state["image"]["current_image_url_adapted"].endswith(
+            "screen1.bmp"
+        )
+        slot_image_path = "images/screen1.bmp" if serving_slot_1 else config_manager.config[
+            "image_path"
+        ]
+        send_key = "current_send_image_1" if serving_slot_1 else "current_send_image"
+
         try:
-            global_state["image"]["current_orig_image"] = load_image(
-                config_manager.config["image_path"]
-            )
+            orig_image = load_image(slot_image_path)
         except FileNotFoundError:
             dummy_path = os.path.join(current_dir, "web/dummy.bmp")
             with open(dummy_path, "rb") as image_file:
-                global_state["image"]["current_orig_image"] = BytesIO(image_file.read())
+                orig_image = BytesIO(image_file.read())
+        global_state["image"]["current_orig_image"] = orig_image
 
         if config_manager.config["image_modification"]:
-            global_state["image"]["current_send_image"] = get_and_modify_image(
-                global_state["image"]["current_orig_image"]
-            )
+            global_state["image"][send_key] = get_and_modify_image(orig_image)
         else:
-            global_state["image"]["current_send_image"] = global_state["image"][
-                "current_orig_image"
-            ]
+            global_state["image"][send_key] = orig_image
 
         add_log_entry("send json /api/display", f"response: {response}")
         return jsonify(response)
@@ -1077,7 +1087,10 @@ data:
     @app.route("/custom/upload_screen", methods=["POST"])
     def upload_screen():
         """
-        Accept a raw BMP body and write it to the configured image_path.
+        Accept a raw BMP body and write it to disk.
+        ?slot=1 targets images/screen1.bmp (served at /image/screen1.bmp via
+        bmp_send_switch alternation); default (slot=0) targets the configured
+        image_path (images/screen.bmp).
         Protected by a shared-secret bearer token (UPLOAD_TOKEN env var) since
         it's reachable through the public ingress.
         """
@@ -1086,13 +1099,19 @@ data:
         if not expected_token or provided != expected_token:
             return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
-        image_path = os.path.join(current_dir, config_manager.config["image_path"])
+        slot = request.args.get("slot", "0")
+        relative_path = "images/screen1.bmp" if slot == "1" else config_manager.config["image_path"]
+        image_path = os.path.join(current_dir, relative_path)
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
         tmp_path = image_path + ".tmp"
         with open(tmp_path, "wb") as f:
             f.write(request.get_data())
         os.replace(tmp_path, image_path)
-        logger.info("[Custom] Uploaded new screen image (%d bytes)", len(request.get_data()))
+        logger.info(
+            "[Custom] Uploaded new screen image to slot %s (%d bytes)",
+            slot,
+            len(request.get_data()),
+        )
         return jsonify({"status": "success"}), 200
 
 
