@@ -153,8 +153,31 @@ data:
         return prs
 
 
+    _UNICODE_TO_ASCII = {
+        "—": "-",  # em dash
+        "–": "-",  # en dash
+        "‘": "'",
+        "’": "'",
+        "“": '"',
+        "”": '"',
+        "…": "...",  # ellipsis
+        "•": "-",  # bullet
+    }
+
+
+    def sanitize(text):
+        """PIL's bundled default font is missing glyphs for common unicode
+        punctuation (em dash, curly quotes, bullet...) - they render as empty
+        boxes. Fold them down to ASCII lookalikes; leave accented letters
+        (é, à, ç...) alone since the font renders those fine."""
+        for uni, ascii_ in _UNICODE_TO_ASCII.items():
+            text = text.replace(uni, ascii_)
+        return text
+
+
     def truncate(text, max_chars):
-        return text if len(text) <= max_chars else text[: max_chars - 1] + "…"
+        text = sanitize(text)
+        return text if len(text) <= max_chars else text[: max_chars - 3] + "..."
 
 
     def section_header(draw, x, y, w, title, font, pad=6):
