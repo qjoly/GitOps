@@ -17,7 +17,7 @@ spec:
     spec:
       initContainers:
         - name: clone
-          image: alpine/git:2.47.2
+          image: alpine/git:v2.54.0
           workingDir: /app
           command:
             - sh
