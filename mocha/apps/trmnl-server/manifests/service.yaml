@@ -10,5 +10,5 @@ spec:
     app: trmnl-server
   ports:
     - name: https
-      port: 83
-      targetPort: 83
+      port: 443
+      targetPort: 443

@@ -60,10 +60,10 @@ spec:
             - name: SERVER_HOSTNAME
               value: "trmnl.mocha.thoughtless.eu"
             - name: SERVER_PORT
-              value: "83"
+              value: "443"
           ports:
             - name: https
-              containerPort: 83
+              containerPort: 443
           volumeMounts:
             - name: data
               mountPath: /app
@@ -78,7 +78,7 @@ spec:
               memory: 256Mi
           readinessProbe:
             tcpSocket:
-              port: 83
+              port: 443
             initialDelaySeconds: 10
             periodSeconds: 15
       volumes:

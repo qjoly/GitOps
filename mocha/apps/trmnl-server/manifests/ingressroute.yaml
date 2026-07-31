@@ -11,7 +11,7 @@ spec:
       match: Host(`trmnl.mocha.thoughtless.eu`)
       services:
         - name: trmnl-server
-          port: 83
+          port: 443
           scheme: https
           serversTransport: trmnl-server-backend
   tls:
