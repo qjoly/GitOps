@@ -1,0 +1,274 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: image-generator-script
+data:
+  generate_image.py: |
+    #!/usr/bin/env python3
+    """
+    Generates images/screen.bmp for the self-hosted trmnl-server, combining:
+    - SigNoz active alerts (via /api/v1/rules)
+    - SigNoz node CPU/memory (via /api/v5/query_range)
+    - Recently-restarted pods (via /api/v5/query_range, delta over the window)
+    - GitHub PRs authored by GH_USERNAME still awaiting review
+
+    Runs as a Kubernetes CronJob, writes directly to /app/images/screen.bmp on
+    the PVC shared with the trmnl-server Deployment.
+    """
+    import os
+    import sys
+    import time
+    from io import BytesIO
+    import requests
+    from PIL import Image, ImageDraw, ImageFont
+
+    SIGNOZ_URL = os.environ.get("SIGNOZ_URL", "http://signoz.signoz.svc.cluster.local:8080")
+    SIGNOZ_KEY = os.environ["SIGNOZ_API_KEY"]
+    CLUSTER_NAME = os.environ.get("CLUSTER_NAME", "mocha")
+    GH_TOKEN = os.environ["GITHUB_TOKEN"]
+    GH_USERNAME = os.environ.get("GITHUB_USERNAME", "qjoly")
+    UPLOAD_URL = os.environ.get(
+        "UPLOAD_URL", "https://trmnl-server.trmnl-server.svc.cluster.local:443/custom/upload_screen"
+    )
+    UPLOAD_TOKEN = os.environ["UPLOAD_TOKEN"]
+
+    WIDTH, HEIGHT = 800, 480
+
+    session = requests.Session()
+    session.headers.update({"SIGNOZ-API-KEY": SIGNOZ_KEY, "Content-Type": "application/json"})
+
+
+    def now_ms():
+        return int(time.time() * 1000)
+
+
+    def signoz_query_range(metric_name, time_agg, space_agg, group_by, window_ms=900_000):
+        end = now_ms()
+        start = end - window_ms
+        body = {
+            "schemaVersion": "v1",
+            "start": start,
+            "end": end,
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name,
+                                    "temporality": "",
+                                    "timeAggregation": time_agg,
+                                    "spaceAggregation": space_agg,
+                                }
+                            ],
+                            "filter": {"expression": f"k8s.cluster.name = '{CLUSTER_NAME}'"},
+                            "groupBy": [{"name": g} for g in group_by],
+                            "disabled": False,
+                        },
+                    }
+                ]
+            },
+        }
+        resp = session.post(f"{SIGNOZ_URL}/api/v5/query_range", json=body, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        series = data["data"]["data"]["results"][0]["aggregations"][0]["series"]
+        out = {}
+        for s in series:
+            label = s["labels"][0]["value"] if s["labels"] else "?"
+            values = [v["value"] for v in s["values"] if not v.get("partial")]
+            if values:
+                out[label] = values
+        return out
+
+
+    def get_active_alerts():
+        resp = session.get(f"{SIGNOZ_URL}/api/v1/rules", timeout=15)
+        resp.raise_for_status()
+        rules = resp.json()["data"]["rules"]
+        return [r["alert"] for r in rules if r.get("state") not in ("inactive", "disabled")]
+
+
+    def get_node_stats():
+        mem = signoz_query_range("k8s.node.memory.working_set", "latest", "max", ["k8s.node.name"])
+        cpu = signoz_query_range("k8s.node.cpu.time", "rate", "sum", ["k8s.node.name"])
+        nodes = {}
+        for name, values in mem.items():
+            nodes.setdefault(name, {})["mem_gb"] = values[-1] / (1024**3)
+        for name, values in cpu.items():
+            nodes.setdefault(name, {})["cpu_cores"] = values[-1]
+        return nodes
+
+
+    def get_recent_pod_restarts():
+        restarts = signoz_query_range(
+            "k8s.container.restarts", "latest", "max", ["k8s.pod.name"], window_ms=900_000
+        )
+        recent = []
+        for pod, values in restarts.items():
+            if len(values) >= 2 and values[-1] > values[0]:
+                recent.append((pod, int(values[-1] - values[0])))
+        return recent
+
+
+    def get_pending_prs():
+        query = f"is:pr is:open author:{GH_USERNAME} review:required archived:false"
+        resp = requests.get(
+            "https://api.github.com/search/issues",
+            params={"q": query, "sort": "updated", "order": "desc", "per_page": 10},
+            headers={
+                "Authorization": f"Bearer {GH_TOKEN}",
+                "Accept": "application/vnd.github+json",
+            },
+            timeout=15,
+        )
+        resp.raise_for_status()
+        items = resp.json().get("items", [])
+        prs = []
+        for it in items:
+            repo = "/".join(it["repository_url"].split("/")[-2:])
+            prs.append({"title": it["title"], "repo": repo, "number": it["number"]})
+        return prs
+
+
+    def truncate(text, max_chars):
+        return text if len(text) <= max_chars else text[: max_chars - 1] + "…"
+
+
+    def render(alerts, nodes, restarts, prs):
+        img = Image.new("1", (WIDTH, HEIGHT), 1)  # 1 = white
+        draw = ImageDraw.Draw(img)
+
+        font_title = ImageFont.load_default(size=26)
+        font_h2 = ImageFont.load_default(size=20)
+        font_body = ImageFont.load_default(size=16)
+
+        margin = 16
+        col_w = (WIDTH - margin * 3) // 2
+        left_x = margin
+        right_x = margin * 2 + col_w
+
+        draw.text((margin, margin), "mocha dashboard", font=font_title, fill=0)
+        draw.text(
+            (WIDTH - margin - 140, margin + 4),
+            time.strftime("%Y-%m-%d %H:%M"),
+            font=font_body,
+            fill=0,
+        )
+        draw.line((margin, 44, WIDTH - margin, 44), fill=0, width=2)
+
+        y = 56
+
+        # --- left column: alerts, nodes, restarts ---
+        draw.text((left_x, y), "Active alerts", font=font_h2, fill=0)
+        y += 26
+        if alerts:
+            for a in alerts[:5]:
+                draw.text((left_x + 8, y), f"! {truncate(a, 38)}", font=font_body, fill=0)
+                y += 20
+        else:
+            draw.text((left_x + 8, y), "None", font=font_body, fill=0)
+            y += 20
+
+        y += 12
+        draw.text((left_x, y), "Nodes", font=font_h2, fill=0)
+        y += 26
+        for name, stats in sorted(nodes.items()):
+            cpu = stats.get("cpu_cores")
+            mem = stats.get("mem_gb")
+            cpu_s = f"{cpu:.1f} cores" if cpu is not None else "n/a"
+            mem_s = f"{mem:.1f} GB" if mem is not None else "n/a"
+            draw.text(
+                (left_x + 8, y),
+                f"{truncate(name, 20)}: {cpu_s}, {mem_s}",
+                font=font_body,
+                fill=0,
+            )
+            y += 20
+
+        y += 12
+        draw.text((left_x, y), "Recent pod restarts", font=font_h2, fill=0)
+        y += 26
+        if restarts:
+            for pod, delta in restarts[:5]:
+                draw.text(
+                    (left_x + 8, y), f"{truncate(pod, 32)} (+{delta})", font=font_body, fill=0
+                )
+                y += 20
+        else:
+            draw.text((left_x + 8, y), "None", font=font_body, fill=0)
+            y += 20
+
+        # --- right column: PRs awaiting review ---
+        ry = 56
+        draw.text((right_x, ry), "PRs awaiting review", font=font_h2, fill=0)
+        ry += 26
+        if prs:
+            for pr in prs[:10]:
+                draw.text(
+                    (right_x + 8, ry),
+                    f"#{pr['number']} {truncate(pr['title'], 34)}",
+                    font=font_body,
+                    fill=0,
+                )
+                ry += 18
+                draw.text((right_x + 16, ry), truncate(pr["repo"], 40), font=font_body, fill=0)
+                ry += 22
+        else:
+            draw.text((right_x + 8, ry), "None", font=font_body, fill=0)
+
+        draw.line((margin, HEIGHT - 24, WIDTH - margin, HEIGHT - 24), fill=0, width=1)
+        draw.text(
+            (margin, HEIGHT - 20),
+            "generated by trmnl-server cronjob",
+            font=font_body,
+            fill=0,
+        )
+        return img
+
+
+    def main():
+        alerts, nodes, restarts, prs = [], {}, [], []
+        try:
+            alerts = get_active_alerts()
+        except Exception as e:
+            print(f"[warn] failed to fetch alerts: {e}", file=sys.stderr)
+        try:
+            nodes = get_node_stats()
+        except Exception as e:
+            print(f"[warn] failed to fetch node stats: {e}", file=sys.stderr)
+        try:
+            restarts = get_recent_pod_restarts()
+        except Exception as e:
+            print(f"[warn] failed to fetch pod restarts: {e}", file=sys.stderr)
+        try:
+            prs = get_pending_prs()
+        except Exception as e:
+            print(f"[warn] failed to fetch GitHub PRs: {e}", file=sys.stderr)
+
+        img = render(alerts, nodes, restarts, prs)
+        buf = BytesIO()
+        img.save(buf, format="BMP")
+
+        resp = requests.post(
+            UPLOAD_URL,
+            data=buf.getvalue(),
+            headers={
+                "Authorization": f"Bearer {UPLOAD_TOKEN}",
+                "Content-Type": "image/bmp",
+            },
+            verify=False,  # backend uses a self-signed cert, this call stays inside the cluster
+            timeout=15,
+        )
+        resp.raise_for_status()
+        print(f"uploaded screen.bmp: {resp.json()}")
+
+
+    if __name__ == "__main__":
+        main()
+

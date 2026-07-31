@@ -4,9 +4,11 @@ kind: Kustomization
 namespace: trmnl-server
 resources:
   - configmap.yaml
+  - configmap-generator.yaml
   - pvc.yaml
   - deployment.yaml
   - service.yaml
   - certificate.yaml
   - serverstransport.yaml
   - ingressroute.yaml
+  - cronjob.yaml

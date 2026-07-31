@@ -61,6 +61,11 @@ spec:
               value: "trmnl.mocha.thoughtless.eu"
             - name: SERVER_PORT
               value: "443"
+            - name: UPLOAD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: trmnl-upload-token
+                  key: token
           ports:
             - name: https
               containerPort: 443

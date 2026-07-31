@@ -1,0 +1,57 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: trmnl-image-generator
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 120
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: generate
+              image: python:3.12-slim
+              command:
+                - sh
+                - -c
+                - pip install --quiet --no-cache-dir requests pillow && python /script/generate_image.py
+              env:
+                - name: SIGNOZ_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: signoz-api-key
+                      key: api_key
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-credentials
+                      key: token
+                - name: GITHUB_USERNAME
+                  value: "qjoly"
+                - name: CLUSTER_NAME
+                  value: "mocha"
+                - name: UPLOAD_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: trmnl-upload-token
+                      key: token
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 256Mi
+          volumes:
+            - name: script
+              configMap:
+                name: image-generator-script
