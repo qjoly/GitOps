@@ -17,7 +17,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: generate-mocha
-              image: python:3.12-slim
+              image: python:3.14-slim
               command:
                 - sh
                 - -c
@@ -54,7 +54,7 @@ spec:
                 limits:
                   memory: 256Mi
             - name: generate-turing
-              image: python:3.12-slim
+              image: python:3.14-slim
               command:
                 - sh
                 - -c
