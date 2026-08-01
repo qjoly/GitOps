@@ -118,10 +118,17 @@ data:
         return recent
 
 
+    EXCLUDED_ORGS = ["une-tasse-de-cafe", "LuccaSA"]
+    EXCLUDED_REPOS = ["qjoly/notes"]
+
+
     def _search_prs(review_qualifier):
+        exclusions = " ".join(f"-org:{org}" for org in EXCLUDED_ORGS) + " " + " ".join(
+            f"-repo:{repo}" for repo in EXCLUDED_REPOS
+        )
         query = (
             f"is:pr is:open draft:false author:{GH_USERNAME} "
-            f"review:{review_qualifier} archived:false"
+            f"review:{review_qualifier} archived:false {exclusions}"
         )
         resp = requests.get(
             "https://api.github.com/search/issues",
