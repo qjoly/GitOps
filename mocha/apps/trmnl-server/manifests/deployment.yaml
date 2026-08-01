@@ -43,7 +43,7 @@ spec:
           command:
             - sh
             - -c
-            - pip install --no-cache-dir --target=/app/deps -r requirements.txt
+            - rm -rf /app/deps && pip install --no-cache-dir --target=/app/deps -r requirements.txt
           volumeMounts:
             - name: data
               mountPath: /app
