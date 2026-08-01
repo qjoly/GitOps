@@ -75,6 +75,9 @@ spec:
             - name: patch
               mountPath: /app/trmnl_server.py
               subPath: trmnl_server.py
+            - name: patch
+              mountPath: /app/config.py
+              subPath: config.py
           resources:
             requests:
               cpu: 50m

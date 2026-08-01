@@ -19,9 +19,13 @@ data:
     import os
     import sys
     import time
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
     from io import BytesIO
     import requests
     from PIL import Image, ImageDraw, ImageFont
+
+    DISPLAY_TZ = ZoneInfo(os.environ.get("DISPLAY_TZ", "Europe/Paris"))
 
     SIGNOZ_URL = os.environ.get("SIGNOZ_URL", "http://signoz.signoz.svc.cluster.local:8080")
     SIGNOZ_KEY = os.environ["SIGNOZ_API_KEY"]
@@ -237,7 +241,7 @@ data:
         title_w = draw.textlength(CLUSTER_NAME, font=font_title)
         subtitle = "cluster dashboard"
         draw.text((margin + title_w + 12, 22), subtitle, font=font_meta, fill=0)
-        ts = time.strftime("%a %d %b, %H:%M")
+        ts = datetime.now(DISPLAY_TZ).strftime("%a %d %b, %H:%M")
         tw = draw.textlength(ts, font=font_meta)
         draw.text((WIDTH - margin - tw, 24), ts, font=font_meta, fill=0)
         draw.line((margin, 54, WIDTH - margin, 54), fill=0, width=3)
