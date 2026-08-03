@@ -31,52 +31,6 @@ spec:
               memory: 8Gi
             limits:
               memory: 24Gi
-          files:
-            config.d/system_log.xml: |
-              <clickhouse>
-                <text_log>
-                  <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
-                </text_log>
-                <latency_log>
-                  <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
-                </latency_log>
-                <error_log>
-                  <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
-                </error_log>
-                <query_metric_log>
-                  <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
-                </query_metric_log>
-                <zookeeper_log>
-                  <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
-                </zookeeper_log>
-                <aggregated_zookeeper_log>
-                  <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
-                </aggregated_zookeeper_log>
-                <query_log>
-                  <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
-                </query_log>
-                <query_thread_log>
-                  <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
-                </query_thread_log>
-                <query_views_log>
-                  <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
-                </query_views_log>
-                <part_log>
-                  <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
-                </part_log>
-                <trace_log>
-                  <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
-                </trace_log>
-                <metric_log>
-                  <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
-                </metric_log>
-                <asynchronous_metric_log>
-                  <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
-                </asynchronous_metric_log>
-                <processors_profile_log>
-                  <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
-                </processors_profile_log>
-              </clickhouse>
         signoz:
           ingress:
             enabled: true
