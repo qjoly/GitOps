@@ -186,6 +186,18 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/talos.svg
                 secretName: oidc-omni
+              - slug: k7
+                name: Provider for K7 (americano)
+                appName: K7
+                clientType: confidential
+                clientID: k7
+                redirectURIs:
+                  - https://k7.americano.thoughtless.eu/api/authentication/callback/login/oidc
+                  - https://k7.americano.thoughtless.eu/api/authentication/callback/logout/oidc
+                scopes: [email, profile, openid]
+                subMode: user_email
+                icon: https://raw.githubusercontent.com/kaybi-gh/k7/main/branding/logo.svg
+                secretName: oidc-k7
             proxyProviders:
               - slug: prowlarr
                 name: Prowlarr
