@@ -1,745 +1,530 @@
 {
-  "title": "ClickHouse Cold Storage (Bunny S3)",
-  "description": "Trafic ClickHouse vers le bucket S3 Bunny (tiering cold storage).",
+  "schemaVersion": "v6",
+  "name": "clickhouse-cold-storage",
   "tags": [
-    "clickhouse",
-    "s3",
-    "cold-storage"
-  ],
-  "layout": [
     {
-      "i": "w1",
-      "x": 0,
-      "y": 0,
-      "w": 4,
-      "h": 3
+      "key": "tag",
+      "value": "clickhouse"
     },
     {
-      "i": "w2",
-      "x": 4,
-      "y": 0,
-      "w": 4,
-      "h": 3
+      "key": "tag",
+      "value": "s3"
     },
     {
-      "i": "w3",
-      "x": 8,
-      "y": 0,
-      "w": 4,
-      "h": 3
-    },
-    {
-      "i": "w4",
-      "x": 0,
-      "y": 3,
-      "w": 6,
-      "h": 6
-    },
-    {
-      "i": "w5",
-      "x": 6,
-      "y": 3,
-      "w": 6,
-      "h": 6
-    },
-    {
-      "i": "w6",
-      "x": 0,
-      "y": 9,
-      "w": 6,
-      "h": 6
-    },
-    {
-      "i": "w7",
-      "x": 6,
-      "y": 9,
-      "w": 6,
-      "h": 6
+      "key": "tag",
+      "value": "cold-storage"
     }
   ],
-  "widgets": [
-    {
-      "id": "w1",
-      "title": "PutObject /s",
-      "description": "",
-      "panelTypes": "value",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "yAxisUnit": "short",
-      "softMin": null,
-      "softMax": null,
-      "fillSpans": false,
-      "mergeAllActiveQueries": false,
-      "query": {
-        "builder": {
-          "queryData": [
+  "spec": {
+    "display": {
+      "name": "ClickHouse Cold Storage (Bunny S3)",
+      "description": "Trafic ClickHouse vers le bucket S3 Bunny (tiering cold storage)."
+    },
+    "variables": [],
+    "panels": {
+      "put-rate": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "PutObject / s",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "reqps",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
             {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_S3PutObject",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "chi_clickhouse_event_S3PutObject",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "last"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "k8s.cluster.name = 'mocha'"
+                    },
+                    "groupBy": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "put/s"
+                  }
                 }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "put/s",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "last",
-              "stepInterval": 60
+              }
             }
           ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "w1-q",
-        "queryType": "builder"
-      }
-    },
-    {
-      "id": "w2",
-      "title": "GetObject /s",
-      "description": "",
-      "panelTypes": "value",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "yAxisUnit": "short",
-      "softMin": null,
-      "softMax": null,
-      "fillSpans": false,
-      "mergeAllActiveQueries": false,
-      "query": {
-        "builder": {
-          "queryData": [
+          "links": []
+        }
+      },
+      "get-rate": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "GetObject / s",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "reqps",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
             {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_S3GetObject",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "chi_clickhouse_event_S3GetObject",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "last"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "k8s.cluster.name = 'mocha'"
+                    },
+                    "groupBy": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "get/s"
+                  }
                 }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "get/s",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "last",
-              "stepInterval": 60
+              }
             }
           ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "w2-q",
-        "queryType": "builder"
-      }
-    },
-    {
-      "id": "w3",
-      "title": "DeleteObject /s",
-      "description": "",
-      "panelTypes": "value",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "yAxisUnit": "short",
-      "softMin": null,
-      "softMax": null,
-      "fillSpans": false,
-      "mergeAllActiveQueries": false,
-      "query": {
-        "builder": {
-          "queryData": [
+          "links": []
+        }
+      },
+      "delete-rate": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "DeleteObject / s",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "reqps",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
             {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_S3DeleteObjects",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "chi_clickhouse_event_S3DeleteObjects",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "last"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "k8s.cluster.name = 'mocha'"
+                    },
+                    "groupBy": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "delete/s"
+                  }
                 }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "delete/s",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "last",
-              "stepInterval": 60
+              }
             }
           ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "w3-q",
-        "queryType": "builder"
+          "links": []
+        }
+      },
+      "request-rate": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "S3 request rate by operation",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "reqps",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "chi_clickhouse_event_S3PutObject",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      },
+                      {
+                        "metricName": "chi_clickhouse_event_S3GetObject",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      },
+                      {
+                        "metricName": "chi_clickhouse_event_S3DeleteObjects",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "k8s.cluster.name = 'mocha'"
+                    },
+                    "groupBy": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "error-rate": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "S3 error rate",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "reqps",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "chi_clickhouse_event_S3WriteRequestsErrors",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      },
+                      {
+                        "metricName": "chi_clickhouse_event_S3ReadRequestsErrors",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "k8s.cluster.name = 'mocha'"
+                    },
+                    "groupBy": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "throughput": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "S3 throughput",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "binBps",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "chi_clickhouse_event_WriteBufferFromS3Bytes",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      },
+                      {
+                        "metricName": "chi_clickhouse_event_ReadBufferFromS3Bytes",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "k8s.cluster.name = 'mocha'"
+                    },
+                    "groupBy": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
       }
     },
-    {
-      "id": "w4",
-      "title": "S3 request rate by operation",
-      "description": "",
-      "panelTypes": "graph",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "yAxisUnit": "short",
-      "softMin": null,
-      "softMax": null,
-      "fillSpans": false,
-      "mergeAllActiveQueries": false,
-      "query": {
-        "builder": {
-          "queryData": [
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
             {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_S3PutObject",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "put",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "last",
-              "stepInterval": 60
+              "x": 0,
+              "y": 0,
+              "width": 4,
+              "height": 2,
+              "content": {
+                "$ref": "#/spec/panels/put-rate"
+              }
             },
             {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_S3GetObject",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "B",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "get",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "B",
-              "reduceTo": "last",
-              "stepInterval": 60
+              "x": 4,
+              "y": 0,
+              "width": 4,
+              "height": 2,
+              "content": {
+                "$ref": "#/spec/panels/get-rate"
+              }
             },
             {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_S3DeleteObjects",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "C",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "delete",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "C",
-              "reduceTo": "last",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "w4-q",
-        "queryType": "builder"
-      }
-    },
-    {
-      "id": "w5",
-      "title": "S3 error rate",
-      "description": "",
-      "panelTypes": "graph",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "yAxisUnit": "short",
-      "softMin": null,
-      "softMax": null,
-      "fillSpans": false,
-      "mergeAllActiveQueries": false,
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_S3WriteRequestsErrors",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "write errors",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "last",
-              "stepInterval": 60
+              "x": 8,
+              "y": 0,
+              "width": 4,
+              "height": 2,
+              "content": {
+                "$ref": "#/spec/panels/delete-rate"
+              }
             },
             {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_S3ReadRequestsErrors",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "B",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "read errors",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "B",
-              "reduceTo": "last",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "w5-q",
-        "queryType": "builder"
-      }
-    },
-    {
-      "id": "w6",
-      "title": "S3 write error ratio",
-      "description": "",
-      "panelTypes": "graph",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "yAxisUnit": "percentunit",
-      "softMin": null,
-      "softMax": null,
-      "fillSpans": false,
-      "mergeAllActiveQueries": false,
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_S3WriteRequestsErrors",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": true,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "last",
-              "stepInterval": 60
+              "x": 0,
+              "y": 2,
+              "width": 6,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/request-rate"
+              }
             },
             {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_S3WriteRequestsCount",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": true,
-              "expression": "B",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "B",
-              "reduceTo": "last",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": [
+              "x": 6,
+              "y": 2,
+              "width": 6,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/error-rate"
+              }
+            },
             {
-              "disabled": false,
-              "expression": "A/B",
-              "legend": "write error ratio",
-              "queryName": "F1"
+              "x": 0,
+              "y": 6,
+              "width": 12,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/throughput"
+              }
             }
           ]
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "w6-q",
-        "queryType": "builder"
+        }
       }
-    },
-    {
-      "id": "w7",
-      "title": "S3 throughput",
-      "description": "",
-      "panelTypes": "graph",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "yAxisUnit": "Bps",
-      "softMin": null,
-      "softMax": null,
-      "fillSpans": false,
-      "mergeAllActiveQueries": false,
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_WriteBufferFromS3Bytes",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "upload",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "last",
-              "stepInterval": 60
-            },
-            {
-              "aggregations": [
-                {
-                  "metricName": "chi_clickhouse_event_ReadBufferFromS3Bytes",
-                  "temporality": "",
-                  "timeAggregation": "rate",
-                  "spaceAggregation": "sum",
-                  "reduceTo": "last"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "B",
-              "filter": {
-                "expression": "k8s.cluster.name = 'mocha'"
-              },
-              "filters": {
-                "op": "AND",
-                "items": []
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "download",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "B",
-              "reduceTo": "last",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "w7-q",
-        "queryType": "builder"
-      }
-    }
-  ],
-  "panelMap": {},
-  "variables": {},
-  "uploadedGrafana": false,
-  "version": "v5",
-  "uuid": "clickhouse-cold-storage"
+    ],
+    "links": []
+  }
 }
