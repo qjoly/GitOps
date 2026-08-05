@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: coturn
-          image: coturn/coturn:4.15.0
+          image: coturn/coturn:4.17.0
           command:
             - sh
             - -c
