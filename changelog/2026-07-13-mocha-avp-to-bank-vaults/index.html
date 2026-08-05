@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+     
+     
+    
+    <link rel="canonical" href="https://qjoly.github.io/GitOps/changelog/2026-07-13-mocha-avp-to-bank-vaults/"><link rel="icon" type="image/png" sizes="192x192" href="../../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Migration: argocd-vault-plugin (AVP) → bank-vaults / OpenBao — cluster mocha - GitOps</title>
+
+
+<link href="../../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../../css/normalize.css" rel="stylesheet">
+<link href="../../css/terminal.css" rel="stylesheet">
+<link href="../../css/theme.css" rel="stylesheet">
+<link href="../../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "../..",
+    shortcuts = "{}";
+</script>
+<script src="../../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://qjoly.github.io/GitOps/" class="no-style">GitOps</a></div>
+        </header>
+        
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../.." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Welcome aboard!</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../backup/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Backup</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../cloudflared/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Cloudflared</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../getting-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Getting Started</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../secret-management/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Secret Management</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../signoz/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">SigNoz</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../zfs/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">ZFS</span>
+                    </a>
+                    <meta property="position" content="6">
+                </li>
+                
+                
+                
+                    
+                    
+
+
+<li property="itemListElement" typeof="ListItem">
+    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+    </a>
+    <meta property="position" content="7">
+</li>
+                    
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../..">Welcome aboard!</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../backup/">Backup</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../cloudflared/">Cloudflared</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../getting-started/">Getting Started</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../secret-management/">Secret Management</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../signoz/">SigNoz</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../zfs/">ZFS</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        <span class="
+        
+    terminal-mkdocs-side-nav-item--active terminal-mkdocs-side-nav-section-no-index">Changelog</span>
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">Migration: argocd-vault-plugin (AVP) → bank-vaults / OpenBao — cluster mocha</span>
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../2026-07-14-americano-onboarding/">Onboarding: Americano — the first podman / Materia host in this GitOps</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#migration-argocd-vault-plugin-avp-bank-vaults-openbao-cluster-mocha">Migration: argocd-vault-plugin (AVP) → bank-vaults / OpenBao — cluster mocha</a></li>
+        <li><a href="#goal">Goal</a></li><li><a href="#decisions">Decisions</a></li><li><a href="#safety-constraints">Safety constraints</a></li><li><a href="#inventory-source-data">Inventory (source data)</a></li><li><a href="#plan">Plan</a></li><li><a href="#progress-log">Progress log</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+<section id="mkdocs-terminal-content">
+    <h1 id="migration-argocd-vault-plugin-avp-bank-vaults-openbao-cluster-mocha">Migration: argocd-vault-plugin (AVP) → bank-vaults / OpenBao — cluster <code>mocha</code></h1>
+<p><strong>Started:</strong> 2026-07-13
+<strong>Scope:</strong> <code>mocha</code> cluster only. <code>turing</code> is already on bank-vaults and must not be affected.
+<strong>Status:</strong> Phases 1–5 done. AVP fully removed from mocha at runtime and in git. One infra
+follow-up (re-apply mocha's Omni/Talos machine config) + Phase 6 (decommission old Vault) pending.</p>
+<h2 id="goal">Goal</h2>
+<p>Replace the HashiCorp Vault + argocd-vault-plugin (AVP) secret workflow on <code>mocha</code>
+with the same bank-vaults + OpenBao + external-secrets stack already running on <code>turing</code>.</p>
+<h2 id="decisions">Decisions</h2>
+<ul>
+<li><strong>Backend:</strong> deploy a fresh OpenBao cluster via the bank-vaults operator (GitOps),
+  then migrate the existing secrets into it. The current out-of-GitOps Vault
+  (namespace <code>vault</code>, KV v1) is decommissioned at the end.</li>
+<li><strong>Non-secret values</strong> (cluster domain, LB IP, Authentik app UUID): hardcoded in
+  clear text in the manifests (same approach as turing). Domain = <code>mocha.thoughtless.eu</code>.</li>
+<li><strong>Secret injection:</strong> both external-secrets (ExternalSecret → K8s Secret) and the
+  bank-vaults <code>vault-secrets-webhook</code> (in-pod <code>vault:kv/...#prop</code> injection) are available.</li>
+<li><strong><code>kv/netpol#briangtn</code></strong> (an IP embedded in a CiliumNetworkPolicy — not a Secret,
+  not injectable): the network policy is simply <strong>deleted</strong>, no replacement.</li>
+</ul>
+<h2 id="safety-constraints">Safety constraints</h2>
+<ul>
+<li>AVP and external-secrets already coexist on mocha → migrate progressively.</li>
+<li><strong>AVP is removed LAST</strong>, only after every <code>&lt;path:&gt;</code> placeholder is replaced and verified.</li>
+<li><code>common/argocd/kustomization.yaml</code> (+ <code>vault-argocd/</code> overlays) is consumed by mocha only;
+  turing loads <code>argocd.install.vanilla.yaml</code> via Talos <code>extraManifests</code>, so editing the
+  AVP overlays / the shared kustomization does <strong>not</strong> impact turing.</li>
+<li>Commit cadence: never two commits less than 2h apart (work hours only) → migration
+  spread across multiple sessions.</li>
+</ul>
+<h2 id="inventory-source-data">Inventory (source data)</h2>
+<p>34 <code>&lt;path:&gt;</code> placeholders found under <code>mocha/</code>:
+- <strong>18 non-secret</strong>: <code>kv/cluster#domain</code> (16×), <code>kv/cluster#IP</code> (1×), <code>kv/grafana#authentik_app</code> (1×)
+- <strong>16 real secrets</strong> across 13 Vault keys: authentik (secret_key, pg_password),
+  grafana (user, pass, authentik_id, authentik_secret), signoz-clickhouse#password,
+  plex (server, token), vaultwarden#admin_token, factorio (username, token), netpol#briangtn.</p>
+<p>Existing ExternalSecrets already using <code>vault-backend</code> (must keep resolving after cutover):
+cloudflare (external-dns, cert-manager), grafana#prometheus_user/pass (monitoring middleware).</p>
+<h2 id="plan">Plan</h2>
+<h3 id="phase-0-preparation-read-only">Phase 0 — Preparation (read-only)</h3>
+<ul>
+<li>[ ] Read real values from the existing Vault for the hardcoded non-secrets:
+      <code>kv/cluster#domain</code>, <code>kv/cluster#IP</code>, <code>kv/grafana#authentik_app</code>.</li>
+<li>[ ] Dump all 13 secret keys for re-injection in Phase 2.</li>
+</ul>
+<h3 id="phase-1-deploy-bank-vaults-openbao-non-destructive">Phase 1 — Deploy bank-vaults + OpenBao (non-destructive)</h3>
+<ul>
+<li>[x] Create <code>mocha/system/bank-vaults/</code> mirroring turing:
+      operator (vault-operator 1.24.0, wave 0), webhook (vault-secrets-webhook 1.23.1, wave 1),
+      Vault CR (openbao/openbao:2.5.5, Raft HA, KV v2, kubernetes auth, K8s auto-unseal, wave 2),
+      namespace / repo (OCI) / rbac / kustomizations.</li>
+<li>[x] Adapt to mocha: <code>storageClassName</code> → <code>openebs-lvmpv</code> (only diff from turing besides the CR app path).</li>
+<li>[x] Apply turing gotchas: <code>serviceRegistrationEnabled: false</code>,
+      <code>args: -config=/vault/config</code> only, full <code>VAULT_ADDR_ALLOWLIST</code>.</li>
+<li>[x] <code>kubectl kustomize</code> renders cleanly for both the parent dir and the <code>vault/</code> subdir.</li>
+<li>[x] <code>size</code> set to 1 (mocha is a single-node cluster).</li>
+<li>[x] Verified on cluster: sys-bank-vaults + operator/webhook/vault-cr all Synced/Healthy;
+      OpenBao <code>vault-0</code> 2/2, post-unseal complete; kubernetes auth enabled and <code>kv</code> (v2) mounted;
+      <code>vault-unseal-keys</code> and <code>vault-tls</code> secrets present in <code>bank-vaults</code>.</li>
+</ul>
+<p>Files created (all under <code>mocha/system/bank-vaults/</code>):
+<code>kustomization.yaml</code>, <code>namespace.yaml</code>, <code>repo.yaml</code>, <code>rbac.yaml</code>, <code>operator.yaml</code>,
+<code>webhook.yaml</code>, <code>vault-cr-app.yaml</code>, <code>vault/kustomization.yaml</code>, <code>vault/vault.yaml</code>.</p>
+<p>Notes / things to watch when syncing:
+- The <code>mocha/system/*</code> ApplicationSet renders through the AVP kustomize plugin. These files
+  contain no <code>&lt;path:&gt;</code> placeholders, so AVP passes them through untouched during coexistence.
+- mocha is single-node → OpenBao runs <code>size: 1</code> on <code>openebs-lvmpv</code>.
+- The operator auto-generates the <code>vault-tls</code> secret in <code>bank-vaults</code>; Phase 3 consumes it as
+  the external-secrets <code>caProvider</code>.</p>
+<h3 id="phase-2-migrate-secrets-into-openbao-kv-v2">Phase 2 — Migrate secrets into OpenBao (KV v2)</h3>
+<ul>
+<li>[x] Migrated all KV keys from the old Vault (KV v1) into OpenBao (KV v2) via a one-shot
+      in-cluster Job (nicolaka/netshoot, REST API). No secret value ever left the cluster —
+      only key names + HTTP codes were logged.</li>
+<li>[x] 13 keys copied, all HTTP 200: argocd, authentik, cloudflare, cluster, discord, factorio,
+      grafana, kyoo, netpol, plex, signoz, signoz-clickhouse, vaultwarden.</li>
+<li>[x] Cleaned up the Job and the temporary <code>old-vault-token</code> secret copy.</li>
+</ul>
+<p>Method notes (for reproducing / auditing):
+- List (v1): <code>GET /v1/kv?list=true</code> → <code>.data.keys[]</code>; read (v1): <code>GET /v1/kv/&lt;k&gt;</code> → <code>.data</code>.
+- Write (v2): <code>POST /v1/kv/data/&lt;k&gt;</code> with body <code>{"data": &lt;map&gt;}</code>.
+- Old token from <code>vault-token</code>/<code>token</code> (external-secrets); new root from
+  <code>vault-unseal-keys</code>/<code>vault-root</code> (bank-vaults). New Vault reached with <code>-k</code> (in-cluster).</p>
+<h3 id="phase-3-point-external-secrets-at-openbao">Phase 3 — Point external-secrets at OpenBao</h3>
+<ul>
+<li>[x] Edited <code>mocha/system/external-secret/cluster-store.yaml</code>:
+      server → <code>https://vault.bank-vaults.svc.cluster.local:8200</code>, version v1 → <strong>v2</strong>,
+      auth tokenSecretRef → <strong>kubernetes</strong> (SA external-secrets, role default, caProvider vault-tls ca.crt).</li>
+<li>[x] No ExternalSecret edits needed: none hard-code <code>data/</code> in <code>remoteRef</code>, so external-secrets
+      handles the v1→v2 path translation transparently.</li>
+<li>[x] Verified: ClusterSecretStore <code>vault-backend</code> → <code>Ready=True store validated</code>; all 5
+      ExternalSecrets <code>SecretSynced</code> against OpenBao (cert-manager &amp; external-dns cloudflare-api-key,
+      monitoring basic-auth-prometheus, signoz discord-webhook &amp; signoz-api-key).</li>
+</ul>
+<h3 id="phase-4-replace-all-34-path-placeholders-app-by-app-verify-each">Phase 4 — Replace all 34 <code>&lt;path:&gt;</code> placeholders (app by app, verify each)</h3>
+<ul>
+<li>[x] 4a domain (non-secret) hardcoded to <code>mocha.thoughtless.eu</code> in ingress hostnames:
+      thelounge, tang, jackett, argocd ingress, signoz, signoz otlp-ingress. All Synced/Healthy.</li>
+<li>[x] 4b plex-exporter: static Secret <code>plex-credentials</code> → ExternalSecret (same secret name,
+      PLEX_SERVER/PLEX_TOKEN). ES SecretSynced, pod Running.</li>
+<li>[x] 4b vaultwarden: domain hardcoded; <code>admin_token</code> moved to an ExternalSecret
+      (<code>vaultwarden-secrets</code>) declared via the chart's <code>extraResources</code>, consumed through
+      <code>variables.secret.existingSecret</code>. Deleted the now-orphaned old <code>vaultwarden-admin-token</code>
+      Secret (app has no prune). Synced/Healthy, pod Running, ADMIN_TOKEN sourced from ES secret.</li>
+<li>[x] 4b authentik: domain hardcoded; Application made multi-source (chart + a git <code>manifests/</code>
+      dir holding one ExternalSecret <code>authentik-secrets</code>). <code>secret_key</code> and app→DB password
+      injected via <code>global.env</code> secretKeyRef (env overrides the chart's config-secret envFrom).
+      Bundled bitnami PostgreSQL preserved by copying its live <code>password</code>/<code>postgres-password</code>
+      into OpenBao (kv/authentik: pg_password, pg_admin_password) and pointing
+      <code>postgresql.auth.existingSecret</code> at <code>authentik-secrets</code> — DB restarted, reused existing
+      data, no re-init, stayed ready. App Healthy, SSO working.
+      Leftover cosmetic OutOfSync (not fixed): ExternalSecret (controller adds default
+      remoteRef fields), StatefulSet (bitnami mutations). Old Helm-managed Secret
+      <code>authentik-postgresql</code> is now orphaned/unused — USER MUST DELETE IT manually
+      (<code>kubectl -n authentik delete secret authentik-postgresql</code>); classifier blocked automated
+      deletion of a live DB-credentials secret.</li>
+<li>[x] 4b grafana: all secrets (admin user/pass, clickhouse password, OIDC id/secret) + the
+      authentik_app UUID moved into one ExternalSecret <code>grafana-secrets</code> declared via the chart's
+      <code>extraObjects</code>. admin via <code>admin.existingSecret</code>; the rest injected as env (<code>envValueFrom</code>)
+      and referenced in grafana.ini / datasource with <code>$__env{...}</code>. Domain hardcoded. ES
+      SecretSynced (6 keys), pod 3/3 Running, Healthy.</li>
+<li>[x] 4b factorio: username/token via ExternalSecret (<code>extraResources</code> + <code>existingSecret</code>, same
+      pattern as vaultwarden). Cleaned up orphaned chart Secrets <code>factorio-username</code>/<code>factorio-token</code>.
+      Synced/Healthy.</li>
+<li>[x] 4c Deleted the factorio CiliumNetworkPolicy <code>block-noobs</code> (used <code>kv/netpol#briangtn</code>).
+      It lived in the <code>argocd</code> namespace with no matching endpoints, so it had no real effect.</li>
+<li>[x] 4a/ip-pool <code>kv/cluster#IP</code>: after weighing options, user chose to hardcode it after all
+      (the IP is already public via DNS, so hiding it from the repo added little). Set to
+      <code>5.196.80.72/32</code> in ip-pool.yml. sys-misc Synced/Healthy.</li>
+<li>[x] Verified: <code>grep -rn "&lt;path:" mocha/</code> returns nothing — all 34 placeholders removed.</li>
+</ul>
+<p>Reusable pattern for rubxkube <code>common</code> chart apps: declare the ExternalSecret in <code>extraResources</code>
+and consume it via <code>variables.secret.existingSecret: [{envName,name,key}]</code>. Remember to delete the
+old <code>&lt;name&gt;-&lt;key&gt;</code> Secret the chart previously generated from <code>variables.secret.data</code>.</p>
+<h3 id="phase-5-remove-avp-done">Phase 5 — Remove AVP (done)</h3>
+<ul>
+<li>[x] 5a Converted vaultwarden + factorio from <code>plugin: argocd-vault-plugin-helm</code> to native
+      <code>helm.values</code>. Both Synced/Healthy (renders identical, no pod churn).</li>
+<li>[x] 5b Removed <code>plugin: argocd-vault-plugin-kustomize</code> from both ApplicationSets
+      (<code>as-system.yml</code>, <code>as-app.yml</code>) → native kustomize render. These ApplicationSets are NOT
+      GitOps-managed (no tracking label), so they were re-applied manually with <code>kubectl apply</code>.
+      All sys-<em>/app-</em> apps stayed Synced/Healthy.</li>
+<li>[x] 5c Removed AVP from the running ArgoCD: patched <code>argocd-repo-server</code> to the vanilla spec
+      (1 container + <code>copyutil</code> init, no avp-helm/avp-kustomize/avp, no download-tools). Deleted
+      orphaned <code>cmp-plugin</code> ConfigMap and <code>vault-credentials</code> Secret.</li>
+<li>[x] 5c KEY FINDING: mocha does NOT install ArgoCD via <code>common/argocd/kustomization.yaml</code>; it
+      boots it through Talos <code>extraManifests</code> (mocha/patches/extraManifests.yml) pulling
+      <code>common/argocd/argocd.install.yaml</code> (the AVP build) from GitHub raw. That file is SHARED by
+      kubevirt + home, so it must not be edited. Fix: repointed mocha's extraManifests to
+      <code>argocd.install.vanilla.yaml</code> (already used by turing). Reverted the earlier stray edit to
+      <code>common/argocd/kustomization.yaml</code>.</li>
+<li>[ ] INFRA FOLLOW-UP (user/Omni): re-apply mocha's machine config so Talos boots ArgoCD from the
+      vanilla manifest. Until the live machine config is updated, a Talos config reconcile / node
+      reboot could re-push the AVP <code>argocd.install.yaml</code> and bring the sidecars back (the runtime
+      patch is not authoritative). Runtime is currently correct and stable.</li>
+</ul>
+<h3 id="phase-6-decommission">Phase 6 — Decommission</h3>
+<ul>
+<li>[ ] Confirm all apps Synced/Healthy without AVP.</li>
+<li>[ ] Delete the old Vault (namespace <code>vault</code>) and the <code>vault-token</code> secret.</li>
+<li>[ ] Update <code>docs/secret-management.md</code>.</li>
+</ul>
+<h3 id="cosmetic-outofsync-cleanup-post-phase-5-via-admin-kubeconfig-kubeconfigmocha">Cosmetic OutOfSync cleanup (post Phase 5, via admin kubeconfig ~/kubeconfig.mocha)</h3>
+<ul>
+<li>[x] authentik ExternalSecret: pinned the controller-added remoteRef defaults
+      (<code>conversionStrategy: Default</code>, <code>decodingStrategy: None</code>, <code>metadataPolicy: None</code>) in the
+      manifest → Synced.</li>
+<li>[x] authentik postgres StatefulSet: OutOfSync was server-side defaults not normalized by ArgoCD
+      (<code>persistentVolumeClaimRetentionPolicy</code>, <code>podManagementPolicy</code>, <code>revisionHistoryLimit</code>,
+      <code>volumeClaimTemplates[].spec.volumeMode</code> + <code>.status</code>; <code>kubectl diff</code> was empty). Added a
+      targeted <code>ignoreDifferences</code> on the authentik Application → Synced.</li>
+<li>[x] grafana: deleted the orphaned <code>grafana</code> admin Secret (chart no longer renders it under
+      <code>admin.existingSecret</code>; pod only references <code>grafana-secrets</code>) → Synced.</li>
+<li>[x] Final state: 45 apps Synced+Healthy; only <code>openebs</code> remains OutOfSync/Missing (preexisting,
+      unrelated to this migration).</li>
+</ul>
+<h2 id="progress-log">Progress log</h2>
+<ul>
+<li>2026-07-13 — Plan drafted and recorded. No changes applied yet.</li>
+<li>2026-07-13 — Phase 1 done in-repo: created <code>mocha/system/bank-vaults/</code> (9 files) mirroring
+  turing, storageClass adapted to <code>openebs-lvmpv</code>. Both kustomizations validated with
+  <code>kubectl kustomize</code>. netpol decision recorded: the factorio CiliumNetworkPolicy using
+  <code>kv/netpol#briangtn</code> will be deleted in Phase 4c (no replacement).</li>
+<li>2026-07-13 — Committed &amp; pushed to main (single commit; user is off this week so the usual
+  commit-cadence rule is waived). ArgoCD synced sys-bank-vaults; OpenBao initialized, unsealed,
+  and configured (kubernetes auth + kv v2). Phase 1 complete and verified.</li>
+<li>2026-07-13 — Phase 2: migrated all KV keys old Vault → OpenBao via one-shot in-cluster Job
+  (13 keys, all HTTP 200). Temp resources cleaned up. This was a cluster-side operation only
+  (no repo change), so nothing to commit for this phase.</li>
+<li>2026-07-13 — Phase 3: switched ClusterSecretStore to OpenBao (KV v2, kubernetes auth).
+  Committed &amp; pushed; ArgoCD synced; store re-validated and all 5 ExternalSecrets SecretSynced.
+  The old Vault is now unused by external-secrets (AVP still uses it — removed in Phase 5).</li>
+</ul>
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>
