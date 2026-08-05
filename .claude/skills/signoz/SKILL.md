@@ -193,9 +193,84 @@ the operator's CRD exists.
 JSON files in `mocha/system/signoz/dashboards/`, bundled into a ConfigMap by
 `configMapGenerator` in `kustomization.yaml` (needs `ServerSideApply=true` when the
 ConfigMap exceeds 256 KB). A PostSync Job (`dashboard-provisioner.yaml`) imports them
-through the API and **upserts** (PUT by id, fallback delete+POST), matched by title, so
-editing a JSON and re-syncing updates the live dashboard. Community dashboards come from
-`github.com/SigNoz/dashboards`.
+through the API and **upserts**, so editing a JSON and re-syncing updates the live
+dashboard. Community dashboards come from `github.com/SigNoz/dashboards`.
+
+## The v1 dashboard API is dead since SigNoz 0.135 — use v2 (schema v6)
+
+`POST /api/v1/dashboards` now returns `501 dashboard_deprecated`. The `telemetrystore-migrator`
+already converted the existing dashboards to the v2 store on upgrade, so they still render, but
+**any create/update must go through `/api/v2/dashboards`** with the `v6` schema. The provisioner
+Job was rewritten to speak v2:
+
+- List: `GET /api/v2/dashboards?limit=500` → `data.dashboards[]`, each has `id` and
+  `spec.display.name`. **Match by `spec.display.name`** (the human title), NOT the top-level
+  `name` — SigNoz appends a random suffix to `name` on create (`clickhouse-cold-storage` becomes
+  `clickhouse-cold-storage-tazxbo0f`), so it is not a stable key.
+- Upsert: if the title exists, `PUT /api/v2/dashboards/{id}` (returns 200, keeps the id — no
+  churn); else `POST` (returns 201). `DELETE /{id}` returns 204. `GET /api/v2/dashboards/{id}`
+  is **501 Not Implemented** and the list truncates `spec` to `display` only — you cannot read a
+  full dashboard back from the API. To capture a working v6 shape, export one from the UI.
+- The provisioner **skips any file whose top-level `schemaVersion != "v6"`** (the 26 legacy v1
+  JSON files) so the Job succeeds; they stay live from the migration but are no longer
+  git-provisioned until rewritten to v6.
+
+### v6 dashboard JSON shape (what to write in the file)
+
+```jsonc
+{
+  "schemaVersion": "v6",                 // required by POST/PUT
+  "name": "clickhouse-cold-storage",     // required, RFC 1123 (lowercase, alnum, '-')
+  "tags": [{"key": "tag", "value": "clickhouse"}],   // objects, not strings
+  "spec": {                               // STRICT: rejects any unknown field
+    "display": {"name": "ClickHouse Cold Storage", "description": "..."},
+    "variables": [],
+    "panels": {                           // dict keyed by panel id
+      "put-rate": {
+        "kind": "Panel",
+        "spec": {
+          "display": {"name": "PutObject / s", "description": ""},
+          "plugin": {"kind": "signoz/NumberPanel",       // or signoz/TimeSeriesPanel
+                     "spec": {"visualization": {"timePreference": "global_time"},
+                              "formatting": {"unit": "reqps", "decimalPrecision": "2"},
+                              "thresholds": null}},
+          "queries": [{                    // EXACTLY ONE query per panel (see below)
+            "kind": "scalar",              // "scalar" for NumberPanel, "time_series" for TimeSeriesPanel
+            "spec": {"name": "A", "plugin": {"kind": "signoz/BuilderQuery", "spec": {
+              "name": "A", "stepInterval": 60, "signal": "metrics", "source": "",
+              "aggregations": [{"metricName": "chi_clickhouse_event_S3PutObject",
+                                "temporality": "", "timeAggregation": "rate",
+                                "spaceAggregation": "sum", "reduceTo": "last"}],
+              "disabled": false, "filter": {"expression": "k8s.cluster.name = 'mocha'"},
+              "groupBy": [], "having": {"expression": ""}, "legend": ""}}}}],
+          "links": []
+        }
+      }
+    },
+    "layouts": [{"kind": "Grid", "spec": {"items": [
+      {"x": 0, "y": 0, "width": 4, "height": 2, "content": {"$ref": "#/spec/panels/put-rate"}}
+    ]}}],
+    "links": []
+  }
+}
+```
+
+Hard rules learned by probing the API (error messages are precise, iterate against them):
+- **One query per panel.** `queries` with >1 entry → `panel must have one query, found N`. To
+  draw multiple series, put multiple entries in the single query's `aggregations` list (each
+  `metricName` becomes a series). This is the opposite of the v1 builder (which used queries A/B/C).
+- **Multi-series legends** collapse to metric-name auto-labels (one `legend` string per query). No
+  per-series legend without a groupBy label.
+- TimeSeriesPanel `plugin.spec` also needs `chartAppearance`, `axes`, and
+  `legend: {position, mode, customColors}`; NumberPanel is lighter (`visualization`, `formatting`,
+  `thresholds`).
+- `spec` and each nested `spec` reject unknown fields (`json: unknown field "x"`). Do NOT carry
+  over v1 keys (`widgets`, `layout`, `panelMap`, `uuid`, `version`, top-level `description`).
+- **Formula queries (`A/B`) in v6 were not reverse-engineered** — the scheduler reference had none.
+  If you need a ratio panel, export a UI-built one to get the shape rather than guessing.
+- Build the file with a small Python generator (see how the cold-storage one was made) — hand-JSON
+  at this nesting depth is error-prone. Validate by POSTing to the live API before committing; a
+  201/200 confirms the schema (data only shows once the metric is ingested).
 
 ## Alerting
 
