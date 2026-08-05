@@ -31,3 +31,21 @@ spec:
     - port: metrics
       path: /metrics
       interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: clickhouse-operator
+  namespace: signoz
+spec:
+  namespaceSelector:
+    matchNames:
+      - signoz
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: clickhouse
+      app.kubernetes.io/component: operator
+  endpoints:
+    - port: signoz-clickhouse-operator-metrics
+      path: /metrics
+      interval: 30s

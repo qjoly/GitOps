@@ -40,6 +40,7 @@ configMapGenerator:
       - dashboards/cert-manager.json
       - dashboards/coredns.json
       - dashboards/openebs-lvm.json
+      - dashboards/clickhouse-cold-storage.json
 generatorOptions:
   disableNameSuffixHash: true
   annotations:

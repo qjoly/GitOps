@@ -21,8 +21,6 @@ spec:
         key: signoz
         property: s3_secret_key
 ---
-# Auto-mergé par l'opérateur Altinity dans le CHI de SigNoz : injecte les creds S3
-# Bunny en env sur le container clickhouse (lues via use_environment_credentials).
 apiVersion: clickhouse.altinity.com/v1
 kind: ClickHouseInstallationTemplate
 metadata:

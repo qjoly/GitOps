@@ -197,6 +197,10 @@ spec:
                         "A container was OOMKilled",
                         "container_oom_events_total increased: a container hit its memory limit and was OOM-killed (cAdvisor).",
                         ["k8s.cluster.name", "namespace", "pod", "container"], win="5m0s", freq="1m0s"),
+                  grule("ClickHouse S3 cold storage write errors", "chi_clickhouse_event_S3WriteRequestsErrors", "rate", "sum", ">", 2, "warning",
+                        "ClickHouse failing to write to the Bunny S3 cold storage",
+                        "S3 write error rate above 2/s averaged over 15m. A low trickle is benign (HEAD/DELETE 404 probes); a sustained rate this high means the cold-storage offload to Bunny is broken.",
+                        "", ["k8s.cluster.name"], win="15m0s", freq="5m0s", match="3"),
               ]
               def field(r, k):
                   return r.get(k) if r.get(k) is not None else (r.get("data") or {}).get(k)
