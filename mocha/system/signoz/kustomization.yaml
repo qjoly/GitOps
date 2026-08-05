@@ -9,6 +9,7 @@ resources:
   - otlp-mtls.yaml
   - alerting.yaml
   - oom-rbac.yaml
+  - clickhouse-cold-storage.yaml
 configMapGenerator:
   - name: signoz-dashboards
     namespace: signoz

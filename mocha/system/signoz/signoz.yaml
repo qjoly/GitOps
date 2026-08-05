@@ -25,6 +25,16 @@ spec:
           persistence:
             enabled: true
             size: 100Gi
+          coldStorage:
+            enabled: true
+            type: s3
+            endpoint: https://de-s3.storage.bunnycdn.com/clickhouse/data/
+            defaultKeepFreeSpaceBytes: "10485760"
+            # role.enabled émet use_environment_credentials : les creds viennent des
+            # env AWS_* injectées par le CHIT (ESO), pas des values -> rien en clair dans Git
+            role:
+              enabled: true
+              annotations: {}
           resources:
             requests:
               cpu: 500m

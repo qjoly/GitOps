@@ -1,0 +1,50 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: clickhouse-cold-storage
+  namespace: signoz
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: clickhouse-cold-storage
+    creationPolicy: Owner
+  data:
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef:
+        key: signoz
+        property: s3_access_key
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: signoz
+        property: s3_secret_key
+---
+# Auto-mergé par l'opérateur Altinity dans le CHI de SigNoz : injecte les creds S3
+# Bunny en env sur le container clickhouse (lues via use_environment_credentials).
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseInstallationTemplate
+metadata:
+  name: cold-storage-credentials
+  namespace: signoz
+spec:
+  templating:
+    policy: auto
+  templates:
+    podTemplates:
+      - name: pod-template
+        spec:
+          containers:
+            - name: clickhouse
+              env:
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: clickhouse-cold-storage
+                      key: AWS_ACCESS_KEY_ID
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: clickhouse-cold-storage
+                      key: AWS_SECRET_ACCESS_KEY
