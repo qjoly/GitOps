@@ -21,7 +21,7 @@ spec:
   sources:
     - repoURL: https://morgoved.github.io/wazuh-helm/
       chart: wazuh
-      targetRevision: 2.0.3
+      targetRevision: 2.0.4
       helm:
         values: |
           indexer:
