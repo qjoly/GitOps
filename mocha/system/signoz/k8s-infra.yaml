@@ -21,7 +21,7 @@ spec:
   source:
     repoURL: https://charts.signoz.io
     chart: k8s-infra
-    targetRevision: 0.16.0
+    targetRevision: 0.17.0
     helm:
       values: |
         global:
