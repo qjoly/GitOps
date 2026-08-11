@@ -14,6 +14,67 @@ spec:
     server: https://kubernetes.default.svc
     namespace: rmfakecloud
   source:
-    repoURL: https://github.com/qjoly/gitops.git
-    targetRevision: HEAD
-    path: mocha/apps/rmfakecloud/manifests
+    repoURL: https://rubxkube.github.io/charts
+    chart: rmfakecloud
+    targetRevision: 0.1.0
+    helm:
+      values: |
+        common:
+          variables:
+            nonSecret:
+              # The tablet is handed this URL when it pairs; changing it breaks sync.
+              STORAGE_URL: https://rm.mocha.thoughtless.eu
+              RM_SMTP_SERVER: mail.infomaniak.com:465
+              RM_SMTP_USERNAME: no-reply@une-pause-cafe.fr
+              RM_SMTP_FROM: no-reply@une-pause-cafe.fr
+            secret:
+              existingSecret:
+                - name: rmfakecloud
+                  key: jwt_secret
+                  envName: JWT_SECRET_KEY
+                - name: rmfakecloud
+                  key: smtp_password
+                  envName: RM_SMTP_PASSWORD
+
+          ingress:
+            enabled: true
+            hostName: rm.mocha.thoughtless.eu
+            ingressClassName: traefik
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+            tls:
+              enabled: true
+              secretName: rm-tls
+
+          # Keeps the existing rmfakecloud-data claim: the chart derives that exact
+          # name from the release name and this volume name.
+          persistence:
+            enabled: true
+            volumes:
+              - name: data
+                size: 10Gi
+                storageClassName: openebs-lvmpv
+                containerMount: /data
+
+          extraResources:
+            - apiVersion: external-secrets.io/v1
+              kind: ExternalSecret
+              metadata:
+                name: rmfakecloud
+              spec:
+                refreshInterval: "1h"
+                secretStoreRef:
+                  name: vault-backend
+                  kind: ClusterSecretStore
+                target:
+                  name: rmfakecloud
+                  creationPolicy: Owner
+                data:
+                  - secretKey: jwt_secret
+                    remoteRef:
+                      key: rmfakecloud
+                      property: jwt_secret
+                  - secretKey: smtp_password
+                    remoteRef:
+                      key: rmfakecloud
+                      property: smtp_password

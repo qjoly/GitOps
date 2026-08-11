@@ -14,6 +14,57 @@ spec:
     server: https://kubernetes.default.svc
     namespace: pr-gitops-grafana-annotation
   source:
-    repoURL: https://github.com/qjoly/gitops.git
-    targetRevision: HEAD
-    path: mocha/apps/pr-gitops-grafana-annotation/manifests
+    repoURL: https://rubxkube.github.io/charts
+    chart: pr-gitops-grafana-annotation
+    targetRevision: 0.1.0
+    helm:
+      values: |
+        common:
+          variables:
+            nonSecret:
+              LISTEN_ADDR: ":8080"
+              GITHUB_REPO: "qjoly/gitops"
+              GRAFANA_URL: "http://grafana.monitoring.svc.cluster.local"
+              ANNOTATION_TAGS: "gitops,deploy"
+            secret:
+              existingSecret:
+                - name: pr-gitops-grafana-annotation
+                  key: github_webhook_secret
+                  envName: GITHUB_WEBHOOK_SECRET
+                - name: pr-gitops-grafana-annotation
+                  key: grafana_token
+                  envName: GRAFANA_TOKEN
+
+          # GitHub has to reach the webhook endpoint from the internet.
+          ingress:
+            enabled: true
+            hostName: annotator.mocha.thoughtless.eu
+            ingressClassName: traefik
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+            tls:
+              enabled: true
+              secretName: pr-gitops-grafana-annotation-tls
+
+          extraResources:
+            - apiVersion: external-secrets.io/v1
+              kind: ExternalSecret
+              metadata:
+                name: pr-gitops-grafana-annotation
+              spec:
+                refreshInterval: "1h"
+                secretStoreRef:
+                  name: vault-backend
+                  kind: ClusterSecretStore
+                target:
+                  name: pr-gitops-grafana-annotation
+                  creationPolicy: Owner
+                data:
+                  - secretKey: github_webhook_secret
+                    remoteRef:
+                      key: pr-gitops-grafana-annotation
+                      property: github_webhook_secret
+                  - secretKey: grafana_token
+                    remoteRef:
+                      key: pr-gitops-grafana-annotation
+                      property: grafana_token

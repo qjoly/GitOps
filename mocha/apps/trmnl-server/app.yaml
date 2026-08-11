@@ -1,3 +1,26 @@
+---
+# The generator script and the local source patches stay as manifests: they are
+# 70+ kB of content, which has no place in a chart's values.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trmnl-server-config
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trmnl-server
+  source:
+    repoURL: https://github.com/qjoly/gitops.git
+    targetRevision: HEAD
+    path: mocha/apps/trmnl-server/manifests
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -14,6 +37,53 @@ spec:
     server: https://kubernetes.default.svc
     namespace: trmnl-server
   source:
-    repoURL: https://github.com/qjoly/gitops.git
-    targetRevision: HEAD
-    path: mocha/apps/trmnl-server/manifests
+    repoURL: https://rubxkube.github.io/charts
+    chart: trmnl-server
+    targetRevision: 0.1.0
+    helm:
+      values: |
+        server:
+          hostname: trmnl.mocha.thoughtless.eu
+          patch:
+            enabled: true
+            configMapName: trmnl-server-patch
+            files:
+              - trmnl_server.py
+              - config.py
+
+        persistence:
+          storageClassName: openebs-lvmpv
+
+        # signoz-api-key, github-credentials and trmnl-upload-token are not managed
+        # from this repo; they were created by hand in the namespace.
+        generator:
+          enabled: true
+          configMapName: image-generator-script
+          env:
+            GITHUB_USERNAME: qjoly
+          secretEnv:
+            - envName: SIGNOZ_API_KEY
+              name: signoz-api-key
+              key: api_key
+            - envName: GITHUB_TOKEN
+              name: github-credentials
+              key: token
+          # One screen per cluster, each writing to its own slot on the display.
+          screens:
+            - name: mocha
+              env:
+                CLUSTER_NAME: mocha
+                SLOT: "0"
+            - name: turing
+              env:
+                CLUSTER_NAME: turing
+                SLOT: "1"
+
+        ingressRoute:
+          enabled: true
+
+        certificate:
+          enabled: true
+          issuerRef:
+            name: cloudflare
+            kind: ClusterIssuer

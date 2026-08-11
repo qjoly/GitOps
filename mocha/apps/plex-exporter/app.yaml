@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: plex-exporter
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: plex-exporter
+  source:
+    repoURL: https://rubxkube.github.io/charts
+    chart: plex-exporter
+    targetRevision: 0.1.0
+    helm:
+      values: |
+        common:
+          # The SigNoz collector scrapes plex-exporter.plex-exporter.svc:9000 by
+          # address (see mocha/system/signoz/k8s-infra.yaml), so the port number
+          # here is load-bearing.
+          variables:
+            secret:
+              existingSecret:
+                - name: plex-credentials
+                  key: PLEX_SERVER
+                  envName: PLEX_SERVER
+                - name: plex-credentials
+                  key: PLEX_TOKEN
+                  envName: PLEX_TOKEN
+
+          extraResources:
+            - apiVersion: external-secrets.io/v1
+              kind: ExternalSecret
+              metadata:
+                name: plex-credentials
+              spec:
+                refreshInterval: "1h"
+                secretStoreRef:
+                  name: vault-backend
+                  kind: ClusterSecretStore
+                target:
+                  name: plex-credentials
+                  creationPolicy: Owner
+                data:
+                  - secretKey: PLEX_SERVER
+                    remoteRef:
+                      key: plex
+                      property: server
+                  - secretKey: PLEX_TOKEN
+                    remoteRef:
+                      key: plex
+                      property: token
