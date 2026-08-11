@@ -1,0 +1,38 @@
+name: knot-image
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: tangled.org/core tag to build the knot from
+        default: v1.16.1-alpha
+        required: true
+permissions:
+  contents: read
+  packages: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone tangled.org/knot-docker
+        run: git clone --depth 1 https://tangled.org/tangled.org/knot-docker knot-docker
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: knot-docker
+          build-args: |
+            TAG=${{ inputs.ref }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/qjoly/knot:${{ inputs.ref }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
