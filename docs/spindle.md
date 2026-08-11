@@ -124,6 +124,22 @@ upstream defaults (8 concurrent × 6144 MB) would need 48Gi.
 The Docker data directory is an `emptyDir` with a 30Gi limit — a throwaway image cache. Worth moving
 to a PVC if re-pulling from nixery on every restart becomes annoying.
 
+## What spindle serves over HTTP
+
+Four routes, from `spindle/server.go`:
+
+| Route | What it is |
+|---|---|
+| `/` | an embedded motd, answered without touching the database, jetstream or docker |
+| `/events` | event stream |
+| `/logs/{knot}/{rkey}/{name}` | workflow logs, read back by the appview |
+| `/xrpc/*` | the XRPC API |
+
+`/` is the useful probe target, precisely because it depends on nothing else. Worth spelling out
+because `grep` for route registrations is easy to get wrong here: they use `mux.HandleFunc(`, so a
+pattern like `mux\.(Get|Handle|Mount)\(` matches only the `/xrpc` mount and makes it look like the
+sole route.
+
 ## PodSecurity
 
 The dind sidecar is privileged, and mocha enforces the `baseline` PodSecurity profile cluster-wide
@@ -161,7 +177,7 @@ Both the SQLite databases and the logs live on one PVC, mounted twice with diffe
 
 Nothing needs to be published for `did:web` to work. `serviceauth.DidWeb()` derives
 `did:web:spindle.mocha.thoughtless.eu` from the hostname, which suggests a DID document is required
-— but the codebase never serves `/.well-known/did.json`, and the server only mounts `/xrpc`. That
+— but the codebase never serves `/.well-known/did.json` anywhere. That
 DID is only ever used as the `aud` claim when validating inbound service-auth JWTs.
 
 Registration happens in the Tangled UI (settings → spindles), which writes an `sh.tangled.spindle`
