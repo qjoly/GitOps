@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
 env:
-  TANGLED_REMOTE: une-tasse-de.cafe@tangled.org:une-tasse-de.cafe/gitops
+  TANGLED_REMOTE: une-tasse-de.cafe@tangled.org:did:plc:4yo4jepwnbtkinf3nljoc76t
 jobs:
   mirror:
     runs-on: ubuntu-latest
