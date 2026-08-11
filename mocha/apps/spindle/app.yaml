@@ -6,6 +6,12 @@ metadata:
 spec:
   project: default
   syncPolicy:
+    # le sidecar dind est privileged, que baseline (enforce par defaut) refuse
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
     automated:
       selfHeal: true
     syncOptions:
