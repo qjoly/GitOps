@@ -14,6 +14,51 @@ spec:
     server: https://kubernetes.default.svc
     namespace: spindle
   source:
-    repoURL: https://github.com/qjoly/gitops.git
-    targetRevision: HEAD
-    path: mocha/apps/spindle/manifests
+    repoURL: https://rubxkube.github.io/charts
+    chart: spindle
+    targetRevision: 0.1.0
+    helm:
+      values: |
+              common:
+                deployment:
+                  minReplicas: 0
+                ingress:
+                  enabled: true
+                  hostName: spindle.mocha.thoughtless.eu
+                  ingressClassName: traefik
+                  tls:
+                    enabled: true
+                    secretName: spindle-tls
+                  annotations:
+                    cert-manager.io/cluster-issuer: cloudflare
+                variables:
+                  nonSecret:
+                    SPINDLE_SERVER_HOSTNAME: spindle.mocha.thoughtless.eu
+                    SPINDLE_SERVER_OWNER: did:plc:hqnyog7skad6m4aejb2yujxy
+                persistence:
+                  enabled: true
+                  volumes:
+                    - name: data
+                      storageClassName: openebs-lvmpv
+                      size: 10Gi
+                      pvcClaim: ""
+                      containerMount: /var/lib/spindle
+                    - name: logs
+                      storageClassName: openebs-lvmpv
+                      size: 2Gi
+                      pvcClaim: ""
+                      containerMount: /var/log/spindle
+                tests:
+                  classicHttp:
+                    enabled: false
+                  curlHostHeader:
+                    enabled: false
+                extraResources:
+                  - apiVersion: v1
+                    kind: Namespace
+                    metadata:
+                      name: spindle
+                      labels:
+                        pod-security.kubernetes.io/enforce: privileged
+                        pod-security.kubernetes.io/audit: privileged
+                        pod-security.kubernetes.io/warn: privileged
