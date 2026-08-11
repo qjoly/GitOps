@@ -1,0 +1,126 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: spindle-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: openebs-lvmpv
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spindle
+  labels:
+    app: spindle
+spec:
+  selector:
+    app: spindle
+  ports:
+    - name: http
+      port: 6555
+      targetPort: 6555
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spindle
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: spindle
+  template:
+    metadata:
+      labels:
+        app: spindle
+    spec:
+      containers:
+        - name: spindle
+          image: ghcr.io/qjoly/spindle:v1.16.1-alpha
+          env:
+            - name: SPINDLE_SERVER_HOSTNAME
+              value: spindle.mocha.thoughtless.eu
+            # une-tasse-de.cafe
+            - name: SPINDLE_SERVER_OWNER
+              value: did:plc:hqnyog7skad6m4aejb2yujxy
+            - name: SPINDLE_SERVER_DB_PATH
+              value: /var/lib/spindle/spindle.db
+            - name: SPINDLE_SERVER_TAP_DB_PATH
+              value: /var/lib/spindle/tap.db
+            - name: SPINDLE_SERVER_REPO_DIR
+              value: /var/lib/spindle/repos
+            # le dossier de logs doit préexister: spindle ouvre les .log sans
+            # les mkdir, et l'entrypoint ne crée que /var/log/spindle en dur
+            - name: SPINDLE_SERVER_LOG_DIR
+              value: /var/log/spindle
+            - name: DOCKER_HOST
+              value: tcp://127.0.0.1:2375
+            - name: SPINDLE_NIXERY_PIPELINES_MAX_CONCURRENT_WORKFLOWS
+              value: "2"
+            - name: SPINDLE_NIXERY_PIPELINES_MAX_JOB_MEMORY_MB
+              value: "4096"
+            - name: SPINDLE_NIXERY_PIPELINES_WORKFLOW_TIMEOUT
+              value: 15m
+          ports:
+            - name: http
+              containerPort: 6555
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/spindle
+              subPath: data
+            - name: data
+              mountPath: /var/log/spindle
+              subPath: logs
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          readinessProbe:
+            tcpSocket:
+              port: 6555
+            initialDelaySeconds: 10
+            periodSeconds: 15
+
+        # les conteneurs de workflow sont des enfants de ce dockerd, donc leur
+        # mémoire compte dans ce cgroup: la limite couvre 2 jobs à 4Gi
+        - name: dind
+          image: docker:29.7.2-dind
+          args:
+            - --host=tcp://127.0.0.1:2375
+            - --host=unix:///var/run/docker.sock
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: docker-data
+              mountPath: /var/lib/docker
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 10Gi
+          readinessProbe:
+            exec:
+              command: ["docker", "-H", "tcp://127.0.0.1:2375", "info"]
+            initialDelaySeconds: 10
+            periodSeconds: 15
+
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: spindle-data
+        # ponytail: cache d'images jetable en emptyDir, passer en PVC si le
+        # re-pull nixery à chaque redémarrage devient pénible
+        - name: docker-data
+          emptyDir:
+            sizeLimit: 30Gi

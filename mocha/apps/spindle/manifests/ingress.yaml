@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spindle
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - spindle.mocha.thoughtless.eu
+      secretName: spindle-tls
+  rules:
+    - host: spindle.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: spindle
+                port:
+                  number: 6555
