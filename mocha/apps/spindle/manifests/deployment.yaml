@@ -92,9 +92,16 @@ spec:
         # mémoire compte dans ce cgroup: la limite couvre 2 jobs à 4Gi
         - name: dind
           image: docker:29.7.2-dind
+          # "dockerd" en premier argument, sinon dockerd-entrypoint.sh injecte
+          # ses propres --host (dont 0.0.0.0:2375) en plus des notres: le bind
+          # entre en conflit et le daemon sort en erreur. Loopback uniquement,
+          # sans quoi une API Docker root sans auth est joignable depuis tout
+          # le cluster -- y compris par le code non fiable des workflows
           args:
-            - --host=tcp://127.0.0.1:2375
+            - dockerd
             - --host=unix:///var/run/docker.sock
+            - --host=tcp://127.0.0.1:2375
+            - --tls=false
           env:
             - name: DOCKER_TLS_CERTDIR
               value: ""
