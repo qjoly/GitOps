@@ -6,8 +6,6 @@ metadata:
 spec:
   project: default
   syncPolicy:
-    # les labels pod-security vivent dans manifests/namespace.yaml:
-    # managedNamespaceMetadata ne rattrape pas un namespace deja cree sans eux
     automated:
       selfHeal: true
     syncOptions:

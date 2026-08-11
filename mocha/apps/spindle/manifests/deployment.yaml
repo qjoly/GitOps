@@ -45,7 +45,6 @@ spec:
           env:
             - name: SPINDLE_SERVER_HOSTNAME
               value: spindle.mocha.thoughtless.eu
-            # une-tasse-de.cafe
             - name: SPINDLE_SERVER_OWNER
               value: did:plc:hqnyog7skad6m4aejb2yujxy
             - name: SPINDLE_SERVER_DB_PATH
@@ -54,8 +53,6 @@ spec:
               value: /var/lib/spindle/tap.db
             - name: SPINDLE_SERVER_REPO_DIR
               value: /var/lib/spindle/repos
-            # le dossier de logs doit préexister: spindle ouvre les .log sans
-            # les mkdir, et l'entrypoint ne crée que /var/log/spindle en dur
             - name: SPINDLE_SERVER_LOG_DIR
               value: /var/log/spindle
             - name: DOCKER_HOST
@@ -88,15 +85,8 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 15
 
-        # les conteneurs de workflow sont des enfants de ce dockerd, donc leur
-        # mémoire compte dans ce cgroup: la limite couvre 2 jobs à 4Gi
         - name: dind
           image: docker:29.7.2-dind
-          # "dockerd" en premier argument, sinon dockerd-entrypoint.sh injecte
-          # ses propres --host (dont 0.0.0.0:2375) en plus des notres: le bind
-          # entre en conflit et le daemon sort en erreur. Loopback uniquement,
-          # sans quoi une API Docker root sans auth est joignable depuis tout
-          # le cluster -- y compris par le code non fiable des workflows
           args:
             - dockerd
             - --host=unix:///var/run/docker.sock
@@ -126,8 +116,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: spindle-data
-        # ponytail: cache d'images jetable en emptyDir, passer en PVC si le
-        # re-pull nixery à chaque redémarrage devient pénible
         - name: docker-data
           emptyDir:
             sizeLimit: 30Gi

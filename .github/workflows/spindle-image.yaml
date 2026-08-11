@@ -1,6 +1,4 @@
 name: spindle-image
-# Upstream publishes no spindle image (only atcr.io/tangled.org/knot), so we
-# build it ourselves from the monorepo's localinfra/spindle.Dockerfile.
 on:
   workflow_dispatch:
     inputs:
