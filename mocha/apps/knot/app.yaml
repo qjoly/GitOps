@@ -1,0 +1,76 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: knot
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: knot
+  source:
+    repoURL: https://qjoly.github.io/knot-helm-chart
+    chart: knot
+    targetRevision: 0.1.0
+    helm:
+      values: |
+              common:
+                ingress:
+                  enabled: true
+                  hostName: knot.mocha.thoughtless.eu
+                  ingressClassName: traefik
+                  tls:
+                    enabled: true
+                    secretName: knot-tls
+                  annotations:
+                    cert-manager.io/cluster-issuer: cloudflare
+                variables:
+                  nonSecret:
+                    KNOT_SERVER_HOSTNAME: knot.mocha.thoughtless.eu
+                    KNOT_SERVER_OWNER: did:plc:hqnyog7skad6m4aejb2yujxy
+                    KNOT_SERVER_DB_PATH: /app/knotserver.db
+                    KNOT_REPO_SCAN_PATH: /home/git/repositories
+                    HOME: /home/git
+                    KNOT_SERVER_ADMIN_SECRET: ""
+                persistence:
+                  enabled: true
+                  volumes:
+                    - name: repositories
+                      storageClassName: openebs-lvmpv
+                      size: 20Gi
+                      pvcClaim: ""
+                      containerMount: /home/git/repositories
+                    - name: server
+                      storageClassName: openebs-lvmpv
+                      size: 2Gi
+                      pvcClaim: ""
+                      containerMount: /app
+                    - name: keys
+                      storageClassName: openebs-lvmpv
+                      size: 64Mi
+                      pvcClaim: ""
+                      containerMount: /etc/ssh/keys
+                extraResources:
+                  - apiVersion: v1
+                    kind: Service
+                    metadata:
+                      name: knot-ssh
+                    spec:
+                      type: LoadBalancer
+                      selector:
+                        app: knot
+                      ports:
+                        - name: ssh
+                          port: 22
+                          targetPort: 22
+                          protocol: TCP
+                tests:
+                  classicHttp:
+                    enabled: false
+                  curlHostHeader:
+                    enabled: false
