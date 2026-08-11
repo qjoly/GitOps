@@ -62,6 +62,11 @@ spec:
                     kind: Service
                     metadata:
                       name: knot-ssh
+                      annotations:
+                        # the pool holds a single address, so share it with
+                        # traefik the way the other LoadBalancers here do
+                        lbipam.cilium.io/sharing-key: public
+                        lbipam.cilium.io/sharing-cross-namespace: "*"
                     spec:
                       type: LoadBalancer
                       selector:
