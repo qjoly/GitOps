@@ -1,0 +1,34 @@
+name: tangled-mirror
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "*"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+env:
+  TANGLED_REMOTE: git@tangled.org:une-tasse-de.cafe/gitops
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.TANGLED_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' \
+            'tangled.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII2UShEm/FFPmYZUizaPnIqOJuynoCQpcLhl5PPHd02n' \
+            > ~/.ssh/known_hosts
+
+      - name: Push main and tags to the knot
+        run: |
+          set -euo pipefail
+          git clone --bare --quiet \
+            "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" repo.git
+          git --git-dir=repo.git push --force --prune "$TANGLED_REMOTE" \
+            'refs/heads/main:refs/heads/main' \
+            'refs/tags/*:refs/tags/*'
