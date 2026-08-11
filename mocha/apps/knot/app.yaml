@@ -40,9 +40,11 @@ spec:
                 persistence:
                   enabled: true
                   volumes:
+                    # the lvm volume group is ~98% allocated, so this is sized
+                    # to what fits; openebs-lvmpv allows expansion later
                     - name: repositories
                       storageClassName: openebs-lvmpv
-                      size: 20Gi
+                      size: 5Gi
                       pvcClaim: ""
                       containerMount: /home/git/repositories
                     - name: server
