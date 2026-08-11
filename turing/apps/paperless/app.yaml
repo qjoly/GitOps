@@ -100,10 +100,11 @@ spec:
             enabled: true
             existingVolumeClaim: paperless-consume
 
-        # nfs-turing dirs are owned by 65534:65534 (0755, no_root_squash) and the
-        # NFS CSI driver ignores fsGroup, so uid 1000 cannot write to media/consume.
-        # Running as root keeps the behaviour the raw manifests had; the chart
-        # derives USERMAP_UID/GID from runAsUser.
+        # nfs-turing squashes root to 65534 and the CSI driver ignores fsGroup, so
+        # media/consume are owned by nobody:nogroup with the group-write bit (2775).
+        # Root writes through that bit; uid 1000 would not. The entrypoint's chown
+        # of those files fails as a result — noisy at boot, harmless, and the raw
+        # manifests behaved the same. The chart derives USERMAP_UID/GID from runAsUser.
         # fsGroup is dropped, not set to 0: any value makes kubelet walk the whole
         # 50Gi media volume to chgrp it on every pod start, which hangs the pod in
         # ContainerCreating. Running as root needs no fsGroup at all.
