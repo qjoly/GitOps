@@ -16,7 +16,7 @@ jobs:
       - name: Clone tangled.org/knot-docker
         run: git clone --depth 1 https://tangled.org/tangled.org/knot-docker knot-docker
 
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-qemu-action@v4
 
       - uses: docker/setup-buildx-action@v3
 
