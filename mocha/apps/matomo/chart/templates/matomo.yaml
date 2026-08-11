@@ -80,6 +80,37 @@ spec:
             initialDelaySeconds: 20
             periodSeconds: 15
             timeoutSeconds: 5
+        {{- if .Values.archive.enabled }}
+        - name: archive
+          image: {{ .Values.image }}
+          workingDir: /var/www/html
+          # Everything on the volume belongs to www-data (33), and that is who
+          # Apache serves as: archiving as root would leave root-owned files in
+          # tmp/ that the web process can no longer write.
+          securityContext:
+            runAsUser: 33
+            runAsGroup: 33
+          # The loop never exits, even when an archive run fails: this container
+          # sharing the pod means a crash would take the whole pod NotReady and
+          # pull Matomo out of the Service.
+          command:
+            - sh
+            - -c
+            - |
+              while true; do
+                sleep {{ .Values.archive.intervalSeconds }}
+                php console core:archive --url=https://{{ .Values.ingress.host }} || echo "archive run failed"
+              done
+          volumeMounts:
+            - name: data
+              mountPath: /var/www/html
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 1Gi
+        {{- end }}
       volumes:
         - name: data
           persistentVolumeClaim:

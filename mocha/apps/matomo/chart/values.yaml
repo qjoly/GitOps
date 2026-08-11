@@ -40,9 +40,13 @@ ingress:
   tlsSecretName: matomo-tls
 
 # Pre-computes reports instead of leaving it to whoever loads a dashboard page.
+# This runs as a container inside the Matomo pod rather than as a CronJob, because
+# openebs-lvmpv refuses to mount the same volume into a second pod, even on the
+# same node ("verifyMount: device already mounted"), and core:archive needs the
+# config.ini.php that only exists on that volume.
 # Matomo also wants browser archiving turned off to get the full benefit, but that
-# lives in config.ini.php on the data volume, so it is a one-off UI/file change:
+# setting lives in config.ini.php, so it is a one-off change:
 # Administration > System > General settings > "Archive reports when viewed" = No.
 archive:
   enabled: true
-  schedule: "17 * * * *"
+  intervalSeconds: 3600
