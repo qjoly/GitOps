@@ -20,8 +20,6 @@ spec:
     helm:
       values: |
               common:
-                deployment:
-                  minReplicas: 0
                 ingress:
                   enabled: true
                   hostName: spindle.mocha.thoughtless.eu
