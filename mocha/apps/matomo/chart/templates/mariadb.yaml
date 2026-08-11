@@ -30,14 +30,15 @@ spec:
     spec:
       containers:
         - name: mariadb
-          image: mariadb:12.3
+          image: {{ .Values.db.image }}
           args:
+            # Matomo writes large blobs when archiving.
             - --max-allowed-packet=64MB
           env:
             - name: MARIADB_DATABASE
-              value: matomo
+              value: {{ .Values.db.name }}
             - name: MARIADB_USER
-              value: matomo
+              value: {{ .Values.db.user }}
             - name: MARIADB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -61,11 +62,7 @@ spec:
             - name: data
               mountPath: /var/lib/mysql
           resources:
-            requests:
-              cpu: 100m
-              memory: 512Mi
-            limits:
-              memory: 1Gi
+            {{- toYaml .Values.db.resources | nindent 12 }}
           livenessProbe:
             exec:
               command: ["healthcheck.sh", "--connect", "--innodb_initialized"]
@@ -78,12 +75,14 @@ spec:
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 5
+  # Named "data" because the live PVC is data-matomo-db-0. volumeClaimTemplates
+  # are immutable, so this name and size must not drift.
   volumeClaimTemplates:
     - metadata:
         name: data
       spec:
         accessModes: ["ReadWriteOnce"]
-        storageClassName: openebs-lvmpv
+        storageClassName: {{ .Values.storageClass }}
         resources:
           requests:
-            storage: 8Gi
+            storage: {{ .Values.db.storage }}

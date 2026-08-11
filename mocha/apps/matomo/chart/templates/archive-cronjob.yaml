@@ -1,0 +1,50 @@
+{{- if .Values.archive.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: matomo-archive
+spec:
+  schedule: {{ .Values.archive.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          # Everything on the volume belongs to www-data (33), and Apache serves as
+          # that user: archiving as root would leave root-owned files in tmp/ that
+          # the web process can no longer write.
+          securityContext:
+            runAsUser: 33
+            runAsGroup: 33
+          containers:
+            - name: archive
+              image: {{ .Values.image }}
+              workingDir: /var/www/html
+              # Overriding command skips the image entrypoint on purpose: it would
+              # re-sync the Matomo sources onto the volume, which is the running
+              # Deployment's job, not this one's. The DB credentials come from
+              # config.ini.php on the volume.
+              command:
+                - php
+                - console
+                - core:archive
+                - --url=https://{{ .Values.ingress.host }}
+              volumeMounts:
+                - name: data
+                  mountPath: /var/www/html
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 1Gi
+          volumes:
+            - name: data
+              # RWO, but the LVM PV pins every pod to the one node that has it.
+              persistentVolumeClaim:
+                claimName: matomo-data
+{{- end }}

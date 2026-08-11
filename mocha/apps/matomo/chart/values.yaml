@@ -1,0 +1,48 @@
+# Resource names are not templated anywhere in this chart. The Deployment and
+# StatefulSet selectors, and the StatefulSet volumeClaimTemplate, are immutable
+# once created: renaming them would have the API server reject the sync rather
+# than migrate anything. They stay "matomo" and "matomo-db".
+
+image: matomo:5.12.0
+
+storageClass: openebs-lvmpv
+
+matomo:
+  storage: 5Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+
+db:
+  image: mariadb:12.3
+  storage: 8Gi
+  name: matomo
+  user: matomo
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+# Vault path behind the ClusterSecretStore; expects db_password and db_root_password.
+vault:
+  key: matomo
+  secretStore: vault-backend
+
+ingress:
+  host: matomo.mocha.thoughtless.eu
+  className: traefik
+  clusterIssuer: cloudflare
+  tlsSecretName: matomo-tls
+
+# Pre-computes reports instead of leaving it to whoever loads a dashboard page.
+# Matomo also wants browser archiving turned off to get the full benefit, but that
+# lives in config.ini.php on the data volume, so it is a one-off UI/file change:
+# Administration > System > General settings > "Archive reports when viewed" = No.
+archive:
+  enabled: true
+  schedule: "17 * * * *"

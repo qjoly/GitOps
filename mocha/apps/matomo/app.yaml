@@ -32,4 +32,4 @@ spec:
   source:
     repoURL: https://github.com/qjoly/gitops.git
     targetRevision: HEAD
-    path: mocha/apps/matomo/manifests
+    path: mocha/apps/matomo/chart

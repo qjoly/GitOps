@@ -3,15 +3,15 @@ kind: Ingress
 metadata:
   name: matomo
   annotations:
-    cert-manager.io/cluster-issuer: cloudflare
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer }}
 spec:
-  ingressClassName: traefik
+  ingressClassName: {{ .Values.ingress.className }}
   tls:
     - hosts:
-        - matomo.mocha.thoughtless.eu
-      secretName: matomo-tls
+        - {{ .Values.ingress.host }}
+      secretName: {{ .Values.ingress.tlsSecretName }}
   rules:
-    - host: matomo.mocha.thoughtless.eu
+    - host: {{ .Values.ingress.host }}
       http:
         paths:
           - path: /
