@@ -104,23 +104,30 @@ spec:
         # NFS CSI driver ignores fsGroup, so uid 1000 cannot write to media/consume.
         # Running as root keeps the behaviour the raw manifests had; the chart
         # derives USERMAP_UID/GID from runAsUser.
+        # fsGroup is dropped, not set to 0: any value makes kubelet walk the whole
+        # 50Gi media volume to chgrp it on every pod start, which hangs the pod in
+        # ContainerCreating. Running as root needs no fsGroup at all.
         podSecurityContext:
           runAsUser: 0
           runAsGroup: 0
           runAsNonRoot: false
-          fsGroup: 0
+          fsGroup: null
           seccompProfile:
             type: RuntimeDefault
+        # Writable rootfs is required by the root mapping above: the entrypoint
+        # usermods the bundled uid-1000 "paperless" user to 0, which needs
+        # /etc/passwd writable. Read-only root only works when running as 1000.
         securityContext:
           runAsUser: 0
           runAsGroup: 0
           runAsNonRoot: false
-          readOnlyRootFilesystem: true
+          readOnlyRootFilesystem: false
           allowPrivilegeEscalation: false
           privileged: false
-          capabilities:
-            drop:
-              - ALL
+          # Not dropping ALL: the entrypoint chowns the volumes to the mapped uid,
+          # which needs CAP_CHOWN/CAP_FOWNER. The raw manifests set no capabilities
+          # either. Revisit together with the root mapping, not before.
+          capabilities: null
           seccompProfile:
             type: RuntimeDefault
 
