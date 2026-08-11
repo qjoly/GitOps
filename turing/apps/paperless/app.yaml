@@ -1,3 +1,7 @@
+---
+# Stateful side of paperless: PVCs, ExternalSecrets, postgres and redis stay as
+# plain manifests. The PVCs must never leave this Application's desired state,
+# otherwise prune deletes them (and ceph-block/nfs-turing reclaim on Delete).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,6 +13,137 @@ spec:
     repoURL: https://github.com/qjoly/gitops.git
     targetRevision: HEAD
     path: turing/apps/paperless/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: paperless
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: paperless-ngx
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://charts.derwitt.dev
+    chart: paperless-ngx
+    targetRevision: 2.1.0
+    helm:
+      # Resources are named "paperless-ngx", never "paperless": a Service named
+      # exactly "paperless" makes the service links inject PAPERLESS_PORT=tcp://…,
+      # which collides with paperless-ngx's own PAPERLESS_PORT and crashes granian
+      # at boot. The chart exposes no enableServiceLinks knob.
+      releaseName: paperless-ngx
+      values: |
+        # Pinned to the version already running so the chart migration is the only
+        # change. Drop the pin (chart appVersion is 3.0.5) once it is confirmed up.
+        image:
+          tag: 3.0.4
+
+        # Two paperless replicas would run two consumers against the same DB.
+        deploymentStrategy:
+          type: Recreate
+
+        database:
+          engine: postgresql
+          host: paperless-postgres
+          user: paperless
+          databaseName: paperless
+          passwordSecret:
+            name: paperless-db-credentials
+            key: password
+
+        redis:
+          connectionUrl: redis://paperless-redis:6379
+
+        hosting:
+          secretKey:
+            create: false
+            name: paperless-oidc
+            key: PAPERLESS_SECRET_KEY
+
+        auth:
+          allowSignup: false
+          sso:
+            providersSecret:
+              name: paperless-oidc
+              key: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+            autoSignup: true
+            autoRedirect: true
+
+        tweaks:
+          apps: allauth.socialaccount.providers.openid_connect
+          timezone: Europe/Paris
+
+        ocr:
+          language: fra+eng
+
+        # consume/ lives on NFS where inotify never fires, so poll instead.
+        documentConsumption:
+          pollingInterval: 30
+
+        # The existing volumes, untouched. The chart creates no PVC of its own.
+        persistence:
+          data:
+            enabled: true
+            existingVolumeClaim: paperless-data
+          media:
+            enabled: true
+            existingVolumeClaim: paperless-media
+          consume:
+            enabled: true
+            existingVolumeClaim: paperless-consume
+
+        # nfs-turing dirs are owned by 65534:65534 (0755, no_root_squash) and the
+        # NFS CSI driver ignores fsGroup, so uid 1000 cannot write to media/consume.
+        # Running as root keeps the behaviour the raw manifests had; the chart
+        # derives USERMAP_UID/GID from runAsUser.
+        podSecurityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          runAsNonRoot: false
+          fsGroup: 0
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          runAsNonRoot: false
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          privileged: false
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
+
+        service:
+          port: 8000
+
+        ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+            external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+            external-dns.alpha.kubernetes.io/hostname: paperless.thoughtless.eu
+            external-dns.alpha.kubernetes.io/target: "58c15097-f3b2-4ff7-a676-21bbeeea39d7.cfargotunnel.com"
+          hosts:
+            - host: paperless.thoughtless.eu
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - secretName: paperless-tls
+              hosts:
+                - paperless.thoughtless.eu
   destination:
     server: https://kubernetes.default.svc
     namespace: paperless

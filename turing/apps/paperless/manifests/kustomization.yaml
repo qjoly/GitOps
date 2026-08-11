@@ -10,4 +10,16 @@ resources:
   - data-pvc.yaml
   - media-pvc.yaml
   - consume-pvc.yaml
-  - paperless.yaml
+
+# The documents and the database live here. Prune=false means a manifest refactor
+# that drops a PVC can no longer take the volume with it.
+patches:
+  - target:
+      kind: PersistentVolumeClaim
+    patch: |
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: patched-by-target
+        annotations:
+          argocd.argoproj.io/sync-options: Prune=false
