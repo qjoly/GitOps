@@ -25,6 +25,16 @@ spec:
           persistence:
             enabled: true
             size: 100Gi
+          # The chart gives the s3 volume prefer_not_to_merge=1, so a part that moves
+          # here never merges again. Anything sent to cold storage therefore only
+          # accumulates parts, until a partition crosses parts_to_throw_insert (3000)
+          # and ClickHouse rejects every insert for that table.
+          # That is what happened on 2026-08-08: metrics retention was moving parts
+          # after 12h, time_series_v4_1week reached 3001 parts in one partition and
+          # metric ingestion stopped dead for three days.
+          # Keep "move to cold storage" off for metrics in the SigNoz retention
+          # settings (it lives in SigNoz's own DB, not here). Only signals with few,
+          # large parts belong on this volume.
           coldStorage:
             enabled: true
             type: s3
