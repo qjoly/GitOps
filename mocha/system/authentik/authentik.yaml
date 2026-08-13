@@ -198,6 +198,19 @@ spec:
                 subMode: user_email
                 icon: https://raw.githubusercontent.com/kaybi-gh/k7/main/branding/logo.svg
                 secretName: oidc-k7
+              # Public client: the gateway does the PKCE flow itself, no secret.
+              # The "groups" claim comes from the default profile scope mapping.
+              - slug: mcp-gateway
+                name: Provider for MCP Gateway (mocha)
+                appName: MCP Gateway
+                clientType: public
+                clientID: mcp-gateway
+                redirectURIs:
+                  - https://mcp.mocha.thoughtless.eu/admin/callback
+                  - https://mcp.mocha.thoughtless.eu/callback
+                scopes: [email, profile, openid, offline_access]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/anthropic.svg
             proxyProviders:
               - slug: prowlarr
                 name: Prowlarr
