@@ -20,6 +20,24 @@ spec:
     helm:
       values: |
               common:
+                deployment:
+                  # fsGroup makes kubelet chmod g+rw the whole keys volume on
+                  # every mount, which takes the host keys from 0600 to 0660.
+                  # sshd then refuses them and exits -- but s6 keeps restarting
+                  # it, so the pod still reports Running and only git-over-SSH
+                  # breaks, silently. Runs after fsGroup is applied, before sshd.
+                  initContainers:
+                    - name: fix-hostkey-perms
+                      image: alpine:3.22
+                      command:
+                        - /bin/sh
+                        - -c
+                        # Empty on first boot: ssh-keygen has not run yet, and
+                        # the keys it writes then are already 0600.
+                        - chmod 600 /etc/ssh/keys/ssh_host_*_key 2>/dev/null || true
+                      volumeMounts:
+                        - name: keys
+                          mountPath: /etc/ssh/keys
                 ingress:
                   enabled: true
                   hostName: knot.mocha.thoughtless.eu
