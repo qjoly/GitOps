@@ -16,7 +16,7 @@ spec:
   source:
     repoURL: https://qjoly.github.io/knot-helm-chart
     chart: knot
-    targetRevision: 0.1.0
+    targetRevision: 0.2.0
     helm:
       values: |
               common:
@@ -76,6 +76,113 @@ spec:
                           port: 22
                           targetPort: 22
                           protocol: TCP
+                  # Restic credentials. The bucket URL is not secret -- it is
+                  # already in signoz/clickhouse-cold-storage.yaml -- so only
+                  # the keys and the repository password come from vault.
+                  # One repository per source, so their prune runs cannot fight
+                  # over the same lock.
+                  - apiVersion: external-secrets.io/v1
+                    kind: ExternalSecret
+                    metadata:
+                      name: knot-server-restic
+                    spec:
+                      refreshInterval: "1h"
+                      secretStoreRef:
+                        name: vault-backend
+                        kind: ClusterSecretStore
+                      target:
+                        name: knot-server-restic
+                        creationPolicy: Owner
+                        template:
+                          engineVersion: v2
+                          data:
+                            AWS_ACCESS_KEY_ID: "{{ .access_key }}"
+                            AWS_SECRET_ACCESS_KEY: "{{ .secret_key }}"
+                            RESTIC_PASSWORD: "{{ .password }}"
+                            RESTIC_REPOSITORY: s3:https://de-s3.storage.bunnycdn.com/mocha-backup/knot-server
+                      data:
+                        - secretKey: access_key
+                          remoteRef:
+                            key: restic
+                            property: s3_access_key
+                        - secretKey: secret_key
+                          remoteRef:
+                            key: restic
+                            property: s3_secret_key
+                        - secretKey: password
+                          remoteRef:
+                            key: restic
+                            property: password
+                  - apiVersion: external-secrets.io/v1
+                    kind: ExternalSecret
+                    metadata:
+                      name: knot-repositories-restic
+                    spec:
+                      refreshInterval: "1h"
+                      secretStoreRef:
+                        name: vault-backend
+                        kind: ClusterSecretStore
+                      target:
+                        name: knot-repositories-restic
+                        creationPolicy: Owner
+                        template:
+                          engineVersion: v2
+                          data:
+                            AWS_ACCESS_KEY_ID: "{{ .access_key }}"
+                            AWS_SECRET_ACCESS_KEY: "{{ .secret_key }}"
+                            RESTIC_PASSWORD: "{{ .password }}"
+                            RESTIC_REPOSITORY: s3:https://de-s3.storage.bunnycdn.com/mocha-backup/knot-repositories
+                      data:
+                        - secretKey: access_key
+                          remoteRef:
+                            key: restic
+                            property: s3_access_key
+                        - secretKey: secret_key
+                          remoteRef:
+                            key: restic
+                            property: s3_secret_key
+                        - secretKey: password
+                          remoteRef:
+                            key: restic
+                            property: password
+                  # /app carries the consistent dump written by the sidecar:
+                  # restore from backup/knotserver.db, never from the live file
+                  - apiVersion: volsync.backube/v1alpha1
+                    kind: ReplicationSource
+                    metadata:
+                      name: knot-server
+                    spec:
+                      sourcePVC: knot-server
+                      trigger:
+                        schedule: "20 */6 * * *"
+                      restic:
+                        repository: knot-server-restic
+                        copyMethod: Direct
+                        cacheCapacity: 128Mi
+                        cacheStorageClassName: openebs-lvmpv
+                        pruneIntervalDays: 14
+                        retain:
+                          daily: 7
+                          weekly: 4
+                          monthly: 3
+                  - apiVersion: volsync.backube/v1alpha1
+                    kind: ReplicationSource
+                    metadata:
+                      name: knot-repositories
+                    spec:
+                      sourcePVC: knot-repositories
+                      trigger:
+                        schedule: "40 */6 * * *"
+                      restic:
+                        repository: knot-repositories-restic
+                        copyMethod: Direct
+                        cacheCapacity: 128Mi
+                        cacheStorageClassName: openebs-lvmpv
+                        pruneIntervalDays: 14
+                        retain:
+                          daily: 7
+                          weekly: 4
+                          monthly: 3
                 tests:
                   classicHttp:
                     enabled: false
