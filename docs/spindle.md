@@ -154,7 +154,7 @@ privileged (container "dind" must not set securityContext.privileged=true)
 Beware of testing this with a server-side dry run against `default` — that namespace already carries
 `enforce: privileged`, so it passes and tells you nothing.
 
-The `managedNamespaceMetadata` pattern used by `crowdsec` and `wazuh` did **not** work here. The
+The `managedNamespaceMetadata` pattern used by `crowdsec` did **not** work here. The
 field was applied to the Application, but the namespace had already been created by an earlier sync
 via `CreateNamespace=true`, and Argo never retrofits the labels onto it — not even after
 `argocd.argoproj.io/refresh=hard`. It does not appear among the Application's managed resources at
