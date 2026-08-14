@@ -167,15 +167,6 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/grafana.svg
                 secretName: oidc-grafana
-              # wazuh: moved to SAML (mocha/system/wazuh/app.yaml) - the
-              # wazuh-security-dashboards-plugin's OIDC flow never completes
-              # the Bearer authinfo call against the indexer regardless of
-              # config (confirmed via debug logs across many fixes); SAML is
-              # the only path both Authentik and Wazuh officially document
-              # for this integration. The SAML provider/application/property
-              # mapping/group are provisioned directly via the Authentik API
-              # (this provisioner chart has no samlProviders support), not
-              # declared here.
               - slug: omni
                 name: Provider for Omni
                 appName: Omni
