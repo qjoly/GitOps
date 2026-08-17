@@ -1,0 +1,31 @@
+# Pure S3 API host, separate from the console ingress: this is the name that
+# ends up in the presigned URLs handed to docker clients. atcr-hold resolves it
+# to Traefik directly (hostAliases) because Cloudflare drops Content-Length: 0,
+# which makes rustfs reject every bodyless S3 call with a 411.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rustfs-s3
+  namespace: rustfs
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+    external-dns.alpha.kubernetes.io/hostname: s3.thoughtless.eu
+    external-dns.alpha.kubernetes.io/target: "58c15097-f3b2-4ff7-a676-21bbeeea39d7.cfargotunnel.com"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: s3.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rustfs-svc
+                port:
+                  name: endpoint
+  tls:
+    - hosts:
+        - s3.thoughtless.eu
+      secretName: rustfs-s3-tls

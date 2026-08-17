@@ -5,3 +5,4 @@ resources:
   - secret.yaml
   - data-pvc.yaml
   - app.yaml
+  - s3-ingress.yaml
