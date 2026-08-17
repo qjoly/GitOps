@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - app.yaml
+  - storageclass-0777.yaml
