@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atcr-hold
+  namespace: atcr-hold
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: atcr-hold
+  template:
+    metadata:
+      labels:
+        app: atcr-hold
+    spec:
+      # Reach rustfs through Traefik instead of the Cloudflare tunnel: the edge
+      # drops Content-Length: 0, and rustfs answers 411 on every bodyless S3
+      # call (CreateMultipartUpload, CopyObject), which is the whole push path.
+      # The presigned URLs still carry this hostname, so clients resolve it
+      # normally through Cloudflare.
+      hostAliases:
+        - ip: "192.168.1.200"
+          hostnames:
+            - s3.thoughtless.eu
+      containers:
+        - name: hold
+          image: ghcr.io/qjoly/atcr-hold:sha-5aa13ab
+          args: ["serve"]
+          env:
+            - name: HOLD_SERVER_PUBLIC_URL
+              value: https://hold.thoughtless.eu
+            - name: HOLD_SERVER_PUBLIC
+              value: "true"
+            - name: HOLD_SERVER_APPVIEW_DID
+              value: did:web:atcr.io
+            - name: HOLD_REGISTRATION_OWNER_DID
+              value: did:plc:hqnyog7skad6m4aejb2yujxy
+            - name: HOLD_DATABASE_PATH
+              value: /var/lib/atcr-hold
+            - name: S3_BUCKET
+              value: atcr
+            - name: S3_ENDPOINT
+              value: https://s3.thoughtless.eu
+            - name: AWS_REGION
+              value: us-east-1
+          envFrom:
+            - secretRef:
+                name: atcr-hold-s3
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /xrpc/_health
+              port: 8080
+            initialDelaySeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/atcr-hold
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: atcr-hold-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: atcr-hold
+  namespace: atcr-hold
+spec:
+  selector:
+    app: atcr-hold
+  ports:
+    - port: 8080
+      targetPort: 8080
