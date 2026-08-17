@@ -1,0 +1,15 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-turing-0777
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 192.168.0.143
+  share: /mnt/Stockage/Kubernetes
+  mountPermissions: "0777"
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
+mountOptions:
+  - nfsvers=4.1
+  - noatime
