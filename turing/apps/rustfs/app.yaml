@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rustfs
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://charts.rustfs.com
+    chart: rustfs
+    targetRevision: 1.0.0-rc.2
+    helm:
+      releaseName: rustfs
+      values: |
+        replicaCount: 1
+
+        mode:
+          standalone:
+            enabled: true
+            strategy:
+              type: Recreate
+            existingClaim:
+              dataClaim: rustfs-data
+          distributed:
+            enabled: false
+
+        secret:
+          existingSecret: rustfs-credentials
+
+        config:
+          rustfs:
+            obs_log_directory: ""
+            timeout_profile: high_latency
+            scanner:
+              speed: slow
+
+        podSecurityContext:
+          runAsUser: 10001
+          runAsGroup: 10001
+          fsGroup: null
+
+        ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+            external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+            external-dns.alpha.kubernetes.io/hostname: rustfs.thoughtless.eu
+            external-dns.alpha.kubernetes.io/target: "58c15097-f3b2-4ff7-a676-21bbeeea39d7.cfargotunnel.com"
+          hosts:
+            - host: rustfs.thoughtless.eu
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            enabled: true
+            certManager:
+              enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: rustfs
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
