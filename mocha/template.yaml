@@ -1,9 +1,11 @@
 kind: Cluster
 name: mocha
 kubernetes:
-  version: v1.32.3
+  # Realigned on what the cluster actually runs: the template had drifted behind
+  # (v1.32.3 / v1.11.6), so a template sync would have downgraded the node.
+  version: v1.35.6
 talos:
-  version: v1.11.6
+  version: v1.13.5
 features:
   diskEncryption: true
   useEmbeddedDiscoveryService: true
