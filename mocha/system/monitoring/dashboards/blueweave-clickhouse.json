@@ -70,7 +70,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_users' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_users' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_users' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_users' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -117,7 +117,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_active_users' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_active_users' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_active_users' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_active_users' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -164,7 +164,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_sessions' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_sessions' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_sessions' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_sessions' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -211,7 +211,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_accounts_distinct' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_accounts_distinct' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_accounts_distinct' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_accounts_distinct' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -258,7 +258,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_users_unreadable' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_users_unreadable' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_users_unreadable' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_users_unreadable' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -305,7 +305,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, series, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'source') AS series, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_accounts_followed' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_accounts_followed' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, series) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, series, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.lbl,'source') AS series, JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_accounts_followed' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_accounts_followed' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, series) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -340,7 +340,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, series, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'source') AS series, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_scrape_queue_waiting' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_scrape_queue_waiting' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, series) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, series, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.lbl,'source') AS series, JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_scrape_queue_waiting' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_scrape_queue_waiting' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, series) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -375,7 +375,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, series, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'source') AS series, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_scrape_joined' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_scrape_joined' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, series) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, series, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.lbl,'source') AS series, JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_scrape_joined' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_scrape_joined' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, series) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -410,7 +410,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, series, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'quantile') AS series, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_call_latency_ms' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_call_latency_ms' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, series) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, series, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.lbl,'quantile') AS series, JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_call_latency_ms' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_call_latency_ms' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, series) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -420,6 +420,251 @@
         "overrides": []
       },
       "description": "Over the in-memory log window, which resets on redeploy."
+    },
+    {
+      "id": 20,
+      "title": "Pod CPU",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='k8s.pod.cpu.usage' AND JSONExtractString(labels,'k8s.namespace.name')='blueweave' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='k8s.pod.cpu.usage' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "description": "Cores used by the blueweave pod. Compare with the 500m limit in the Deployment."
+    },
+    {
+      "id": 21,
+      "title": "Pod memory (working set)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 18,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='k8s.pod.memory.working_set' AND JSONExtractString(labels,'k8s.namespace.name')='blueweave' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='k8s.pod.memory.working_set' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "description": "Against a 256Mi limit \u2014 this is what gets the pod OOMKilled if it climbs."
+    },
+    {
+      "id": 22,
+      "title": "Pod memory vs limit",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 18,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp,  JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='k8s.pod.memory_limit_utilization' AND JSONExtractString(labels,'k8s.namespace.name')='blueweave' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='k8s.pod.memory_limit_utilization' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "description": "Ratio of the limit. Sustained above ~0.9 means the limit needs raising before the kernel decides for you."
+    },
+    {
+      "id": 23,
+      "title": "Accounts scraped by source",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, series, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.lbl,'source') AS series, JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_accounts_scraped' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_accounts_scraped' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, series) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "description": "Distinct accounts the scraper has actually touched, X and Mastodon apart."
+    },
+    {
+      "id": 24,
+      "title": "Scrape attempts by outcome",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 25,
+        "w": 16,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, series, sum(v) AS value FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.lbl,'outcome') AS series, JSONExtractString(t.lbl,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_scrape_total' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_scrape_total' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster, series) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "description": "Cumulative since start, so it resets on redeploy. 'cached' means served without a request at all."
+    },
+    {
+      "id": 25,
+      "title": "Failing accounts",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 1,
+          "rawSql": "SELECT JSONExtractString(t.lbl,'source') AS source, JSONExtractString(t.lbl,'account') AS account, anyLast(s.value) AS up FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_scrape_up' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_scrape_up' AND $__timeFilter(toDateTime(s.unix_milli/1000)) AND JSONExtractString(t.lbl,'k8s.cluster.name') IN (${cluster:singlequote}) GROUP BY source, account HAVING up = 0 ORDER BY source, account"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "description": "Accounts whose last real attempt failed. Empty is the healthy state."
+    },
+    {
+      "id": 26,
+      "title": "Minutes since last successful scrape",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 1,
+          "rawSql": "SELECT JSONExtractString(t.lbl,'source') AS source, JSONExtractString(t.lbl,'account') AS account, round((toUnixTimestamp(now()) - anyLast(s.value))/60) AS minutes_ago FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS lbl FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='blueweave_scrape_last_success_seconds' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='blueweave_scrape_last_success_seconds' AND $__timeFilter(toDateTime(s.unix_milli/1000)) AND JSONExtractString(t.lbl,'k8s.cluster.name') IN (${cluster:singlequote}) GROUP BY source, account ORDER BY minutes_ago DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "description": "Catches an account that reports up but quietly stopped returning posts. The cache TTL is 15 min, so anything far past that is suspect."
     }
   ]
 }
