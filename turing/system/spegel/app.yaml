@@ -16,6 +16,12 @@ spec:
       values: |
         spegel:
           containerdRegistryConfigPath: /etc/cri/conf.d/hosts
+        service:
+          registry:
+            # Cilium (kubeProxyReplacement) refuses hostPorts inside the NodePort
+            # range, so the default 30020 was silently dropped and containerd
+            # never reached the mirror. 29999 sits just below the range.
+            hostPort: 29999
         image:
           tag: v0.6.0
   destination:
