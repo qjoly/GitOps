@@ -3,7 +3,7 @@
 # once created: renaming them would have the API server reject the sync rather
 # than migrate anything. They stay "matomo" and "matomo-db".
 
-image: matomo:5.12.0
+image: matomo:5.13.0
 
 storageClass: openebs-lvmpv
 
