@@ -41,9 +41,11 @@ ipv6:
 # L2 announcements — exposes LoadBalancer IPs on the LAN (pool: 192.168.1.200-250)
 l2announcements:
   enabled: true
-  leaseDuration: 3s
-  leaseRenewDeadline: 1s
-  leaseRetryPeriod: 200ms
+  # Faster than the 15s/5s/2s defaults, but no longer so tight that a KubePrism
+  # hiccup makes the renewal miss its deadline and log a lock timeout.
+  leaseDuration: 7s
+  leaseRenewDeadline: 3s
+  leaseRetryPeriod: 500ms
 
 externalIPs:
   enabled: true

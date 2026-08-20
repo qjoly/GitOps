@@ -6,3 +6,7 @@ metadata:
 spec:
   externalIPs: true
   loadBalancerIPs: true
+  # Without this, Cilium also announces on kubespan and siderolinktun, which are
+  # point-to-point and have no MAC address: the GARP then fails to be crafted.
+  interfaces:
+    - ^end[0-9]+$
