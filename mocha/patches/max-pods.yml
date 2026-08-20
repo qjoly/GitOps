@@ -1,0 +1,4 @@
+machine:
+  kubelet:
+    extraConfig:
+      maxPods: 250

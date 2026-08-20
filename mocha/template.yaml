@@ -24,6 +24,11 @@ patches:
      file: patches/workload-on-cp.yml
    - name: load-zfs-module
      file: patches/zfs-module.yml
+     # The node hit the kubelet default of 110 pods while sitting at 45% of its
+     # CPU requests and 14% of its memory, stranding eleven pods — ArgoCD among
+     # them. The ceiling was the default, not the hardware.
+   - name: max-pods
+     file: patches/max-pods.yml
 systemExtensions:
   - siderolabs/iscsi-tools
   - siderolabs/zfs
