@@ -25,6 +25,15 @@ on:
       - "mocha/patches/**"
       - "mocha/helmfile.yaml"
       - "mocha/helm/**"
+  # Manual re-run: the push trigger is path-filtered, so a CI-only fix
+  # cannot replay a sync that failed for infra reasons.
+  workflow_dispatch:
+    inputs:
+      cluster:
+        description: Cluster to sync
+        type: choice
+        options: [turing, mocha]
+        required: true
 
 permissions:
   contents: read
@@ -48,6 +57,10 @@ jobs:
       - name: Detect changed clusters
         id: detect
         run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo 'clusters=["${{ inputs.cluster }}"]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             range="origin/${{ github.base_ref }}...${{ github.sha }}"
           else
@@ -213,7 +226,7 @@ jobs:
   # ----------------------------------------------------------------
   sync:
     needs: detect
-    if: github.event_name == 'push' && needs.detect.outputs.clusters != '[]'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && needs.detect.outputs.clusters != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
