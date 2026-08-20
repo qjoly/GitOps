@@ -13,8 +13,22 @@
   "packageRules": [
     {
       "description": "Immich Postgres: block major bumps, PG major upgrade needs a manual dump/restore (vector extensions)",
-      "matchPackageNames": ["ghcr.io/immich-app/postgres"],
-      "matchUpdateTypes": ["major"],
+      "matchPackageNames": [
+        "ghcr.io/immich-app/postgres"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "helm CLI: stay on 3.x, helm 4 breaks helmfile v0.171.0 and the helm-diff plugin install",
+      "matchDepNames": [
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "enabled": false
     }
   ],
