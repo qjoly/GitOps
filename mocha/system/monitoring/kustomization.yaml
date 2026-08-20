@@ -54,6 +54,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/crowdsec-clickhouse.json
+  - name: grafana-dashboard-blueweave-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/blueweave-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
