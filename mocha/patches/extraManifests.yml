@@ -2,9 +2,10 @@ cluster:
   extraManifests:
    # --- Cilium Installation ---
    - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/cilium/install-cilium.yaml
-   # --- ArgoCD Installation ---
-   - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/argocd/argocd.namespace.yaml
-   - https://raw.githubusercontent.com/qjoly/gitops/refs/heads/main/common/argocd/argocd.install.vanilla.yaml
+   # --- ArgoCD: bootstrap only, removed once installed ---
+   # Most resources in argocd.install.vanilla.yaml carry no namespace, so a
+   # template sync recreates them in default. ArgoCD already runs in its own
+   # namespace here, so the manifest has no reason to be reapplied.
    # --- Metrics Server Installation ---
    - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml
    - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
