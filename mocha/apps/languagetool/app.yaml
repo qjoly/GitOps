@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: languagetool
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: languagetool
+  source:
+    repoURL: https://rubxkube.github.io/charts
+    chart: languagetool
+    targetRevision: 0.1.0
+    helm:
+      values: |
+        common:
+          ingress:
+            enabled: true
+            hostName: languagetool.mocha.thoughtless.eu
+            ingressClassName: traefik
+            tls:
+              enabled: true
+              secretName: languagetool-tls
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+              # IP allow-list is enforced by the Traefik Middleware defined in
+              # extraResources below. The reference format for the kubernetescrd
+              # provider is <middleware-namespace>-<middleware-name>@kubernetescrd.
+              traefik.ingress.kubernetes.io/router.middlewares: languagetool-allowlist@kubernetescrd
+
+          persistence:
+            enabled: true
+            volumes:
+              - name: fasttext
+                storageClassName: openebs-lvmpv
+                size: 1Gi
+                pvcClaim: ""
+                containerMount: /fasttext
+              - name: ngrams
+                storageClassName: openebs-lvmpv
+                size: 5Gi
+                pvcClaim: ""
+                containerMount: /ngrams
+
+          extraResources:
+            # Restricts languagetool.mocha.thoughtless.eu to the CIDRs listed
+            # below. Attached to the Ingress through the router.middlewares
+            # annotation above. Traefik v3 uses ipAllowList (renamed from the
+            # v2 ipWhiteList). websecure already trusts the OVH LB via
+            # forwardedHeaders.trustedIPs, so the real client IP is evaluated
+            # here without extra ipStrategy config.
+            - apiVersion: traefik.io/v1alpha1
+              kind: Middleware
+              metadata:
+                name: allowlist
+              spec:
+                ipAllowList:
+                  sourceRange:
+                    # Allowed external clients
+                    - 104.30.161.148/32
+                    - 82.64.54.199/32
