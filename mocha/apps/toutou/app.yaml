@@ -1,0 +1,202 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: toutou
+  namespace: argocd
+spec:
+  project: default
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: toutou-db
+      jsonPointers:
+        - /spec/persistentVolumeClaimRetentionPolicy
+        - /spec/podManagementPolicy
+        - /spec/revisionHistoryLimit
+      jqPathExpressions:
+        - '.spec.volumeClaimTemplates[].spec.volumeMode'
+        - '.spec.volumeClaimTemplates[].status'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: toutou
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.6.4
+    helm:
+      values: |
+        name: "toutou"
+        image:
+          repository: atcr.io/une-tasse-de.cafe/toutou
+          tag: "60132d5"
+          pullPolicy: IfNotPresent
+        service:
+          servicePort: 3000
+          containerPort: 3000
+        deployment:
+          port: 3000
+          memoryRequest: "128Mi"
+          cpuRequest: "50m"
+          memoryLimit: "512Mi"
+          # Prisma owns the schema; `db push` applies it before the app starts.
+          initContainers:
+            - name: migrate
+              image: atcr.io/une-tasse-de.cafe/toutou:60132d5
+              command: ["node_modules/.bin/prisma", "db", "push", "--skip-generate"]
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: toutou-secrets
+                      key: DATABASE_URL
+        readinessProbeEnabled: true
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 20
+        ingress:
+          enabled: true
+          hostName: "toutou.mocha.thoughtless.eu"
+          ingressClassName: traefik
+          tls:
+            enabled: true
+            secretName: "toutou-tls"
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+        variables:
+          nonSecret:
+            AUTH_URL: "https://toutou.mocha.thoughtless.eu"
+            AUTH_TRUST_HOST: "true"
+            OIDC_ISSUER: "https://authentik.mocha.thoughtless.eu/application/o/toutou/"
+          secret:
+            existingSecret:
+              - envName: DATABASE_URL
+                name: toutou-secrets
+                key: DATABASE_URL
+              - envName: AUTH_SECRET
+                name: toutou-secrets
+                key: AUTH_SECRET
+              - envName: OIDC_CLIENT_ID
+                name: toutou-secrets
+                key: OIDC_CLIENT_ID
+              - envName: OIDC_CLIENT_SECRET
+                name: toutou-secrets
+                key: OIDC_CLIENT_SECRET
+        extraResources:
+          # DATABASE_URL is composed here so the password lives in Vault only once.
+          - apiVersion: external-secrets.io/v1
+            kind: ExternalSecret
+            metadata:
+              name: toutou-secrets
+            spec:
+              refreshInterval: "1h"
+              secretStoreRef:
+                name: vault-backend
+                kind: ClusterSecretStore
+              target:
+                name: toutou-secrets
+                creationPolicy: Owner
+                template:
+                  engineVersion: v2
+                  data:
+                    DATABASE_URL: "postgresql://toutou:{{ .db_password }}@toutou-db:5432/toutou?schema=public"
+                    POSTGRES_PASSWORD: "{{ .db_password }}"
+                    AUTH_SECRET: "{{ .auth_secret }}"
+                    OIDC_CLIENT_ID: "{{ .authentik_id }}"
+                    OIDC_CLIENT_SECRET: "{{ .authentik_secret }}"
+              data:
+                - secretKey: db_password
+                  remoteRef:
+                    key: toutou
+                    property: db_password
+                - secretKey: auth_secret
+                  remoteRef:
+                    key: toutou
+                    property: auth_secret
+                - secretKey: authentik_id
+                  remoteRef:
+                    key: toutou
+                    property: authentik_id
+                - secretKey: authentik_secret
+                  remoteRef:
+                    key: toutou
+                    property: authentik_secret
+          - apiVersion: v1
+            kind: Service
+            metadata:
+              name: toutou-db
+            spec:
+              clusterIP: None
+              selector:
+                app: toutou-db
+              ports:
+                - name: postgres
+                  port: 5432
+                  targetPort: 5432
+          - apiVersion: apps/v1
+            kind: StatefulSet
+            metadata:
+              name: toutou-db
+            spec:
+              serviceName: toutou-db
+              replicas: 1
+              selector:
+                matchLabels:
+                  app: toutou-db
+              template:
+                metadata:
+                  labels:
+                    app: toutou-db
+                spec:
+                  containers:
+                    - name: postgres
+                      image: postgres:17-alpine
+                      env:
+                        - name: POSTGRES_DB
+                          value: toutou
+                        - name: POSTGRES_USER
+                          value: toutou
+                        - name: POSTGRES_PASSWORD
+                          valueFrom:
+                            secretKeyRef:
+                              name: toutou-secrets
+                              key: POSTGRES_PASSWORD
+                        # The image only initialises into an empty dir, not a
+                        # mount point with lost+found in it.
+                        - name: PGDATA
+                          value: /var/lib/postgresql/data/pgdata
+                      ports:
+                        - name: postgres
+                          containerPort: 5432
+                      volumeMounts:
+                        - name: data
+                          mountPath: /var/lib/postgresql/data
+                      resources:
+                        requests:
+                          cpu: 50m
+                          memory: 128Mi
+                        limits:
+                          memory: 512Mi
+                      readinessProbe:
+                        exec:
+                          command: ["pg_isready", "-U", "toutou", "-d", "toutou"]
+                        initialDelaySeconds: 10
+                        periodSeconds: 10
+              volumeClaimTemplates:
+                - metadata:
+                    name: data
+                  spec:
+                    accessModes: ["ReadWriteOnce"]
+                    storageClassName: openebs-lvmpv
+                    resources:
+                      requests:
+                        storage: 5Gi
