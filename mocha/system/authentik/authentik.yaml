@@ -202,6 +202,16 @@ spec:
                 scopes: [email, profile, openid, offline_access]
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/anthropic.svg
+              - slug: toutou
+                name: Provider for Toutou (mocha)
+                appName: Toutou
+                clientType: confidential
+                redirectURIs:
+                  - https://toutou.mocha.thoughtless.eu/api/auth/callback/oidc
+                scopes: [email, profile, openid]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/dog.svg
+                secretName: oidc-toutou
             proxyProviders:
               - slug: prowlarr
                 name: Prowlarr
