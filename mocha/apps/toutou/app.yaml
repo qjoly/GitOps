@@ -37,6 +37,10 @@ spec:
           repository: atcr.io/une-tasse-de.cafe/toutou
           tag: "60132d5"
           pullPolicy: IfNotPresent
+          # atcr.io refuses anonymous pulls, even for our own repository.
+          repositorySettings:
+            isPrivate: true
+            secretName: toutou-registry
         service:
           servicePort: 3000
           containerPort: 3000
@@ -92,6 +96,29 @@ spec:
                 name: toutou-secrets
                 key: OIDC_CLIENT_SECRET
         extraResources:
+          - apiVersion: external-secrets.io/v1
+            kind: ExternalSecret
+            metadata:
+              name: toutou-registry
+            spec:
+              refreshInterval: "1h"
+              secretStoreRef:
+                name: vault-backend
+                kind: ClusterSecretStore
+              target:
+                name: toutou-registry
+                creationPolicy: Owner
+                template:
+                  type: kubernetes.io/dockerconfigjson
+                  engineVersion: v2
+                  data:
+                    .dockerconfigjson: |
+                      {"auths":{"atcr.io":{"username":"une-tasse-de.cafe","password":"{{ .atcr_password }}","auth":"{{ printf "une-tasse-de.cafe:%s" .atcr_password | b64enc }}"}}}
+              data:
+                - secretKey: atcr_password
+                  remoteRef:
+                    key: toutou
+                    property: atcr_password
           # DATABASE_URL is composed here so the password lives in Vault only once.
           - apiVersion: external-secrets.io/v1
             kind: ExternalSecret
