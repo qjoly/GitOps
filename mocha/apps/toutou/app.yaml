@@ -14,6 +14,9 @@ spec:
         - /spec/podManagementPolicy
         - /spec/revisionHistoryLimit
       jqPathExpressions:
+        - '.spec.volumeClaimTemplates[].apiVersion'
+        - '.spec.volumeClaimTemplates[].kind'
+        - '.spec.volumeClaimTemplates[].metadata.creationTimestamp'
         - '.spec.volumeClaimTemplates[].spec.volumeMode'
         - '.spec.volumeClaimTemplates[].status'
   syncPolicy:
