@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-lab
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    # The CAPI CRs depend on CRDs provided by capi-provider-virtink and
+    # capi-cp-kamaji (separate Applications). Retry until those CRDs exist.
+    retry:
+      limit: 20
+      backoff:
+        duration: 15s
+        maxDuration: 5m
+        factor: 2
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: virtink-lab
+  source:
+    repoURL: https://github.com/qjoly/gitops.git
+    targetRevision: HEAD
+    path: mocha/apps/kube-lab/manifests

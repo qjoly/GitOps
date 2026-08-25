@@ -1,0 +1,178 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: virtink-lab
+---
+# Multi-node guest Kubernetes cluster running on Mocha.
+#  - Control plane: hosted by Kamaji (pods on Mocha, no dedicated VM).
+#  - Workers: Virtink VirtualMachines (Cloud Hypervisor) with a container rootfs.
+#  - CNI: Cilium, pushed into the guest via CAAPH HelmChartProxy.
+#  - Infra cluster = Mocha itself ("internal" mode): the VirtinkCluster has no
+#    infraClusterSecretRef, so the provider uses its in-cluster client.
+apiVersion: cluster.x-k8s.io/v1beta2
+kind: Cluster
+metadata:
+  name: virtink-lab
+  namespace: virtink-lab
+  labels:
+    cni: cilium
+spec:
+  controlPlaneEndpoint:
+    # Kamaji publishes the tenant API server as a ClusterIP Service named after
+    # the KamajiControlPlane, in the same namespace.
+    host: virtink-lab-kcp.virtink-lab.svc
+    port: 6443
+  clusterNetwork:
+    # Guest pod CIDR MUST NOT overlap Mocha's pod CIDR (10.244.0.0/24): the
+    # worker VMs attach to Mocha's pod network, so their node IPs come from
+    # 10.244.0.0/24. 10.243.0.0/16 is disjoint from both Mocha's pod and
+    # service ranges.
+    pods:
+      cidrBlocks: ["10.243.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/24"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: VirtinkCluster
+    name: virtink-lab
+  controlPlaneRef:
+    apiGroup: controlplane.cluster.x-k8s.io
+    kind: KamajiControlPlane
+    name: virtink-lab-kcp
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VirtinkCluster
+metadata:
+  name: virtink-lab
+  namespace: virtink-lab
+  annotations:
+    # Control plane is managed by Kamaji, not by this infra provider.
+    cluster.x-k8s.io/managed-by: kamaji
+spec: {}
+---
+# Hosted control plane with Kamaji, backed by the existing "default" etcd DataStore.
+apiVersion: controlplane.cluster.x-k8s.io/v1alpha2
+kind: KamajiControlPlane
+metadata:
+  name: virtink-lab-kcp
+  namespace: virtink-lab
+spec:
+  version: "v1.24.0"
+  dataStoreName: default
+  replicas: 1
+  addons:
+    coreDNS: {}
+  kubelet:
+    cgroupfs: systemd
+  network:
+    serviceType: ClusterIP
+---
+apiVersion: cluster.x-k8s.io/v1beta2
+kind: MachineDeployment
+metadata:
+  name: virtink-lab-md-0
+  namespace: virtink-lab
+spec:
+  clusterName: virtink-lab
+  replicas: 2
+  selector:
+    matchLabels: {}
+  template:
+    spec:
+      clusterName: virtink-lab
+      version: v1.24.0
+      bootstrap:
+        configRef:
+          apiGroup: bootstrap.cluster.x-k8s.io
+          kind: KubeadmConfigTemplate
+          name: virtink-lab-md-0
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: VirtinkMachineTemplate
+        name: virtink-lab-md-0
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
+kind: KubeadmConfigTemplate
+metadata:
+  name: virtink-lab-md-0
+  namespace: virtink-lab
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          ignorePreflightErrors:
+            - SystemVerification
+          kubeletExtraArgs:
+            - name: provider-id
+              value: virtink://{{ ds.meta_data.instance_id }}
+      postKubeadmCommands:
+        - rm -rf /usr/share/capch/images/*.tar
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VirtinkMachineTemplate
+metadata:
+  name: virtink-lab-md-0
+  namespace: virtink-lab
+spec:
+  template:
+    spec:
+      virtualMachineTemplate:
+        metadata:
+          namespace: virtink-lab
+        spec:
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    topologyKey: kubernetes.io/hostname
+                    labelSelector:
+                      matchExpressions:
+                        - key: cluster.x-k8s.io/deployment-name
+                          operator: In
+                          values:
+                            - virtink-lab-md-0
+          instance:
+            cpu:
+              sockets: 1
+              coresPerSocket: 2
+            disks:
+              - name: rootfs
+            interfaces:
+              - name: pod
+            kernel:
+              cmdline: "console=ttyS0 root=/dev/vda rw"
+              image: "smartxworks/capch-kernel-5.15.12"
+            memory:
+              size: 4Gi
+          networks:
+            - name: pod
+              pod: {}
+          runPolicy: Always
+          volumes:
+            - name: rootfs
+              containerRootfs:
+                image: "smartxworks/capch-rootfs-1.24.0"
+                size: 4Gi
+---
+# CNI for the guest cluster. CAAPH (addon-helm provider) is already installed
+# on Mocha and reconciles this against clusters labelled cni=cilium.
+apiVersion: addons.cluster.x-k8s.io/v1alpha1
+kind: HelmChartProxy
+metadata:
+  name: virtink-lab-cilium
+  namespace: virtink-lab
+spec:
+  clusterSelector:
+    matchLabels:
+      cni: cilium
+  repoURL: https://helm.cilium.io/
+  chartName: cilium
+  releaseName: cilium
+  namespace: kube-system
+  valuesTemplate: |
+    kubeProxyReplacement: true
+    k8sServiceHost: "{{ .Cluster.spec.controlPlaneEndpoint.host }}"
+    k8sServicePort: {{ .Cluster.spec.controlPlaneEndpoint.port }}

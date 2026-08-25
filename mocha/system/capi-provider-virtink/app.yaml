@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: capi-provider-virtink
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # CAPI provider CRDs are large; server-side apply is required.
+      - ServerSideApply=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: capch-system
+  source:
+    repoURL: https://github.com/qjoly/gitops.git
+    targetRevision: HEAD
+    # Cluster API infrastructure provider for Virtink.
+    # Rendered from smartxworks/cluster-api-provider-virtink v0.7.0
+    # (clusterctl generate provider --infrastructure virtink:v0.7.0).
+    # Not tracked by clusterctl inventory (GitOps-managed on purpose).
+    path: mocha/system/capi-provider-virtink/manifests
