@@ -19,6 +19,7 @@ spec:
   source:
     repoURL: https://github.com/qjoly/gitops.git
     targetRevision: HEAD
-    # Vendored from smartxworks/virtink v0.17.0 release (virtink.yaml).
-    # Cloud Hypervisor based VM runtime. Depends on cert-manager (present).
+    # Rendered by kustomize from the pinned upstream release (not vendored) —
+    # see manifests/kustomization.yaml. Cloud Hypervisor based VM runtime,
+    # depends on cert-manager (present).
     path: mocha/system/virtink/manifests

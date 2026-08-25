@@ -19,8 +19,7 @@ spec:
   source:
     repoURL: https://github.com/qjoly/gitops.git
     targetRevision: HEAD
-    # Cluster API control-plane provider for Kamaji (hosted control planes).
-    # Rendered from clastix/cluster-api-control-plane-provider-kamaji v0.20.0
-    # (clusterctl generate provider --control-plane kamaji:v0.20.0).
+    # Cluster API control-plane provider for Kamaji, rendered by kustomize from
+    # the upstream repo at tag v0.20.0 (see manifests/kustomization.yaml).
     # Reuses the existing Kamaji operator + DataStore "default" (etcd).
     path: mocha/system/capi-cp-kamaji/manifests
