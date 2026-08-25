@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: capi-cp-kamaji
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # The KamajiControlPlane CRD is very large (~1MB); server-side apply
+      # is mandatory to avoid the annotation size limit.
+      - ServerSideApply=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kamaji-system
+  source:
+    repoURL: https://github.com/qjoly/gitops.git
+    targetRevision: HEAD
+    # Cluster API control-plane provider for Kamaji, rendered by kustomize from
+    # the upstream repo at tag v0.20.0 (see manifests/kustomization.yaml).
+    # Reuses the existing Kamaji operator + DataStore "default" (etcd).
+    path: mocha/system/capi-cp-kamaji/manifests

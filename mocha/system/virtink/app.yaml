@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: virtink
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # Virtink ships large CRDs; server-side apply avoids the client-side
+      # last-applied-configuration annotation size limit.
+      - ServerSideApply=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: virtink-system
+  source:
+    repoURL: https://github.com/qjoly/gitops.git
+    targetRevision: HEAD
+    # Rendered by kustomize from the pinned upstream release (not vendored) —
+    # see manifests/kustomization.yaml. Cloud Hypervisor based VM runtime,
+    # depends on cert-manager (present).
+    path: mocha/system/virtink/manifests

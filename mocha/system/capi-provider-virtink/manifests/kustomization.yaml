@@ -1,0 +1,13 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# CAPI infrastructure provider for Virtink, rendered from the upstream repo at
+# the release tag instead of vendoring the ~5k-line components file.
+# config/default ships CRDs + RBAC + controller in namespace capch-system.
+resources:
+  - github.com/smartxworks/cluster-api-provider-virtink/config/default?ref=v0.7.0
+# config/default carries a placeholder image tag; pin it to the released image.
+images:
+  - name: capch-controller
+    newName: docker.io/smartxworks/capch-controller
+    newTag: v0.7.0
