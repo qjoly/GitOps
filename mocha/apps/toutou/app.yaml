@@ -38,7 +38,7 @@ spec:
         name: "toutou"
         image:
           repository: atcr.io/une-tasse-de.cafe/toutou
-          tag: "35dac8e"
+          tag: "7a4181e"
           pullPolicy: IfNotPresent
           # atcr.io refuses anonymous pulls, even for our own repository.
           repositorySettings:
@@ -55,7 +55,7 @@ spec:
           # Prisma owns the schema; `db push` applies it before the app starts.
           initContainers:
             - name: migrate
-              image: atcr.io/une-tasse-de.cafe/toutou:35dac8e
+              image: atcr.io/une-tasse-de.cafe/toutou:7a4181e
               command: ["node_modules/.bin/prisma", "db", "push", "--skip-generate"]
               env:
                 - name: DATABASE_URL
