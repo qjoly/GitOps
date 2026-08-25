@@ -16,6 +16,25 @@
       "matchPackageNames": ["ghcr.io/immich-app/postgres"],
       "matchUpdateTypes": ["major"],
       "enabled": false
+    },
+    {
+      "description": "Group the Virtink stack (operator + CAPI providers) into a single PR, kept CAPI-compatible together",
+      "matchFileNames": [
+        "mocha/system/virtink/**",
+        "mocha/system/capi-provider-virtink/**",
+        "mocha/system/capi-cp-kamaji/**"
+      ],
+      "groupName": "virtink stack"
+    },
+    {
+      "description": "Virtink/Kamaji CAPI providers: block automatic majors. A major bump usually changes the served CRD apiVersions and requires manual edits in mocha/system/* and apps/kube-lab.",
+      "matchPackageNames": [
+        "smartxworks/cluster-api-provider-virtink",
+        "clastix/cluster-api-control-plane-provider-kamaji",
+        "smartxworks/virtink"
+      ],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ],
   "argocd": {
@@ -35,6 +54,17 @@
         "image: (?<depName>.*?):(?<currentValue>.*?)\\s+"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Virtink operator pinned in its kustomize remote release-asset URL",
+      "managerFilePatterns": [
+        "/mocha/system/virtink/manifests/kustomization\\.yaml$/"
+      ],
+      "matchStrings": [
+        "github\\.com/(?<depName>smartxworks/virtink)/releases/download/(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)/"
+      ],
+      "datasourceTemplate": "github-releases"
     }
   ]
 }

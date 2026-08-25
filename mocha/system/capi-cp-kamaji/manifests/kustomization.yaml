@@ -5,7 +5,7 @@ kind: Kustomization
 # release tag instead of vendoring the ~16k-line components file.
 # config/default ships CRDs + RBAC + controller in namespace kamaji-system.
 resources:
-  - https://github.com/clastix/cluster-api-control-plane-provider-kamaji/config/default?ref=v0.20.0
+  - github.com/clastix/cluster-api-control-plane-provider-kamaji/config/default?ref=v0.20.0
 # config/default leaves clusterctl feature-gate variables (${CACPPK_*}) in the
 # controller args, which kustomize does not substitute. Pin them to the upstream
 # defaults (all false) so the controller does not crashloop on literal ${...}.

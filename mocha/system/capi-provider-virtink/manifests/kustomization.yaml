@@ -5,7 +5,7 @@ kind: Kustomization
 # the release tag instead of vendoring the ~5k-line components file.
 # config/default ships CRDs + RBAC + controller in namespace capch-system.
 resources:
-  - https://github.com/smartxworks/cluster-api-provider-virtink/config/default?ref=v0.7.0
+  - github.com/smartxworks/cluster-api-provider-virtink/config/default?ref=v0.7.0
 # config/default carries a placeholder image tag; pin it to the released image.
 images:
   - name: capch-controller
