@@ -38,3 +38,39 @@ for pod in vault-0 vault-1 vault-2; do
   kubectl --context "$CTX" exec -n vault "$pod" -- vault status || true
 done
 '''
+
+[tasks."talos-poc:kubeconfig"]
+description = "Fetch the talos-poc guest cluster kubeconfig (NodePort endpoint) into a local file"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+# Management (Mocha) kubeconfig — the OIDC omni-mocha context hangs headless, so
+# default to the direct non-OIDC file.
+MGMT="${MOCHA_KUBECONFIG:-$HOME/kubeconfig.mocha}"
+NS="${TALOS_NAMESPACE:-talos-poc}"
+CLUSTER="${TALOS_CLUSTER:-talos-poc}"
+OUT="${TALOS_KUBECONFIG:-$HOME/kubeconfig.talos-poc}"
+[ -f "$MGMT" ] || { echo "management kubeconfig not found: $MGMT" >&2; exit 1; }
+export KUBECONFIG="$MGMT"
+
+# The CAPI-issued kubeconfig points at the in-cluster ClusterIP; rewrite it to the
+# control-plane Service NodePort reachable on the node's address.
+NP="$(kubectl -n "$NS" get svc "${CLUSTER}-lb" -o jsonpath='{.spec.ports[0].nodePort}')"
+[ -n "$NP" ] || { echo "service ${CLUSTER}-lb is not type NodePort" >&2; exit 1; }
+IP="${NODE_IP:-$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')}"
+
+tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+kubectl -n "$NS" get secret "${CLUSTER}-kubeconfig" -o jsonpath='{.data.value}' | base64 -d > "$tmp/src"
+KUBECONFIG="$tmp/src" kubectl config view --raw -o jsonpath='{.users[0].user.client-certificate-data}' | base64 -d > "$tmp/client.crt"
+KUBECONFIG="$tmp/src" kubectl config view --raw -o jsonpath='{.users[0].user.client-key-data}'         | base64 -d > "$tmp/client.key"
+
+# NODE_IP is usually not in the API server cert SANs, so skip TLS verification.
+rm -f "$OUT"
+KUBECONFIG="$OUT" kubectl config set-cluster     "$CLUSTER"          --server="https://${IP}:${NP}" --insecure-skip-tls-verify=true >/dev/null
+KUBECONFIG="$OUT" kubectl config set-credentials "${CLUSTER}-admin"  --client-certificate="$tmp/client.crt" --client-key="$tmp/client.key" --embed-certs=true >/dev/null
+KUBECONFIG="$OUT" kubectl config set-context     "$CLUSTER"          --cluster="$CLUSTER" --user="${CLUSTER}-admin" >/dev/null
+KUBECONFIG="$OUT" kubectl config use-context     "$CLUSTER" >/dev/null
+chmod 600 "$OUT"
+echo "wrote $OUT  (server https://${IP}:${NP})"
+KUBECONFIG="$OUT" kubectl get nodes
+'''
