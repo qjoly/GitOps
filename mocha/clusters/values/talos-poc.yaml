@@ -1,0 +1,22 @@
+---
+# One file = one guest cluster. Copy it, rename it, commit.
+# talosCluster.name is the CAPI cluster name AND the namespace it lives in.
+global:
+  namespace: talos-poc
+talosCluster:
+  name: talos-poc
+  kubernetesVersion: v1.32.1
+  controlPlaneMachineCount: 1
+  workerMachineCount: 1
+  podCIDR: 10.243.0.0/16
+  serviceCIDR: 10.95.0.0/16
+  instanceType: o1.xlarge
+  instancePreference: talos
+  rootVolumeSize: 10Gi
+  storageClassName: longhorn
+  talosImageURL: https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/v1.9.5/openstack-amd64.raw.xz
+  talosVersion: v1.9.5
+  talosCode: t195
+  controlPlaneServiceType: NodePort
+  cilium:
+    enabled: true
