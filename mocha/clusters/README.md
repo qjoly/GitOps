@@ -19,7 +19,7 @@ The chart doing the work lives in
      namespace: dev-quentin
    talosCluster:
      name: dev-quentin
-     talosImageURL: https://factory.talos.dev/image/<hash>/v1.9.5/openstack-amd64.raw.xz
+     talosImageURL: https://factory.talos.dev/image/<hash>/v1.13.7/openstack-amd64.raw.xz
      workerMachineCount: 2
    ```
 
@@ -58,6 +58,8 @@ mise run talos-poc:kubeconfig   # see ../../mise.toml (parameterised by env)
 
 `talos-poc` was first created manually. Before letting the ApplicationSet
 auto-sync an already-running cluster, review the Argo CD diff: resource names
-carry the `talosCode` suffix, so a mismatch (e.g. `t18` vs `t195`) makes CAPI
-roll new machine templates. Either set `talosCode` to match the live cluster
-or recreate it from scratch.
+carry the `talosCode` suffix, so a mismatch (e.g. `t195` vs `t1137`) makes CAPI
+roll new machine templates. These values pin Talos `v1.13.7` (`t1137`), so
+syncing a cluster still on an older Talos build will roll its VMs onto the new
+image — intended here, but do it deliberately. Either set
+`talosCode`/`talosVersion` to match the live cluster or recreate it from scratch.

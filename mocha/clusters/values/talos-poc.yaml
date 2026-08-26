@@ -5,7 +5,7 @@ global:
   namespace: talos-poc
 talosCluster:
   name: talos-poc
-  kubernetesVersion: v1.32.1
+  kubernetesVersion: v1.36.2
   controlPlaneMachineCount: 1
   workerMachineCount: 1
   podCIDR: 10.243.0.0/16
@@ -14,9 +14,9 @@ talosCluster:
   instancePreference: talos
   rootVolumeSize: 10Gi
   storageClassName: longhorn
-  talosImageURL: https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/v1.9.5/openstack-amd64.raw.xz
-  talosVersion: v1.9.5
-  talosCode: t195
+  talosImageURL: https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/v1.13.7/openstack-amd64.raw.xz
+  talosVersion: v1.13.7
+  talosCode: t1137
   controlPlaneServiceType: NodePort
   cilium:
     enabled: true
