@@ -51,15 +51,25 @@ mise run talos-poc:kubeconfig   # see ../../mise.toml (parameterised by env)
 
 - CAPI providers: `kubevirt` (infra), `talos` (control-plane + bootstrap),
   `helm` (addon), `in-cluster` (ipam).
-- KubeVirt + CDI, a `longhorn` StorageClass, and the `talos`
+- KubeVirt + CDI, the `openebs-lvmpv` StorageClass (the only one on `mocha`;
+  `longhorn` is not installed), and the `talos`
   `VirtualMachineClusterPreference` (`kubevirt-capi-easy/talosVMCP.yaml`).
+  `openebs-lvmpv`'s CSI `fsGroupPolicy` is `ReadWriteOnceWithFSType`, so the boot
+  DataVolume uses `rootVolumeMode: Filesystem` — a raw `Block` volume makes the
+  non-root CDI importer fail with `cannot open /dev/cdi-block-volume: Permission
+  denied`.
 
 ## Adopting an existing, hand-applied cluster
 
-`talos-poc` was first created manually. Before letting the ApplicationSet
-auto-sync an already-running cluster, review the Argo CD diff: resource names
-carry the `talosCode` suffix, so a mismatch (e.g. `t195` vs `t1137`) makes CAPI
-roll new machine templates. These values pin Talos `v1.13.7` (`t1137`), so
-syncing a cluster still on an older Talos build will roll its VMs onto the new
-image — intended here, but do it deliberately. Either set
-`talosCode`/`talosVersion` to match the live cluster or recreate it from scratch.
+`talos-poc` was first created manually on Talos `v1.9.5`. That cluster has since
+been deleted and re-created from these exact values on Talos `v1.13.7` (`t1137`,
+k8s `v1.36.2`), verified booting to two `Ready` nodes with Cilium. It currently
+runs as a hand-applied cluster (the ApplicationSet is not applied yet), so
+adopting it under Argo CD should show no diff.
+
+More generally, before letting the ApplicationSet auto-sync an already-running
+cluster, review the Argo CD diff: resource names carry the `talosCode` suffix, so
+a mismatch (e.g. `t195` vs `t1137`) makes CAPI roll new machine templates.
+Syncing a cluster still on an older Talos build will roll its VMs onto the new
+image — do it deliberately. Either set `talosCode`/`talosVersion` to match the
+live cluster or recreate it from scratch.
