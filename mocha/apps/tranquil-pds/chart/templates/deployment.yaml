@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tranquil-pds
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tranquil-pds
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: tranquil-pds
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: {{ .Values.app.runAsUser }}
+        runAsGroup: {{ .Values.app.runAsUser }}
+        fsGroup: {{ .Values.app.runAsUser }}
+      containers:
+        - name: tranquil-pds
+          image: {{ .Values.image }}
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secretName }}
+          env:
+            {{- range $k, $v := .Values.app.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          volumeMounts:
+            # Mount only the data subdirs, never /var/lib/tranquil-pds itself:
+            # the image ships the web frontend there and a full mount would shadow it.
+            - name: data
+              mountPath: /var/lib/tranquil-pds/blobs
+              subPath: blobs
+            - name: data
+              mountPath: /var/lib/tranquil-pds/store
+              subPath: store
+          readinessProbe:
+            httpGet:
+              path: /xrpc/_health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /xrpc/_health
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: tranquil-pds-data
