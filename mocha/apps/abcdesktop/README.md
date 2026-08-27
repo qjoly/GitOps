@@ -78,6 +78,16 @@ the `applist` key and sync.
 Available images are the `*.d` ones in `ghcr.io/abcdesktopio`, built from
 [oc.apps](https://github.com/abcdesktopio/oc.apps).
 
+Currently registered: Firefox (Ubuntu and Rocky Linux builds), VSCode and a
+Terminal. `vscode.d` already carries git, gcc, make, golang and pre-commit;
+`terminal.d` carries git, ssh and sshfs.
+
+`mise` has no distribution package, so the session init container drops its
+static binary into `~/.local/bin` and puts `~/.local/share/mise/shims` on the
+PATH through `.bashrc`. Both live in the home PVC, so it survives sessions and
+is visible from every application container. Pin its version in `od.config` when
+upgrading.
+
 The desktop image itself is Ubuntu-only upstream: `oc.user` ships a
 `Dockerfile.ubuntu` and nothing else, so there is no Fedora session image. The
 RPM-based application images (`firefoxrockylinux.d`, `firefoxalmalinux.d`) are
