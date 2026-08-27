@@ -1,0 +1,1548 @@
+# Copyright abcdesktop.io
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pyos-role
+rules:
+- apiGroups: ['']
+  resources: ['pods']
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ['']
+  resources: ['events']
+  verbs: [ "get", "list", "watch" ]
+- apiGroups: ['']
+  resources: ['pods/exec']
+  verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+- apiGroups: ['']
+  resources: ['pods/ephemeralcontainers']
+  verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+- apiGroups: ['']
+  resources: ['secrets']
+  verbs:  ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ['']
+  resources: ['configmaps']
+  verbs:  ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ['']
+  resources: ['pods/log']
+  verbs: ['get', 'list', 'watch' ]
+- apiGroups: [""]
+  resources: ["persistentvolumes"]
+  verbs: ["get", "list", "create", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims"]
+  verbs: ["get", "list", "watch", "update", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pyos-rbac
+subjects:
+- kind: ServiceAccount
+  name: pyos-serviceaccount
+roleRef:
+  kind: Role
+  name: pyos-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pyos-serviceaccount
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: version-config
+data:
+  versionConfig.json: |-
+    {
+      "ABCDESKTOP_VERSION": "4.4",
+      "ABCDESKTOP_APPLICATIONS_LIST_URL": "https://raw.githubusercontent.com/abcdesktopio/images/refs/heads/main/appLists/appList.4.4.json"
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-mongodb-scripts
+  labels:
+    abcdesktop/role: mongodb
+data:
+  init-container.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    echo "🧩 Preparing MongoDB configuration..."
+    mkdir -p /work/config
+    cp /input/mongod.conf /work/config/mongod.conf
+    cp /input/mongod.keyfile /work/config/mongod.keyfile
+    chown -R mongodb:mongodb /work/config
+    chmod 700 /work/config
+    chmod 400 /work/config/mongod.keyfile
+    mkdir -p /data/db
+    chown -R mongodb:mongodb /data/db
+    mkdir -p /var/log/mongodb
+    touch /var/log/mongodb/mongod.log
+    chown -R mongodb:mongodb /var/log/mongodb
+    chmod 666 /var/log/mongodb/mongod.log
+    echo "🧩 Preparing MongoDB done..."
+  mongod.conf: |
+    net:
+      bindIp: 0.0.0.0
+      port: 27017
+    replication:
+      replSetName: rs0
+    security:
+      authorization: enabled
+      keyFile: /etc/mongodb/mongod.keyfile
+    storage:
+      dbPath: /data/db
+    # systemLog:
+    #   destination: file
+    #   path: /var/log/mongodb/mongod.log
+    #   logAppend: true
+  init.js: |
+    // init.js - executed automatically by MongoDB at first startup
+    print("🏁 Running init.js ...");
+
+    const fs = require('fs');
+
+    const targetDbList = fs.readFileSync('/etc/abcdesktop/MONGO_DBS_LIST', 'utf8').trim();
+    const rootUser = fs.readFileSync('/etc/abcdesktop/admin/MONGO_ROOT_USERNAME', 'utf8').trim();
+    const rootPass = fs.readFileSync('/etc/abcdesktop/admin/MONGO_ROOT_PASSWORD', 'utf8').trim();
+    const usersStr = fs.readFileSync('/etc/abcdesktop/MONGO_USERS_LIST', 'utf8').trim();
+
+    // auth against admin
+    const adminDb = db.getSiblingDB('admin');
+    adminDb.auth(rootUser, rootPass);
+    print('Successfully authenticated admin user');
+
+    print('List of database');
+    print(targetDbList);
+    const targetDbs = targetDbList.split(',');
+
+    for (targetDbStr of targetDbs) {
+        print('use ' + targetDbStr);
+        // we'll create the users here
+        const targetDb = db.getSiblingDB(targetDbStr);
+        
+        // user-defined roles should be stored in the admin db
+        let customRoles = [];
+        try {
+        const rolesResult = adminDb.getRoles({rolesInfo: 1, showBuiltinRoles: false});
+        // Check if rolesResult is an array or an object with a roles property
+        if (Array.isArray(rolesResult)) {
+            customRoles = rolesResult
+            .map(role => role.role)
+            .filter(Boolean);
+        } else if (rolesResult && rolesResult.roles && Array.isArray(rolesResult.roles)) {
+            customRoles = rolesResult.roles
+            .map(role => role.role)
+            .filter(Boolean);
+        }
+        print('Custom roles found: ' + JSON.stringify(customRoles));
+        } catch (err) {
+        print('Warning: Could not retrieve custom roles: ' + err.message);
+        customRoles = [];
+        }
+
+        // parse the list of users, and create each user as needed
+        if (usersStr && usersStr.trim()) {
+        usersStr
+            .trim()
+            .split(';')
+            .map(s => s.split(':'))
+            .forEach(user => {
+            const username = user[0];
+            const rolesStr = user[1];
+            const password = user[2];
+
+            if (!username || !rolesStr || !password) {
+                print('Skipping invalid user entry: ' + JSON.stringify(user));
+                return;
+            }
+
+            const roles = rolesStr.split(',');
+            const userDoc = {
+                user: username,
+                pwd: password,
+            };
+
+            userDoc.roles = roles.map(role => {
+                if (customRoles.indexOf(role) === -1) {
+                // is this a built-in role?
+                return role; // yes, just use the role name
+                }
+                return {role: role, db: 'admin'}; // no, user-defined, specify the long format
+            });
+
+            try {
+                print('Creating user: ' + username + ' in database: ' + targetDbStr);
+                targetDb.createUser(userDoc);
+                print('Successfully created user: ' + username);
+            } catch (err) {
+                print('Error creating user ' + username + ': ' + err.message);
+                if (err.message.toLowerCase().indexOf('duplicate') === -1) {
+                // if not a duplicate user
+                throw err; // rethrow
+                } else {
+                print('User ' + username + ' already exists, skipping...');
+                }
+            }
+            });
+        } else {
+        print('No users to create for database: ' + targetDbStr);
+        }
+    }
+
+    print("🏁 init.js completed successfully ✅");
+
+  init-replica.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    # Log level configuration
+    # Levels: TRACE=0, DEBUG=1, INFO=2, WARNING=3, ERROR=4
+    LOG_LEVEL=${LOG_LEVEL:-2}  # Default: INFO
+
+    # ANSI color codes
+    COLOR_RESET='\033[0m'
+    COLOR_TRACE='\033[0;36m'    # Cyan
+    COLOR_DEBUG='\033[0;34m'    # Blue
+    COLOR_INFO='\033[0;32m'     # Green
+    COLOR_WARNING='\033[0;33m'  # Yellow
+    COLOR_ERROR='\033[0;31m'    # Red
+
+    # Option to disable colors
+    USE_COLORS=${USE_COLORS:-true}
+
+    # Utility function to get timestamp
+    get_timestamp() {
+        date +"%Y-%m-%d %H:%M:%S"
+    }
+
+    # Generic log function
+    # Parameters: $1=level, $2=color, $3=level_num, $4=message
+    log_message() {
+        local level=$1
+        local color=$2
+        local level_num=$3
+        local message=$4
+        
+        # Check if message should be displayed based on configured level
+        if [ $level_num -lt $LOG_LEVEL ]; then
+            return
+        fi
+        
+        local timestamp=$(get_timestamp)
+        
+        if [ "$USE_COLORS" = true ]; then
+            echo -e "${color}[$timestamp] [$level] $message${COLOR_RESET}" >&2
+        else
+            echo "[$timestamp] [$level] $message" >&2
+        fi
+    }
+
+    # TRACE function (level 0)
+    log_trace() {
+        log_message "TRACE  " "$COLOR_TRACE" 0 "$1"
+    }
+
+    # DEBUG function (level 1)
+    log_debug() {
+        log_message "DEBUG  " "$COLOR_DEBUG" 1 "$1"
+    }
+
+    # INFO function (level 2)
+    log_info() {
+        log_message "INFO   " "$COLOR_INFO" 2 "$1"
+    }
+
+    # WARNING function (level 3)
+    log_warning() {
+        log_message "WARNING" "$COLOR_WARNING" 3 "$1"
+    }
+
+    # ERROR function (level 4)
+    log_error() {
+        log_message "ERROR  " "$COLOR_ERROR" 4 "$1"
+    }
+
+    # Function to set log level by name
+    set_log_level() {
+        case $1 in
+            TRACE)
+                LOG_LEVEL=0
+                ;;
+            DEBUG)
+                LOG_LEVEL=1
+                ;;
+            INFO)
+                LOG_LEVEL=2
+                ;;
+            WARNING)
+                LOG_LEVEL=3
+                ;;
+            ERROR)
+                LOG_LEVEL=4
+                ;;
+            *)
+                log_error "Invalid log level: $1"
+                return 1
+                ;;
+        esac
+        log_info "Log level set to: $1"
+    }
+
+    # --- Variables ---
+    NAMESPACE="${NAMESPACE:-abcdesktop}"
+    SERVICE="${SERVICE:-mongodb}"
+    STATEFULSET_NAME="${STATEFULSET_NAME:-mongodb-od}"
+    REPLICAS="${REPLICAS:-1}"
+    MONGO_USER="$(cat "${MONGO_INITDB_ROOT_USERNAME_FILE}")" || { echo "Error: username file not found"; exit 1; }
+    MONGO_PASSWORD="$(cat "${MONGO_INITDB_ROOT_PASSWORD_FILE}")" || { echo "Error: password file not found"; exit 1; }
+    MONGO_AUTH_DB="${MONGO_AUTH_DB:-admin}"
+    SLEEP_TIME=5
+    MAX_WAIT_ATTEMPTS=60
+
+    # --- Function to execute mongosh command with authentication ---
+    mongosh_exec() {
+        local host="$1"
+        shift
+        mongosh \
+            -u "$MONGO_USER" \
+            -p "$MONGO_PASSWORD" \
+            --authenticationDatabase "$MONGO_AUTH_DB" \
+            --host "$host" \
+            --quiet \
+            "$@"
+    }
+
+    # --- Function to build host list dynamically ---
+    # Input: Service name, StatefulSet name, Number of replicas
+    # Output: Array of hosts (one per line)
+    build_hosts_list() {
+        log_trace "[START] build_hosts_list"
+        local service_name="$1"
+        local statefulset_name="$2"
+        local replicas="$3"
+        local hosts=()
+        for i in $(seq 0 $((replicas - 1))); do
+            hosts+=("${statefulset_name}-${i}.${service_name}:27017")
+        done
+        log_info "📡 Configured hosts:"
+        for host in "${hosts[@]}"; do
+            log_info "  - $host"
+        done
+        log_trace "[END] build_hosts_list"
+        printf '%s\n' "${hosts[@]}"
+    }
+
+    # --- Function to wait for all hosts to be reachable ---
+    # Input: Sleep time (optional, default from SLEEP_TIME), Array of hosts (passed as arguments)
+    wait_for_hosts() {
+        log_trace "[START] wait_for_hosts"
+        local sleep_time="$1"
+        shift
+        local hosts=("$@")
+        log_info "⏳ Waiting for hosts to be reachable..."
+        for host in "${hosts[@]}"; do
+            until mongosh_exec "$host" --eval 'db.adminCommand({ping:1})' >/dev/null 2>&1; do
+                log_debug "... $host not ready yet ..."
+                sleep "${sleep_time}"
+            done
+        done
+        log_info "✅ All hosts respond to ping."
+        log_trace "[END] wait_for_hosts"
+    }
+
+    # --- Function to build replica set configuration ---
+    # Input: Array of hosts (passed as arguments)
+    # Output: JSON configuration string
+    build_replicaset_config() {
+        log_trace "[START] build_replicaset_config"
+        local hosts=("$@")
+        local config="{ _id: 'rs0', members: ["
+        for i in "${!hosts[@]}"; do
+            config="${config}{ _id: ${i}, host: '${hosts[$i]}' }"
+            if [ "$i" -lt "$((${#hosts[@]} - 1))" ]; then
+                config="${config}, "
+            fi
+        done
+        config="${config}] }"
+        log_trace "[END] build_replicaset_config"
+        echo "$config"
+    }
+
+    # --- Function to display replica set configuration ---
+    # Input: Primary host
+    display_replicaset_config() {
+        log_trace "[START] display_replicaset_config"
+        local primary="$1"
+        
+        if [ "$LOG_LEVEL" -le 1 ]; then
+            log_debug "📋 Current replica set configuration:"
+            local rs_conf
+            rs_conf=$(mongosh_exec "$primary" --eval 'rs.conf()' 2>&1 || echo "Failed to retrieve replica set config")
+            log_debug "$rs_conf"
+        fi
+        log_trace "[END] display_replicaset_config"
+    }
+
+    # --- Function to check replica set status ---
+    # Input: Primary host
+    # Output: Returns 0 (not initialized) or 1 (initialized) via exit code
+    check_replicaset_status() {
+        log_trace "[START] check_replicaset_status"
+        local primary="$1"
+        local rs_status
+        local rs_ok
+        
+        # Check if ReplicaSet is already initialized
+        rs_status=$(mongosh_exec "$primary" --eval 'rs.status()' 2>&1 || true)
+        log_debug "📝 Replica set status check output:"
+        log_debug "$rs_status"
+
+        # Check if not initialized yet (expected on first run)
+        if echo "$rs_status" | grep -q "MongoServerError: no replset config has been received"; then
+            log_info "ℹ️  Replica set not initialized yet."
+            log_trace "[END] check_replicaset_status (not initialized)"
+            return 0
+        fi
+        
+        # Check if InvalidReplicaSetConfig error is present
+        if echo "$rs_status" | grep -q "MongoServerError: Our replica set config is invalid or we are not a member of it"; then
+            log_warning "⚠️  InvalidReplicaSetConfig detected. Forcing reconfig..."
+            display_replicaset_config "$primary"
+            mongosh_exec "$primary" --eval 'rs.reconfig(rs.config(),{force:true})' >/dev/null 2>&1 || log_error "Reconfig failed"
+            log_info "⏳ Waiting after reconfig..."
+            sleep ${SLEEP_TIME}
+            display_replicaset_config "$primary"
+        fi
+
+        # Test status again and return clean boolean result
+        rs_ok=$(mongosh_exec "$primary" --eval 'rs.status().ok' 2>/dev/null || echo "0")
+        rs_ok=$(echo "$rs_ok" | tr -d '[:space:]')
+        
+        log_trace "[END] check_replicaset_status (rs_ok=$rs_ok)"
+        
+        # Return 1 if initialized, 0 if not
+        if [ "$rs_ok" = "1" ]; then
+            return 1
+        else
+            return 0
+        fi
+    }
+
+    # --- Function to initialize replica set ---
+    # Input: Primary host, replica set config
+    initialize_replicaset() {
+        log_trace "[START] initialize_replicaset"
+        local primary="$1"
+        local config="$2"
+        local init_output
+        
+        log_info "🆕 Initializing replica set..."
+        log_debug "🛠️  Replica set configuration: $config"
+        
+        init_output=$(mongosh_exec "$primary" --eval "rs.initiate(${config});" 2>&1 || true)
+        log_debug "📝 Replica set initialization output:"
+        log_debug "$init_output"
+        
+        # Check if already initialized (expected error)
+        if echo "$init_output" | grep -q "already initialized"; then
+            log_info "ℹ️  Replica set was already initialized, skipping..."
+            log_trace "[END] initialize_replicaset (already initialized)"
+            return 0
+        fi
+        
+        # Check for other errors
+        if echo "$init_output" | grep -q "MongoServerError" && ! echo "$init_output" | grep -q "already initialized"; then
+            log_error "❌ Unexpected error during initialization:"
+            log_error "$init_output"
+            log_trace "[END] initialize_replicaset (error)"
+            return 1
+        fi
+        
+        display_replicaset_config "$primary"
+        log_trace "[END] initialize_replicaset"
+    }
+
+    # --- Function to find and display PRIMARY member ---
+    # Input: Primary host, Sleep time (optional), Max attempts (optional)
+    # Output: Displays PRIMARY member details, returns 0 if found, 1 if not found
+    find_and_display_primary() {
+        log_trace "[START] find_and_display_primary"
+        local primary="$1"
+        local sleep_time="${2:-$SLEEP_TIME}"
+        local max_attempts="${3:-$MAX_WAIT_ATTEMPTS}"
+        local primary_member
+        local i=0
+        
+        log_info "🔍 Searching for PRIMARY member..."
+        
+        while [ $i -lt "$max_attempts" ]; do       
+            # Find the member with stateStr = PRIMARY
+            primary_member=$(mongosh_exec "$primary" --eval 'rs.status().members.find(m=>m.stateStr=="PRIMARY")' 2>/dev/null || echo "")
+            
+            if [ -n "$primary_member" ] && echo "$primary_member" | grep -q "PRIMARY"; then
+                # Extract the host name from primary_member
+                local primary_host
+                primary_host=$(echo "$primary_member" | grep -o "name: '[^']*'" | sed "s/name: '\(.*\)'/\1/" || echo "unknown")
+                log_info "🎯 PRIMARY member found: $primary_host"
+                log_debug "$primary_member"
+                log_trace "[END] find_and_display_primary (found)"
+                return 0
+            fi
+            
+            i=$((i + 1))
+            log_debug "Searching for PRIMARY... attempt $i/$max_attempts"
+            sleep "${sleep_time}"
+        done
+        
+        log_warning "⚠️  No PRIMARY member found after $max_attempts attempts"
+        log_trace "[END] find_and_display_primary (not found)"
+        return 1
+    }
+
+    # --- Function to wait for PRIMARY election ---
+    # Input: Primary host, Sleep time, Max attempts (default 60)
+    wait_for_primary_election() {
+        log_trace "[START] wait_for_primary_election"
+        local primary="$1"
+        local sleep_time="$2"
+        local max_attempts="${3:-60}"
+        local state
+        
+        log_info "⏳ Waiting for PRIMARY election..."
+        for i in $(seq 1 "$max_attempts"); do
+            state=$(mongosh_exec "$primary" --eval 'rs.status().members.filter(m=>m.self)[0].stateStr' || echo "")
+            if [ "$state" == "PRIMARY" ]; then
+                log_info "✅ Primary elected"
+                find_and_display_primary "$primary"
+                log_trace "[END] wait_for_primary_election (elected)"
+                break
+            fi
+            log_debug "Waiting for PRIMARY... attempt $i/$max_attempts"
+            sleep "${sleep_time}"
+        done
+        log_trace "[END] wait_for_primary_election"
+    }
+
+    # --- Main function ---
+    # To change log level, set LOG_LEVEL environment variable:
+    #   LOG_LEVEL=0 (TRACE), 1 (DEBUG), 2 (INFO), 3 (WARNING), 4 (ERROR)
+    #   Example: LOG_LEVEL=2 ./init-replica.sh
+    # Or use LOG_LEVEL_NAME with string values:
+    #   LOG_LEVEL_NAME=INFO ./init-replica.sh
+    main() {
+        # Set log level if provided as string
+        if [ -n "${LOG_LEVEL_NAME:-}" ]; then
+            set_log_level "$LOG_LEVEL_NAME"
+        fi
+
+        log_trace "[START] main"
+        local hosts
+        local primary
+        local rs_config
+        
+        # Build host list
+        mapfile -t hosts < <(build_hosts_list "$SERVICE" "$STATEFULSET_NAME" "$REPLICAS")
+        primary="${hosts[0]}"
+        
+        # Wait for all hosts to be ready
+        wait_for_hosts "$SLEEP_TIME" "${hosts[@]}"
+        
+        # Check replica set status (return 0=not initialized, 1=initialized)
+        if check_replicaset_status "$primary"; then
+            # Not initialized (return 0)
+            rs_config=$(build_replicaset_config "${hosts[@]}")
+            initialize_replicaset "$primary" "$rs_config"
+            # wait_for_primary_election "$primary" "$SLEEP_TIME" "$MAX_WAIT_ATTEMPTS"
+            find_and_display_primary "$primary"
+            log_info "✅ Replica set is initialized."
+        else
+            # Already initialized (return 1)
+            display_replicaset_config "$primary"
+            find_and_display_primary "$primary"
+            log_info "✅ Replica set already initialized."
+        fi
+        
+        log_info "🎉 MongoDB replica set is ready"
+        
+        log_trace "[END] main"
+    }
+
+    # --- Execute main function ---
+    main
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-mongodb
+  labels:
+    abcdesktop/role: mongodb
+type: Opaque
+stringData:
+  MONGO_ROOT_USERNAME: 'root'
+  MONGO_ROOT_PASSWORD: 'Oge5iQw9dGBvRDd'
+  MONGO_USERNAME: 'pyos'
+  MONGO_PASSWORD: 'Az4MeYWUjZDg4Zjhk'
+  MONGO_USERS_LIST: 'pyos:readWrite:Az4MeYWUjZDg4Zjhk'
+  MONGO_DBS_LIST: 'image,fail2ban,loginHistory,applications,profiles,desktop'
+  MONGODB_URL: 'mongodb://pyos:Az4MeYWUjZDg4Zjhk@mongodb'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: abcdesktop-passwd-templatefile
+data:
+  passwd: |
+    {{ uid }}:x:{{ uidNumber }}:{{ gidNumber }}:{{ gecos }}:{{ homeDirectory }}:{{ loginShell }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: abcdesktop-group-templatefile
+data:
+  group: |
+    sudo:x:27:{{ uid }}
+    lpadmin:x:101:root,{{ uid }}
+    {{ gid }}:x:{{ gidNumber }}:{{ uid }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: abcdesktop-shadow-templatefile
+data:
+  shadow: |
+    {{ uid }}:{{ sha512 }}:19080:0:99999:7:::
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: abcdesktop-gshadow-templatefile
+data:
+  gshadow: |
+    sudo:*::{{ uid }}
+    lpadmin:!::root,{{ uid }}
+    {{ gid }}:!::{{ uid }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb-od
+  labels:
+    run: mongodb-od
+    type: database
+    abcdesktop/role: mongodb
+spec:
+  serviceName: mongodb
+  replicas: 1 # MONGO_REPLICAS
+  selector:
+    matchLabels:
+      run: mongodb-od
+  template:
+    metadata:
+      labels:
+        run: mongodb-od
+        type: database
+        netpol/mongodb: 'true'
+        netpol/dns: 'true'
+    spec:
+      securityContext:
+        fsGroup: 999
+      terminationGracePeriodSeconds: 10
+      automountServiceAccountToken: false
+      # --- InitContainer to prepare configuration
+      initContainers:
+      - name: prepare-config
+        image: ghcr.io/abcdesktopio/mongo:safe8.0
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        command:
+          - sh
+          - -c
+          - /scripts/init-container.sh
+        volumeMounts:
+          - name: init-container-script
+            mountPath: /scripts/init-container.sh
+            subPath: init-container.sh
+            readOnly: true
+          - name: config
+            mountPath: /input/mongod.conf
+            subPath: mongod.conf
+          - name: keyfile
+            mountPath: /input/mongod.keyfile
+            subPath: mongod.keyfile
+          - name: prepared-config
+            mountPath: /work/config
+          - name: logs
+            mountPath: /var/log/mongodb
+
+      # --- Main MongoDB container
+      containers:
+      - name: mongodb
+        image: ghcr.io/abcdesktopio/mongo:safe8.0
+        imagePullPolicy: Always
+        # DO NOT use `command`, keep docker-entrypoint.sh
+        args: ["--config=/etc/mongodb/mongod.conf"]
+        ports:
+        - containerPort: 27017
+          name: mongodb
+        volumeMounts:
+          - name: prepared-config
+            mountPath: /etc/mongodb
+          - name: abcdesktop
+            mountPath: /etc/abcdesktop
+            readOnly: true
+          - name: init-script
+            mountPath: /docker-entrypoint-initdb.d/init.js
+            subPath: init.js
+            readOnly: true
+          - name: logs
+            mountPath: /var/log/mongodb
+          - name: data
+            mountPath: /data/db
+        env:
+          - name: MONGO_INITDB_ROOT_USERNAME_FILE
+            value: /etc/abcdesktop/admin/MONGO_ROOT_USERNAME
+          - name: MONGO_INITDB_ROOT_PASSWORD_FILE
+            value: /etc/abcdesktop/admin/MONGO_ROOT_PASSWORD
+        readinessProbe:
+          tcpSocket:
+            port: 27017
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 6
+        livenessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - |
+                mongosh \
+                  --quiet \
+                  --username "$(cat /etc/abcdesktop/admin/MONGO_ROOT_USERNAME)" \
+                  --password "$(cat /etc/abcdesktop/admin/MONGO_ROOT_PASSWORD)" \
+                  --authenticationDatabase admin \
+                  --eval "try { db.adminCommand('ping').ok === 1 ? quit(0) : quit(1) } catch(e) { quit(1) }"
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          timeoutSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1          
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+
+      # --- Non-persistent volumes
+      volumes:
+        - name: init-container-script
+          configMap:
+            name: configmap-mongodb-scripts
+            items:
+              - key: init-container.sh
+                path: init-container.sh
+            defaultMode: 0755
+        - name: config
+          configMap:
+            name: configmap-mongodb-scripts
+            items:
+              - key: mongod.conf
+                path: mongod.conf
+        - name: abcdesktop
+          secret:
+            secretName: secret-mongodb
+            items:
+            - key: MONGO_ROOT_USERNAME
+              path: admin/MONGO_ROOT_USERNAME
+              mode: 0400
+            - key: MONGO_ROOT_PASSWORD
+              path: admin/MONGO_ROOT_PASSWORD
+              mode: 0400
+            - key: MONGO_USERNAME
+              path: MONGO_USERNAME
+              mode: 0400
+            - key: MONGO_PASSWORD
+              path: MONGO_PASSWORD
+              mode: 0400
+            - key: MONGO_USERS_LIST
+              path: MONGO_USERS_LIST
+              mode: 0400
+            - key: MONGO_DBS_LIST
+              path: MONGO_DBS_LIST
+              mode: 0400
+        - name: init-script
+          configMap:
+            name: configmap-mongodb-scripts
+            items:
+              - key: init.js
+                path: init.js
+        - name: keyfile
+          secret:
+            secretName: abcdesktop-mongod-keyfile
+        - name: prepared-config
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+        # --- Non-persistent volume for MongoDB data
+        - name: data
+          emptyDir: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongodb-init-replica
+  labels:
+    abcdesktop/role: mongodb
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: init-replica
+        image: ghcr.io/abcdesktopio/mongo:safe8.0
+        imagePullPolicy: Always
+        command:
+          - bash
+          - -c
+          - |
+            /scripts/init-replica.sh
+        env:
+          - name: NAMESPACE
+            value: metadata.namespace
+          - name: SERVICE
+            value: mongodb
+          - name: STATEFULSET_NAME
+            value: mongodb-od
+          - name: REPLICAS
+            value: "1" # MONGO_REPLICAS
+          - name: MONGO_INITDB_ROOT_USERNAME_FILE
+            value: /etc/abcdesktop/admin/MONGO_ROOT_USERNAME
+          - name: MONGO_INITDB_ROOT_PASSWORD_FILE
+            value: /etc/abcdesktop/admin/MONGO_ROOT_PASSWORD
+          - name: MONGO_AUTH_DB
+            value: admin
+        volumeMounts:
+          - name: scripts
+            mountPath: /scripts/init-replica.sh
+            subPath: init-replica.sh
+          - name: abcdesktop
+            mountPath: /etc/abcdesktop
+            readOnly: true
+      volumes:
+        - name: scripts
+          configMap:
+            name: configmap-mongodb-scripts
+            defaultMode: 0755
+            items:
+              - key: init-replica.sh
+                path: init-replica.sh  
+        - name: abcdesktop
+          secret:
+            secretName: secret-mongodb
+            items:
+            - key: MONGO_ROOT_USERNAME
+              path: admin/MONGO_ROOT_USERNAME
+              mode: 0400
+            - key: MONGO_ROOT_PASSWORD
+              path: admin/MONGO_ROOT_PASSWORD
+              mode: 0400
+            - key: MONGO_USERNAME
+              path: MONGO_USERNAME
+              mode: 0400
+            - key: MONGO_PASSWORD
+              path: MONGO_PASSWORD
+              mode: 0400
+            - key: MONGO_USERS_LIST
+              path: MONGO_USERS_LIST
+              mode: 0400
+            - key: MONGO_DBS_LIST
+              path: MONGO_DBS_LIST
+              mode: 0400                
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memcached-od 
+  labels:
+    abcdesktop/role: memcached
+spec:
+  selector:
+    matchLabels:
+      run: memcached-od
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: memcached-od
+        type: database
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: memcached
+        # like image: memcached:alpine 
+        imagePullPolicy: Always
+        image: ghcr.io/abcdesktopio/oc.memcached:4.4
+        resources:
+          limits:
+            cpu: 0.2
+            memory: 64Mi
+          requests:
+            cpu: 0.1
+            memory: 16Mi
+        ports:
+          - containerPort: 11211
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: router-od
+  labels:
+    abcdesktop/role: router
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: router-od
+  template:
+    metadata:
+      labels:
+        name: router-od
+        run:  router-od
+        type: router-od
+        # list netpool to permit router to connect to
+        netpol/speedtest: 'true'
+        netpol/pyos: 'true'
+        netpol/ocuser: 'true'
+        netpol/dns: 'true'
+        netpol/nginx: 'true'
+        netpol/console: 'true'
+    spec:
+      automountServiceAccountToken: false
+      dnsPolicy: ClusterFirst
+      containers:
+      - name: nginx-router
+        imagePullPolicy: Always
+        image: ghcr.io/abcdesktopio/route:4.4
+        # securityContext:
+        #  readOnlyRootFilesystem: true
+        ports:
+          - containerPort: 80
+            name: http
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+          failureThreshold: 1
+          periodSeconds: 10
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+          failureThreshold: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 512Mi
+          requests:
+            cpu: 0.1
+            memory: 16Mi
+        env:
+          #
+          # overwrite default values for development
+          # you should not change the default values
+          #
+          # - name: SPEEDTEST_FQDN
+          #  value: speedtest.abcdesktop.svc.cluster.local
+          # - name: PYOS_FQDN
+          #  value: pyos.abcdesktop.svc.cluster.local
+          # - name: CONSOLE_FQDN
+          #  value: console.abcdesktop.svc.cluster.local
+          # - name: WEBSITE_FQDN
+          #  value: website.abcdesktop.svc.cluster.local
+          - name: JWT_DESKTOP_PAYLOAD_PRIVATE_KEY
+            value: "/config.payload/abcdesktop_jwt_desktop_payload_private_key.pem"
+          - name: JWT_DESKTOP_SIGNING_PUBLIC_KEY
+            value: "/config.signing/abcdesktop_jwt_desktop_signing_public_key.pem"
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+        volumeMounts:
+          # keys for JWT signing and payload
+          - name: jwtsigningkeys
+            mountPath: "/config.signing"
+            readOnly: true
+          - name: jwtpayloadkeys
+            mountPath: "/config.payload"
+            readOnly: true
+          # non-persistent volumes for nginx
+          # - name: etc-nginx-scgi-temp
+          #  mountPath: /etc/nginx/scgi_temp
+          #  readOnly: false
+          #- name: etc-nginx-uwsgi-temp
+          #  mountPath: /etc/nginx/uwsgi_temp
+          #  readOnly: false
+          #- name: etc-nginx-fastcgi-temp
+          #  mountPath: /etc/nginx/fastcgi_temp
+          #  readOnly: false
+          #- name: usr-local-openresty-log
+          #  mountPath: /usr/local/openresty/nginx/logs
+          #  readOnly: false
+          #- name: var-run-openresty
+          #  mountPath: /var/run/openresty
+          #  readOnly: false
+          #- name: etc-nginx-client-body-temp
+          #  mountPath: /etc/nginx/client_body_temp 
+          #  readOnly: false
+          #- name: etc-nginx-proxy-temp
+          #  mountPath: /etc/nginx/proxy_temp
+          #  readOnly: false
+          #- name: var-log-nginx
+          #  mountPath: /var/log/nginx
+          #  readOnly: false
+          #- name: tmp
+          #  mountPath: /tmp
+          #  readOnly: false
+      volumes:
+        - name: jwtsigningkeys
+          secret:
+            secretName: abcdesktopjwtdesktopsigning
+        - name: jwtpayloadkeys
+          secret:
+            secretName: abcdesktopjwtdesktoppayload
+        #- name: etc-nginx-scgi-temp
+        #emptyDir: {}
+        #- name: etc-nginx-uwsgi-temp
+        #emptyDir: {}
+        #- name: etc-nginx-fastcgi-temp
+        #emptyDir: {}
+        #- name: usr-local-openresty-log
+        #emptyDir: {}
+        #- name: etc-nginx-client-body-temp
+        #emptyDir: {}
+        #- name: var-nginx-log
+        #emptyDir: {}
+        #- name: etc-nginx-proxy-temp
+        #emptyDir: {}
+        #- name: var-log-nginx
+        #emptyDir: {}
+        #- name: tmp
+        #emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-od
+  labels:
+    abcdesktop/role: website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: nginx-od
+  template:
+    metadata:
+      labels:
+        name: nginx-od
+        run: nginx-od
+        type: frontend
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: nginx
+        imagePullPolicy: Always
+        image: ghcr.io/abcdesktopio/oc.nginx:4.4
+        securityContext:
+          readOnlyRootFilesystem: true
+        ports:
+          - containerPort: 80
+            name: http
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          failureThreshold: 1
+          periodSeconds: 10
+        startupProbe:
+          httpGet:
+            path: /
+            port: 80
+          failureThreshold: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 128Mi
+          requests:
+            cpu: 0.1
+            memory: 8Mi
+        volumeMounts:
+          # read-write volumes for nginx
+          - name: var-log-volume
+            mountPath: /var/log/nginx
+            readOnly: false
+          - name: var-cache-volume
+            mountPath: /var/cache/nginx
+            readOnly: false
+          - name: var-run-volume
+            mountPath: /var/run
+            readOnly: false
+      volumes:
+        # read-write volumes for nginx
+        - name: var-log-volume
+          emptyDir: {}
+        - name: var-cache-volume
+          emptyDir: {}
+        - name: var-run-volume
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speedtest-od
+  labels:
+    abcdesktop/role: speedtest
+spec:
+  selector:
+    matchLabels:
+      run: speedtest-od
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: speedtest-od 
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: speedtest
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 128Mi
+          requests:
+            cpu: 0.1
+            memory: 32Mi
+        # like image: ghcr.io/librespeed/speedtest:master-alpine 
+        image: ghcr.io/abcdesktopio/oc.speedtest:4.4
+        ports:
+          - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pyos-od
+  labels:
+    abcdesktop/role: pyos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: pyos-od
+  template:
+    metadata:
+      labels:
+        name: pyos-od
+        run: pyos-od
+        netpol/https: 'true'
+        netpol/ldaps: 'true'
+        netpol/auth: 'true'
+        netpol/cifs: 'true'
+        netpol/api: 'true'
+        netpol/dns: 'true'
+        netpol/mongodb: 'true'
+        netpol/memcached: 'true'
+        netpol/graylog: 'true'
+        netpol/router: 'true'
+        netpol/nginx: 'true'
+    spec:
+      initContainers:
+      - name: wait-for-mongo
+        image: ghcr.io/abcdesktopio/mongo:safe8.0
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 512Mi
+          requests:
+            cpu: 0.1
+            memory: 256Mi
+        command:
+          - sh
+          - -c
+          - |
+            until mongosh --host mongodb --eval "db.adminCommand('ping')" --quiet; do
+              echo "Waiting for MongoDB...";
+              sleep 2;
+            done
+      serviceAccountName: pyos-serviceaccount
+      dnsPolicy: ClusterFirst
+      containers:
+      - name : pyos
+        imagePullPolicy: Always
+        image: ghcr.io/abcdesktopio/pyos:4.4.alpine_latest
+        volumeMounts:
+          - name: jwtsigningkeys
+            mountPath: "/config.signing"
+            readOnly: true
+          - name: jwtusersigningkeys
+            mountPath: "/config.usersigning"
+            readOnly: true
+          - name: jwtpayloadkeys
+            mountPath: "/config.payload"
+            readOnly: true
+          - name: volume-abcdesktop-config
+            mountPath: /var/pyos/od.config
+            subPath: od.config
+            readOnly: true
+          - name: volume-abcdesktop-passwd-templatefile
+            mountPath: /var/pyos/passwd
+            subPath: passwd
+            readOnly: true
+          - name: volume-abcdesktop-group-templatefile
+            mountPath: /var/pyos/group
+            subPath: group
+            readOnly: true
+          - name: volume-abcdesktop-shadow-templatefile
+            mountPath: /var/pyos/shadow
+            subPath: shadow
+            readOnly: true
+          - name: volume-abcdesktop-gshadow-templatefile
+            mountPath: /var/pyos/gshadow
+            subPath: gshadow
+            readOnly: true
+        ports:
+          - containerPort: 8000
+        livenessProbe:
+          httpGet:
+            path: /API/healthz
+            port: 8000
+          failureThreshold: 1
+          periodSeconds: 10
+        startupProbe:
+          httpGet:
+            path: /API/healthz
+            port: 8000
+          failureThreshold: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 1
+            memory: 2048Mi
+          requests:
+            cpu: 0.1
+            memory: 256Mi
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: MONGODB_URL
+            valueFrom:
+              secretKeyRef:
+                name: secret-mongodb
+                key: MONGODB_URL
+          - name: OAUTHLIB_RELAX_TOKEN_SCOPE
+            value: "1"
+      volumes:
+        - name: jwtusersigningkeys
+          secret:
+            secretName: abcdesktopjwtusersigning
+        - name: jwtsigningkeys
+          secret:
+            secretName: abcdesktopjwtdesktopsigning
+        - name: jwtpayloadkeys
+          secret:
+            secretName: abcdesktopjwtdesktoppayload
+        - name: volume-abcdesktop-config
+          configMap:
+            name: abcdesktop-config
+        - name: volume-abcdesktop-passwd-templatefile
+          configMap:
+            name: abcdesktop-passwd-templatefile
+        - name: volume-abcdesktop-group-templatefile
+          configMap:
+            name: abcdesktop-group-templatefile
+        - name: volume-abcdesktop-shadow-templatefile
+          configMap:
+            name: abcdesktop-shadow-templatefile
+        - name: volume-abcdesktop-gshadow-templatefile
+          configMap:
+            name: abcdesktop-gshadow-templatefile
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: console-od
+  labels:
+    abcdesktop/role: console
+spec:
+  selector:
+    matchLabels:
+      run: console-od
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: console-od
+        type: admin-console
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: console
+        imagePullPolicy: Always
+        image: ghcr.io/abcdesktopio/console:4.4
+        securityContext:
+          readOnlyRootFilesystem: true
+        ports:
+          - containerPort: 80
+        env:
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 128Mi
+          requests:
+            cpu: 0.1
+            memory: 16Mi
+        volumeMounts:
+          - name: version-config-volume
+            mountPath: /usr/share/nginx/html/config/versionConfig.json
+            subPath: versionConfig.json
+            readOnly: true
+          # read-write volumes for nginx
+          - name: var-log-volume
+            mountPath: /var/log/nginx
+            readOnly: false
+          - name: var-cache-volume
+            mountPath: /var/cache/nginx
+            readOnly: false
+          - name: var-run-volume
+            mountPath: /var/run
+            readOnly: false
+      volumes:
+        # read-write volumes for nginx
+        - name: var-log-volume
+          emptyDir: {}
+        - name: var-cache-volume
+          emptyDir: {}
+        - name: var-run-volume
+          emptyDir: {}
+        - name: version-config-volume
+          configMap:
+            name: version-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openldap-od
+  labels:
+    abcdesktop/role: openldap
+spec:
+  selector:
+    matchLabels:
+      run: openldap-od
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: openldap-od
+        netpol/dns: 'true'
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: openldap
+        # abcdesktopio/docker-test-openldap:master
+        # is same as https://github.com/rroemhild/docker-test-openldap
+        # but with posixAccount support
+        image: ghcr.io/abcdesktopio/docker-test-openldap:4.4
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 2048Mi
+          requests:
+            cpu: 0.1
+            memory: 128Mi
+        ports:
+          - containerPort: 389
+          - containerPort: 636
+---
+apiVersion: v1 
+kind: Service 
+metadata: 
+  name: desktop
+  labels:
+    abcdesktop/role: desktop
+spec: 
+  clusterIP: None
+  selector:
+    type: x11server
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: memcached
+  labels:
+    abcdesktop/role: memcached
+spec:
+  selector:
+    run: memcached-od
+  ports:
+  - port: 11211
+    protocol: TCP
+    targetPort: 11211
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: mongodb
+  labels:
+    abcdesktop/role: mongodb
+spec:
+  clusterIP: None
+  selector:
+    run: mongodb-od
+  ports:
+  - protocol: TCP
+    port: 27017
+    targetPort: 27017
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: speedtest
+  labels:
+    abcdesktop/role: speedtest
+spec:
+  selector:
+    run: speedtest-od
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: pyos
+  labels:
+    abcdesktop/role: pyos
+spec:
+  selector:
+    run: pyos-od
+  ports:
+  - port: 8000
+    protocol: TCP
+    targetPort: 8000
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: console
+  labels:
+    abcdesktop/role: console
+spec:
+  selector:
+    run: console-od
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: http-router
+  labels:
+    abcdesktop/role: router
+spec:
+  selector:
+    run: router-od
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    name: http
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: website
+  labels:
+    abcdesktop/role: website
+spec:
+  selector:
+    run: nginx-od
+  ports:
+  - protocol: TCP
+    port: 80
+    name: http
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: openldap
+  labels:
+    abcdesktop/role: openldap
+spec:
+  selector:
+    run: openldap-od
+  ports:
+  - name: ldap
+    protocol: TCP
+    port: 389
+    targetPort: 389
+  - name: ldaps
+    protocol: TCP
+    port: 636
+    targetPort: 636

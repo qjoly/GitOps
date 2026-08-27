@@ -1,0 +1,25 @@
+# The router fronts everything: website, pyos API and the desktop websockets.
+# Access control is authentik's job, see the authmanagers block in od.config.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: abcdesktop
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - abcdesktop.mocha.thoughtless.eu
+      secretName: abcdesktop-tls
+  rules:
+    - host: abcdesktop.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: http-router
+                port:
+                  number: 80
