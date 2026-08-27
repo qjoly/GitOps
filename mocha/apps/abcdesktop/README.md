@@ -61,6 +61,24 @@ vault kv put kv/abcdesktop \
   mongo_pyos_password="$(openssl rand -hex 16)"
 ```
 
+## Applications
+
+Applications are not part of the desktop image: each one runs as its own
+container inside the session pod. They live in mongodb, and upstream registers
+them by POSTing a `docker inspect` output to the pyos manager API — there is no
+manifest for it. `manifests/apps-register.yaml` does that from a list of image
+references, rebuilding the payload from the registry API (no docker daemon
+involved), as an ArgoCD PostSync hook. To add an application, add its image to
+the `applist` key and sync.
+
+Available images are the `*.d` ones in `ghcr.io/abcdesktopio`, built from
+[oc.apps](https://github.com/abcdesktopio/oc.apps).
+
+The desktop image itself is Ubuntu-only upstream: `oc.user` ships a
+`Dockerfile.ubuntu` and nothing else, so there is no Fedora session image. The
+RPM-based application images (`firefoxrockylinux.d`, `firefoxalmalinux.d`) are
+the closest thing available, and they run fine next to the Ubuntu desktop.
+
 ## Single session only
 
 Sized for one desktop at a time: everything runs with `replicas: 1`. State is

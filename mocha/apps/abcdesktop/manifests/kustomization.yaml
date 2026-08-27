@@ -9,6 +9,7 @@ resources:
   - externalsecrets.yaml
   - ingress.yaml
   - mongodb-pvc.yaml
+  - apps-register.yaml
 
 # The install script builds this ConfigMap from od.config and labels it so pyos
 # picks it up.
