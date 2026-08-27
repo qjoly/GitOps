@@ -5,8 +5,7 @@
 `manifests/` and everything the script would have generated locally (RSA keys,
 mongodb keyfile) comes from Vault instead.
 
-Reachable on <https://abcdesktop.mocha.thoughtless.eu>, restricted to the CIDRs
-listed in `manifests/ingress.yaml`.
+Reachable on <https://abcdesktop.mocha.thoughtless.eu>, behind authentik.
 
 ## Local changes to the upstream files
 
@@ -19,8 +18,11 @@ listed in `manifests/ingress.yaml`.
   public OAuth2 client: pyos reads its config from a ConfigMap, which is not a
   place for a client secret. The `openldap-od` deployment is left running, it
   simply has no user anymore.
+- `od.config`: the desktop home directory is a per-user PVC instead of an
+  emptyDir, so a session survives a pod restart.
 - `manifests/kustomization.yaml`: drops the upstream `secret-mongodb`, whose
-  passwords are public, and makes the mongodb init Job replaceable.
+  passwords are public, makes the mongodb init Job replaceable, and moves the
+  mongodb data to a PVC.
 
 Everything else is upstream, so refreshing the app means re-downloading the two
 files:
@@ -61,9 +63,10 @@ vault kv put kv/abcdesktop \
 
 ## Single session only
 
-Sized for one desktop at a time, as upstream ships it: everything runs with
-`replicas: 1`, mongodb data and the desktop home directories are `emptyDir`
-volumes. A user session (and its preferences) does not survive a pod restart.
+Sized for one desktop at a time: everything runs with `replicas: 1`. State is
+persistent though — mongodb keeps its data in `mongodb-data`, and each user gets
+a 10Gi home PVC named `authentik-<userid>`, kept when the session ends
+(`desktop.removepersistentvolumeclaim` stays False).
 
 Desktop images are pulled on demand from `ghcr.io/abcdesktopio`, the first login
 takes a while.

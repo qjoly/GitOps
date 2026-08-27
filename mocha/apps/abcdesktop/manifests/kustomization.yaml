@@ -8,6 +8,7 @@ resources:
   - abcdesktop-4.4.yaml
   - externalsecrets.yaml
   - ingress.yaml
+  - mongodb-pvc.yaml
 
 # The install script builds this ConfigMap from od.config and labels it so pyos
 # picks it up.
@@ -45,3 +46,17 @@ patches:
         name: mongodb-init-replica
         annotations:
           argocd.argoproj.io/sync-options: Replace=true
+
+  # Upstream mounts an emptyDir here. kustomize ignores $retainKeys in a
+  # strategic merge on this field, so the swap is done as a JSON patch: it
+  # fails loudly if upstream ever reorders the volumes.
+  - target:
+      kind: StatefulSet
+      name: mongodb-od
+    patch: |
+      - op: remove
+        path: /spec/template/spec/volumes/7/emptyDir
+      - op: add
+        path: /spec/template/spec/volumes/7/persistentVolumeClaim
+        value:
+          claimName: mongodb-data

@@ -8,6 +8,9 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
+      # od.config is a hashed ConfigMap: without prune the superseded ones pile
+      # up and keep the app OutOfSync forever.
+      prune: true
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
