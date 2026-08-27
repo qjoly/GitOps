@@ -10,6 +10,8 @@ data:
   applist: |
     ghcr.io/abcdesktopio/firefox.d:4.4
     ghcr.io/abcdesktopio/firefoxrockylinux.d:4.4
+    ghcr.io/abcdesktopio/vscode.d:4.4
+    ghcr.io/abcdesktopio/terminal.d:4.4
   register.py: |
     import json, os, sys, time, urllib.error, urllib.request
 
