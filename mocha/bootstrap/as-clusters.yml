@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: mocha-guest-clusters
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/qjoly/gitops.git
+        revision: HEAD
+        files:
+          - path: mocha/clusters/values/*.yaml
+  template:
+    metadata:
+      name: "cluster-{{ .talosCluster.name }}"
+    spec:
+      project: "default"
+      sources:
+        - repoURL: https://github.com/qjoly/kubevirt-capi-easy.git
+          targetRevision: main
+          path: charts/kubevirt-talos
+          helm:
+            valueFiles:
+              - $values/mocha/clusters/values/{{ .path.filename }}
+        - repoURL: https://github.com/qjoly/gitops.git
+          targetRevision: HEAD
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .talosCluster.name }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
