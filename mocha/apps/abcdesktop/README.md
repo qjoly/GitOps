@@ -12,6 +12,13 @@ listed in `manifests/ingress.yaml`.
 
 - `od.config`: `default_host_url` points to the ingress and `websocketrouting`
   uses it instead of the `Origin` header.
+- `od.config`: the `authmanagers` block declares authentik as the only provider
+  and disables the LDAP demo directory and the anonymous login that ship with
+  abcdesktop. The matching authentik provider lives in
+  `mocha/system/authentik/authentik.yaml`, provisioned like the others. It is a
+  public OAuth2 client: pyos reads its config from a ConfigMap, which is not a
+  place for a client secret. The `openldap-od` deployment is left running, it
+  simply has no user anymore.
 - `manifests/kustomization.yaml`: drops the upstream `secret-mongodb`, whose
   passwords are public, and makes the mongodb init Job replaceable.
 
@@ -22,7 +29,7 @@ files:
 cd mocha/apps/abcdesktop/manifests
 curl -sLO https://raw.githubusercontent.com/abcdesktopio/conf/main/kubernetes/abcdesktop-4.4.yaml
 curl -sL https://raw.githubusercontent.com/abcdesktopio/conf/main/reference/od.config.4.4 -o od.config
-# then reapply the two od.config edits above
+# then reapply the od.config edits listed above
 ```
 
 ## One-shot: push the secrets to Vault

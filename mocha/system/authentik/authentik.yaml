@@ -202,6 +202,18 @@ spec:
                 scopes: [email, profile, openid, offline_access]
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/anthropic.svg
+              # abcdesktop's pyos exchanges the code server-side but the
+              # client_secret would have to sit in a ConfigMap, hence public.
+              - slug: abcdesktop
+                name: Provider for abcdesktop (mocha)
+                appName: abcdesktop
+                clientType: public
+                clientID: abcdesktop
+                redirectURIs:
+                  - https://abcdesktop.mocha.thoughtless.eu/API/auth/oauth?manager=external&provider=authentik
+                scopes: [email, profile, openid]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kasm.svg
               - slug: toutou
                 name: Provider for Toutou (mocha)
                 appName: Toutou
