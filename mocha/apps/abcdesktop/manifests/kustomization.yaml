@@ -1,0 +1,47 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  # Vendored as-is from
+  # https://raw.githubusercontent.com/abcdesktopio/conf/main/kubernetes/abcdesktop-4.4.yaml
+  # Keep it untouched: local changes live in the patches below.
+  - abcdesktop-4.4.yaml
+  - externalsecrets.yaml
+  - ingress.yaml
+
+# The install script builds this ConfigMap from od.config and labels it so pyos
+# picks it up.
+configMapGenerator:
+  - name: abcdesktop-config
+    files:
+      - od.config
+    options:
+      labels:
+        abcdesktop/role: pyos.config
+
+patches:
+  # Upstream ships mongodb credentials in clear text in the manifest, so anyone
+  # reading the public repo knows them. Dropped here, externalsecrets.yaml
+  # recreates the same Secret from Vault.
+  - target:
+      kind: Secret
+      name: secret-mongodb
+    patch: |
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: secret-mongodb
+
+  # A Job spec is immutable: without Replace, any future edit of the upstream
+  # manifest makes the sync fail instead of recreating the Job.
+  - target:
+      kind: Job
+      name: mongodb-init-replica
+    patch: |
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: mongodb-init-replica
+        annotations:
+          argocd.argoproj.io/sync-options: Replace=true

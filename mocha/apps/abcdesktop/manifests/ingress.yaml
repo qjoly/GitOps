@@ -1,0 +1,37 @@
+# The router fronts everything: website, pyos API and the desktop websockets.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: abcdesktop
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+    # Anonymous login is enabled in od.config, so the entrypoint stays
+    # restricted to the CIDRs listed in the Middleware below.
+    traefik.ingress.kubernetes.io/router.middlewares: abcdesktop-allowlist@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - abcdesktop.mocha.thoughtless.eu
+      secretName: abcdesktop-tls
+  rules:
+    - host: abcdesktop.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: http-router
+                port:
+                  number: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: allowlist
+spec:
+  ipAllowList:
+    sourceRange:
+      - 104.30.161.148/32
+      - 82.64.54.199/32
