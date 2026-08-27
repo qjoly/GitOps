@@ -21,8 +21,12 @@ Reachable on <https://abcdesktop.mocha.thoughtless.eu>, behind authentik.
 - `od.config`: the desktop home directory is a per-user PVC instead of an
   emptyDir, so a session survives a pod restart.
 - `manifests/kustomization.yaml`: drops the upstream `secret-mongodb`, whose
-  passwords are public, makes the mongodb init Job replaceable, and moves the
-  mongodb data to a PVC.
+  passwords are public, and moves the mongodb data to a PVC.
+
+If the upstream `mongodb-init-replica` Job ever changes, the sync will fail on
+its immutable spec: delete the Job and let ArgoCD recreate it. Do not reach for
+`Replace=true`, ArgoCD then replaces the Job on *every* sync and a live Job has
+no `spec.selector` to replace with.
 
 Everything else is upstream, so refreshing the app means re-downloading the two
 files:

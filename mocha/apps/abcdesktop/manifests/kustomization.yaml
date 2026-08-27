@@ -35,18 +35,6 @@ patches:
       metadata:
         name: secret-mongodb
 
-  # A Job spec is immutable: without Replace, any future edit of the upstream
-  # manifest makes the sync fail instead of recreating the Job.
-  - target:
-      kind: Job
-      name: mongodb-init-replica
-    patch: |
-      apiVersion: batch/v1
-      kind: Job
-      metadata:
-        name: mongodb-init-replica
-        annotations:
-          argocd.argoproj.io/sync-options: Replace=true
 
   # Upstream mounts an emptyDir here. kustomize ignores $retainKeys in a
   # strategic merge on this field, so the swap is done as a JSON patch: it
