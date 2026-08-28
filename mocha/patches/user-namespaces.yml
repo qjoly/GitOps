@@ -1,0 +1,7 @@
+# Talos ships user.max_user_namespaces=0. Chromium and Electron need an
+# unprivileged user namespace for their zygote sandbox, so VS Code died at
+# startup with "Failed to move to new namespace ... Operation not permitted".
+# 15000 is the usual value on Fedora and Ubuntu.
+machine:
+  sysctls:
+    user.max_user_namespaces: "15000"

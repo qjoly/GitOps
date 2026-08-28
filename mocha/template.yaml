@@ -29,6 +29,10 @@ patches:
      # them. The ceiling was the default, not the hardware.
    - name: max-pods
      file: patches/max-pods.yml
+     # Needed by the Chromium/Electron sandbox: abcdesktop runs VS Code, which
+     # cannot start without an unprivileged user namespace.
+   - name: user-namespaces
+     file: patches/user-namespaces.yml
 systemExtensions:
   - siderolabs/iscsi-tools
   - siderolabs/zfs
