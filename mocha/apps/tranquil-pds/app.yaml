@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tranquil-pds
+  namespace: argocd
+spec:
+  project: default
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: tranquil-pds-db
+      jsonPointers:
+        - /spec/persistentVolumeClaimRetentionPolicy
+        - /spec/podManagementPolicy
+        - /spec/revisionHistoryLimit
+      jqPathExpressions:
+        - '.spec.volumeClaimTemplates[].apiVersion'
+        - '.spec.volumeClaimTemplates[].kind'
+        - '.spec.volumeClaimTemplates[].metadata.creationTimestamp'
+        - '.spec.volumeClaimTemplates[].spec.volumeMode'
+        - '.spec.volumeClaimTemplates[].status'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tranquil-pds
+  source:
+    repoURL: https://rubxkube.github.io/charts
+    chart: tranquil-pds
+    targetRevision: 0.1.0
+    helm:
+      values: |
+        imagePullPolicy: Always
+        storageClass: openebs-lvmpv
+        ingress:
+          host: pds.mocha.thoughtless.eu
+          className: traefik
+          clusterIssuer: cloudflare
+        sso:
+          issuer: https://authentik.mocha.thoughtless.eu/application/o/tranquil-pds/
+          displayName: Authentik
