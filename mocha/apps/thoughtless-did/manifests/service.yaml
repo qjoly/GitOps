@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoughtless-did
+  labels:
+    app: thoughtless-did
+spec:
+  selector:
+    app: thoughtless-did
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

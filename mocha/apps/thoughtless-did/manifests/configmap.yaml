@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thoughtless-did
+data:
+  default.conf: |
+    server {
+        listen 8080 default_server;
+        server_name _;
+
+        location = /.well-known/did.json {
+            default_type application/json;
+            add_header Access-Control-Allow-Origin "*" always;
+            alias /srv/well-known/did.json;
+        }
+
+        location = /.well-known/atproto-did {
+            default_type text/plain;
+            add_header Access-Control-Allow-Origin "*" always;
+            alias /srv/well-known/atproto-did;
+        }
+
+        location = /healthz {
+            default_type text/plain;
+            return 200 "ok\n";
+        }
+
+        location / {
+            return 404;
+        }
+    }
+  # did:web document for did:web:thoughtless.eu. The publicKeyMultibase is the
+  # account's repo signing key -- verify_did_web compares it exactly, so it is
+  # load-bearing and must not be regenerated.
+  did.json: |
+    {
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/multikey/v1",
+        "https://w3id.org/security/suites/secp256k1-2019/v1"
+      ],
+      "id": "did:web:thoughtless.eu",
+      "alsoKnownAs": ["at://thoughtless.eu"],
+      "verificationMethod": [
+        {
+          "id": "did:web:thoughtless.eu#atproto",
+          "type": "Multikey",
+          "controller": "did:web:thoughtless.eu",
+          "publicKeyMultibase": "zQ3shkWnhAT4daQBN1EsQUVU6VGPkfrpuK4zzA6fqSEmobFCU"
+        }
+      ],
+      "service": [
+        {
+          "id": "#atproto_pds",
+          "type": "AtprotoPersonalDataServer",
+          "serviceEndpoint": "https://pds.mocha.thoughtless.eu"
+        }
+      ]
+    }
+  atproto-did: |
+    did:web:thoughtless.eu
