@@ -16,3 +16,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       flatpak \
       dbus-x11 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# flatpak run asks accountsservice for the user's locales over the system bus.
+# The daemon needs root, the desktop runs as uid 4096, and dbus then answers
+# "Failed to execute program org.freedesktop.Accounts: Permission denied",
+# which flatpak treats as fatal. Dropping the activation file makes dbus answer
+# ServiceUnknown instead, which flatpak shrugs off. The daemon could not have
+# started here anyway.
+RUN rm -f /usr/share/dbus-1/system-services/org.freedesktop.Accounts.service
