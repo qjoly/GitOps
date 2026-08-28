@@ -93,6 +93,23 @@ The desktop image itself is Ubuntu-only upstream: `oc.user` ships a
 RPM-based application images (`firefoxrockylinux.d`, `firefoxalmalinux.d`) are
 the closest thing available, and they run fine next to the Ubuntu desktop.
 
+## The Chromium sandbox needs two things
+
+VS Code (and any Electron or Chromium app) starts its zygote sandbox by calling
+`clone(CLONE_NEWUSER)`. Two separate defaults block it, and both had to go:
+
+- `user.max_user_namespaces` is 0 on Talos -> `mocha/patches/user-namespaces.yml`.
+- the runtime's default seccomp filter denies the call whatever that sysctl says
+  -> the desktop pod runs a `Localhost` profile, written on the node by
+  `mocha/patches/seccomp-userns.yml`. It keeps `defaultAction: SCMP_ACT_ERRNO`
+  and allows `clone`/`unshare`/`setns`, rather than dropping the filter with
+  `Unconfined`.
+
+Fixing only one of them changes nothing: the symptom stays
+`Failed to move to new namespace ... Operation not permitted` followed by a
+zygote FATAL, and the application container exits with code 0 within a second.
+Firefox is more forgiving, it just runs with a degraded sandbox.
+
 ## Single session only
 
 Sized for one desktop at a time: everything runs with `replicas: 1`. State is

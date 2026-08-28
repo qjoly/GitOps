@@ -33,6 +33,10 @@ patches:
      # cannot start without an unprivileged user namespace.
    - name: user-namespaces
      file: patches/user-namespaces.yml
+     # Companion of the sysctl above: the default seccomp filter denies
+     # clone(CLONE_NEWUSER) on its own.
+   - name: seccomp-userns
+     file: patches/seccomp-userns.yml
 systemExtensions:
   - siderolabs/iscsi-tools
   - siderolabs/zfs
