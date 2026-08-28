@@ -8,12 +8,21 @@
 # the filter entirely.
 #
 # Derived from the reference profile of containers/common
-# (pkg/seccomp/seccomp.json): defaultAction stays SCMP_ACT_ERRNO, clone,
-# clone3, unshare and setns stay allowed, and mount/umount/pivot_root/reboot/
-# module loading/time setting were moved behind their capability, the way
-# containerd gates them. The desktop has none of those capabilities, so they
-# are refused. It is not bit-for-bit containerd's profile: regenerate from the
-# same source if you need to refresh it.
+# (pkg/seccomp/seccomp.json): defaultAction stays SCMP_ACT_ERRNO and every
+# syscall outside the lists below is refused with ENOSYS. clone, clone3,
+# unshare and setns are allowed, which is the whole point.
+#
+# The `includes: {caps: [...]}` fields on mount, reboot, module loading and
+# friends are a containers/common extension that podman and CRI-O honour but
+# containerd IGNORES: with this runtime those rules apply as plain ALLOW.
+# Measured, not assumed - mount() from the desktop returns EPERM (1), not the
+# ENOSYS (38) this profile would return. So the syscall filter does not gate
+# them; the empty capability set does, which is the mechanism that matters.
+# Keeping the fields anyway: they are accurate documentation of intent and
+# would take effect under a CRI-O runtime.
+#
+# Do not turn them into explicit SCMP_ACT_ERRNO rules without checking
+# flatpak: bubblewrap needs mount inside its own user namespace.
 machine:
   seccompProfiles:
     - name: abcdesktop.json

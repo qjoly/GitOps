@@ -103,7 +103,9 @@ VS Code (and any Electron or Chromium app) starts its zygote sandbox by calling
   -> the desktop pod runs a `Localhost` profile, written on the node by
   `mocha/patches/seccomp-userns.yml`. It keeps `defaultAction: SCMP_ACT_ERRNO`
   and allows `clone`/`unshare`/`setns`, rather than dropping the filter with
-  `Unconfined`.
+  `Unconfined`. Note that the profile's `includes: {caps: ...}` fields are a
+  containers/common extension containerd ignores, so mount and friends are
+  gated by the empty capability set, not by seccomp.
 
 Fixing only one of them changes nothing: the symptom stays
 `Failed to move to new namespace ... Operation not permitted` followed by a
