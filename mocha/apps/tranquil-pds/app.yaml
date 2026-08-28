@@ -32,7 +32,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/charts
     chart: tranquil-pds
-    targetRevision: 0.1.0
+    targetRevision: 0.2.0
     helm:
       values: |
         # Pinned to a digest that ships the built-in frontend (/app UI).
@@ -47,3 +47,12 @@ spec:
         sso:
           issuer: https://authentik.mocha.thoughtless.eu/application/o/tranquil-pds/
           displayName: Authentik
+        # Default relay list minus relay.fire.hose.cam (dead host, spams requestCrawl WARNs).
+        crawlers:
+          - https://relay3.fr.hose.cam
+          - https://bsky.network
+          - https://northamerica.firehose.network
+          - https://europe.firehose.network
+          - https://asia.firehose.network
+          - https://atproto.africa
+          - https://relay.upcloud.world
