@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: thoughtless-did
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: thoughtless-did
+  source:
+    repoURL: https://github.com/qjoly/gitops.git
+    targetRevision: HEAD
+    path: mocha/apps/thoughtless-did/manifests
