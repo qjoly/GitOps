@@ -35,7 +35,10 @@ spec:
     targetRevision: 0.1.0
     helm:
       values: |
-        imagePullPolicy: Always
+        # Pinned to a digest that ships the built-in frontend (/app UI).
+        # The :latest tag drifted to a build without the `frontend` feature.
+        image: atcr.io/tranquil.farm/tranquil-pds@sha256:9d803e048be9231ddc5dde854b9f581bf40a614adb6c812ac497bc7b8d4c06ce
+        imagePullPolicy: IfNotPresent
         storageClass: openebs-lvmpv
         ingress:
           host: pds.mocha.thoughtless.eu
