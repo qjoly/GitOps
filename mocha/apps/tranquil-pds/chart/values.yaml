@@ -1,23 +1,18 @@
 image: atcr.io/tranquil.farm/tranquil-pds:latest
+imagePullPolicy: Always
 
-# Private atcr.io repo: bootstrapped dockerconfigjson pull secret.
+# Private atcr.io repo. Pull secret materialized from Vault (kv/tranquil-pds
+# key `dockerconfigjson`) via external-secrets — see templates/pull-secret.yaml.
 imagePullSecret: atcr-pull
 
-# Bootstrapped out-of-band. Consumed as env vars by the app:
-#   PDS_HOSTNAME, DATABASE_URL, JWT_SECRET, DPOP_SECRET, MASTER_KEY
-# and by the postgres StatefulSet: DB_PASSWORD (must match the password in DATABASE_URL).
+# Vault-backed (external-secrets). Keys: DB_PASSWORD, JWT_SECRET, DPOP_SECRET,
+# MASTER_KEY, SSO_OIDC_CLIENT_ID, SSO_OIDC_CLIENT_SECRET.
 secretName: tranquil-pds-secrets
 
 storageClass: openebs-lvmpv
 
 app:
-  # UID/GID the distroless nonroot image runs as; also owns the mounted data volume.
-  runAsUser: 65532
-  # Persistent filesystem blob store under /var/lib/tranquil-pds (~1Gi per active user).
-  storage: 10Gi
-  # Non-secret config overrides. Every option also has an env var (see example.toml).
-  env:
-    INVITE_CODE_REQUIRED: "true"
+  blobStorage: 10Gi
   resources:
     requests:
       cpu: 100m
@@ -27,7 +22,7 @@ app:
 
 db:
   image: postgres:18-alpine
-  storage: 5Gi
+  storage: 10Gi
   resources:
     requests:
       cpu: 50m
@@ -36,8 +31,14 @@ db:
       memory: 512Mi
 
 ingress:
-  # User handles are served as subdomains, so the cert must cover the apex and *.host.
   host: pds.mocha.thoughtless.eu
   className: traefik
   clusterIssuer: cloudflare
   tlsSecretName: tranquil-pds-tls
+
+sso:
+  issuer: https://authentik.mocha.thoughtless.eu/application/o/tranquil-pds/
+  displayName: Authentik
+
+vault:
+  key: tranquil-pds

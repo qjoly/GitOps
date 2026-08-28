@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tranquil-pds
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   selector:
@@ -16,48 +18,86 @@ spec:
     spec:
       imagePullSecrets:
         - name: {{ .Values.imagePullSecret }}
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: {{ .Values.app.runAsUser }}
-        runAsGroup: {{ .Values.app.runAsUser }}
-        fsGroup: {{ .Values.app.runAsUser }}
       containers:
         - name: tranquil-pds
           image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
           ports:
             - containerPort: 3000
-          envFrom:
-            - secretRef:
-                name: {{ .Values.secretName }}
           env:
-            {{- range $k, $v := .Values.app.env }}
-            - name: {{ $k }}
-              value: {{ $v | quote }}
-            {{- end }}
+            - name: PDS_HOSTNAME
+              value: {{ .Values.ingress.host | quote }}
+            - name: SERVER_HOST
+              value: "0.0.0.0"
+            - name: SERVER_PORT
+              value: "3000"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: DB_PASSWORD
+            - name: DATABASE_URL
+              value: postgres://tranquil_pds:$(DB_PASSWORD)@tranquil-pds-db:5432/pds
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: JWT_SECRET
+            - name: DPOP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: DPOP_SECRET
+            - name: MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: MASTER_KEY
+            - name: SSO_OIDC_ENABLED
+              value: "true"
+            - name: SSO_OIDC_ISSUER
+              value: {{ .Values.sso.issuer | quote }}
+            - name: SSO_OIDC_DISPLAY_NAME
+              value: {{ .Values.sso.displayName | quote }}
+            - name: SSO_OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: SSO_OIDC_CLIENT_ID
+            - name: SSO_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: SSO_OIDC_CLIENT_SECRET
           volumeMounts:
-            # Mount only the data subdirs, never /var/lib/tranquil-pds itself:
-            # the image ships the web frontend there and a full mount would shadow it.
-            - name: data
+            - name: blobs
               mountPath: /var/lib/tranquil-pds/blobs
-              subPath: blobs
-            - name: data
-              mountPath: /var/lib/tranquil-pds/store
-              subPath: store
           readinessProbe:
             httpGet:
               path: /xrpc/_health
               port: 3000
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /xrpc/_health
               port: 3000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
             periodSeconds: 20
           resources:
             {{- toYaml .Values.app.resources | nindent 12 }}
       volumes:
-        - name: data
+        - name: blobs
           persistentVolumeClaim:
-            claimName: tranquil-pds-data
+            claimName: tranquil-pds-blobs
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tranquil-pds-blobs
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: {{ .Values.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.app.blobStorage }}

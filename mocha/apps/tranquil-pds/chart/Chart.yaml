@@ -1,5 +1,5 @@
 apiVersion: v2
 name: tranquil-pds
-description: AT Protocol Personal Data Server (Rust single-binary) — tranquil.farm
+description: Tranquil PDS (AT Protocol Personal Data Server, Rust) with Authentik SSO
 version: 0.1.0
 appVersion: "latest"
