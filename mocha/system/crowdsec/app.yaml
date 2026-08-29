@@ -42,19 +42,14 @@ spec:
               serviceMonitor:
                 enabled: true
           lapi:
-            resources:
-              requests:
-                cpu: 500m
-                memory: 500Mi
-              limits:
-                cpu: "2"
-                memory: 512Mi
             env:
               - name: BOUNCER_KEY_traefik
                 valueFrom:
                   secretKeyRef:
                     name: crowdsec-bouncer
                     key: key
+              - name: USE_WAL
+                value: "true"
             persistentVolume:
               data:
                 enabled: true
