@@ -1,0 +1,143 @@
+---
+# The app is retired: xcancel shut down, so BlueWeave has no source to read.
+# What stays deployed is a static page explaining it.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: blueweave
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blueweave-down-page
+  namespace: blueweave
+data:
+  index.html: |
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>BlueWeave is down</title>
+        <style>
+          body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+                 font-family: system-ui, sans-serif; background: #10131a; color: #e8ecf1; }
+          main { max-width: 34rem; padding: 2rem; line-height: 1.6; }
+          h1 { margin: 0 0 1rem; font-size: 1.8rem; }
+        </style>
+      </head>
+      <body>
+        <main>
+          <h1>BlueWeave is broken</h1>
+          <p>
+            BlueWeave relied on <strong>xcancel</strong> to read tweets. xcancel has shut
+            down, so there is no source left to weave from and the app cannot work.
+          </p>
+          <p>Nothing to do on your side. Sorry for the noise.</p>
+        </main>
+      </body>
+    </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blueweave
+  namespace: blueweave
+  labels:
+    app: blueweave
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blueweave
+  template:
+    metadata:
+      labels:
+        app: blueweave
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: page
+          configMap:
+            name: blueweave-down-page
+        # nginx still needs somewhere to write its pid and request temp files.
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+      containers:
+        # Unprivileged variant: listens on 8080 and needs no root.
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.29-alpine
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: page
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /var/cache/nginx
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blueweave
+  namespace: blueweave
+  labels:
+    app: blueweave
+spec:
+  selector:
+    app: blueweave
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blueweave
+  namespace: blueweave
+  labels:
+    app: blueweave
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - blueweave.app
+      secretName: blueweave-tls
+  rules:
+    - host: blueweave.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blueweave
+                port:
+                  name: http
