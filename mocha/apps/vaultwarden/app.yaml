@@ -22,7 +22,7 @@ spec:
               name: "vaultwarden"
               image:
                 repository: vaultwarden/server
-                tag: "1.37.0"
+                tag: "1.37.2"
               service:
                 servicePort: 80
                 containerPort: 80
