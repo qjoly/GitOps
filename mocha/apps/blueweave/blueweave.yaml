@@ -71,7 +71,7 @@ spec:
       containers:
         # Unprivileged variant: listens on 8080 and needs no root.
         - name: nginx
-          image: nginxinc/nginx-unprivileged:1.29-alpine
+          image: nginxinc/nginx-unprivileged:1.31-alpine
           ports:
             - name: http
               containerPort: 8080
