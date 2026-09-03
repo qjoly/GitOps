@@ -189,7 +189,7 @@ spec:
                 spec:
                   containers:
                     - name: postgres
-                      image: postgres:17-alpine
+                      image: postgres:18-alpine
                       env:
                         - name: POSTGRES_DB
                           value: toutou
