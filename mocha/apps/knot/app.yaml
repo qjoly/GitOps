@@ -28,7 +28,7 @@ spec:
                   # breaks, silently. Runs after fsGroup is applied, before sshd.
                   initContainers:
                     - name: fix-hostkey-perms
-                      image: alpine:3.22
+                      image: alpine:3.24
                       command:
                         - /bin/sh
                         - -c
