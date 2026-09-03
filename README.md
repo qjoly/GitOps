@@ -7,8 +7,8 @@
 <div align="center">
 
   [![Blog](https://img.shields.io/badge/Blog-blue?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://a-cup-of.coffee/)
-  [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.31.3-blue?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
-  [![Linux](https://img.shields.io/badge/Talos-v1.9.5-blue?style=for-the-badge&logo=linux&logoColor=white)](https://talos.dev/)
+  [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.35.6-blue?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+  [![Linux](https://img.shields.io/badge/Talos-v1.13.5-blue?style=for-the-badge&logo=linux&logoColor=white)](https://talos.dev/)
 
 </div>
 
@@ -24,7 +24,7 @@
 
 This repository contains the configuration files for my homelab. The homelab is a collection of servers and services that I run at home or in the cloud. The homelab is used for learning, testing, and hosting projects.
 
-## Stack 
+## Stack
 
 To avoid headaches and to keep things simple, I use [Talos](https://www.talos.dev/) to manage the Kubernetes cluster (don't hesitate to check [a little article I wrote about it](https://a-cup-of.coffee/blog/talos/)). To be more specific, I have a self-hosted [Omni](https://www.siderolabs.com/platform/saas-for-kubernetes/) instance to manage all clusters with a single endpoint and secure them with SSO.
 
@@ -33,79 +33,45 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 - [**Omni** (Self-hosted)](https://www.siderolabs.com/platform/saas-for-kubernetes/) : Manage all nodes between clusters and regions.
 - [Cilium](https://cilium.io/) as CNI and LB (ARP mode)
 - [ArgoCD](https://argoproj.github.io/argo-cd/) to manage the GitOps workflow
-- ~~[Nginx Ingress Controller](https://kubernetes.github.io/ingress-nginx/) for Ingress management (and [Istio](https://istio.io/) deployed on some clusters)~~
-- [Traefik Ingress Controller](https://doc.traefik.io/traefik/getting-started/install-traefik/#use-the-helm-chart) for Ingress management (as well as for middleware management). 
-- [Cert Manager](https://cert-manager.io/) for TLS certificates.
+- [Traefik](https://doc.traefik.io/traefik/getting-started/install-traefik/#use-the-helm-chart) as Ingress controller (and for middleware management)
+- [Cert Manager](https://cert-manager.io/) for TLS certificates
+- [External DNS](https://kubernetes-sigs.github.io/external-dns/) to publish records from Ingresses
 - Storage:
-  - [Rook](https://rook.io/) for multiple nodes cluster.
-  - OpenEBS + LVM (or ZFS) for single-node cluster.
-  - [ZFS](https://openzfs.github.io/openzfs-docs/) + [Local-Path-Provisioner](https://github.com/rancher/local-path-provisioner) (**Only on Cortado cluster**).
-- ~~[Reflector](https://github.com/emberstack/kubernetes-reflector/blob/main/README.md) to sync secrets across namespaces (requirement for External Secrets + Vault).~~ (Removed 16/12/2024)
-- [External Secrets](https://external-secrets.io/latest/) to fetch secrets from a remote store.
-- [Vault](https://www.vaultproject.io/) as a secret store to store secrets.
-- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet (**Only on the `turing` cluster**).
-- [Volsync](https://github.com/backube/volsync) to create backup and send backup (using restic) to a minio server (**Only on Cortado cluster**).
+  - [Rook](https://rook.io/) (Ceph) on `turing`, plus [csi-driver-nfs](https://github.com/kubernetes-csi/csi-driver-nfs) for the NAS.
+  - [OpenEBS](https://openebs.io/) + LVM on `mocha` (`openebs-lvmpv` is the only StorageClass there).
+- [External Secrets](https://external-secrets.io/latest/) to fetch secrets from a remote store
+- [Vault](https://www.vaultproject.io/) (via [bank-vaults](https://bank-vaults.dev/)) as secret store
+- [Authentik](https://goauthentik.io/) for SSO / forward-auth (**`mocha`**)
+- [SigNoz](https://signoz.io/) + [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator) for metrics, logs and traces
+- [CrowdSec](https://www.crowdsec.net/) to filter traffic hitting the Ingress (**`mocha`**)
+- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet (**`turing`**)
+- [Volsync](https://github.com/backube/volsync) to back up PVCs with restic (**`mocha`**)
+- [Spegel](https://spegel.dev/) to share images between nodes (**`turing`**)
+- [Reloader](https://github.com/stakater/Reloader) to restart workloads when a ConfigMap/Secret changes
+- Cluster API ([KubeVirt](https://kubevirt.io/) + Talos providers) to run guest clusters on `mocha`
 
-### Cluster
+### Clusters
 
-- [**Cortado** : Single node bare-metal cluster hosted by OVH.](https://github.com/qjoly/GitOps/tree/main/cortado) - This cluster is mainly used for backups and small applications (gaming, small sites, etc.).
-<div align="center">
+- [**Mocha**](https://github.com/qjoly/GitOps/tree/main/mocha) : single bare-metal node hosted by OVH (128GB RAM, 8 CPU, 2x512GB NVMe). Production cluster, also the management plane for guest clusters.
+- [**Turing**](https://github.com/qjoly/GitOps/tree/main/turing) : cluster made of small devices (ARM and x86) at home. Local hosting, storage (Rook + NAS) and testing.
 
-[![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Ftalos_version&style=flat-square&logo=talos&logoColor=white&color=red&label=%20)](https://talos.dev)
-[![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fkubernetes_version&style=flat-square&logo=kubernetes&logoColor=white&color=blue&label=%20)](https://kubernetes.io)&nbsp;&nbsp;
-![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_age_days&style=flat-square&label=Age)
-![Uptime-Days](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_uptime_days&style=flat-square&label=Uptime)
-![Node-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_node_count&style=flat-square&label=Nodes)
-![Pod-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_pod_count&style=flat-square&label=Pods)
-![CPU-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_cpu_usage&style=flat-square&label=CPU)
-![Memory-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.cortado.thoughtless.eu%2Fcluster_memory_usage&style=flat-square&label=Memory)
+`cortado` and the standalone `kubevirt` cluster have been retired — the old configs live in the git history.
 
-</div>
+### Not Kubernetes
 
-- [**Mocha** : Another node bare-metal cluster hosted by OVH](https://github.com/qjoly/GitOps/tree/main/mocha), production cluster (128GB RAM, 8 CPU, 2x512Go NVMe)
-<div align="center">
+- [**Americano**](https://github.com/qjoly/GitOps/tree/main/americano) : a bare host running podman quadlets, reconciled by [Materia](https://github.com/stryan/materia) instead of ArgoCD. See [`americano/README.md`](./americano/README.md) for the branch trick that makes it work from a subdirectory.
+- [`external/`](./external) : OTel collector and exporter units for machines outside the clusters (Proxmox hosts, the `affogato` backup box).
 
-[![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.mocha.thoughtless.eu%2Ftalos_version&style=flat-square&logo=talos&logoColor=white&color=red&label=%20)](https://talos.dev)
-[![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.mocha.thoughtless.eu%2Fkubernetes_version&style=flat-square&logo=kubernetes&logoColor=white&color=blue&label=%20)](https://kubernetes.io)&nbsp;&nbsp;
-![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.mocha.thoughtless.eu%2Fcluster_age_days&style=flat-square&label=Age)
-![Uptime-Days](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.mocha.thoughtless.eu%2Fcluster_uptime_days&style=flat-square&label=Uptime)
-![Node-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.mocha.thoughtless.eu%2Fcluster_node_count&style=flat-square&label=Nodes)
-![Pod-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.mocha.thoughtless.eu%2Fcluster_pod_count&style=flat-square&label=Pods)
-![CPU-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.mocha.thoughtless.eu%2Fcluster_cpu_usage&style=flat-square&label=CPU)
-![Memory-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.mocha.thoughtless.eu%2Fcluster_memory_usage&style=flat-square&label=Memory)
+## Guest clusters on `mocha`
 
-</div>
+Instead of a second physical cluster for tests, `mocha` hosts [Cluster API](https://cluster-api.sigs.k8s.io/) guest clusters running as KubeVirt VMs — plain Talos + Cilium clusters, one values file each.
 
-- **Turing** : A cluster based on small devices (ARM and x86) at home. This cluster is used for local hosting and testing. (Prometheus not yet available)
-<div align="center">
+Two reasons to keep them around:
 
-[![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.turing.thoughtless.eu%2Ftalos_version&style=flat-square&logo=talos&logoColor=white&color=red&label=%20)](https://talos.dev)
-[![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.turing.thoughtless.eu%2Fkubernetes_version&style=flat-square&logo=kubernetes&logoColor=white&color=blue&label=%20)](https://kubernetes.io)&nbsp;&nbsp;
-![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.turing.thoughtless.eu%2Fcluster_age_days&style=flat-square&label=Age)
-![Uptime-Days](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.turing.thoughtless.eu%2Fcluster_uptime_days&style=flat-square&label=Uptime)
-![Node-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.turing.thoughtless.eu%2Fcluster_node_count&style=flat-square&label=Nodes)
-![Pod-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.turing.thoughtless.eu%2Fcluster_pod_count&style=flat-square&label=Pods)
-![CPU-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.turing.thoughtless.eu%2Fcluster_cpu_usage&style=flat-square&label=CPU)
-![Memory-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.turing.thoughtless.eu%2Fcluster_memory_usage&style=flat-square&label=Memory)
+1. **Network isolation**: their pod/service CIDRs live inside the VMs, so they can overlap freely with the host cluster (and with each other).
+2. **Configuration testing**: same core components as production, disposable.
 
-</div>
-
-- **Kubevirt** : See below :p 
-
-
-## About the 'Kubevirt' Virtual Cluster
-
-While this repository primarily contains three physical clusters (`mocha`, `cortado`, and `turing`), a fourth cluster configuration exists in the `kubevirt` directory. This is a virtual cluster that runs as workloads on top of another cluster (primarily hosted on `mocha` due to its greater resource capacity).
-
-This virtual cluster is provisioned using [Kubevirt](https://kubevirt.io/) technology integrated with the Omni Infrastructure provider. For a detailed exploration of this setup, you can read [my article about Omni and Kubevirt integration](https://a-cup-of.coffee/blog/omni/).
-
-### Why Use a Virtual Cluster?
-
-There are two primary motivations behind maintaining a separate virtual cluster:
-
-1. **Network Isolation**: It allows for different pod CIDR and service CIDR ranges than the host cluster, preventing network overlaps that could cause routing issues.
-
-2. **Configuration Testing**: It provides an isolated environment that mirrors my production clusters with the same core components (metrics server, ArgoCD, ApplicationSet, etc.), making it perfect for testing configurations and upgrades safely.
+Creating, destroying and adopting them is documented in [`mocha/clusters/README.md`](./mocha/clusters/README.md). The chart doing the work is [`qjoly/kubevirt-capi-easy`](https://github.com/qjoly/kubevirt-capi-easy). For the story of the previous (Omni-managed) KubeVirt setup, see [my article about Omni and Kubevirt](https://a-cup-of.coffee/blog/omni/).
 
 ## Usage
 
@@ -120,23 +86,40 @@ omnictl config merge ./omniconfig.yaml
 Then, you can deploy the cluster based on the MachineClass you have configured.
 
 ```bash
-cd lungo
+cd mocha
 omnictl cluster template sync -f template.yaml
 ```
 
 This will create a new cluster based on the configuration you have set in the `template.yaml` file. You can download the kubeconfig file using the following command:
 
 ```bash
-omnictl kubeconfig --cluster lungo
+omnictl kubeconfig --cluster mocha
 ```
 
-## CI/CD — Automatic cluster template sync
+Recurring operations (Vault unseal, guest cluster kubeconfig) are `mise` tasks:
+
+```bash
+mise tasks          # list them
+mise run vault:status
+```
+
+## CI/CD
+
+| Workflow | What it does |
+|----------|--------------|
+| `omni-template-sync.yaml` | Syncs the Omni cluster templates on every push to `main` (see below) |
+| `materia-americano.yaml` | Republishes `americano/` to the root of the `americano` branch for Materia |
+| `tangled-mirror.yaml` | Mirrors the repo to tangled |
+| `page.yaml` | Builds and publishes the mkdocs site ([docs](https://qjoly.github.io/GitOps/)) |
+| `spindle-image.yaml`, `abcdesktop-image.yaml`, `atcr-hold-image.yaml` | Build the container images for a few self-hosted apps |
+
+### Automatic cluster template sync
 
 The workflow `.github/workflows/omni-template-sync.yaml` runs `omnictl cluster template sync` automatically on every push to `main` that modifies files under `turing/` or `mocha/`.
 
 A `detect` job inspects the diff and builds a matrix of changed clusters. A parallel `sync` job then syncs each one independently — touching only `mocha/` never triggers a `turing` sync, and a failure in one cluster does not block the other.
 
-`kubevirt/` and `archives/` are intentionally excluded from CI sync.
+`archives/` is intentionally excluded from CI sync. More details in [`docs/github-actions.md`](./docs/github-actions.md).
 
 It authenticates against Omni using a **service account** (not a Kubernetes ServiceAccount — it is an Omni-native token-based credential).
 
@@ -170,16 +153,16 @@ kind: Config
 clusters:
   - cluster:
       server: https://omni.home.une-tasse-de.cafe:8100/
-    name: omni-lungo
+    name: omni-mocha
 contexts:
   - context:
-      cluster: omni-lungo
+      cluster: omni-mocha
       namespace: default
-      user: omni-lungo-quentinj@une-pause-cafe.fr
-    name: omni-lungo
-current-context: omni-lungo
+      user: omni-mocha-quentinj@une-pause-cafe.fr
+    name: omni-mocha
+current-context: omni-mocha
 users:
-- name: omni-lungo-quentinj@une-pause-cafe.fr
+- name: omni-mocha-quentinj@une-pause-cafe.fr
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -188,11 +171,9 @@ users:
         - get-token
         - --oidc-issuer-url=https://omni.home.une-tasse-de.cafe/oidc
         - --oidc-client-id=native
-        - --oidc-extra-scope=cluster:lungo
+        - --oidc-extra-scope=cluster:mocha
       command: kubectl
       env: null
       provideClusterInfo: false
 ```
 </details>
-
-<!-- test: verifying pr-gitops-grafana-annotation webhook (round 2), safe to remove -->
