@@ -53,6 +53,13 @@ spec:
                     name: authentik-secrets
                     key: bootstrap-token
           server:
+            # BestEffort let clickhouse starve authentik into >5s replies, which is
+            # longer than allauth's hardcoded OIDC discovery timeout (paperless 500s).
+            # No limits: CFS throttling would work against that.
+            resources:
+              requests:
+                cpu: 1000m
+                memory: 3Gi
             ingress:
               enabled: true
               ingressClassName: traefik
@@ -64,6 +71,11 @@ spec:
                 - secretName: authentik-tls
                   hosts:
                     - authentik.mocha.thoughtless.eu
+          worker:
+            resources:
+              requests:
+                cpu: 1000m
+                memory: 2Gi
           postgresql:
             enabled: true
             auth:
@@ -72,6 +84,10 @@ spec:
                 userPasswordKey: password
                 adminPasswordKey: postgres-password
             primary:
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
               persistence:
                 enabled: true
                 storageClass: openebs-lvmpv
