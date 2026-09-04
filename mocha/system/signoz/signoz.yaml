@@ -35,6 +35,18 @@ spec:
           # Keep "move to cold storage" off for metrics in the SigNoz retention
           # settings (it lives in SigNoz's own DB, not here). Only signals with few,
           # large parts belong on this volume.
+          #
+          # 2026-09-04: the same failure recurred on the LOGS side. logs_v2 moved parts
+          # to cold storage after only 1 day (_retention_days_cold=1) while still holding
+          # thousands of tiny parts, freezing them on S3 and pushing the daily partition
+          # toward the 3000-part limit. The deeper root cause: ZooKeeper and ClickHouse
+          # share this single-node openebs-lvmpv disk, and ClickHouse merge I/O starves
+          # ZK's WAL fsync (observed 2-61s), expiring ClickHouse's ZK session (30s
+          # default) so every replicated table drops to read-only, merges stop committing
+          # and parts pile up. Mitigated below by larger collector batches (less churn)
+          # and a longer ZK session timeout. The logs move-to-cold is pushed out in the
+          # SigNoz retention settings, same as metrics. A dedicated/faster disk for
+          # ZooKeeper is the real structural fix.
           coldStorage:
             enabled: true
             type: s3
@@ -49,6 +61,18 @@ spec:
               memory: 8Gi
             limits:
               memory: 24Gi
+          # Raise ClickHouse's ZooKeeper client session/operation timeouts above the
+          # 30s/10s defaults so a replica rides out multi-second ZK WAL fsync stalls
+          # instead of dropping to read-only. This merges into the operator-generated
+          # <zookeeper> config and does not touch the node list.
+          files:
+            config.d/zookeeper-timeouts.xml: |
+              <clickhouse>
+                <zookeeper>
+                  <session_timeout_ms>60000</session_timeout_ms>
+                  <operation_timeout_ms>20000</operation_timeout_ms>
+                </zookeeper>
+              </clickhouse>
         signoz:
           ingress:
             enabled: true
@@ -65,3 +89,13 @@ spec:
               - secretName: signoz-tls
                 hosts:
                   - signoz.mocha.thoughtless.eu
+        otelCollector:
+          # The chart default flushes a batch to ClickHouse every 1s (batch.timeout),
+          # which at low log volume produces thousands of ~40KiB parts per day. ClickHouse
+          # then burns disk I/O merging them, starving ZooKeeper's fsync (see the
+          # clickhouse comment above). Batching for 30s yields far fewer, larger parts and
+          # far fewer merges. send_batch_size (50000) is inherited from the chart default.
+          config:
+            processors:
+              batch:
+                timeout: 30s
