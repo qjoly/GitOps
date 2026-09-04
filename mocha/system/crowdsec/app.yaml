@@ -21,7 +21,7 @@ spec:
   sources:
     - repoURL: https://crowdsecurity.github.io/helm-charts
       chart: crowdsec
-      targetRevision: 0.24.0
+      targetRevision: 0.24.2
       helm:
         values: |
           container_runtime: containerd
