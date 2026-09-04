@@ -18,6 +18,25 @@ spec:
     name: vault
     args:
       - "-config=/vault/config"
+    # Relaxed from the operator default (timeoutSeconds 1) to survive transient
+    # slowness of /v1/sys/health under node contention and avoid liveness crashloops.
+    livenessProbe:
+      httpGet:
+        path: /v1/sys/health?standbyok=true
+        port: 8200
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 5
+    readinessProbe:
+      httpGet:
+        path: /v1/sys/health?standbyok=true&perfstandbyok=true&drsecondarycode=299
+        port: 8200
+        scheme: HTTPS
+      periodSeconds: 5
+      timeoutSeconds: 5
+      failureThreshold: 3
 
   securityContext:
     runAsUser: 100
