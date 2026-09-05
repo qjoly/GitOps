@@ -51,14 +51,21 @@ spec:
               - name: USE_WAL
                 value: "true"
             persistentVolume:
+              # DB on tmpfs (extraVolumes below) to escape openebs-lvmpv I/O contention; data is regenerable.
               data:
-                enabled: true
-                storageClassName: openebs-lvmpv
-                size: 1Gi
+                enabled: false
               config:
                 enabled: true
                 storageClassName: openebs-lvmpv
                 size: 100Mi
+            extraVolumes:
+              - name: crowdsec-db
+                emptyDir:
+                  medium: Memory
+                  sizeLimit: 128Mi
+            extraVolumeMounts:
+              - name: crowdsec-db
+                mountPath: /var/lib/crowdsec/data
             metrics:
               serviceMonitor:
                 enabled: true
