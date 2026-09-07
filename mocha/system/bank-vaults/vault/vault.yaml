@@ -18,6 +18,28 @@ spec:
     name: vault
     args:
       - "-config=/vault/config"
+    # Single-node Raft on openebs-lvmpv: I/O stalls (signoz ClickHouse/ZK) freeze the
+    # API for up to ~2m25s. Killing on liveness only makes it worse (restart -> reseal
+    # -> more I/O). Tolerate ~180s before restart; readiness steers traffic non-destructively.
+    livenessProbe:
+      httpGet:
+        path: /v1/sys/health?standbyok=true
+        port: 8200
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 15
+      timeoutSeconds: 10
+      failureThreshold: 12
+      successThreshold: 1
+    readinessProbe:
+      httpGet:
+        path: /v1/sys/health?standbyok=true&perfstandbyok=true&drsecondarycode=299
+        port: 8200
+        scheme: HTTPS
+      periodSeconds: 5
+      timeoutSeconds: 10
+      failureThreshold: 6
+      successThreshold: 1
 
   securityContext:
     runAsUser: 100
