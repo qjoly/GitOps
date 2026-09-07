@@ -945,7 +945,7 @@ spec:
       containers:
       - name: nginx-router
         imagePullPolicy: Always
-        image: ghcr.io/abcdesktopio/route:4.4
+        image: ghcr.io/abcdesktopio/route:4.5
         # securityContext:
         #  readOnlyRootFilesystem: true
         ports:
