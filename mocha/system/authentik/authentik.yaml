@@ -60,6 +60,15 @@ spec:
               requests:
                 cpu: 1000m
                 memory: 3Gi
+            # Single-node openebs-lvmpv I/O stalls freeze authentik for tens of
+            # seconds; default probes (3s timeout, 3 failures = ~30s) SIGKILL it
+            # mid-stall and take OIDC discovery down. Relax to ride out stalls.
+            livenessProbe:
+              timeoutSeconds: 10
+              failureThreshold: 6
+            readinessProbe:
+              timeoutSeconds: 10
+              failureThreshold: 6
             ingress:
               enabled: true
               ingressClassName: traefik
