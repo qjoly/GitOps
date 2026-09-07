@@ -12,6 +12,7 @@ spec:
         pod-security.kubernetes.io/audit: privileged
         pod-security.kubernetes.io/warn: privileged
     automated:
+      prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
@@ -26,6 +27,7 @@ spec:
         values: |
           container_runtime: containerd
           agent:
+            enabled: false
             acquisition:
               - namespace: traefik
                 podName: traefik-*
@@ -42,6 +44,11 @@ spec:
               serviceMonitor:
                 enabled: true
           lapi:
+            enabled: false
+            # Placeholders required by the chart's external-LAPI validation; unused while disabled.
+            secrets:
+              csLapiSecret: "disabled"
+              registrationToken: "disabled"
             env:
               - name: BOUNCER_KEY_traefik
                 valueFrom:
