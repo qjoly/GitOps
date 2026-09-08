@@ -22,6 +22,15 @@ spec:
         global:
           storageClass: openebs-lvmpv
         clickhouse:
+          # PARK 2026-09-08: nvme1n1 (openebs-lvmpv) is worn out (SMART 106% used,
+          # critical_warning 0x8 read-only mode, ~48s write latency). SigNoz's
+          # ClickHouse+ZooKeeper are the dominant writers wearing the disk, so scale
+          # the whole stack to 0 until the SSD is replaced. Re-enable by restoring
+          # these counts to 1. PVCs are retained (no prune + operator default Retain).
+          layout:
+            replicasCount: 0
+          zookeeper:
+            replicaCount: 0
           persistence:
             enabled: true
             size: 100Gi
@@ -74,6 +83,7 @@ spec:
                 </zookeeper>
               </clickhouse>
         signoz:
+          replicaCount: 0
           ingress:
             enabled: true
             className: traefik
@@ -90,6 +100,7 @@ spec:
                 hosts:
                   - signoz.mocha.thoughtless.eu
         otelCollector:
+          replicaCount: 0
           # The chart default flushes a batch to ClickHouse every 1s (batch.timeout),
           # which at low log volume produces thousands of ~40KiB parts per day. ClickHouse
           # then burns disk I/O merging them, starving ZooKeeper's fsync (see the
