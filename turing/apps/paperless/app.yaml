@@ -33,7 +33,7 @@ spec:
   source:
     repoURL: https://charts.derwitt.dev
     chart: paperless-ngx
-    targetRevision: 2.1.1
+    targetRevision: 2.1.4
     helm:
       # Resources are named "paperless-ngx", never "paperless": a Service named
       # exactly "paperless" makes the service links inject PAPERLESS_PORT=tcp://…,
