@@ -16,7 +16,7 @@ spec:
     namespace: traefik
   source:
     repoURL: https://traefik.github.io/charts
-    targetRevision: 41.4.0
+    targetRevision: 41.5.0
     chart: traefik
     helm:
       values: |
