@@ -35,9 +35,29 @@ spec:
 
         valkey:
           enabled: true
+          controllers:
+            main:
+              containers:
+                main:
+                  resources:
+                    requests:
+                      cpu: 50m
+                      memory: 64Mi
+                    limits:
+                      memory: 256Mi
 
         server:
           enabled: true
+          controllers:
+            main:
+              containers:
+                main:
+                  resources:
+                    requests:
+                      cpu: 200m
+                      memory: 1Gi
+                    limits:
+                      memory: 3Gi
           ingress:
             main:
               enabled: true
@@ -60,6 +80,17 @@ spec:
 
         machine-learning:
           enabled: true
+          controllers:
+            main:
+              containers:
+                main:
+                  # la limite couvre le chargement simultane de buffalo_l, PP-OCRv5 et CLIP
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 1Gi
+                    limits:
+                      memory: 4Gi
   destination:
     server: https://kubernetes.default.svc
     namespace: immich

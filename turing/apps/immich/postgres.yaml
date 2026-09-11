@@ -46,6 +46,12 @@ spec:
                 secretKeyRef:
                   name: immich-db-credentials
                   key: password
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
           ports:
             - containerPort: 5432
           volumeMounts:
