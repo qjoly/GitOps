@@ -1,0 +1,32 @@
+# Selector-less Service: endpoints are provided manually by the EndpointSlice below
+apiVersion: v1
+kind: Service
+metadata:
+  name: homeassistant
+  namespace: homeassistant
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8123
+      targetPort: 8123
+      protocol: TCP
+---
+# Home Assistant runs outside the cluster on the LAN (192.168.0.254:8123)
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: homeassistant-ext
+  namespace: homeassistant
+  labels:
+    kubernetes.io/service-name: homeassistant
+addressType: IPv4
+ports:
+  - name: http
+    port: 8123
+    protocol: TCP
+endpoints:
+  - addresses:
+      - 192.168.0.254
+    conditions:
+      ready: true
