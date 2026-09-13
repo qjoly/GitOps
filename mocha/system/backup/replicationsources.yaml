@@ -9,8 +9,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-vaultwarden-data
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -29,8 +28,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-tang-data
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -49,8 +47,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-data-vault-0
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -69,8 +66,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-data-vault-1
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -89,8 +85,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-data-vault-2
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -109,8 +104,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-data-matomo-db-0
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -129,8 +123,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-data-toutou-db-0
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -149,8 +142,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-data-tranquil-pds-db-0
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -169,8 +161,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-mongodb-data
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -189,8 +180,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-data-kamaji-etcd-0
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -209,8 +199,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-data-kamaji-etcd-1
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -229,8 +218,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-data-kamaji-etcd-2
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -249,8 +237,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-rmfakecloud-data
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -269,8 +256,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-grafana
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -289,8 +275,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-thelounge-data
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -309,8 +294,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-spindle-data
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -329,8 +313,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-tranquil-pds-blobs
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -349,8 +332,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-matomo-data
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -369,8 +351,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-trmnl-server-data
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -389,8 +370,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-netbird-management
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -409,8 +389,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-blueweave-data
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -429,8 +408,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-authentik-github-une-pause-cafe-fr
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -449,8 +427,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-factorio-data
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -469,8 +446,7 @@ spec:
     manual: paused-vg-full
   restic:
     repository: restic-signoz-db-signoz-0
-    copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    copyMethod: Direct
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
