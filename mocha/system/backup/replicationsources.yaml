@@ -6,7 +6,7 @@ metadata:
 spec:
   sourcePVC: vaultwarden-data
   trigger:
-    schedule: "0 1 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-vaultwarden-data
     copyMethod: Snapshot
@@ -26,7 +26,7 @@ metadata:
 spec:
   sourcePVC: tang-data
   trigger:
-    schedule: "7 1 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-tang-data
     copyMethod: Snapshot
@@ -46,7 +46,7 @@ metadata:
 spec:
   sourcePVC: data-vault-0
   trigger:
-    schedule: "14 1 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-data-vault-0
     copyMethod: Snapshot
@@ -66,7 +66,7 @@ metadata:
 spec:
   sourcePVC: data-vault-1
   trigger:
-    schedule: "21 1 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-data-vault-1
     copyMethod: Snapshot
@@ -86,7 +86,7 @@ metadata:
 spec:
   sourcePVC: data-vault-2
   trigger:
-    schedule: "28 1 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-data-vault-2
     copyMethod: Snapshot
@@ -106,7 +106,7 @@ metadata:
 spec:
   sourcePVC: data-matomo-db-0
   trigger:
-    schedule: "35 1 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-data-matomo-db-0
     copyMethod: Snapshot
@@ -126,7 +126,7 @@ metadata:
 spec:
   sourcePVC: data-toutou-db-0
   trigger:
-    schedule: "42 1 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-data-toutou-db-0
     copyMethod: Snapshot
@@ -146,7 +146,7 @@ metadata:
 spec:
   sourcePVC: data-tranquil-pds-db-0
   trigger:
-    schedule: "49 1 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-data-tranquil-pds-db-0
     copyMethod: Snapshot
@@ -166,7 +166,7 @@ metadata:
 spec:
   sourcePVC: mongodb-data
   trigger:
-    schedule: "56 2 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-mongodb-data
     copyMethod: Snapshot
@@ -186,7 +186,7 @@ metadata:
 spec:
   sourcePVC: data-kamaji-etcd-0
   trigger:
-    schedule: "3 2 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-data-kamaji-etcd-0
     copyMethod: Snapshot
@@ -206,7 +206,7 @@ metadata:
 spec:
   sourcePVC: data-kamaji-etcd-1
   trigger:
-    schedule: "10 2 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-data-kamaji-etcd-1
     copyMethod: Snapshot
@@ -226,7 +226,7 @@ metadata:
 spec:
   sourcePVC: data-kamaji-etcd-2
   trigger:
-    schedule: "17 2 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-data-kamaji-etcd-2
     copyMethod: Snapshot
@@ -246,7 +246,7 @@ metadata:
 spec:
   sourcePVC: rmfakecloud-data
   trigger:
-    schedule: "24 2 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-rmfakecloud-data
     copyMethod: Snapshot
@@ -266,7 +266,7 @@ metadata:
 spec:
   sourcePVC: grafana
   trigger:
-    schedule: "31 2 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-grafana
     copyMethod: Snapshot
@@ -286,7 +286,7 @@ metadata:
 spec:
   sourcePVC: thelounge-data
   trigger:
-    schedule: "38 2 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-thelounge-data
     copyMethod: Snapshot
@@ -306,7 +306,7 @@ metadata:
 spec:
   sourcePVC: spindle-data
   trigger:
-    schedule: "45 2 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-spindle-data
     copyMethod: Snapshot
@@ -326,7 +326,7 @@ metadata:
 spec:
   sourcePVC: tranquil-pds-blobs
   trigger:
-    schedule: "52 3 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-tranquil-pds-blobs
     copyMethod: Snapshot
@@ -346,7 +346,7 @@ metadata:
 spec:
   sourcePVC: matomo-data
   trigger:
-    schedule: "59 3 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-matomo-data
     copyMethod: Snapshot
@@ -366,7 +366,7 @@ metadata:
 spec:
   sourcePVC: trmnl-server-data
   trigger:
-    schedule: "6 3 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-trmnl-server-data
     copyMethod: Snapshot
@@ -386,7 +386,7 @@ metadata:
 spec:
   sourcePVC: netbird-management
   trigger:
-    schedule: "13 3 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-netbird-management
     copyMethod: Snapshot
@@ -406,7 +406,7 @@ metadata:
 spec:
   sourcePVC: blueweave-data
   trigger:
-    schedule: "20 3 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-blueweave-data
     copyMethod: Snapshot
@@ -426,7 +426,7 @@ metadata:
 spec:
   sourcePVC: authentik-github-une-pause-cafe-fr
   trigger:
-    schedule: "27 3 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-authentik-github-une-pause-cafe-fr
     copyMethod: Snapshot
@@ -446,7 +446,7 @@ metadata:
 spec:
   sourcePVC: factorio-data
   trigger:
-    schedule: "34 3 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-factorio-data
     copyMethod: Snapshot
@@ -466,7 +466,7 @@ metadata:
 spec:
   sourcePVC: signoz-db-signoz-0
   trigger:
-    schedule: "41 3 * * *"
+    manual: paused-vg-full
   restic:
     repository: restic-signoz-db-signoz-0
     copyMethod: Snapshot
