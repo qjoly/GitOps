@@ -1,0 +1,312 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: restic-matomo-db-dump
+  namespace: matomo
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: restic-matomo-db-dump
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        AWS_ACCESS_KEY_ID: "{{ .aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ .aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: de
+        RESTIC_PASSWORD: "{{ .restic_password }}"
+        RESTIC_REPOSITORY: "s3:https://de-s3.storage.bunnycdn.com/mocha-coffee/matomo-db"
+  data:
+    - secretKey: aws_access_key_id
+      remoteRef: { key: restic, property: AWS_ACCESS_KEY_ID }
+    - secretKey: aws_secret_access_key
+      remoteRef: { key: restic, property: AWS_SECRET_ACCESS_KEY }
+    - secretKey: restic_password
+      remoteRef: { key: restic, property: RESTIC_PASSWORD }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: matomo-db-dump
+  namespace: matomo
+spec:
+  schedule: "0 1 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          volumes:
+            - name: work
+              emptyDir: {}
+          initContainers:
+            - name: dump
+              image: mariadb:12.3
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  mariadb-dump --single-transaction --host matomo-db --user root matomo \
+                    | gzip -9 > /work/matomo.sql.gz
+                  echo "dump size: $(du -h /work/matomo.sql.gz)"
+              env:
+                - name: MYSQL_PWD
+                  valueFrom:
+                    secretKeyRef:
+                      name: matomo-db
+                      key: db_root_password
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+          containers:
+            - name: upload
+              image: restic/restic:0.17.3
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  export RESTIC_CACHE_DIR=/work/cache
+                  restic cat config >/dev/null 2>&1 || restic init
+                  restic backup /work/matomo.sql.gz --host mocha --tag matomo-db
+                  restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
+              envFrom:
+                - secretRef:
+                    name: restic-matomo-db-dump
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: restic-toutou-db-dump
+  namespace: toutou
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: restic-toutou-db-dump
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        AWS_ACCESS_KEY_ID: "{{ .aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ .aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: de
+        RESTIC_PASSWORD: "{{ .restic_password }}"
+        RESTIC_REPOSITORY: "s3:https://de-s3.storage.bunnycdn.com/mocha-coffee/toutou-db"
+  data:
+    - secretKey: aws_access_key_id
+      remoteRef: { key: restic, property: AWS_ACCESS_KEY_ID }
+    - secretKey: aws_secret_access_key
+      remoteRef: { key: restic, property: AWS_SECRET_ACCESS_KEY }
+    - secretKey: restic_password
+      remoteRef: { key: restic, property: RESTIC_PASSWORD }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: toutou-db-dump
+  namespace: toutou
+spec:
+  schedule: "15 1 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          volumes:
+            - name: work
+              emptyDir: {}
+          initContainers:
+            - name: dump
+              image: postgres:17-alpine
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  pg_dump --no-owner --no-privileges --clean --if-exists \
+                    | gzip -9 > /work/toutou.sql.gz
+                  echo "dump size: $(du -h /work/toutou.sql.gz)"
+              env:
+                - name: PGHOST
+                  value: toutou-db
+                - name: PGPORT
+                  value: "5432"
+                - name: PGUSER
+                  value: toutou
+                - name: PGDATABASE
+                  value: toutou
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: toutou-secrets
+                      key: POSTGRES_PASSWORD
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+          containers:
+            - name: upload
+              image: restic/restic:0.17.3
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  export RESTIC_CACHE_DIR=/work/cache
+                  restic cat config >/dev/null 2>&1 || restic init
+                  restic backup /work/toutou.sql.gz --host mocha --tag toutou-db
+                  restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
+              envFrom:
+                - secretRef:
+                    name: restic-toutou-db-dump
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: restic-tranquil-pds-db-dump
+  namespace: tranquil-pds
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: restic-tranquil-pds-db-dump
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        AWS_ACCESS_KEY_ID: "{{ .aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ .aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: de
+        RESTIC_PASSWORD: "{{ .restic_password }}"
+        RESTIC_REPOSITORY: "s3:https://de-s3.storage.bunnycdn.com/mocha-coffee/tranquil-pds-db"
+  data:
+    - secretKey: aws_access_key_id
+      remoteRef: { key: restic, property: AWS_ACCESS_KEY_ID }
+    - secretKey: aws_secret_access_key
+      remoteRef: { key: restic, property: AWS_SECRET_ACCESS_KEY }
+    - secretKey: restic_password
+      remoteRef: { key: restic, property: RESTIC_PASSWORD }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tranquil-pds-db-dump
+  namespace: tranquil-pds
+spec:
+  schedule: "30 1 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          volumes:
+            - name: work
+              emptyDir: {}
+          initContainers:
+            - name: dump
+              image: postgres:18-alpine
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  pg_dump --no-owner --no-privileges --clean --if-exists \
+                    | gzip -9 > /work/pds.sql.gz
+                  echo "dump size: $(du -h /work/pds.sql.gz)"
+              env:
+                - name: PGHOST
+                  value: tranquil-pds-db
+                - name: PGPORT
+                  value: "5432"
+                - name: PGUSER
+                  value: tranquil_pds
+                - name: PGDATABASE
+                  value: pds
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: tranquil-pds-secrets
+                      key: DB_PASSWORD
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+          containers:
+            - name: upload
+              image: restic/restic:0.17.3
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  export RESTIC_CACHE_DIR=/work/cache
+                  restic cat config >/dev/null 2>&1 || restic init
+                  restic backup /work/pds.sql.gz --host mocha --tag tranquil-pds-db
+                  restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
+              envFrom:
+                - secretRef:
+                    name: restic-tranquil-pds-db-dump
+              volumeMounts:
+                - name: work
+                  mountPath: /work
