@@ -1,0 +1,100 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: restic-openbao
+  namespace: bank-vaults
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: restic-openbao
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        AWS_ACCESS_KEY_ID: "{{ .aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ .aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: de
+        RESTIC_PASSWORD: "{{ .restic_password }}"
+        RESTIC_REPOSITORY: "s3:https://de-s3.storage.bunnycdn.com/mocha-coffee/openbao-raft"
+  data:
+    - secretKey: aws_access_key_id
+      remoteRef:
+        key: restic
+        property: AWS_ACCESS_KEY_ID
+    - secretKey: aws_secret_access_key
+      remoteRef:
+        key: restic
+        property: AWS_SECRET_ACCESS_KEY
+    - secretKey: restic_password
+      remoteRef:
+        key: restic
+        property: RESTIC_PASSWORD
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: openbao-snapshot
+  namespace: bank-vaults
+spec:
+  schedule: "0 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 100
+            fsGroup: 1000
+          volumes:
+            - name: work
+              emptyDir: {}
+            - name: vault-tls
+              secret:
+                secretName: vault-tls
+          initContainers:
+            - name: snapshot
+              image: openbao/openbao:2.6.1
+              command: ["/bin/sh", "-c"]
+              args:
+                - bao operator raft snapshot save /work/openbao.snap
+              env:
+                - name: VAULT_ADDR
+                  value: https://vault.bank-vaults.svc.cluster.local:8200
+                - name: VAULT_CACERT
+                  value: /tls/ca.crt
+                - name: VAULT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: vault-unseal-keys
+                      key: vault-root
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+                - name: vault-tls
+                  mountPath: /tls
+                  readOnly: true
+          containers:
+            - name: upload
+              image: restic/restic:0.17.3
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  export RESTIC_CACHE_DIR=/work/cache
+                  restic cat config >/dev/null 2>&1 || restic init
+                  restic backup /work/openbao.snap --host mocha --tag openbao-raft
+                  restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
+              envFrom:
+                - secretRef:
+                    name: restic-openbao
+              volumeMounts:
+                - name: work
+                  mountPath: /work
