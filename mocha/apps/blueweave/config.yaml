@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blueweave-config
+  namespace: blueweave
+  labels:
+    app: blueweave
+data:
+  NODE_ENV: "production"
+  HOSTNAME: "0.0.0.0"
+  PORT: "3000"
+  # Public URL (== root of the OAuth ATProto client_id).
+  PUBLIC_BASE_URL: "https://blueweave.app"
+  # Prometheus exposition, on its own port. Scraped by the PodMonitor.
+  METRICS_PORT: "9464"
+  # Where the session and OAuth stores are written (mounted PVC).
+  DATA_DIR: "/data"
+  # DID allowed on /feed/admin. Unset means nobody.
+  ADMIN_DID: "did:plc:hqnyog7skad6m4aejb2yujxy"
+  # X source (xcancel RSS feeds).
+  # Nitter hosts for the X source, tried in order until one answers. Measured
+  # from inside this cluster: tiekoetter 30/30, xcancel 5/40 (its antibot is
+  # deterministic per URL, so it stays as a fallback). Instances are
+  # volunteer-run — when this one dies, reorder the list.
+  XCANCEL_HOSTS: "https://nitter.tiekoetter.com,https://xcancel.com"

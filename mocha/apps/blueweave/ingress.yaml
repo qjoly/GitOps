@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blueweave
+  namespace: blueweave
+  labels:
+    app: blueweave
+  annotations:
+    # Automatic TLS via cert-manager, using mocha's only ClusterIssuer.
+    cert-manager.io/cluster-issuer: cloudflare
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - blueweave.app
+      secretName: blueweave-tls
+  rules:
+    - host: blueweave.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blueweave
+                port:
+                  name: http

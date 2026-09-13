@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: blueweave
+  namespace: blueweave
+  labels:
+    app: blueweave
+spec:
+  selector:
+    app: blueweave
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

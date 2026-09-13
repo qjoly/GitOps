@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: blueweave-data
+  namespace: blueweave
+  labels:
+    app: blueweave
+spec:
+  # RWO is enough and matches the Deployment: one replica, Recreate strategy.
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      # Sessions and OAuth tokens, a few KB per user. 1Gi is already generous.
+      storage: 1Gi

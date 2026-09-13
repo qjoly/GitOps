@@ -1,0 +1,23 @@
+# The OTel collector's target allocator selects every PodMonitor in every
+# namespace (its selectors are empty), so this is all it takes to be scraped
+# into ClickHouse.
+#
+# A PodMonitor rather than a ServiceMonitor: the metrics port is not in the
+# Service on purpose — the Service is what the Ingress routes to.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: blueweave
+  namespace: blueweave
+  labels:
+    app: blueweave
+spec:
+  selector:
+    matchLabels:
+      app: blueweave
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      # Matches the collector's own 30s; a shorter one would only add load for
+      # gauges that move slowly.
+      interval: 30s

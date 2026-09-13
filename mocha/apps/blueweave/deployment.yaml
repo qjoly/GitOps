@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blueweave
+  namespace: blueweave
+  labels:
+    app: blueweave
+spec:
+  # ⚠️ Single replica: OAuth sessions and the application session are IN-MEMORY
+  # (see src/lib/server/stores.ts and session.ts). Scaling to >1 requires a shared
+  # store (Redis), otherwise a user loses their session depending on which pod answers.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: blueweave
+  template:
+    metadata:
+      labels:
+        app: blueweave
+    spec:
+      # atcr serves nothing anonymously, not even /v2/, so the pull is authenticated.
+      imagePullSecrets:
+        - name: atcr-pull
+      securityContext:
+        runAsNonRoot: true
+        # The image no longer carries a USER (see Dockerfile), so pin it here.
+        runAsUser: 1000
+        runAsGroup: 1000
+        # The PVC is provisioned root-owned; without this the container cannot
+        # write its own data volume. Kubernetes chowns the mount to this group.
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        # Writable /tmp despite readOnlyRootFilesystem (Node/undici may write there).
+        - name: tmp
+          emptyDir: {}
+        # Sessions and OAuth tokens. Without it every redeploy signs everyone out.
+        - name: data
+          persistentVolumeClaim:
+            claimName: blueweave-data
+      containers:
+        - name: blueweave
+          # Image on atcr (ATProto container registry), under the owner's handle.
+          image: atcr.io/une-tasse-de.cafe/blueweave:latest
+          # Mutable `main` tag pushed by the CI: always re-pull on restart.
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+            # Deliberately not in the Service the Ingress points at: these
+            # numbers describe the users, and nothing routes here from outside.
+            - name: metrics
+              containerPort: 9464
+          envFrom:
+            - configMapRef:
+                name: blueweave-config
+            - secretRef:
+                name: blueweave-secrets
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
