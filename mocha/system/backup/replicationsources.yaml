@@ -9,7 +9,8 @@ spec:
     schedule: "0 1 * * *"
   restic:
     repository: restic-vaultwarden-data
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -28,7 +29,8 @@ spec:
     schedule: "7 1 * * *"
   restic:
     repository: restic-tang-data
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -47,7 +49,8 @@ spec:
     schedule: "14 1 * * *"
   restic:
     repository: restic-data-vault-0
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -66,7 +69,8 @@ spec:
     schedule: "21 1 * * *"
   restic:
     repository: restic-data-vault-1
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -85,7 +89,8 @@ spec:
     schedule: "28 1 * * *"
   restic:
     repository: restic-data-vault-2
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -104,7 +109,8 @@ spec:
     schedule: "35 1 * * *"
   restic:
     repository: restic-data-matomo-db-0
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -123,7 +129,8 @@ spec:
     schedule: "42 1 * * *"
   restic:
     repository: restic-data-toutou-db-0
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -142,7 +149,8 @@ spec:
     schedule: "49 1 * * *"
   restic:
     repository: restic-data-tranquil-pds-db-0
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -161,7 +169,8 @@ spec:
     schedule: "56 2 * * *"
   restic:
     repository: restic-mongodb-data
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -180,7 +189,8 @@ spec:
     schedule: "3 2 * * *"
   restic:
     repository: restic-data-kamaji-etcd-0
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -199,7 +209,8 @@ spec:
     schedule: "10 2 * * *"
   restic:
     repository: restic-data-kamaji-etcd-1
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -218,7 +229,8 @@ spec:
     schedule: "17 2 * * *"
   restic:
     repository: restic-data-kamaji-etcd-2
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -237,7 +249,8 @@ spec:
     schedule: "24 2 * * *"
   restic:
     repository: restic-rmfakecloud-data
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -256,7 +269,8 @@ spec:
     schedule: "31 2 * * *"
   restic:
     repository: restic-grafana
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -275,7 +289,8 @@ spec:
     schedule: "38 2 * * *"
   restic:
     repository: restic-thelounge-data
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -294,7 +309,8 @@ spec:
     schedule: "45 2 * * *"
   restic:
     repository: restic-spindle-data
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -313,7 +329,8 @@ spec:
     schedule: "52 3 * * *"
   restic:
     repository: restic-tranquil-pds-blobs
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -332,7 +349,8 @@ spec:
     schedule: "59 3 * * *"
   restic:
     repository: restic-matomo-data
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -351,7 +369,8 @@ spec:
     schedule: "6 3 * * *"
   restic:
     repository: restic-trmnl-server-data
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -370,7 +389,8 @@ spec:
     schedule: "13 3 * * *"
   restic:
     repository: restic-netbird-management
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -389,7 +409,8 @@ spec:
     schedule: "20 3 * * *"
   restic:
     repository: restic-blueweave-data
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -408,7 +429,8 @@ spec:
     schedule: "27 3 * * *"
   restic:
     repository: restic-authentik-github-une-pause-cafe-fr
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -427,7 +449,8 @@ spec:
     schedule: "34 3 * * *"
   restic:
     repository: restic-factorio-data
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
@@ -446,7 +469,8 @@ spec:
     schedule: "41 3 * * *"
   restic:
     repository: restic-signoz-db-signoz-0
-    copyMethod: Direct
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
     cacheCapacity: 512Mi
     pruneIntervalDays: 7
     retain:
