@@ -1337,7 +1337,7 @@ spec:
       containers:
       - name: console
         imagePullPolicy: Always
-        image: ghcr.io/abcdesktopio/console:4.4
+        image: ghcr.io/abcdesktopio/console:5.0
         securityContext:
           readOnlyRootFilesystem: true
         ports:
