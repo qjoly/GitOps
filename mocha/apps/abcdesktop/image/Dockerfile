@@ -7,7 +7,7 @@
 # distribution is a project of its own, and flatpak makes the base distribution
 # mostly irrelevant anyway.
 ARG BASE=ghcr.io/abcdesktopio/oc.user.ubuntu.sudo.24.04
-ARG BASE_TAG=4.4
+ARG BASE_TAG=5.0
 FROM ${BASE}:${BASE_TAG}
 
 # dbus-x11 gives dbus-launch, which flatpak run needs to reach its session
