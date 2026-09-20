@@ -54,6 +54,7 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 
 - [**Mocha**](https://github.com/qjoly/GitOps/tree/main/mocha) : single bare-metal node hosted by OVH (128GB RAM, 8 CPU, 2x512GB NVMe). Production cluster, also the management plane for guest clusters.
 - [**Turing**](https://github.com/qjoly/GitOps/tree/main/turing) : cluster made of small devices (ARM and x86) at home. Local hosting, storage (Rook + NAS) and testing.
+- [**Doppio**](https://github.com/qjoly/GitOps/tree/main/doppio) : single bare-metal node at OVH, kept for storage and backup. The odd one out — it runs [Corium](https://github.com/Corium-OS/Corium) (bootc + k0s) rather than Talos, so it is driven with `cctl` and has no Omni template. See [`doppio/README.md`](./doppio/README.md).
 
 `cortado` and the standalone `kubevirt` cluster have been retired — the old configs live in the git history.
 

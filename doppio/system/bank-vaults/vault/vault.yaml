@@ -1,0 +1,123 @@
+apiVersion: vault.banzaicloud.com/v1alpha1
+kind: Vault
+metadata:
+  name: vault
+  namespace: bank-vaults
+  labels:
+    app.kubernetes.io/name: vault
+    vault_cr: vault
+spec:
+  size: 1
+  image: openbao/openbao:2.6.1
+  serviceAccount: vault
+  serviceType: ClusterIP
+  statsdDisabled: true
+  serviceRegistrationEnabled: false
+
+  vaultContainerSpec:
+    name: vault
+    args:
+      - "-config=/vault/config"
+    # Single-node Raft on local disk. Probe timings copied from mocha, where an
+    # I/O stall was shown to freeze the API for over two minutes: killing on
+    # liveness makes it worse (restart -> reseal -> more I/O), so this tolerates
+    # ~180s before a restart and lets readiness steer traffic instead. doppio is
+    # a storage box, so the stall it is guarding against is the likely one.
+    livenessProbe:
+      httpGet:
+        path: /v1/sys/health?standbyok=true
+        port: 8200
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 15
+      timeoutSeconds: 10
+      failureThreshold: 12
+      successThreshold: 1
+    readinessProbe:
+      httpGet:
+        path: /v1/sys/health?standbyok=true&perfstandbyok=true&drsecondarycode=299
+        port: 8200
+        scheme: HTTPS
+      periodSeconds: 5
+      timeoutSeconds: 10
+      failureThreshold: 6
+      successThreshold: 1
+
+  securityContext:
+    runAsUser: 100
+    runAsGroup: 1000
+    fsGroup: 1000
+
+  caNamespaces:
+    - "*"
+
+  unsealConfig:
+    options:
+      preFlightChecks: true
+      storeRootToken: true
+      secretShares: 5
+      secretThreshold: 3
+    kubernetes:
+      secretNamespace: bank-vaults
+
+  volumeClaimTemplates:
+    - metadata:
+        name: vault-raft
+      spec:
+        storageClassName: doppio-local
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 2Gi
+
+  volumeMounts:
+    - name: vault-raft
+      mountPath: /vault/file
+
+  config:
+    disable_mlock: true
+    storage:
+      raft:
+        path: /vault/file
+    listener:
+      tcp:
+        address: "0.0.0.0:8200"
+        tls_cert_file: /vault/tls/server.crt
+        tls_key_file: /vault/tls/server.key
+    api_addr: https://vault.bank-vaults:8200
+    cluster_addr: "https://${.Env.POD_NAME}:8201"
+    ui: true
+
+  resources:
+    vault:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+
+  externalConfig:
+    policies:
+      - name: reader
+        rules: |
+          path "kv/data/*" {
+            capabilities = ["read"]
+          }
+          path "kv/metadata/*" {
+            capabilities = ["read", "list"]
+          }
+    auth:
+      - type: kubernetes
+        roles:
+          - name: default
+            bound_service_account_names: ["*"]
+            bound_service_account_namespaces: ["*"]
+            policies: ["reader"]
+            ttl: 1h
+    secrets:
+      - path: kv
+        type: kv
+        description: General secrets store (KV v2)
+        options:
+          version: 2

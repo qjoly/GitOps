@@ -1,0 +1,112 @@
+# doppio — what ArgoCD is pointed at once Corium has brought it up.
+#
+# Apply once, by hand, against the freshly bootstrapped node:
+#
+#   cctl kubeconfig <node> > /tmp/doppio.kubeconfig
+#   kubectl --kubeconfig /tmp/doppio.kubeconfig apply -f doppio/bootstrap/bootstrap.yml
+#
+# Everything after that is reconciled from git.
+#
+# Note there is no Cilium or ArgoCD Application here, unlike the day-0
+# extraManifests of the Talos clusters: on doppio both are k0s charts, owned by
+# doppio/corium/ks-stor.yaml. See doppio/README.md.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: common
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/qjoly/gitops
+    targetRevision: main
+    path: common
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: doppio-system
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/qjoly/gitops.git
+        revision: HEAD
+        directories:
+          - path: doppio/system/*
+  template:
+    metadata:
+      name: "sys-{{.path.basename}}"
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: "default"
+      source:
+        repoURL: https://github.com/qjoly/gitops.git
+        targetRevision: HEAD
+        path: "{{.path.path}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "argocd"
+      syncPolicy:
+        automated:
+          selfHeal: true
+          prune: true
+        syncOptions:
+          - CreateNamespace=true
+      ignoreDifferences:
+        - group: argoproj.io
+          kind: Application
+          jsonPointers:
+            - /metadata/finalizers
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: doppio-apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/qjoly/gitops.git
+        revision: HEAD
+        directories:
+          - path: doppio/apps/*
+  template:
+    metadata:
+      name: "app-{{.path.basename}}"
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: "default"
+      source:
+        repoURL: https://github.com/qjoly/gitops.git
+        targetRevision: HEAD
+        path: "{{.path.path}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "argocd"
+      syncPolicy:
+        automated:
+          selfHeal: true
+          prune: true
+        syncOptions:
+          - CreateNamespace=true
+      ignoreDifferences:
+        - group: argoproj.io
+          kind: Application
+          jsonPointers:
+            - /metadata/finalizers

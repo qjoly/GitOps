@@ -1,0 +1,26 @@
+---
+# The default StorageClass for doppio.
+#
+# BasePath is the mount point of the array declared in
+# doppio/corium/ks-stor.yaml. The two have to agree: point this at a path that
+# is not on the array and every PVC lands on the root filesystem instead, which
+# is a 10 GiB image on a storage box.
+#
+# A separate name from the chart's own `openebs-hostpath` on purpose: taking
+# over a StorageClass the Helm release also owns is a fight with no winner.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: doppio-local
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+    openebs.io/cas-type: local
+    cas.openebs.io/config: |
+      - name: StorageType
+        value: hostpath
+      - name: BasePath
+        value: /var/lib/doppio/local
+provisioner: openebs.io/local
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+allowVolumeExpansion: false

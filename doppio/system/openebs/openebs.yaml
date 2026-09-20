@@ -1,0 +1,43 @@
+# Hostpath only. mocha runs openebs-lvmpv because it has an LVM volume group;
+# doppio has a plain filesystem on the array, so the local hostpath provisioner
+# is the engine that matches the machine.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openebs
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://openebs.github.io/openebs
+    chart: openebs
+    targetRevision: 4.6.0
+    helm:
+      values: |
+        engines:
+          local:
+            lvm:
+              enabled: false
+            zfs:
+              enabled: false
+          replicated:
+            mayastor:
+              enabled: false
+        loki:
+          enabled: false
+        alloy:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openebs
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
