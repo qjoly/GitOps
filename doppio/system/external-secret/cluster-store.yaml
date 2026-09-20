@@ -1,0 +1,24 @@
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: vault-backend
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  provider:
+    vault:
+      server: "https://vault.bank-vaults.svc.cluster.local:8200"
+      path: "kv"
+      version: "v2"
+      caProvider:
+        type: Secret
+        name: vault-tls
+        namespace: bank-vaults
+        key: ca.crt
+      auth:
+        kubernetes:
+          mountPath: "kubernetes"
+          role: "default"
+          serviceAccountRef:
+            name: external-secrets
+            namespace: external-secrets

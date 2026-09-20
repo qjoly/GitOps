@@ -1,0 +1,125 @@
+# doppio — the node document.
+#
+# This file plays the role `mocha/patches/` and `turing/patches/` play for the
+# Talos clusters: it is what the machine is, in git, reviewable.
+#
+# Day 0   `cctl enroll <ip> --code <code> --config doppio/corium/ks-stor.yaml`
+# Day 2   `cctl apply <ip> --file doppio/corium/ks-stor.yaml`
+#
+# A day-two apply re-applies **only** `addons`, and refuses every field that
+# defines what the node is (role, name, network, disks). Those need
+# `cctl reset` and a re-bootstrap. See Corium ADR 8.
+corium:
+  role: single
+
+  node:
+    name: ks-stor
+
+  # Keep the management API: this document is the whole configuration, not a
+  # patch, and dropping `api` here takes cctl away at the next boot.
+  api:
+    enabled: true
+
+  network:
+    podCIDR: 10.244.0.0/16
+    serviceCIDR: 10.96.0.0/12
+
+    # k0s deploys no CNI, so kube-router and Cilium never fight over the node.
+    # The node stays NotReady until Cilium is up; that is expected, not a
+    # failed boot.
+    cni: custom
+
+  # TODO(disks): the storage array, once the disk layout is known.
+  #
+  # `lsblk -o NAME,SIZE,MODEL` on the node, then fill this in. The mount point
+  # is what doppio/system/openebs-storageclass hands to OpenEBS, so the two
+  # have to agree.
+  #
+  # raid:
+  #   - name: data
+  #     level: 1
+  #     devices: [/dev/nvme0n1, /dev/nvme1n1]
+  #     filesystem: ext4
+  #     mountPoint: /var/lib/doppio/local
+  #     wipe: false
+
+  addons:
+    # --- CNI ------------------------------------------------------------
+    - name: cilium
+      chart: cilium/cilium
+      version: 1.20.2
+      namespace: kube-system
+      repository:
+        name: cilium
+        url: https://helm.cilium.io/
+      values:
+        # Must match network.podCIDR above, or pods get addresses the cluster
+        # does not route.
+        ipam:
+          mode: cluster-pool
+          operator:
+            clusterPoolIPv4PodCIDRList:
+              - 10.244.0.0/16
+
+        # Same tunnel choice as mocha and turing: safe over OVH networking.
+        routingMode: tunnel
+        tunnelProtocol: vxlan
+        autoDirectNodeRoutes: false
+
+        bpf:
+          masquerade: true
+
+        ipv6:
+          enabled: false
+
+        operator:
+          # Single node. The chart default of 2 leaves one replica Pending for
+          # ever on its anti-affinity rule.
+          replicas: 1
+
+        hubble:
+          enabled: true
+          relay:
+            enabled: true
+          ui:
+            enabled: true
+
+    # --- GitOps engine --------------------------------------------------
+    - name: argocd
+      chart: argo/argo-cd
+      version: 10.9.2
+      namespace: argocd
+      repository:
+        name: argo
+        url: https://argoproj.github.io/argo-helm
+      values:
+        # Single node: no HA, no redis cluster.
+        redis-ha:
+          enabled: false
+        controller:
+          replicas: 1
+        server:
+          replicas: 1
+        repoServer:
+          replicas: 1
+        applicationSet:
+          replicas: 1
+
+        configs:
+          params:
+            # TLS is terminated in front of ArgoCD, not by it.
+            server.insecure: true
+          cm:
+            url: https://argocd.doppio.thoughtless.eu
+            timeout.reconciliation: 180s
+            # Cilium mints one CiliumIdentity per pod; without this the
+            # ArgoCD UI drowns in them.
+            resource.exclusions: |
+              - apiGroups:
+                  - cilium.io
+                kinds:
+                  - CiliumIdentity
+                clusters:
+                  - "*"
+          rbac:
+            policy.default: role:readonly

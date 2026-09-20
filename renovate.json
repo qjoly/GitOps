@@ -47,7 +47,9 @@
         "clastix/cluster-api-control-plane-provider-kamaji",
         "smartxworks/virtink"
       ],
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "enabled": false
     }
   ],
@@ -79,6 +81,17 @@
         "github\\.com/(?<depName>smartxworks/virtink)/releases/download/(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)/"
       ],
       "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Corium node documents: Helm add-ons pinned under addons[] (no manager understands this shape)",
+      "managerFilePatterns": [
+        "/doppio/corium/.*\\.yaml$/"
+      ],
+      "matchStrings": [
+        "chart: [^/\\s]+/(?<depName>\\S+)\\s+version: (?<currentValue>\\S+)\\s+namespace: \\S+\\s+repository:\\s+name: \\S+\\s+url: (?<registryUrl>\\S+)"
+      ],
+      "datasourceTemplate": "helm"
     }
   ]
 }
