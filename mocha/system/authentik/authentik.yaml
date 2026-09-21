@@ -259,6 +259,21 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/bluesky.svg
                 secretName: oidc-tranquil-pds
+              # kube-apiserver only validates the ID token; the login flow runs in
+              # kubectl (kubelogin), which cannot hold a secret -> public + PKCE.
+              # Both ports are kubelogin's defaults for its local callback server.
+              - slug: mocha-oidc
+                name: Provider for Kubernetes API (mocha)
+                appName: Kubernetes (mocha)
+                clientType: public
+                clientID: mocha-oidc
+                redirectURIs:
+                  - http://localhost:8000
+                  - http://localhost:18000
+                # offline_access: refresh token, otherwise a browser login per hour.
+                scopes: [email, profile, openid, offline_access]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kubernetes.svg
             proxyProviders:
               - slug: prowlarr
                 name: Prowlarr
