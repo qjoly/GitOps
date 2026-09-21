@@ -160,6 +160,16 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/argo-cd.svg
                 secretName: oidc-argocd-turing
+              - slug: argocd-mocha
+                name: Provider for ArgoCD (mocha)
+                appName: ArgoCD Mocha
+                clientType: confidential
+                redirectURIs:
+                  - https://argocd.mocha.thoughtless.eu/api/dex/callback
+                scopes: [email, profile, openid]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/argo-cd.svg
+                secretName: oidc-argocd-mocha
               - slug: immich
                 name: Provider for Immich (turing)
                 appName: Immich

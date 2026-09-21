@@ -19,8 +19,8 @@ data:
   dex.config: |
     connectors:
     - config:
-        issuer: https://oidc.home.une-tasse-de.cafe/application/o/argocd-mocha/
-        clientID: 0ErFEH07XOcuRf6uNC5dEwcHSIC0b2WfMK0fH2M6
+        issuer: https://authentik.mocha.thoughtless.eu/application/o/argocd-mocha/
+        clientID: $dex.authentik.clientID
         clientSecret: $dex.authentik.clientSecret
         insecureEnableGroups: true
         scopes:
