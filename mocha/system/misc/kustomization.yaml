@@ -4,5 +4,6 @@ kind: Kustomization
 resources:
   - ingress-argocd.yaml
   - ip-pool.yml
+  - l2-announcement.yml
   - cluster-issuer.yaml
   - traefik-middleware.yaml
