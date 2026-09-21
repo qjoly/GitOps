@@ -22,6 +22,9 @@ spec:
           enabled: false
         alloy:
           enabled: false
+        lvm-localpv:
+          lvmNode:
+            kubeletDir: /var/lib/k0s/kubelet
   destination:
     server: https://kubernetes.default.svc
     namespace: openebs
