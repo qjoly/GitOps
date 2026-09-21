@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://openebs.github.io/openebs
     chart: openebs
-    targetRevision: 4.6.0
+    targetRevision: 4.6.1
     helm:
       values: |
         engines:
