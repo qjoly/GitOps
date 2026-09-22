@@ -82,5 +82,10 @@ k0s:
         extraArgs:
           oidc-issuer-url: https://authentik.mocha.thoughtless.eu/application/o/mocha-oidc/
           oidc-client-id: mocha-oidc
-          oidc-username-claim: email
+          # sub (not email): the email claim carries email_verified:false, and
+          # Kubernetes rejects an email-claim username when email_verified is not
+          # true. sub sidesteps that rule. prefix "-" means no issuer prefix, so
+          # the username is the sub verbatim.
+          oidc-username-claim: sub
+          oidc-username-prefix: "-"
           oidc-groups-claim: groups
