@@ -1,0 +1,86 @@
+role: single
+cluster:
+  name: corium
+network:
+  podCIDR: 10.244.0.0/16
+  serviceCIDR: 10.96.0.0/12
+  cni: custom
+storage:
+  type: sqlite
+node:
+  name: mocha
+addons:
+  - name: cilium
+    chart: cilium/cilium
+    version: 1.20.2
+    namespace: kube-system
+    repository:
+      name: cilium
+      url: https://helm.cilium.io/
+    values:
+      autoDirectNodeRoutes: false
+      bpf:
+        masquerade: true
+      hubble:
+        enabled: true
+        relay:
+          enabled: true
+        ui:
+          enabled: true
+      ipam:
+        mode: cluster-pool
+        operator:
+          clusterPoolIPv4PodCIDRList:
+            - 10.244.0.0/16
+      ipv6:
+        enabled: false
+      operator:
+        replicas: 1
+      routingMode: tunnel
+      tunnelProtocol: vxlan
+  - name: argocd
+    chart: argo/argo-cd
+    version: 10.9.2
+    namespace: argocd
+    repository:
+      name: argo
+      url: https://argoproj.github.io/argo-helm
+    values:
+      applicationSet:
+        replicas: 1
+      configs:
+        cm:
+          resource.exclusions: |
+            - apiGroups:
+                - cilium.io
+              kinds:
+                - CiliumIdentity
+              clusters:
+                - "*"
+          timeout.reconciliation: 180s
+          url: https://argocd.mocha.thoughtless.eu
+        params:
+          server.insecure: true
+      controller:
+        replicas: 1
+      redis-ha:
+        enabled: false
+      repoServer:
+        replicas: 1
+      server:
+        replicas: 1
+upgrades:
+  automatic: none
+  schedule: daily
+api:
+  enabled: true
+# Corium ne modélise pas les flags du kube-apiserver : on passe par le patch k0s.
+k0s:
+  patch:
+    spec:
+      api:
+        extraArgs:
+          oidc-issuer-url: https://authentik.mocha.thoughtless.eu/application/o/mocha-oidc/
+          oidc-client-id: mocha-oidc
+          oidc-username-claim: email
+          oidc-groups-claim: groups
