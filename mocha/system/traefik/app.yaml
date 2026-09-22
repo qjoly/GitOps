@@ -39,6 +39,8 @@ spec:
           annotations:
             lbipam.cilium.io/sharing-key: "public"
             lbipam.cilium.io/sharing-cross-namespace: "*"
+          spec:
+            externalTrafficPolicy: Local
         ports:
           websecure:
             forwardedHeaders:
