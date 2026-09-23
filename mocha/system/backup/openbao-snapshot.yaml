@@ -61,7 +61,7 @@ spec:
                 secretName: vault-tls
           initContainers:
             - name: snapshot
-              image: openbao/openbao:2.6.2
+              image: openbao/openbao:2.7.0
               command: ["/bin/sh", "-c"]
               args:
                 - bao operator raft snapshot save /work/openbao.snap
