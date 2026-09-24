@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://charts.rook.io/release
     chart: rook-ceph
-    targetRevision: v1.20.3
+    targetRevision: v1.20.7
     helm:
       values: |
         crds:
