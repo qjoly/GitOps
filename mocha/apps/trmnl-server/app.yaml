@@ -54,8 +54,8 @@ spec:
         persistence:
           storageClassName: openebs-lvmpv
 
-        # signoz-api-key, github-credentials and trmnl-upload-token are not managed
-        # from this repo; they were created by hand in the namespace.
+        # signoz-api-key, github-credentials and trmnl-upload-token come from
+        # Vault via the ExternalSecrets in manifests/externalsecret.yaml.
         generator:
           enabled: true
           configMapName: image-generator-script
