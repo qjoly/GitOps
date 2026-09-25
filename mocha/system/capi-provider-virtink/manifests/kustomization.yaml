@@ -11,3 +11,7 @@ images:
   - name: capch-controller
     newName: docker.io/smartxworks/capch-controller
     newTag: v0.7.0
+  # gcr.io/kubebuilder was shut down; the sidecar now lives on quay.io.
+  - name: gcr.io/kubebuilder/kube-rbac-proxy
+    newName: quay.io/brancz/kube-rbac-proxy
+    newTag: v0.19.1
