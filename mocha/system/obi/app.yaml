@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: obi
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: obi
+  source:
+    repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+    chart: opentelemetry-ebpf-instrumentation
+    targetRevision: 0.14.0
+    helm:
+      values: |
+        # DaemonSet on the single node, zero-code RED metrics and traces for every
+        # process it can reach. Kernel 7.2 covers the eBPF and BTF requirements.
+        preset: application
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        config:
+          data:
+            extensions:
+              obi:
+                version: "2.0"
+            # Both lists replace the chart defaults wholesale, so every knob the
+            # chart sets has to be repeated here, not just the endpoint.
+            meter_provider:
+              readers:
+                - periodic:
+                    exporter:
+                      otlp_http:
+                        default_histogram_aggregation: explicit_bucket_histogram
+                        encoding: protobuf
+                        endpoint: http://signoz-otel-collector.signoz.svc.cluster.local:4318
+                    interval: 60000
+                - pull:
+                    exporter:
+                      prometheus/development:
+                        port: 9090
+            tracer_provider:
+              processors:
+                - batch:
+                    exporter:
+                      otlp_grpc:
+                        endpoint: http://signoz-otel-collector.signoz.svc.cluster.local:4317
+                        tls:
+                          insecure: true
+                    max_export_batch_size: 4096
+                    max_queue_size: 16384
+                    schedule_delay: 15000
