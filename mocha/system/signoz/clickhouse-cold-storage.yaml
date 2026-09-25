@@ -26,6 +26,10 @@ kind: ClickHouseInstallationTemplate
 metadata:
   name: cold-storage-credentials
   namespace: signoz
+  annotations:
+    # The CRD is installed by the signoz chart, which this same Application
+    # deploys: without this, a cluster without the CRD fails the whole sync.
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   templating:
     policy: auto

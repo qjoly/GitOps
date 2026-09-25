@@ -22,15 +22,14 @@ spec:
         global:
           storageClass: openebs-lvmpv
         clickhouse:
-          # PARK 2026-09-08: nvme1n1 (openebs-lvmpv) is worn out (SMART 106% used,
-          # critical_warning 0x8 read-only mode, ~48s write latency). SigNoz's
-          # ClickHouse+ZooKeeper are the dominant writers wearing the disk, so scale
-          # the whole stack to 0 until the SSD is replaced. Re-enable by restoring
-          # these counts to 1. PVCs are retained (no prune + operator default Retain).
+          # Unparked 2026-09-25: the node was reinstalled and both NVMe drives read
+          # healthy (nvme0 2% used, nvme1 25%, no critical warning), so the worn-out
+          # SSD that forced the 2026-09-08 scale-to-0 is gone. The old PVCs went with
+          # the reinstall, this starts on an empty volume.
           layout:
-            replicasCount: 0
+            replicasCount: 1
           zookeeper:
-            replicaCount: 0
+            replicaCount: 1
           persistence:
             enabled: true
             size: 100Gi
