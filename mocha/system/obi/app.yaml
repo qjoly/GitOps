@@ -22,12 +22,14 @@ spec:
         # DaemonSet on the single node, zero-code RED metrics and traces for every
         # process it can reach. Kernel 7.2 covers the eBPF and BTF requirements.
         preset: application
+        # OBI keeps a BPF map and a process table per instrumented binary, 512Mi
+        # was not enough to even reach a steady state on this node.
         resources:
           requests:
             cpu: 50m
-            memory: 128Mi
+            memory: 256Mi
           limits:
-            memory: 512Mi
+            memory: 1Gi
         config:
           data:
             extensions:
