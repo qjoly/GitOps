@@ -82,7 +82,7 @@ spec:
                 </zookeeper>
               </clickhouse>
         signoz:
-          replicaCount: 0
+          replicaCount: 1
           ingress:
             enabled: true
             className: traefik
@@ -99,7 +99,7 @@ spec:
                 hosts:
                   - signoz.mocha.thoughtless.eu
         otelCollector:
-          replicaCount: 0
+          replicaCount: 1
           # The chart default flushes a batch to ClickHouse every 1s (batch.timeout),
           # which at low log volume produces thousands of ~40KiB parts per day. ClickHouse
           # then burns disk I/O merging them, starving ZooKeeper's fsync (see the
