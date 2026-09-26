@@ -1,0 +1,1546 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: argocd
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: argocd
+      tags:
+      - key: tag
+        value: argocd
+      spec:
+        display:
+          name: Argo CD Metrics
+          description: ''
+        variables:
+        - kind: ListVariable
+          spec:
+            name: k8s.cluster.name
+            display:
+              name: k8s.cluster.name
+              description: Name of the cluster
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.cluster.name
+                signal: all
+        - kind: ListVariable
+          spec:
+            name: health.status
+            display:
+              name: health.status
+              description: Health status of an application
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: health_status
+                signal: all
+        - kind: ListVariable
+          spec:
+            name: namespace
+            display:
+              name: namespace
+              description: Kubernetes Namespace
+            allowAllValue: false
+            allowMultiple: false
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: namespace
+                signal: all
+        - kind: ListVariable
+          spec:
+            name: sync.status
+            display:
+              name: sync.status
+              description: Sync status of an application
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: sync_status
+                signal: all
+        panels:
+          number-of-applications:
+            kind: Panel
+            spec:
+              display:
+                name: Number Of Applications
+                description: Number of applications present in the ArgoCD Dashboard
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_info
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          repository-servers:
+            kind: Panel
+            spec:
+              display:
+                name: 'Repository Servers '
+                description: Number for Repository present in the ArgoCD Dashboard
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_info
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: '{{health_status}}'
+              links: []
+          healthy:
+            kind: Panel
+            spec:
+              display:
+                name: Healthy
+                description: Number of healthly applications in ArgoCD Dashboard
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_info
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND health_status = 'Healthy' AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          progressing:
+            kind: Panel
+            spec:
+              display:
+                name: Progressing
+                description: 'Number of applications that are currently in progress '
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_info
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND health_status = 'Progressing' AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          suspended:
+            kind: Panel
+            spec:
+              display:
+                name: Suspended
+                description: Number of application which are suspended
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_info
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND health_status = 'Suspended' AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          degraded:
+            kind: Panel
+            spec:
+              display:
+                name: Degraded
+                description: Number of application which are degraded
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_info
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND health_status = 'Degraded' AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          application-health-distribution:
+            kind: Panel
+            spec:
+              display:
+                name: Application Health Distribution
+                description: Distribution of application health statuses across all apps
+              plugin:
+                kind: signoz/PieChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  legend:
+                    position: bottom
+                    mode: list
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_info
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: health_status
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{health_status}}'
+              links: []
+          sync-status-distribution:
+            kind: Panel
+            spec:
+              display:
+                name: Sync Status Distribution
+                description: Distribution of application sync statuses across all apps
+              plugin:
+                kind: signoz/PieChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  legend:
+                    position: bottom
+                    mode: list
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_info
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: sync_status
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{sync_status}}'
+              links: []
+          synced:
+            kind: Panel
+            spec:
+              display:
+                name: Synced
+                description: Shows the number of the synced application in the ArgoCD Dashboard
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_info
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND sync_status = 'Synced' AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          outofsync:
+            kind: Panel
+            spec:
+              display:
+                name: OutOfSync
+                description: Number of applications which are out of sync
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_info
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND sync_status = 'OutOfSync' AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          applications-by-repository:
+            kind: Panel
+            spec:
+              display:
+                name: Applications By Repository
+                description: Shows applications count by repository over the time
+              plugin:
+                kind: signoz/PieChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  legend:
+                    position: bottom
+                    mode: list
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_info
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND health_status IN $health.status AND sync_status IN $sync.status AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: repo
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Repo - {{repo}}
+              links: []
+          sync-activity:
+            kind: Panel
+            spec:
+              display:
+                name: Sync activity
+                description: Show different phases of sync activity
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_sync_total
+                        timeAggregation: increase
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND phase = 'Succeeded' AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: phase
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Phase - {{phase}}
+              links: []
+          reconciliation-activity:
+            kind: Panel
+            spec:
+              display:
+                name: Reconciliation activity
+                description: Shows Application reconciliation count over the time
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_reconcile.count
+                        timeAggregation: increase
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: namespace
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Namespace - {{namespace}}
+              links: []
+          count-of-application-reconciliation-by-duration-bo:
+            kind: Panel
+            spec:
+              display:
+                name: Count of Application Reconciliation by Duration Bounds
+                description: Shows the count of application reconciliation by Duration Bounds
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_reconcile.bucket
+                        spaceAggregation: p50
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: namespace
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Namespace - {{namespace}}
+              links: []
+          reconciliation-performance:
+            kind: Panel
+            spec:
+              display:
+                name: Reconciliation Performance
+                description: Shows application reconciliation performance
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_reconcile.bucket
+                        timeAggregation: avg
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: Namespace - {{namespace}}
+              links: []
+          k8s-api-activity:
+            kind: Panel
+            spec:
+              display:
+                name: K8s API Activity
+                description: Shows the number of Kubernetes requests executed during application reconciliation
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_k8s_request_total
+                        timeAggregation: increase
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: namespace = $namespace AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: verb
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: resource_kind
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Resource kind - {{resource_kind}}, Verb - {{verb}}
+              links: []
+          workqueue-depth:
+            kind: Panel
+            spec:
+              display:
+                name: Workqueue Depth
+                description: Current depth of workqueue
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: workqueue_depth
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Name - {{name}}
+              links: []
+          age-of-cluster-cache:
+            kind: Panel
+            spec:
+              display:
+                name: Age of Cluster Cache
+                description: Cluster cache age in seconds.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_cluster_cache_age_seconds
+                        timeAggregation: avg
+                        spaceAggregation: avg
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: server
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Server - {{server}}
+              links: []
+          count-of-cluster-resource-objects:
+            kind: Panel
+            spec:
+              display:
+                name: Count of Cluster Resource Objects
+                description: The number of kubernetes resource objects in the cache
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_cluster_api_resource_objects
+                        timeAggregation: avg
+                        spaceAggregation: avg
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: server
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Server - {{server}}
+              links: []
+          count-of-cluster-events:
+            kind: Panel
+            spec:
+              display:
+                name: Count of Cluster Events
+                description: The number of processed kubernetes events
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_cluster_events_total
+                        timeAggregation: increase
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: server
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Server - {{server}}
+              links: []
+          count-of-api-resources:
+            kind: Panel
+            spec:
+              display:
+                name: Count of API Resources
+                description: The number of monitored kubernetes API resources
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_cluster_api_resources
+                        timeAggregation: avg
+                        spaceAggregation: avg
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: server
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Server - {{server}}
+              links: []
+          git-requests-by-type:
+            kind: Panel
+            spec:
+              display:
+                name: Git Requests by Type
+                description: Rate of git requests performed by the repo server, broken down by request type
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_git_request_total
+                        timeAggregation: increase
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: request_type
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{request_type}}'
+              links: []
+          cluster-connection-status:
+            kind: Panel
+            spec:
+              display:
+                name: Cluster Connection Status
+                description: Current connection status to each registered cluster (1=connected, 0=not connected)
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_cluster_connection_status
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: server
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Cluster - {{server}}
+              links: []
+          pending-repo-requests:
+            kind: Panel
+            spec:
+              display:
+                name: Pending Repo Requests
+                description: Number of pending requests requiring repository lock
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_repo_pending_request_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: repo
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Repo - {{repo}}
+              links: []
+          git-request-duration-p99:
+            kind: Panel
+            spec:
+              display:
+                name: Git Request Duration (P99)
+                description: 99th percentile of git request duration by repository
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: s
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_git_request_duration_seconds.bucket
+                        timeAggregation: avg
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: repo
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: Repo - {{repo}}
+              links: []
+          orphaned-resources-per-app:
+            kind: Panel
+            spec:
+              display:
+                name: Orphaned Resources per App
+                description: Number of orphaned resources per application
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: argocd_app_orphaned_resources_count
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: App Name - {{name}}
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/number-of-applications'
+            - x: 6
+              y: 0
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/repository-servers'
+            display:
+              title: Overview
+              collapse:
+                open: true
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/healthy'
+            - x: 3
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/progressing'
+            - x: 6
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/suspended'
+            - x: 9
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/degraded'
+            - x: 0
+              y: 2
+              width: 6
+              height: 3
+              content:
+                $ref: '#/spec/panels/application-health-distribution'
+            - x: 6
+              y: 2
+              width: 6
+              height: 3
+              content:
+                $ref: '#/spec/panels/sync-status-distribution'
+            display:
+              title: Application Health
+              collapse:
+                open: true
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 4
+              height: 2
+              content:
+                $ref: '#/spec/panels/synced'
+            - x: 4
+              y: 0
+              width: 4
+              height: 2
+              content:
+                $ref: '#/spec/panels/outofsync'
+            - x: 8
+              y: 0
+              width: 4
+              height: 3
+              content:
+                $ref: '#/spec/panels/applications-by-repository'
+            display:
+              title: Application Sync Status
+              collapse:
+                open: true
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/sync-activity'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/reconciliation-activity'
+            - x: 0
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/count-of-application-reconciliation-by-duration-bo'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/reconciliation-performance'
+            - x: 0
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/k8s-api-activity'
+            - x: 6
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/workqueue-depth'
+            display:
+              title: Controller Stats
+              collapse:
+                open: true
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/age-of-cluster-cache'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/count-of-cluster-resource-objects'
+            - x: 0
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/count-of-cluster-events'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/count-of-api-resources'
+            display:
+              title: Cluster Stats
+              collapse:
+                open: true
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 12
+              height: 4
+              content:
+                $ref: '#/spec/panels/git-requests-by-type'
+            display:
+              title: Repo Server Stats
+              collapse:
+                open: true
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/cluster-connection-status'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/pending-repo-requests'
+            - x: 0
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/git-request-duration-p99'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/orphaned-resources-per-app'
+            display:
+              title: Application Details
+              collapse:
+                open: true

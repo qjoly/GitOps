@@ -1,0 +1,620 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: kubernetes-controller-manager
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: kubernetes-controller-manager
+      tags:
+      - key: tag
+        value: kubernetes
+      - key: tag
+        value: control-plane
+      - key: tag
+        value: controller-manager
+      - key: tag
+        value: prometheus
+      spec:
+        display:
+          name: Kubernetes Controller Manager
+          description: Standard control-plane view for kube-controller-manager workqueues, retries, and client request pressure.
+        variables:
+        - kind: ListVariable
+          spec:
+            name: service.name
+            display:
+              name: service.name
+              description: Auto-discovered services (from metric labels).
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: service.name
+                signal: metrics
+        - kind: ListVariable
+          spec:
+            name: k8s.cluster.name
+            display:
+              name: k8s.cluster.name
+              description: Optional cluster label selector.
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.cluster.name
+                signal: metrics
+        - kind: ListVariable
+          spec:
+            name: deployment_environment_name
+            display:
+              name: deployment_environment_name
+              description: Optional OTel environment label selector.
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: deployment.environment.name
+                signal: metrics
+        - kind: ListVariable
+          spec:
+            name: deployment_environment
+            display:
+              name: deployment_environment
+              description: Optional legacy environment label selector.
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: deployment.environment
+                signal: metrics
+        panels:
+          auto-discovered-controller-services:
+            kind: Panel
+            spec:
+              display:
+                name: Auto-Discovered Controller Services
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: reqps
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: workqueue_adds_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: service.name
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{service.name}}'
+              links: []
+          workqueue-adds-s:
+            kind: Panel
+            spec:
+              display:
+                name: Workqueue Adds / s
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: reqps
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: workqueue_adds_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: adds/s
+              links: []
+          workqueue-retries-s:
+            kind: Panel
+            spec:
+              display:
+                name: Workqueue Retries / s
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: reqps
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: workqueue_retries_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: retries/s
+              links: []
+          go-routines:
+            kind: Panel
+            spec:
+              display:
+                name: Go Routines
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: go_goroutines
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: goroutines
+              links: []
+          process-rss:
+            kind: Panel
+            spec:
+              display:
+                name: Process RSS
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: By
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: process_resident_memory_bytes
+                        timeAggregation: latest
+                        spaceAggregation: avg
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: rss
+              links: []
+          workqueue-depth-by-queue:
+            kind: Panel
+            spec:
+              display:
+                name: Workqueue Depth By Queue
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: workqueue_depth
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: name
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{name}}'
+              links: []
+          workqueue-queue-duration-p50-p90-p99:
+            kind: Panel
+            spec:
+              display:
+                name: Workqueue Queue Duration (p50/p90/p99)
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: reqps
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: workqueue_queue_duration_seconds.bucket
+                            spaceAggregation: p50
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p50
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: workqueue_queue_duration_seconds.bucket
+                            spaceAggregation: p90
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p90
+                      - type: builder_query
+                        spec:
+                          name: C
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: workqueue_queue_duration_seconds.bucket
+                            spaceAggregation: p99
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p99
+              links: []
+          workqueue-work-duration-p50-p90-p99:
+            kind: Panel
+            spec:
+              display:
+                name: Workqueue Work Duration (p50/p90/p99)
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: reqps
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: workqueue_work_duration_seconds.bucket
+                            spaceAggregation: p50
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p50
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: workqueue_work_duration_seconds.bucket
+                            spaceAggregation: p90
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p90
+                      - type: builder_query
+                        spec:
+                          name: C
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: workqueue_work_duration_seconds.bucket
+                            spaceAggregation: p99
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p99
+              links: []
+          rest-client-requests-by-code:
+            kind: Panel
+            spec:
+              display:
+                name: REST Client Requests By Code
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: reqps
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: rest_client_requests_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: code
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{code}}'
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 3
+              height: 4
+              content:
+                $ref: '#/spec/panels/auto-discovered-controller-services'
+            - x: 3
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/workqueue-adds-s'
+            - x: 6
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/workqueue-retries-s'
+            - x: 9
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/go-routines'
+            - x: 0
+              y: 4
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/process-rss'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/workqueue-depth-by-queue'
+            - x: 0
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/workqueue-queue-duration-p50-p90-p99'
+            - x: 6
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/workqueue-work-duration-p50-p90-p99'
+            - x: 0
+              y: 12
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/rest-client-requests-by-code'

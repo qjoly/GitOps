@@ -1,0 +1,795 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: plex
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: plex
+      tags:
+      - key: tag
+        value: plex
+      - key: tag
+        value: media
+      spec:
+        display:
+          name: Plex
+          description: Plex media server metrics (libraries, playback, devices, host) from prometheus-plex-exporter.
+        variables: []
+        panels:
+          storage-share-by-library:
+            kind: Panel
+            spec:
+              display:
+                name: Storage share by library
+                description: ''
+              plugin:
+                kind: signoz/PieChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: bytes
+                  legend:
+                    position: bottom
+                    mode: list
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: library_storage_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy:
+                      - name: library
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{library}}'
+              links: []
+          content-duration-share-by-library:
+            kind: Panel
+            spec:
+              display:
+                name: Content duration share by library
+                description: ''
+              plugin:
+                kind: signoz/PieChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: ms
+                  legend:
+                    position: bottom
+                    mode: list
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: library_duration_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy:
+                      - name: library
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{library}}'
+              links: []
+          plays-by-library:
+            kind: Panel
+            spec:
+              display:
+                name: Plays by library
+                description: ''
+              plugin:
+                kind: signoz/PieChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  legend:
+                    position: bottom
+                    mode: list
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: plays_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy:
+                      - name: library_type
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{library_type}}'
+              links: []
+          watch-time-by-stream-type:
+            kind: Panel
+            spec:
+              display:
+                name: Watch time by stream type
+                description: ''
+              plugin:
+                kind: signoz/PieChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  legend:
+                    position: bottom
+                    mode: list
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: play_seconds_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy:
+                      - name: stream_type
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{stream_type}}'
+              links: []
+          watch-time-by-device:
+            kind: Panel
+            spec:
+              display:
+                name: Watch time by device
+                description: ''
+              plugin:
+                kind: signoz/PieChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  legend:
+                    position: bottom
+                    mode: list
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: play_seconds_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy:
+                      - name: device_type
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{device_type}}'
+              links: []
+          watch-time-by-resolution:
+            kind: Panel
+            spec:
+              display:
+                name: Watch time by resolution
+                description: ''
+              plugin:
+                kind: signoz/PieChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  legend:
+                    position: bottom
+                    mode: list
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: play_seconds_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy:
+                      - name: stream_resolution
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{stream_resolution}}'
+              links: []
+          watch-time-by-user:
+            kind: Panel
+            spec:
+              display:
+                name: Watch time by user
+                description: ''
+              plugin:
+                kind: signoz/BarChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: play_seconds_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy:
+                      - name: user
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{user}}'
+              links: []
+          plays-by-title:
+            kind: Panel
+            spec:
+              display:
+                name: Plays by title
+                description: ''
+              plugin:
+                kind: signoz/BarChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: plays_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy:
+                      - name: title
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{title}}'
+              links: []
+          active-play-time-rate-by-user:
+            kind: Panel
+            spec:
+              display:
+                name: Active play time rate by user
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: play_seconds_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy:
+                      - name: user
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{user}}'
+              links: []
+          estimated-transmit-rate:
+            kind: Panel
+            spec:
+              display:
+                name: Estimated transmit rate
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: estimated_transmit_bytes_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: transmit
+              links: []
+          server-cpu-utilization:
+            kind: Panel
+            spec:
+              display:
+                name: Server CPU utilization
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: percent
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: host_cpu_util
+                        timeAggregation: latest
+                        spaceAggregation: avg
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: cpu
+              links: []
+          server-memory-utilization:
+            kind: Panel
+            spec:
+              display:
+                name: Server memory utilization
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: percent
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: host_mem_util
+                        timeAggregation: latest
+                        spaceAggregation: avg
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: mem
+              links: []
+          total-storage:
+            kind: Panel
+            spec:
+              display:
+                name: Total storage
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: bytes
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: library_storage_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          total-plays:
+            kind: Panel
+            spec:
+              display:
+                name: Total plays
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: plays_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          playback-breakdown:
+            kind: Panel
+            spec:
+              display:
+                name: Playback breakdown
+                description: ''
+              plugin:
+                kind: signoz/TablePanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting: {}
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: play_seconds_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: server_type = 'plex'
+                      groupBy:
+                      - name: user
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: title
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: stream_type
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: stream_resolution
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: device_type
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 3
+              content:
+                $ref: '#/spec/panels/storage-share-by-library'
+            - x: 6
+              y: 0
+              width: 6
+              height: 3
+              content:
+                $ref: '#/spec/panels/content-duration-share-by-library'
+            - x: 0
+              y: 3
+              width: 6
+              height: 3
+              content:
+                $ref: '#/spec/panels/plays-by-library'
+            - x: 6
+              y: 3
+              width: 6
+              height: 3
+              content:
+                $ref: '#/spec/panels/watch-time-by-stream-type'
+            - x: 0
+              y: 6
+              width: 6
+              height: 3
+              content:
+                $ref: '#/spec/panels/watch-time-by-device'
+            - x: 6
+              y: 6
+              width: 6
+              height: 3
+              content:
+                $ref: '#/spec/panels/watch-time-by-resolution'
+            - x: 0
+              y: 9
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/watch-time-by-user'
+            - x: 6
+              y: 9
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/plays-by-title'
+            - x: 0
+              y: 13
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/active-play-time-rate-by-user'
+            - x: 6
+              y: 13
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/estimated-transmit-rate'
+            - x: 0
+              y: 17
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/server-cpu-utilization'
+            - x: 6
+              y: 17
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/server-memory-utilization'
+            - x: 0
+              y: 21
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/total-storage'
+            - x: 6
+              y: 21
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/total-plays'
+            - x: 0
+              y: 23
+              width: 12
+              height: 4
+              content:
+                $ref: '#/spec/panels/playback-breakdown'

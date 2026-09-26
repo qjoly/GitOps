@@ -1,0 +1,1176 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: cert-manager
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: cert-manager
+      tags:
+      - key: tag
+        value: cert-manager
+      - key: tag
+        value: kubernetes
+      - key: tag
+        value: tls
+      - key: tag
+        value: pki
+      - key: tag
+        value: prometheus
+      spec:
+        display:
+          name: cert-manager Monitoring
+          description: 'Monitors cert-manager health: certificate status, controller performance, ACME operations, webhook health, work queue, and resource usage. Scrape cert-manager port 9402 via OTel Collector Prometheus receiver.'
+        variables:
+        - kind: ListVariable
+          spec:
+            name: namespace
+            display:
+              name: namespace
+              description: Kubernetes namespace of the certificates
+            allowAllValue: true
+            allowMultiple: true
+            sort: alphabetical-asc
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: namespace
+                signal: metrics
+        - kind: ListVariable
+          spec:
+            name: issuer_name
+            display:
+              name: issuer_name
+              description: Certificate issuer name
+            allowAllValue: true
+            allowMultiple: true
+            sort: alphabetical-asc
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: issuer_name
+                signal: metrics
+        - kind: ListVariable
+          spec:
+            name: deployment_environment
+            display:
+              name: deployment_environment
+              description: Deployment environment
+            allowAllValue: true
+            allowMultiple: true
+            sort: alphabetical-asc
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: deployment.environment
+                signal: metrics
+        panels:
+          total-certificates:
+            kind: Panel
+            spec:
+              display:
+                name: Total Certificates
+                description: Total certificates tracked by cert-manager. Sum of ready_status across all condition values equals total cert count (exactly one condition = 1 per cert).
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: certmanager_certificate_ready_status
+                        temporality: unspecified
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: namespace IN $namespace AND issuer_name IN $issuer_name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          ready-certificates:
+            kind: Panel
+            spec:
+              display:
+                name: Ready Certificates
+                description: Certificates currently in Ready condition (actively serving TLS).
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: certmanager_certificate_ready_status
+                        temporality: unspecified
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: condition = 'True' AND namespace IN $namespace AND issuer_name IN $issuer_name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          not-ready-certificates:
+            kind: Panel
+            spec:
+              display:
+                name: Not Ready Certificates
+                description: Certificates with condition=False. Non-zero indicates issuance or renewal failure.
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: certmanager_certificate_ready_status
+                        temporality: unspecified
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: condition = 'False' AND namespace IN $namespace AND issuer_name IN $issuer_name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          webhook-requests-in-flight:
+            kind: Panel
+            spec:
+              display:
+                name: Webhook Requests In-Flight
+                description: Current number of admission requests being processed by the cert-manager webhook.
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: controller_runtime_webhook_requests_in_flight
+                        temporality: unspecified
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: ''
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          certificate-ready-status-per-cert:
+            kind: Panel
+            spec:
+              display:
+                name: Certificate Ready Status per Cert
+                description: Ready condition value per certificate over time (1=ready, 0=not ready). Drops indicate issuance or renewal failures.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: certmanager_certificate_ready_status
+                        temporality: unspecified
+                        timeAggregation: latest
+                        spaceAggregation: avg
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: condition = 'True' AND namespace IN $namespace AND issuer_name IN $issuer_name
+                      groupBy:
+                      - name: name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: namespace
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{name}} ({{namespace}})'
+              links: []
+          not-ready-certificates-by-namespace:
+            kind: Panel
+            spec:
+              display:
+                name: Not Ready Certificates by Namespace
+                description: Count of not-ready certificates grouped by namespace. Growing values indicate systemic issuance problems.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: certmanager_certificate_ready_status
+                        temporality: unspecified
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: condition = 'False' AND namespace IN $namespace
+                      groupBy:
+                      - name: namespace
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{namespace}}'
+              links: []
+          controller-sync-call-rate:
+            kind: Panel
+            spec:
+              display:
+                name: Controller Sync Call Rate
+                description: Rate of sync() calls per controller per second. Spikes may indicate high reconciliation load.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: certmanager_controller_sync_call_count
+                        temporality: cumulative
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: ''
+                      groupBy:
+                      - name: controller
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{controller}}'
+              links: []
+          controller-sync-error-rate:
+            kind: Panel
+            spec:
+              display:
+                name: Controller Sync Error Rate
+                description: Rate of sync() errors per controller per second. Sustained errors indicate reconciliation problems.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: certmanager_controller_sync_error_count
+                        temporality: cumulative
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: ''
+                      groupBy:
+                      - name: controller
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{controller}}'
+              links: []
+          acme-request-rate-by-action:
+            kind: Panel
+            spec:
+              display:
+                name: ACME Request Rate by Action
+                description: Rate of outbound ACME HTTP requests per action (getNonce, createOrder, finalizeOrder, etc.).
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: certmanager_http_acme_client_request_count
+                        temporality: cumulative
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: ''
+                      groupBy:
+                      - name: action
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{action}}'
+              links: []
+          acme-error-rate-non-2xx-by-action:
+            kind: Panel
+            spec:
+              display:
+                name: ACME Error Rate (non-2xx) by Action
+                description: Rate of ACME requests returning non-2xx HTTP status codes per action. Persistent errors indicate ACME provider issues.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: certmanager_http_acme_client_request_count
+                        temporality: cumulative
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: status NOT LIKE '2%'
+                      groupBy:
+                      - name: action
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{action}}'
+              links: []
+          acme-average-request-duration-by-action:
+            kind: Panel
+            spec:
+              display:
+                name: ACME Average Request Duration by Action
+                description: Average ACME HTTP request duration per action. Computed from Summary .sum / .count rate.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: s
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: certmanager_http_acme_client_request_duration_seconds.sum
+                            temporality: cumulative
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: avg
+                          disabled: true
+                          filter:
+                            expression: ''
+                          groupBy:
+                          - name: action
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: ''
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: certmanager_http_acme_client_request_duration_seconds.count
+                            temporality: cumulative
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: avg
+                          disabled: true
+                          filter:
+                            expression: ''
+                          groupBy:
+                          - name: action
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: ''
+                      - type: builder_formula
+                        spec:
+                          name: F1
+                          expression: A/B
+                          disabled: false
+                          legend: '{{action}}'
+                          having:
+                            expression: ''
+                          functions: []
+                          order: []
+              links: []
+          webhook-request-rate-by-status-code:
+            kind: Panel
+            spec:
+              display:
+                name: Webhook Request Rate by Status Code
+                description: Rate of admission webhook requests grouped by HTTP response status code.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: controller_runtime_webhook_requests_total
+                        temporality: cumulative
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: ''
+                      groupBy:
+                      - name: code
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: HTTP {{code}}
+              links: []
+          webhook-average-admission-latency:
+            kind: Panel
+            spec:
+              display:
+                name: Webhook Average Admission Latency
+                description: Average admission webhook processing latency computed from histogram .sum / .count rates.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: s
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: controller_runtime_webhook_latency_seconds.sum
+                            temporality: cumulative
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: avg
+                          disabled: true
+                          filter:
+                            expression: ''
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: ''
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: controller_runtime_webhook_latency_seconds.count
+                            temporality: cumulative
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: avg
+                          disabled: true
+                          filter:
+                            expression: ''
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: ''
+                      - type: builder_formula
+                        spec:
+                          name: F1
+                          expression: A/B
+                          disabled: false
+                          legend: avg latency
+                          having:
+                            expression: ''
+                          functions: []
+                          order: []
+              links: []
+          work-queue-depth-by-controller:
+            kind: Panel
+            spec:
+              display:
+                name: Work Queue Depth by Controller
+                description: Current item count in each controller work queue. Growing depth indicates processing backlog.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: workqueue_depth
+                        temporality: unspecified
+                        timeAggregation: latest
+                        spaceAggregation: avg
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: ''
+                      groupBy:
+                      - name: name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{name}}'
+              links: []
+          work-queue-add-rate-by-controller:
+            kind: Panel
+            spec:
+              display:
+                name: Work Queue Add Rate by Controller
+                description: Rate of items enqueued per controller queue per second.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: workqueue_adds_total
+                        temporality: cumulative
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: ''
+                      groupBy:
+                      - name: name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{name}}'
+              links: []
+          cpu-usage-by-component:
+            kind: Panel
+            spec:
+              display:
+                name: CPU Usage by Component
+                description: CPU core utilization rate per cert-manager component (controller, webhook, cainjector).
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: process_cpu_seconds_total
+                        temporality: cumulative
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name LIKE 'cert-manager%'
+                      groupBy:
+                      - name: service.name
+                        fieldContext: resource
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{service.name}}'
+              links: []
+          memory-usage-by-component:
+            kind: Panel
+            spec:
+              display:
+                name: Memory Usage by Component
+                description: Resident set size (RSS) memory per cert-manager component in bytes.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: process_resident_memory_bytes
+                        temporality: unspecified
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name LIKE 'cert-manager%'
+                      groupBy:
+                      - name: service.name
+                        fieldContext: resource
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{service.name}}'
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/total-certificates'
+            - x: 3
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/ready-certificates'
+            - x: 6
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/not-ready-certificates'
+            - x: 9
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/webhook-requests-in-flight'
+            - x: 0
+              y: 2
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/certificate-ready-status-per-cert'
+            - x: 6
+              y: 2
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/not-ready-certificates-by-namespace'
+            display:
+              title: Certificate Health
+              collapse:
+                open: true
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/controller-sync-call-rate'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/controller-sync-error-rate'
+            display:
+              title: Controller Performance
+              collapse:
+                open: true
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/acme-request-rate-by-action'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/acme-error-rate-non-2xx-by-action'
+            - x: 0
+              y: 4
+              width: 12
+              height: 4
+              content:
+                $ref: '#/spec/panels/acme-average-request-duration-by-action'
+            display:
+              title: ACME Operations
+              collapse:
+                open: true
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/webhook-request-rate-by-status-code'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/webhook-average-admission-latency'
+            display:
+              title: Webhook Health
+              collapse:
+                open: true
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/work-queue-depth-by-controller'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/work-queue-add-rate-by-controller'
+            display:
+              title: Work Queue
+              collapse:
+                open: true
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/cpu-usage-by-component'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/memory-usage-by-component'
+            display:
+              title: Resource Usage
+              collapse:
+                open: true

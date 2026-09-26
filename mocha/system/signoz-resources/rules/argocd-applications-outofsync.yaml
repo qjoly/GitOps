@@ -1,0 +1,60 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: argocd-applications-outofsync
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: ArgoCD applications OutOfSync
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: One or more ArgoCD applications have been OutOfSync for over 10m (not a transient auto-sync).
+      labels:
+        severity: warning
+      annotations:
+        summary: ArgoCD has out-of-sync applications
+        description: One or more ArgoCD applications have been OutOfSync for over 10m (not a transient auto-sync).
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: argocd_app_info
+                timeAggregation: count
+                spaceAggregation: sum
+              filter:
+                expression: sync_status = 'OutOfSync'
+              groupBy:
+              - name: k8s.cluster.name
+              - name: name
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: warning
+            op: above
+            matchType: all_the_times
+            target: 0
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 10m
+          frequency: 2m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

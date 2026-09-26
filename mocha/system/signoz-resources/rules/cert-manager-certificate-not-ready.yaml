@@ -1,0 +1,61 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: cert-manager-certificate-not-ready
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: cert-manager certificate not ready
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: certmanager_certificate_ready_status{condition=True} < 1 (renewal failed or expired).
+      labels:
+        severity: warning
+      annotations:
+        summary: A cert-manager Certificate is not Ready
+        description: certmanager_certificate_ready_status{condition=True} < 1 (renewal failed or expired).
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: certmanager_certificate_ready_status
+                timeAggregation: latest
+                spaceAggregation: min
+              filter:
+                expression: condition = 'True'
+              groupBy:
+              - name: k8s.cluster.name
+              - name: namespace
+              - name: name
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: warning
+            op: below
+            matchType: at_least_once
+            target: 1
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 15m
+          frequency: 5m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

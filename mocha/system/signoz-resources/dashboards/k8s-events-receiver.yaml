@@ -1,0 +1,777 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: k8s-events-receiver
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: k8s-events-receiver
+      tags:
+      - key: tag
+        value: k8s
+      - key: tag
+        value: cloud
+      - key: tag
+        value: events
+      spec:
+        display:
+          name: Kubernetes Cluster Events
+          description: This dashboard displays specific event and object kind counts, as well as their respective time-series charts, allowing the viewer to understand what's happening inside a cluster at a glance.
+        variables:
+        - kind: ListVariable
+          spec:
+            name: k8s.cluster.name
+            display:
+              name: k8s.cluster.name
+              description: The k8s cluster name
+            allowAllValue: false
+            allowMultiple: false
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.cluster.name
+                signal: all
+        - kind: ListVariable
+          spec:
+            name: k8s.namespace.name
+            display:
+              name: k8s.namespace.name
+              description: The k8s namespace name
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.namespace.name
+                signal: all
+        panels:
+          scaling-replica-s-count:
+            kind: Panel
+            spec:
+              display:
+                name: Scaling Replica's Count
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.event.reason = 'ScalingReplicaSet')
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          event-count:
+            kind: Panel
+            spec:
+              display:
+                name: Event Count
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name)
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          successful-delete-events:
+            kind: Panel
+            spec:
+              display:
+                name: Successful Delete Events
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.event.reason = 'SuccessfulDelete')
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          deployments-count:
+            kind: Panel
+            spec:
+              display:
+                name: Deployments Count
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.object.kind = 'Deployment')
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          scheduled-events-count:
+            kind: Panel
+            spec:
+              display:
+                name: Scheduled Events Count
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.event.reason = 'Scheduled')
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          killing-events:
+            kind: Panel
+            spec:
+              display:
+                name: Killing Events
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.event.reason = 'Killing')
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          pulled-images-count:
+            kind: Panel
+            spec:
+              display:
+                name: Pulled Images Count
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.event.reason = 'Pulled')
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          successful-create-events:
+            kind: Panel
+            spec:
+              display:
+                name: Successful Create Events
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.event.reason = 'SuccessfulDelete')
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          field-path-count-for-x-container:
+            kind: Panel
+            spec:
+              display:
+                name: Field Path Count for X Container
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: none
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.object.fieldpath = 'spec.containers{kubernetes-bootcamp}')
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          event-count-over-time:
+            kind: Panel
+            spec:
+              display:
+                name: Event Count over Time
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 1980
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name)
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: Events
+              links: []
+          pulled-images-vs-successfully-created-containers:
+            kind: Panel
+            spec:
+              display:
+                name: Pulled Images vs Successfully Created Containers
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 1980
+                          signal: logs
+                          aggregations:
+                          - expression: count()
+                          disabled: false
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.event.reason = 'Pulled')
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: Pulled Images
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 1980
+                          signal: logs
+                          aggregations:
+                          - expression: count()
+                          disabled: false
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.event.reason = 'SuccessfulCreate')
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: Created Pods
+              links: []
+          scaling-replica-sets-over-time:
+            kind: Panel
+            spec:
+              display:
+                name: Scaling Replica Sets over Time
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.event.reason = 'ScalingReplicaSet')
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: Scaling Replica Sets
+              links: []
+          pulled-images-over-time:
+            kind: Panel
+            spec:
+              display:
+                name: Pulled Images over Time
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.event.reason = 'Pulled')
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: Pulled Images
+              links: []
+          deployments-vs-pods:
+            kind: Panel
+            spec:
+              display:
+                name: Deployments vs Pods
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 1980
+                          signal: logs
+                          aggregations:
+                          - expression: count()
+                          disabled: false
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.object.kind = 'Deployment')
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: Deployments
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 1980
+                          signal: logs
+                          aggregations:
+                          - expression: count()
+                          disabled: false
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.object.kind = 'Pod')
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: Pods
+              links: []
+          deployments-count-over-time:
+            kind: Panel
+            spec:
+              display:
+                name: Deployments Count over Time
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 1980
+                      signal: logs
+                      aggregations:
+                      - expression: count()
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.namespace.name IN $k8s.namespace.name AND k8s.object.kind = 'Deployment')
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: Deployments
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 2
+              height: 2
+              content:
+                $ref: '#/spec/panels/scaling-replica-s-count'
+            - x: 2
+              y: 0
+              width: 2
+              height: 2
+              content:
+                $ref: '#/spec/panels/event-count'
+            - x: 4
+              y: 0
+              width: 2
+              height: 2
+              content:
+                $ref: '#/spec/panels/successful-delete-events'
+            - x: 6
+              y: 0
+              width: 2
+              height: 2
+              content:
+                $ref: '#/spec/panels/deployments-count'
+            - x: 8
+              y: 0
+              width: 2
+              height: 2
+              content:
+                $ref: '#/spec/panels/scheduled-events-count'
+            - x: 10
+              y: 0
+              width: 2
+              height: 2
+              content:
+                $ref: '#/spec/panels/killing-events'
+            - x: 0
+              y: 2
+              width: 2
+              height: 2
+              content:
+                $ref: '#/spec/panels/pulled-images-count'
+            - x: 2
+              y: 2
+              width: 2
+              height: 2
+              content:
+                $ref: '#/spec/panels/successful-create-events'
+            - x: 4
+              y: 2
+              width: 2
+              height: 2
+              content:
+                $ref: '#/spec/panels/field-path-count-for-x-container'
+            - x: 6
+              y: 2
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/event-count-over-time'
+            - x: 0
+              y: 6
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/pulled-images-vs-successfully-created-containers'
+            - x: 6
+              y: 10
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/scaling-replica-sets-over-time'
+            - x: 0
+              y: 14
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/pulled-images-over-time'
+            - x: 6
+              y: 18
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/deployments-vs-pods'
+            - x: 0
+              y: 22
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/deployments-count-over-time'

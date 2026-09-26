@@ -1,0 +1,394 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: kubernetes-pvc-metrics
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: kubernetes-pvc-metrics
+      tags:
+      - key: tag
+        value: pvc
+      - key: tag
+        value: pod
+      - key: tag
+        value: volume
+      - key: tag
+        value: k8s
+      spec:
+        display:
+          name: Kubernetes PVC Metrics
+          description: ''
+        variables:
+        - kind: ListVariable
+          spec:
+            name: k8s.cluster.name
+            display:
+              name: k8s.cluster.name
+              description: The k8s cluster name
+            allowAllValue: false
+            allowMultiple: false
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.cluster.name
+                signal: all
+        - kind: ListVariable
+          spec:
+            name: k8s.node.name
+            display:
+              name: k8s.node.name
+              description: The k8s node name.
+            allowAllValue: true
+            allowMultiple: true
+            sort: alphabetical-asc
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.node.name
+                signal: all
+        - kind: ListVariable
+          spec:
+            name: k8s.namespace.name
+            display:
+              name: k8s.namespace.name
+              description: The k8s namespace name
+            allowAllValue: false
+            allowMultiple: false
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.namespace.name
+                signal: all
+        panels:
+          volume-available:
+            kind: Panel
+            spec:
+              display:
+                name: Volume available
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: k8s.volume.available
+                        timeAggregation: avg
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name) AND k8s.volume.type = 'persistentVolumeClaim'
+                      groupBy:
+                      - name: k8s.namespace.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.persistentvolumeclaim.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{k8s.namespace.name}}-{{k8s.persistentvolumeclaim.name}}'
+              links: []
+          volume-capacity:
+            kind: Panel
+            spec:
+              display:
+                name: Volume capacity
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: k8s.volume.capacity
+                        timeAggregation: avg
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name) AND k8s.volume.type = 'persistentVolumeClaim'
+                      groupBy:
+                      - name: k8s.namespace.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.persistentvolumeclaim.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{k8s.namespace.name}}-{{k8s.persistentvolumeclaim.name}}'
+              links: []
+          volume-inodes-used:
+            kind: Panel
+            spec:
+              display:
+                name: Volume inodes used
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: k8s.volume.inodes.used
+                        timeAggregation: avg
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name) AND k8s.volume.type = 'persistentVolumeClaim'
+                      groupBy:
+                      - name: k8s.namespace.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.persistentvolumeclaim.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{k8s.namespace.name}}-{{k8s.persistentvolumeclaim.name}}'
+              links: []
+          volume-inodes:
+            kind: Panel
+            spec:
+              display:
+                name: Volume inodes
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: k8s.volume.inodes
+                        timeAggregation: avg
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name) AND k8s.volume.type = 'persistentVolumeClaim'
+                      groupBy:
+                      - name: k8s.namespace.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.persistentvolumeclaim.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{k8s.namespace.name}}-{{k8s.persistentvolumeclaim.name}}'
+              links: []
+          volume-inodes-free:
+            kind: Panel
+            spec:
+              display:
+                name: Volume inodes free
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: k8s.volume.inodes.free
+                        timeAggregation: avg
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name) AND k8s.volume.type = 'persistentVolumeClaim'
+                      groupBy:
+                      - name: k8s.namespace.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.persistentvolumeclaim.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{k8s.namespace.name}}-{{k8s.persistentvolumeclaim.name}}'
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/volume-available'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/volume-capacity'
+            - x: 0
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/volume-inodes-used'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/volume-inodes'
+            - x: 0
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/volume-inodes-free'

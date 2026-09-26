@@ -1,0 +1,611 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: zfs-backup
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: zfs-backup
+      tags:
+      - key: tag
+        value: zfs
+      - key: tag
+        value: backup
+      - key: tag
+        value: affogato
+      spec:
+        display:
+          name: ZFS Backup (Affogato)
+          description: ZFS backup server (Affogato) pools, datasets and host metrics.
+        variables: []
+        panels:
+          pool-health:
+            kind: Panel
+            spec:
+              display:
+                name: Pool health
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: zfs_pool_health
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'affogato'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          pool-allocated:
+            kind: Panel
+            spec:
+              display:
+                name: Pool allocated
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: bytes
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: zfs_pool_allocated_bytes
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'affogato'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          dedup-ratio:
+            kind: Panel
+            spec:
+              display:
+                name: Dedup ratio
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: zfs_pool_deduplication_ratio
+                        timeAggregation: latest
+                        spaceAggregation: avg
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'affogato'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          pool-fragmentation:
+            kind: Panel
+            spec:
+              display:
+                name: Pool fragmentation
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: percent
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: zfs_pool_fragmentation_ratio
+                        timeAggregation: latest
+                        spaceAggregation: avg
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'affogato'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: frag
+              links: []
+          used-by-dataset:
+            kind: Panel
+            spec:
+              display:
+                name: Used by dataset
+                description: ''
+              plugin:
+                kind: signoz/BarChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/PromQLQuery
+                    spec:
+                      name: A
+                      query: zfs_dataset_used_bytes{type="filesystem",name=~".+/.+"}
+                      disabled: false
+                      legend: '{{name}}'
+              links: []
+          pool-free:
+            kind: Panel
+            spec:
+              display:
+                name: Pool free
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: bytes
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: zfs_pool_free_bytes
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'affogato'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          referenced-by-dataset:
+            kind: Panel
+            spec:
+              display:
+                name: Referenced by dataset
+                description: ''
+              plugin:
+                kind: signoz/BarChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/PromQLQuery
+                    spec:
+                      name: A
+                      query: zfs_dataset_referenced_bytes{type="filesystem",name=~".+/.+"}
+                      disabled: false
+                      legend: '{{name}}'
+              links: []
+          written-by-dataset:
+            kind: Panel
+            spec:
+              display:
+                name: Written by dataset
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/PromQLQuery
+                    spec:
+                      name: A
+                      query: zfs_dataset_written_bytes{type="filesystem",name=~".+/.+"}
+                      disabled: false
+                      legend: '{{name}}'
+              links: []
+          memory-usage:
+            kind: Panel
+            spec:
+              display:
+                name: Memory usage
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: system.memory.usage
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'affogato'
+                      groupBy:
+                      - name: state
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{state}}'
+              links: []
+          filesystem-usage:
+            kind: Panel
+            spec:
+              display:
+                name: Filesystem usage
+                description: ''
+              plugin:
+                kind: signoz/BarChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: system.filesystem.usage
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'affogato' AND state = 'used'
+                      groupBy:
+                      - name: mountpoint
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{mountpoint}}'
+              links: []
+          cpu-load-1m:
+            kind: Panel
+            spec:
+              display:
+                name: CPU load (1m)
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: system.cpu.load_average.1m
+                        timeAggregation: latest
+                        spaceAggregation: avg
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'affogato'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: load
+              links: []
+          network-io:
+            kind: Panel
+            spec:
+              display:
+                name: Network IO
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: system.network.io
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'affogato'
+                      groupBy:
+                      - name: direction
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{direction}}'
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/pool-health'
+            - x: 6
+              y: 0
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/pool-allocated'
+            - x: 0
+              y: 2
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/dedup-ratio'
+            - x: 6
+              y: 2
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/pool-fragmentation'
+            - x: 0
+              y: 6
+              width: 6
+              height: 3
+              content:
+                $ref: '#/spec/panels/used-by-dataset'
+            - x: 6
+              y: 6
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/pool-free'
+            - x: 0
+              y: 9
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/referenced-by-dataset'
+            - x: 6
+              y: 9
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/written-by-dataset'
+            - x: 0
+              y: 13
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/memory-usage'
+            - x: 6
+              y: 13
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/filesystem-usage'
+            - x: 0
+              y: 17
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/cpu-load-1m'
+            - x: 6
+              y: 17
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/network-io'

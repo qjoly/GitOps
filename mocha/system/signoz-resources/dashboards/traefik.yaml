@@ -1,0 +1,500 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: traefik
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: traefik
+      tags:
+      - key: tag
+        value: traefik
+      - key: tag
+        value: proxy
+      spec:
+        display:
+          name: Traefik
+          description: Traefik entrypoints, routers and services metrics (requests, latency, status codes, connections).
+        variables:
+        - kind: ListVariable
+          spec:
+            name: k8s.cluster.name
+            display:
+              name: k8s.cluster.name
+              description: Name of the cluster
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.cluster.name
+                signal: all
+        panels:
+          request-rate-by-service:
+            kind: Panel
+            spec:
+              display:
+                name: Request rate by service
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: traefik_service_requests_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: service
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{service}}'
+              links: []
+          request-rate-by-entrypoint:
+            kind: Panel
+            spec:
+              display:
+                name: Request rate by entrypoint
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: traefik_entrypoint_requests_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: entrypoint
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{entrypoint}}'
+              links: []
+          requests-by-status-code:
+            kind: Panel
+            spec:
+              display:
+                name: Requests by status code
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: traefik_service_requests_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: code
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{code}}'
+              links: []
+          open-connections:
+            kind: Panel
+            spec:
+              display:
+                name: Open connections
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: traefik_open_connections
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          service-request-duration-p99:
+            kind: Panel
+            spec:
+              display:
+                name: Service request duration p99
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: s
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: traefik_service_request_duration_seconds.bucket
+                        timeAggregation: rate
+                        spaceAggregation: p99
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: service
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{service}}'
+              links: []
+          service-request-duration-p50:
+            kind: Panel
+            spec:
+              display:
+                name: Service request duration p50
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: s
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: traefik_service_request_duration_seconds.bucket
+                        timeAggregation: rate
+                        spaceAggregation: p50
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: service
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{service}}'
+              links: []
+          config-reload-rate:
+            kind: Panel
+            spec:
+              display:
+                name: Config reload rate
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: traefik_config_reloads_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          total-request-rate:
+            kind: Panel
+            spec:
+              display:
+                name: Total request rate
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: traefik_service_requests_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/request-rate-by-service'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/request-rate-by-entrypoint'
+            - x: 0
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/requests-by-status-code'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/open-connections'
+            - x: 0
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/service-request-duration-p99'
+            - x: 6
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/service-request-duration-p50'
+            - x: 0
+              y: 12
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/config-reload-rate'
+            - x: 6
+              y: 12
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/total-request-rate'

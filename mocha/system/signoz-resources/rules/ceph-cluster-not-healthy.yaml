@@ -1,0 +1,59 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: ceph-cluster-not-healthy
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: Ceph cluster not healthy
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: ceph_health_status > 0 on turing (1=HEALTH_WARN, 2=HEALTH_ERR).
+      labels:
+        severity: warning
+      annotations:
+        summary: Ceph cluster is not HEALTH_OK
+        description: ceph_health_status > 0 on turing (1=HEALTH_WARN, 2=HEALTH_ERR).
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: ceph_health_status
+                timeAggregation: latest
+                spaceAggregation: max
+              filter:
+                expression: k8s.cluster.name = 'turing'
+              groupBy:
+              - name: k8s.cluster.name
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: warning
+            op: above
+            matchType: at_least_once
+            target: 0
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 10m
+          frequency: 1m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

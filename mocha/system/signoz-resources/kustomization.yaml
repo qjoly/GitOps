@@ -1,0 +1,51 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: signoz
+resources:
+  - api-key.yaml
+  - providerconfig.yaml
+  - discord-channel.yaml
+  - rules/argocd-applications-outofsync.yaml
+  - rules/backup-server-not-reporting.yaml
+  - rules/backup-zfs-pool-high-fragmentation.yaml
+  - rules/backup-zfs-pool-low-free-space.yaml
+  - rules/backup-zfs-pool-not-healthy.yaml
+  - rules/ceph-cluster-not-healthy.yaml
+  - rules/ceph-mon-quorum-degraded.yaml
+  - rules/ceph-osd-down.yaml
+  - rules/cert-manager-certificate-not-ready.yaml
+  - rules/clickhouse-s3-cold-storage-write-errors.yaml
+  - rules/kubernetes-container-oomkilled.yaml
+  - rules/kubernetes-container-restarting.yaml
+  - rules/kubernetes-node-disk-pressure.yaml
+  - rules/kubernetes-node-memory-pressure.yaml
+  - rules/kubernetes-node-not-ready.yaml
+  - rules/proxmox-node-down.yaml
+  - rules/proxmox-storage-not-available.yaml
+  - dashboards/argocd.yaml
+  - dashboards/cert-manager.yaml
+  - dashboards/clickhouse-cold-storage.yaml
+  - dashboards/coredns.yaml
+  - dashboards/host-metrics.yaml
+  - dashboards/k8s-events-receiver.yaml
+  - dashboards/kubernetes-apiserver.yaml
+  - dashboards/kubernetes-cluster-metrics.yaml
+  - dashboards/kubernetes-controller-manager.yaml
+  - dashboards/kubernetes-coredns.yaml
+  - dashboards/kubernetes-cronjobs.yaml
+  - dashboards/kubernetes-etcd.yaml
+  - dashboards/kubernetes-kube-proxy.yaml
+  - dashboards/kubernetes-kubelet.yaml
+  - dashboards/kubernetes-node-metrics-detailed.yaml
+  - dashboards/kubernetes-node-metrics-overall.yaml
+  - dashboards/kubernetes-pod-metrics-detailed.yaml
+  - dashboards/kubernetes-pod-metrics-overall.yaml
+  - dashboards/kubernetes-pvc-metrics.yaml
+  - dashboards/kubernetes-scheduler.yaml
+  - dashboards/kubernetes-system-overview.yaml
+  - dashboards/openebs-lvm.yaml
+  - dashboards/plex.yaml
+  - dashboards/proxmox.yaml
+  - dashboards/rook-ceph.yaml
+  - dashboards/traefik.yaml
+  - dashboards/zfs-backup.yaml

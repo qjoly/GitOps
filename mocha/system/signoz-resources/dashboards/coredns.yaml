@@ -1,0 +1,500 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: coredns
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: coredns
+      tags:
+      - key: tag
+        value: coredns
+      - key: tag
+        value: dns
+      - key: tag
+        value: kubernetes
+      spec:
+        display:
+          name: CoreDNS
+          description: CoreDNS request/response rates, cache and errors (mocha).
+        variables: []
+        panels:
+          request-rate:
+            kind: Panel
+            spec:
+              display:
+                name: Request rate
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: coredns_dns_requests_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          cache-entries:
+            kind: Panel
+            spec:
+              display:
+                name: Cache entries
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: coredns_cache_entries
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          panics:
+            kind: Panel
+            spec:
+              display:
+                name: Panics
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: coredns_panics_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          reload-failures:
+            kind: Panel
+            spec:
+              display:
+                name: Reload failures
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: coredns_reload_failed_total
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          requests-by-type:
+            kind: Panel
+            spec:
+              display:
+                name: Requests by type
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: coredns_dns_requests_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy:
+                      - name: type
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{type}}'
+              links: []
+          responses-by-rcode:
+            kind: Panel
+            spec:
+              display:
+                name: Responses by rcode
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: coredns_dns_responses_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy:
+                      - name: rcode
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{rcode}}'
+              links: []
+          requests-by-protocol:
+            kind: Panel
+            spec:
+              display:
+                name: Requests by protocol
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: coredns_dns_requests_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy:
+                      - name: proto
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{proto}}'
+              links: []
+          cache-hits:
+            kind: Panel
+            spec:
+              display:
+                name: Cache hits
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: coredns_cache_hits_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy:
+                      - name: type
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{type}}'
+              links: []
+          cache-misses:
+            kind: Panel
+            spec:
+              display:
+                name: Cache misses
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: coredns_cache_misses_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: misses
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/request-rate'
+            - x: 6
+              y: 0
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/cache-entries'
+            - x: 0
+              y: 2
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/panics'
+            - x: 6
+              y: 2
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/reload-failures'
+            - x: 0
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/requests-by-type'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/responses-by-rcode'
+            - x: 0
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/requests-by-protocol'
+            - x: 6
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/cache-hits'
+            - x: 0
+              y: 12
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/cache-misses'

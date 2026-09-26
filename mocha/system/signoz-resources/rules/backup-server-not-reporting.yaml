@@ -1,0 +1,62 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: backup-server-not-reporting
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: Backup server not reporting
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: No ZFS metrics received from affogato for 10m (collector or server down).
+      labels:
+        severity: critical
+      annotations:
+        summary: Backup server sent no metrics
+        description: No ZFS metrics received from affogato for 10m (collector or server down).
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: zfs_pool_size_bytes
+                timeAggregation: latest
+                spaceAggregation: max
+              filter:
+                expression: k8s.cluster.name = 'affogato'
+              groupBy:
+              - name: k8s.cluster.name
+              - name: pool
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: below
+            matchType: at_least_once
+            target: 1
+            channels:
+            - discord
+        alertOnAbsent: true
+        absentFor: 10
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 10m
+          frequency: 5m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

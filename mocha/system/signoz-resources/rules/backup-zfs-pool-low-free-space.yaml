@@ -1,0 +1,60 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: backup-zfs-pool-low-free-space
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: Backup ZFS pool low free space
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: Less than ~1.5 TB free on the affogato ZFS pool.
+      labels:
+        severity: warning
+      annotations:
+        summary: Backup pool low on free space
+        description: Less than ~1.5 TB free on the affogato ZFS pool.
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: zfs_pool_free_bytes
+                timeAggregation: latest
+                spaceAggregation: min
+              filter:
+                expression: k8s.cluster.name = 'affogato'
+              groupBy:
+              - name: k8s.cluster.name
+              - name: pool
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: warning
+            op: below
+            matchType: at_least_once
+            target: 1500000000000
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 5m
+          frequency: 5m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

@@ -1,0 +1,427 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: openebs-lvm
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: openebs-lvm
+      tags:
+      - key: tag
+        value: openebs
+      - key: tag
+        value: lvm
+      - key: tag
+        value: storage
+      spec:
+        display:
+          name: OpenEBS LVM
+          description: OpenEBS LVM volume group, physical volumes and volumes (mocha).
+        variables: []
+        panels:
+          vg-total-size:
+            kind: Panel
+            spec:
+              display:
+                name: VG total size
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: bytes
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: lvm_vg_total_size_bytes
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          vg-free-size:
+            kind: Panel
+            spec:
+              display:
+                name: VG free size
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: bytes
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: lvm_vg_free_size_bytes
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          logical-volumes:
+            kind: Panel
+            spec:
+              display:
+                name: Logical volumes
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: lvm_vg_lv_count
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          physical-volumes:
+            kind: Panel
+            spec:
+              display:
+                name: Physical volumes
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: lvm_vg_pv_count
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          vg-free-over-time:
+            kind: Panel
+            spec:
+              display:
+                name: VG free over time
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: lvm_vg_free_size_bytes
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy:
+                      - name: name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{name}}'
+              links: []
+          pv-used-by-device:
+            kind: Panel
+            spec:
+              display:
+                name: PV used by device
+                description: ''
+              plugin:
+                kind: signoz/BarChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: lvm_pv_used_size_bytes
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy:
+                      - name: name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{name}}'
+              links: []
+          pv-free-by-device:
+            kind: Panel
+            spec:
+              display:
+                name: PV free by device
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: lvm_pv_free_size_bytes
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy:
+                      - name: name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{name}}'
+              links: []
+          volume-sizes:
+            kind: Panel
+            spec:
+              display:
+                name: Volume sizes
+                description: ''
+              plugin:
+                kind: signoz/BarChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: openebs_size_of_volume
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'mocha'
+                      groupBy:
+                      - name: volumename
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{volumename}}'
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/vg-total-size'
+            - x: 6
+              y: 0
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/vg-free-size'
+            - x: 0
+              y: 2
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/logical-volumes'
+            - x: 6
+              y: 2
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/physical-volumes'
+            - x: 0
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/vg-free-over-time'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/pv-used-by-device'
+            - x: 0
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/pv-free-by-device'
+            - x: 6
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/volume-sizes'

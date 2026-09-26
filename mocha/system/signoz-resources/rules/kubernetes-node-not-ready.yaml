@@ -1,0 +1,60 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: kubernetes-node-not-ready
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: Kubernetes node not ready
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: k8s.node.condition_ready < 1 (node NotReady or Unknown).
+      labels:
+        severity: critical
+      annotations:
+        summary: A Kubernetes node is not Ready
+        description: k8s.node.condition_ready < 1 (node NotReady or Unknown).
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: k8s.node.condition_ready
+                timeAggregation: latest
+                spaceAggregation: min
+              filter:
+                expression: ''
+              groupBy:
+              - name: k8s.cluster.name
+              - name: k8s.node.name
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: below
+            matchType: at_least_once
+            target: 1
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 5m
+          frequency: 1m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

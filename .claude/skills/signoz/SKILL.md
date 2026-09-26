@@ -297,6 +297,58 @@ Hard rules learned by probing the API (error messages are precise, iterate again
     Discord channel `text` uses `{{ range .Labels.SortedPairs }}• {{ .Name }}: {{ .Value }}`
     to list every label of the firing series.
 
+## SigNoz Operator: dashboards and alerts are CRs now (replaces the provisioner Jobs)
+
+`mocha/system/signoz-operator/` (chart `signoz-operator`, needs `ServerSideApply=true`:
+the `dashboards` CRD is 95 KB) + `mocha/system/signoz-resources/` (a `ProviderConfig`,
+27 `Dashboard`, 17 `Rule`, and the Discord-channel Job — there is no `Channel` kind).
+Use the **typed** `objectTemplate.spec`, not `jsonSpec`: the API server then validates
+the whole body at apply time.
+
+Validate any change **twice**, they catch different things:
+
+1. against the CRD schema offline — `helm template signoz/signoz-operator --include-crds`,
+   then jsonschema the CRs against `openAPIV3Schema`;
+2. against the **live API**, by POSTing `objectTemplate.spec` to
+   `/api/v2/dashboards` or `/api/v1/rules` and DELETEing what got created.
+
+The CRD models one permissive union for every panel kind, so step 1 passes shapes the
+live API refuses. Per-kind accepted `plugin.spec` keys (probed on 0.143):
+
+| kind | keys |
+|---|---|
+| TimeSeriesPanel | visualization(+fillSpans), formatting, chartAppearance, axes, legend, thresholds |
+| BarChartPanel | visualization(+fillSpans), formatting, axes, legend, thresholds — NO chartAppearance |
+| NumberPanel | visualization, formatting, thresholds |
+| TablePanel | visualization, formatting (NO `unit`), thresholds |
+| PieChartPanel | visualization, formatting, legend |
+| HistogramPanel | legend only. ListPanel: nothing |
+
+Other live-only rules: `allowAllValue` requires `allowMultiple: true` on a variable;
+`signoz/PromQLQuery` is only accepted on TimeSeries/Number/BarChart panels (use a bar
+chart instead of a PromQL table or pie); `signoz/ClickHouseSQL` works everywhere.
+Omit `decimalPrecision` (the CRD enum mixes ints and `full`, nothing validates), omit
+`temporality: ""` / `source: ""`, and use `thresholds: []` rather than `null`.
+
+**One query per panel still holds**, but `signoz/CompositeQuery` is the way around it:
+its `spec.queries` holds several `{type: builder_query}` sub-queries plus
+`{type: builder_formula, spec: {expression: "A/B"}}`. That is how a v1 panel with
+queries A/B and a formula converts without loss.
+
+Rules use schema **v2alpha1**: `evaluation: {kind: rolling, spec: {evalWindow, frequency}}`,
+`condition.thresholds: {kind: basic, spec: [{name, op, matchType, target, channels}]}`
+(`channels` replaces `preferredChannels`), `notificationSettings` required
+(`usePolicy: false`), `groupBy` items are `{name: <key>}`, `alertOnAbsent`/`absentFor`
+unchanged.
+
+The API key must belong to a SigNoz **service account with a role attached** — a
+role-less token authenticates fine and then 403s on everything
+(`service_account/<uuid> is not authorized to perform dashboard:list`). Grant Admin in
+the UI; the operator cannot bootstrap its own role.
+
+Cluster context is **`mocha-corium`** (the `omni-*` contexts need an interactive browser
+login and fail headless).
+
 ## Applying changes
 
 Everything is ArgoCD. `sys-signoz` (mocha) and `sys-signoz-k8s-infra` (turing) are the

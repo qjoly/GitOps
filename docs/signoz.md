@@ -178,58 +178,142 @@ curl -v https://signoz-ingest.mocha.thoughtless.eu/v1/metrics \
 A TLS handshake that completes (even with an HTTP 4xx on the empty body) means the
 certificate is trusted; a handshake failure means the CA is not in the bundle yet.
 
-## Provisioning jobs (dashboards & alerts)
+## Provisioning dashboards and alerts (SigNoz Operator)
 
 SigNoz stores dashboards, channels and alert rules in its own database, not in
-Kubernetes objects — so they cannot be applied with `kubectl`. Instead, two Jobs
-push them through the SigNoz REST API and keep the database in sync with the repo.
-Both share the same shape:
+Kubernetes objects. The **SigNoz Operator** bridges that gap: it reconciles custom
+resources of group `resources.signoz.io/v1alpha1` against the SigNoz REST API, so
+dashboards and alert rules are ordinary manifests that ArgoCD applies like anything
+else. It replaced the two inline-Python provisioning Jobs.
 
-- **ArgoCD PostSync hook** (`argocd.argoproj.io/hook: PostSync`), with
-  `hook-delete-policy: BeforeHookCreation` — the previous run is deleted and a fresh
-  one runs on **every sync**, so editing a dashboard or an alert and re-syncing
-  re-applies it. `ttlSecondsAfterFinished: 600`, `backoffLimit: 3`.
-- A minimal `python:3.12-alpine` container, non-root and `drop: [ALL]`, running an
-  inline script (no external image to maintain).
-- They call the in-cluster API at `http://signoz.signoz.svc.cluster.local:8080`
-  with the header `SIGNOZ-API-KEY`. The key comes from the `signoz-api-key`
-  ExternalSecret (Vault `kv/signoz#api_key`). Create it once in the UI under
-  **Settings → API Keys** and store it in Vault.
+Two ArgoCD applications:
 
-Because they are PostSync hooks, they run *after* the chart is healthy, so the API
-is up by the time they fire.
+- `sys-signoz-operator` (`mocha/system/signoz-operator/`) installs the
+  `signoz-operator` Helm chart from `https://charts.signoz.io` into the
+  `signoz-operator` namespace, together with its CRDs. `ServerSideApply=true` is
+  mandatory: the `dashboards` CRD is ~95 KB and blows past the apply annotation
+  limit otherwise.
+- `sys-signoz-resources` (`mocha/system/signoz-resources/`) holds the resources
+  themselves, all in the `signoz` namespace.
 
-### Dashboard import job
+### ProviderConfig
 
-`signoz-dashboard-import` (in `dashboard-provisioner.yaml`) mounts the
-`signoz-dashboards` ConfigMap at `/dashboards` and **upserts by title**: it lists
-existing dashboards, maps `title → id`, then for each JSON file `PUT`s by id if the
-title already exists (falling back to `DELETE` + `POST` if the update is rejected),
-or `POST`s a new one otherwise. It exits non-zero if any dashboard fails, which
-**fails the ArgoCD sync** — a broken dashboard JSON is caught, not silently dropped.
+`providerconfig.yaml` declares a namespaced `ProviderConfig` named `mocha` that
+points every custom resource at `http://signoz.signoz.svc.cluster.local:8080` and
+authenticates with the `SIGNOZ-API-KEY` header, read from the `signoz-api-key`
+secret (ExternalSecret, Vault `kv/signoz#api_key`). Create the key once in the UI
+under **Settings → API Keys** and store it in Vault; the operator resolves the
+secret in the `ProviderConfig`'s own namespace.
 
-The ConfigMap is built from `mocha/system/signoz/dashboards/*.json` by the
-`configMapGenerator` in `kustomization.yaml`. To add a dashboard: drop its JSON in
-that directory, add it to the generator, and sync (needs `ServerSideApply=true` once
-the ConfigMap exceeds 256 KB).
+Every `Dashboard` and `Rule` references it with `spec.providerConfigRef.name: mocha`
+and carries `argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true`, so
+a first sync does not fail before the operator has installed the CRDs.
 
-### Alerting job
+`spec.reclaimPolicy` defaults to `Delete`: removing a manifest deletes the object in
+SigNoz. Set it to `Orphan` on anything that must survive its manifest.
 
-`signoz-alerting-provisioner` (in `alerting.yaml`) upserts the notification channel
-and the alert rules. It also pulls the `discord-webhook` ExternalSecret (Vault
-`kv/discord#webhook`, with the `/slack` suffix already included).
+### Dashboards
 
-Alerts go to Discord. SigNoz has no native Discord support, but Discord accepts
-Slack-formatted payloads on the `/slack` suffix of a webhook URL, so the job
-provisions a **Slack channel** named `discord` pointing at `<webhook>/slack`
-(`GET /api/v1/channels` → `PUT` by id if it exists, else `POST`). The channel's
-`text` template renders one compact line per firing alert; keep it short, since
-Discord rejects payloads over 4096 characters with an HTTP 400.
+One `Dashboard` per file in `mocha/system/signoz-resources/dashboards/`. The body
+sits under `spec.objectTemplate.spec` in the **typed** form rather than as a
+`jsonSpec` string, so the Kubernetes API server validates the whole v6 schema at
+apply time instead of letting SigNoz reject it later.
 
-Alert rules use the SigNoz **v5** rule schema (`queries` with a `spec` and a
-`filter.expression`) and each sets `preferredChannels: ["discord"]`. They are
-upserted by title on every sync.
+The body is the SigNoz **v6** dashboard schema (`schemaVersion: v6`): `panels` is a
+dictionary keyed by panel id, and `layouts[].spec.items[].content.$ref` points into
+it with `#/spec/panels/<id>`. The v1 keys (`widgets`, `layout`, `panelMap`, `uuid`,
+`version`) no longer exist — the v1 API returns `501 dashboard_deprecated` since
+SigNoz 0.135, which is why the old JSON dashboards had all silently stopped being
+imported.
 
-To add an alert, append a rule object to the job's script and re-sync, or create it
-in the UI and pick the `discord` channel. To test the channel, use the "Test" button
-in the UI or `POST /api/v1/testChannel`.
+Things the CRD schema enforces that the raw API tolerated:
+
+- `decimalPrecision` must be omitted (the CRD enum mixes integers and `full`, so no
+  plain value validates) — SigNoz applies its own default.
+- `temporality: ""` and `source: ""` are rejected; omit the field instead of
+  sending an empty string.
+- `softMin`, `softMax` and `customColors` must be omitted rather than set to
+  `null`; `thresholds` is an empty array, not `null`.
+
+And things only the **live API** rejects, discovered by probing it — the CRD schema
+models one permissive union for every panel kind, so `kubectl apply` accepts shapes
+that SigNoz then refuses. `plugin.spec` accepts a different set of keys per kind:
+
+| Panel kind | accepted `plugin.spec` keys |
+|---|---|
+| `TimeSeriesPanel` | `visualization` (+`fillSpans`), `formatting`, `chartAppearance`, `axes`, `legend`, `thresholds` |
+| `BarChartPanel` | `visualization` (+`fillSpans`), `formatting`, `axes`, `legend`, `thresholds` — **no** `chartAppearance` |
+| `NumberPanel` | `visualization`, `formatting`, `thresholds` |
+| `TablePanel` | `visualization`, `formatting` (**no** `unit`), `thresholds` |
+| `PieChartPanel` | `visualization`, `formatting`, `legend` |
+| `HistogramPanel` | `legend` only |
+| `ListPanel` | nothing |
+
+`visualization.fillSpans` is only valid on `TimeSeriesPanel` and `BarChartPanel`.
+
+Two more live-only rules:
+
+- A variable cannot set `allowAllValue: true` unless `allowMultiple` is also true
+  (`allowAllValue cannot be set if allowMultiple is not set to true`). A v1 variable
+  with `multiSelect: false` therefore loses its "ALL" option.
+- `signoz/PromQLQuery` is accepted only on `TimeSeriesPanel`, `NumberPanel` and
+  `BarChartPanel`. A PromQL table or pie chart is rejected with `query kind ... is
+  not supported by panel kind ...`; use a bar chart instead.
+  `signoz/ClickHouseSQL` works on every panel kind.
+
+A panel takes **exactly one** entry in `queries`. To draw several series or a
+formula, use a single query of kind `signoz/CompositeQuery` whose `spec.queries`
+holds the sub-queries (`type: builder_query`) and the formula
+(`type: builder_formula`, `spec.expression: "A/B"`). Raw panels use
+`signoz/ClickHouseSQL` or `signoz/PromQLQuery` with `spec.query`.
+
+Dashboard variables are `ListVariable` entries whose `spec.plugin.kind` is
+`signoz/DynamicVariable` (`spec.name` + `spec.signal`), `signoz/QueryVariable` or
+`signoz/CustomVariable` — the v1 shape with a UUID `id` is gone.
+
+### Alert rules
+
+One `Rule` per file in `mocha/system/signoz-resources/rules/`, using the
+**v2alpha1** rule schema:
+
+- `evaluation: {kind: rolling, spec: {evalWindow, frequency}}` replaces the
+  top-level `evalWindow`/`frequency`.
+- `condition.thresholds: {kind: basic, spec: [{name, op, matchType, target,
+  channels}]}` replaces `condition.op`/`target`/`matchType` and
+  `preferredChannels`. `op` is `above`/`below`/..., `matchType` is
+  `at_least_once`/`all_the_times`/`on_average`/`in_total`/`last`.
+- `notificationSettings` is required; `usePolicy: false` keeps routing on the
+  threshold's `channels` instead of a `RoutePolicy`.
+- `condition.alertOnAbsent` + `condition.absentFor` still drive no-data alerts
+  (used by "Backup server not reporting").
+- `groupBy` entries are `{name: <key>}`. They become alert labels, which is what
+  the Discord template prints — keep them.
+
+### Discord channel
+
+The operator has no `Channel` kind, so the notification channel is still created by
+a small PostSync Job (`discord-channel.yaml`) that upserts it through
+`POST`/`PUT /api/v1/channels`. Discord has no native SigNoz support but accepts
+Slack-formatted payloads on the `/slack` suffix of a webhook URL, so the channel is
+a **Slack** channel named `discord` pointing at `<webhook>/slack` (Vault
+`kv/discord#webhook`, suffix included). Keep the `text` template short: Discord
+rejects payloads over 4096 characters with an HTTP 400. Test it with
+`POST /api/v1/testChannel` (expects 204) or the "Test" button in the UI.
+
+Ordering caveat: the Job is a PostSync hook, so on a brand-new SigNoz database the
+alert rules are reconciled before the channel exists and may land in `Terminal`
+with a "channel not found" message. A second sync of `sys-signoz-resources` fixes
+it, since the channel is then already there.
+
+### Day-to-day
+
+Add a dashboard or an alert by dropping a manifest in the right directory and
+listing it in `kustomization.yaml`. Check the result with:
+
+```bash
+kubectl -n signoz get dashboards,rules
+```
+
+`Ready=True` with an `ID` column means the object exists in SigNoz. `Ready=False`
+carries the API's own error message in the conditions; reason `Terminal` means the
+body was refused and no retry will help.

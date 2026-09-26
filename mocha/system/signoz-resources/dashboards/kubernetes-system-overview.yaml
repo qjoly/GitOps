@@ -1,0 +1,1076 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: kubernetes-system-overview
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: kubernetes-system-overview
+      tags:
+      - key: tag
+        value: kubernetes
+      - key: tag
+        value: overview
+      - key: tag
+        value: control-plane
+      - key: tag
+        value: node
+      - key: tag
+        value: dns
+      - key: tag
+        value: prometheus
+      spec:
+        display:
+          name: Kubernetes System Overview
+          description: Combined view across control-plane, node, networking, and DNS components with distro-neutral service scoping.
+        variables:
+        - kind: ListVariable
+          spec:
+            name: service.name
+            display:
+              name: service.name
+              description: Auto-discovered services (from metric labels).
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: service.name
+                signal: metrics
+        - kind: ListVariable
+          spec:
+            name: k8s.cluster.name
+            display:
+              name: k8s.cluster.name
+              description: Optional cluster label selector.
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.cluster.name
+                signal: metrics
+        - kind: ListVariable
+          spec:
+            name: deployment_environment_name
+            display:
+              name: deployment_environment_name
+              description: Optional OTel environment label selector.
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: deployment.environment.name
+                signal: metrics
+        - kind: ListVariable
+          spec:
+            name: deployment_environment
+            display:
+              name: deployment_environment
+              description: Optional legacy environment label selector.
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: deployment.environment
+                signal: metrics
+        panels:
+          api-requests-s:
+            kind: Panel
+            spec:
+              display:
+                name: API Requests / s
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: reqps
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: apiserver_request_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: apiserver req/s
+              links: []
+          scheduling-attempts-s:
+            kind: Panel
+            spec:
+              display:
+                name: Scheduling Attempts / s
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: reqps
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: scheduler_schedule_attempts_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: scheduler attempts/s
+              links: []
+          controller-workqueue-adds-s:
+            kind: Panel
+            spec:
+              display:
+                name: Controller Workqueue Adds / s
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: reqps
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: workqueue_adds_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: controller adds/s
+              links: []
+          etcd-client-requests-s:
+            kind: Panel
+            spec:
+              display:
+                name: Etcd Client Requests / s
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: reqps
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: etcd_server_client_requests_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: etcd req/s
+              links: []
+          kubelet-running-pods:
+            kind: Panel
+            spec:
+              display:
+                name: Kubelet Running Pods
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: kubelet_running_pods
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: running pods
+              links: []
+          proxy-sync-s:
+            kind: Panel
+            spec:
+              display:
+                name: Proxy Sync / s
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: reqps
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: kubeproxy_sync_proxy_rules_duration_seconds.count
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: proxy sync/s
+              links: []
+          coredns-requests-s:
+            kind: Panel
+            spec:
+              display:
+                name: CoreDNS Requests / s
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: reqps
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: coredns_dns_requests_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: dns req/s
+              links: []
+          etcd-has-leader:
+            kind: Panel
+            spec:
+              display:
+                name: Etcd Has Leader
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: etcd_server_has_leader
+                        timeAggregation: latest
+                        spaceAggregation: max
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: leader=1
+              links: []
+          component-throughput-trends:
+            kind: Panel
+            spec:
+              display:
+                name: Component Throughput Trends
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: reqps
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: apiserver_request_total
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: kube-apiserver
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: scheduler_schedule_attempts_total
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: kube-scheduler
+                      - type: builder_query
+                        spec:
+                          name: C
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: workqueue_adds_total
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: kube-controller-manager
+                      - type: builder_query
+                        spec:
+                          name: D
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: etcd_server_client_requests_total
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: etcd
+                      - type: builder_query
+                        spec:
+                          name: E
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: kubelet_started_pods_total
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: kubelet
+                      - type: builder_query
+                        spec:
+                          name: F
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: kubeproxy_sync_proxy_rules_duration_seconds.count
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: kube-proxy
+                      - type: builder_query
+                        spec:
+                          name: G
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: coredns_dns_requests_total
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: coredns
+              links: []
+          api-request-rate-by-code:
+            kind: Panel
+            spec:
+              display:
+                name: API Request Rate By Code
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: reqps
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: apiserver_request_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: code
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{code}}'
+              links: []
+          scheduling-attempts-by-result:
+            kind: Panel
+            spec:
+              display:
+                name: Scheduling Attempts By Result
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: reqps
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: scheduler_schedule_attempts_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: result
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{result}}'
+              links: []
+          controller-workqueue-depth:
+            kind: Panel
+            spec:
+              display:
+                name: Controller Workqueue Depth
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: workqueue_depth
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: name
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{name}}'
+              links: []
+          etcd-apply-duration-p50-p90-p99:
+            kind: Panel
+            spec:
+              display:
+                name: Etcd Apply Duration (p50/p90/p99)
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: reqps
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: etcd_server_apply_duration_seconds.bucket
+                            spaceAggregation: p50
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p50
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: etcd_server_apply_duration_seconds.bucket
+                            spaceAggregation: p90
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p90
+                      - type: builder_query
+                        spec:
+                          name: C
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: etcd_server_apply_duration_seconds.bucket
+                            spaceAggregation: p99
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p99
+              links: []
+          kubelet-runtime-ops-s-by-type:
+            kind: Panel
+            spec:
+              display:
+                name: Kubelet Runtime Ops / s By Type
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: reqps
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: kubelet_runtime_operations_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: operation_type
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{operation_type}}'
+              links: []
+          proxy-network-programming-duration-p50-p90-p99:
+            kind: Panel
+            spec:
+              display:
+                name: Proxy Network Programming Duration (p50/p90/p99)
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: reqps
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: kubeproxy_network_programming_duration_seconds.bucket
+                            spaceAggregation: p50
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p50
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: kubeproxy_network_programming_duration_seconds.bucket
+                            spaceAggregation: p90
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p90
+                      - type: builder_query
+                        spec:
+                          name: C
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: kubeproxy_network_programming_duration_seconds.bucket
+                            spaceAggregation: p99
+                            reduceTo: avg
+                          disabled: false
+                          filter:
+                            expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                          groupBy: []
+                          having:
+                            expression: ''
+                          legend: p99
+              links: []
+          coredns-responses-by-rcode:
+            kind: Panel
+            spec:
+              display:
+                name: CoreDNS Responses By Rcode
+                description: DNS responses broken down by response code (rcode).
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: reqps
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: coredns_dns_responses_total
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: avg
+                      disabled: false
+                      filter:
+                        expression: service.name IN $service.name AND k8s.cluster.name IN $k8s.cluster.name
+                      groupBy:
+                      - name: rcode
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{rcode}}'
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/api-requests-s'
+            - x: 3
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/scheduling-attempts-s'
+            - x: 6
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/controller-workqueue-adds-s'
+            - x: 9
+              y: 0
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/etcd-client-requests-s'
+            - x: 0
+              y: 2
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/kubelet-running-pods'
+            - x: 3
+              y: 2
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/proxy-sync-s'
+            - x: 6
+              y: 2
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/coredns-requests-s'
+            - x: 9
+              y: 2
+              width: 3
+              height: 2
+              content:
+                $ref: '#/spec/panels/etcd-has-leader'
+            - x: 0
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/component-throughput-trends'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/api-request-rate-by-code'
+            - x: 0
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/scheduling-attempts-by-result'
+            - x: 6
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/controller-workqueue-depth'
+            - x: 0
+              y: 12
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/etcd-apply-duration-p50-p90-p99'
+            - x: 6
+              y: 12
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/kubelet-runtime-ops-s-by-type'
+            - x: 0
+              y: 16
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/proxy-network-programming-duration-p50-p90-p99'
+            - x: 6
+              y: 16
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/coredns-responses-by-rcode'

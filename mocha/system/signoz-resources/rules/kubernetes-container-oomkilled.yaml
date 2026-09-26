@@ -1,0 +1,62 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: kubernetes-container-oomkilled
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: Kubernetes container OOMKilled
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: 'container_oom_events_total increased: a container hit its memory limit and was OOM-killed (cAdvisor).'
+      labels:
+        severity: critical
+      annotations:
+        summary: A container was OOMKilled
+        description: 'container_oom_events_total increased: a container hit its memory limit and was OOM-killed (cAdvisor).'
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: container_oom_events_total
+                timeAggregation: increase
+                spaceAggregation: max
+              filter:
+                expression: ''
+              groupBy:
+              - name: k8s.cluster.name
+              - name: namespace
+              - name: pod
+              - name: container
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: above
+            matchType: at_least_once
+            target: 0
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 5m
+          frequency: 1m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

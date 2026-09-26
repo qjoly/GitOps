@@ -1,0 +1,17 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: mocha
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  endpoint:
+    value: http://signoz.signoz.svc.cluster.local:8080
+  auth:
+    header:
+      name: SIGNOZ-API-KEY
+      valueFrom:
+        secretKeyRef:
+          name: signoz-api-key
+          key: api_key

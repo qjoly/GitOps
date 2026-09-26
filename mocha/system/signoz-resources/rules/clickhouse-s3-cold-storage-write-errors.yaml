@@ -1,0 +1,59 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: clickhouse-s3-cold-storage-write-errors
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: ClickHouse S3 cold storage write errors
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: S3 write error rate above 2/s averaged over 15m. A low trickle is benign (HEAD/DELETE 404 probes); a sustained rate this high means the cold-storage offload to Bunny is broken.
+      labels:
+        severity: warning
+      annotations:
+        summary: ClickHouse failing to write to the Bunny S3 cold storage
+        description: S3 write error rate above 2/s averaged over 15m. A low trickle is benign (HEAD/DELETE 404 probes); a sustained rate this high means the cold-storage offload to Bunny is broken.
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: chi_clickhouse_event_S3WriteRequestsErrors
+                timeAggregation: rate
+                spaceAggregation: sum
+              filter:
+                expression: ''
+              groupBy:
+              - name: k8s.cluster.name
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: warning
+            op: above
+            matchType: on_average
+            target: 2
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 15m
+          frequency: 5m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

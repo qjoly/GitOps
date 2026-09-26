@@ -1,0 +1,60 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: proxmox-node-down
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: Proxmox node down
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: pve_up = 0 for a Proxmox node (id node/...).
+      labels:
+        severity: critical
+      annotations:
+        summary: A Proxmox node is down
+        description: pve_up = 0 for a Proxmox node (id node/...).
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: pve_up
+                timeAggregation: latest
+                spaceAggregation: min
+              filter:
+                expression: k8s.cluster.name = 'proxmox-01' AND id LIKE 'node/%'
+              groupBy:
+              - name: k8s.cluster.name
+              - name: id
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: below
+            matchType: at_least_once
+            target: 1
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 5m
+          frequency: 1m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

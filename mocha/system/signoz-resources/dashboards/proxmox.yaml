@@ -1,0 +1,701 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: proxmox
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: proxmox
+      tags:
+      - key: tag
+        value: proxmox
+      - key: tag
+        value: pve
+      - key: tag
+        value: infrastructure
+      spec:
+        display:
+          name: Proxmox VE
+          description: Proxmox VE nodes (host metrics) and cluster guests/storage (pve-exporter).
+        variables: []
+        panels:
+          nodes-online:
+            kind: Panel
+            spec:
+              display:
+                name: Nodes online
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: pve_up
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'proxmox-01' AND id LIKE 'node/%'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          vms-running:
+            kind: Panel
+            spec:
+              display:
+                name: VMs running
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: pve_up
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'proxmox-01' AND id LIKE 'qemu/%'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          lxc-running:
+            kind: Panel
+            spec:
+              display:
+                name: LXC running
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: pve_up
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'proxmox-01' AND id LIKE 'lxc/%'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          storages-online:
+            kind: Panel
+            spec:
+              display:
+                name: Storages online
+                description: ''
+              plugin:
+                kind: signoz/NumberPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                  formatting:
+                    unit: short
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: pve_up
+                        timeAggregation: latest
+                        spaceAggregation: sum
+                        reduceTo: last
+                      disabled: false
+                      filter:
+                        expression: k8s.cluster.name = 'proxmox-01' AND id LIKE 'storage/%'
+                      groupBy: []
+                      having:
+                        expression: ''
+                      legend: ''
+              links: []
+          cpu-load-1m-per-node:
+            kind: Panel
+            spec:
+              display:
+                name: CPU load (1m) per node
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: short
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: system.cpu.load_average.1m
+                            timeAggregation: latest
+                            spaceAggregation: avg
+                            reduceTo: last
+                          disabled: false
+                          filter:
+                            expression: k8s.cluster.name = 'proxmox-01'
+                          groupBy:
+                          - name: host.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: '{{host.name}}'
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: system.cpu.load_average.1m
+                            timeAggregation: latest
+                            spaceAggregation: avg
+                            reduceTo: last
+                          disabled: false
+                          filter:
+                            expression: k8s.cluster.name = 'proxmox-02'
+                          groupBy:
+                          - name: host.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: '{{host.name}}'
+              links: []
+          memory-used-per-node:
+            kind: Panel
+            spec:
+              display:
+                name: Memory used per node
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: system.memory.usage
+                            timeAggregation: latest
+                            spaceAggregation: sum
+                            reduceTo: last
+                          disabled: false
+                          filter:
+                            expression: k8s.cluster.name = 'proxmox-01' AND state = 'used'
+                          groupBy:
+                          - name: host.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: '{{host.name}}'
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: system.memory.usage
+                            timeAggregation: latest
+                            spaceAggregation: sum
+                            reduceTo: last
+                          disabled: false
+                          filter:
+                            expression: k8s.cluster.name = 'proxmox-02' AND state = 'used'
+                          groupBy:
+                          - name: host.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: '{{host.name}}'
+              links: []
+          filesystem-used-per-node:
+            kind: Panel
+            spec:
+              display:
+                name: Filesystem used per node
+                description: ''
+              plugin:
+                kind: signoz/BarChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: system.filesystem.usage
+                            timeAggregation: latest
+                            spaceAggregation: sum
+                            reduceTo: last
+                          disabled: false
+                          filter:
+                            expression: k8s.cluster.name = 'proxmox-01' AND state = 'used'
+                          groupBy:
+                          - name: host.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: '{{host.name}}'
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: system.filesystem.usage
+                            timeAggregation: latest
+                            spaceAggregation: sum
+                            reduceTo: last
+                          disabled: false
+                          filter:
+                            expression: k8s.cluster.name = 'proxmox-02' AND state = 'used'
+                          groupBy:
+                          - name: host.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: '{{host.name}}'
+              links: []
+          network-io-per-node:
+            kind: Panel
+            spec:
+              display:
+                name: Network IO per node
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: system.network.io
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: last
+                          disabled: false
+                          filter:
+                            expression: k8s.cluster.name = 'proxmox-01'
+                          groupBy:
+                          - name: host.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          - name: direction
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: '{{host.name}} {{direction}}'
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: system.network.io
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: last
+                          disabled: false
+                          filter:
+                            expression: k8s.cluster.name = 'proxmox-02'
+                          groupBy:
+                          - name: host.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          - name: direction
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: '{{host.name}} {{direction}}'
+              links: []
+          vm-cpu-usage:
+            kind: Panel
+            spec:
+              display:
+                name: VM CPU usage
+                description: ''
+              plugin:
+                kind: signoz/BarChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: percentunit
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: scalar
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/PromQLQuery
+                    spec:
+                      name: A
+                      query: pve_cpu_usage_ratio{id=~"qemu/.*"} * on (id) group_left(name) pve_guest_info
+                      disabled: false
+                      legend: '{{name}}'
+              links: []
+          top-vm-cpu:
+            kind: Panel
+            spec:
+              display:
+                name: Top VM CPU
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: percentunit
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/PromQLQuery
+                    spec:
+                      name: A
+                      query: pve_cpu_usage_ratio{id=~"qemu/.*"} * on (id) group_left(name) pve_guest_info
+                      disabled: false
+                      legend: '{{name}}'
+              links: []
+          top-vm-memory:
+            kind: Panel
+            spec:
+              display:
+                name: Top VM memory
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/PromQLQuery
+                    spec:
+                      name: A
+                      query: pve_memory_usage_bytes{id=~"qemu/.*"} * on (id) group_left(name) pve_guest_info
+                      disabled: false
+                      legend: '{{name}}'
+              links: []
+          storage-used:
+            kind: Panel
+            spec:
+              display:
+                name: Storage used
+                description: ''
+              plugin:
+                kind: signoz/BarChartPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/PromQLQuery
+                    spec:
+                      name: A
+                      query: pve_disk_usage_bytes{id=~"storage/.*"} * on (id) group_left(storage,node) pve_storage_info
+                      disabled: false
+                      legend: '{{storage}} ({{node}})'
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/nodes-online'
+            - x: 6
+              y: 0
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/vms-running'
+            - x: 0
+              y: 2
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/lxc-running'
+            - x: 6
+              y: 2
+              width: 6
+              height: 2
+              content:
+                $ref: '#/spec/panels/storages-online'
+            - x: 0
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/cpu-load-1m-per-node'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/memory-used-per-node'
+            - x: 0
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/filesystem-used-per-node'
+            - x: 6
+              y: 8
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/network-io-per-node'
+            - x: 0
+              y: 12
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/vm-cpu-usage'
+            - x: 6
+              y: 12
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/top-vm-cpu'
+            - x: 0
+              y: 16
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/top-vm-memory'
+            - x: 6
+              y: 16
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/storage-used'

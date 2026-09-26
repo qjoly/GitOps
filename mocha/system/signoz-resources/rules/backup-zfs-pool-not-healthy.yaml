@@ -1,0 +1,60 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: backup-zfs-pool-not-healthy
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: Backup ZFS pool not healthy
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: zfs_pool_health != 0 on affogato (0=ONLINE, 1=DEGRADED, 2=FAULTED, 3=OFFLINE, 4=UNAVAIL, 6=SUSPENDED).
+      labels:
+        severity: critical
+      annotations:
+        summary: ZFS backup pool is not ONLINE
+        description: zfs_pool_health != 0 on affogato (0=ONLINE, 1=DEGRADED, 2=FAULTED, 3=OFFLINE, 4=UNAVAIL, 6=SUSPENDED).
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: zfs_pool_health
+                timeAggregation: latest
+                spaceAggregation: max
+              filter:
+                expression: k8s.cluster.name = 'affogato'
+              groupBy:
+              - name: k8s.cluster.name
+              - name: pool
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: above
+            matchType: at_least_once
+            target: 0
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 5m
+          frequency: 1m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

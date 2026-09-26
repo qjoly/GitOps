@@ -1,0 +1,412 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: kubernetes-node-metrics-overall
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: kubernetes-node-metrics-overall
+      tags:
+      - key: tag
+        value: node
+      - key: tag
+        value: k8s
+      - key: tag
+        value: kubelet
+      spec:
+        display:
+          name: Kubernetes Node Metrics - Overall
+          description: ''
+        variables:
+        - kind: ListVariable
+          spec:
+            name: k8s.cluster.name
+            display:
+              name: k8s.cluster.name
+              description: The k8s cluster name
+            allowAllValue: false
+            allowMultiple: false
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.cluster.name
+                signal: all
+        - kind: ListVariable
+          spec:
+            name: k8s.node.name
+            display:
+              name: k8s.node.name
+              description: The k8s node name
+            allowAllValue: true
+            allowMultiple: true
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.node.name
+                signal: all
+        panels:
+          node-cpu-usage:
+            kind: Panel
+            spec:
+              display:
+                name: Node CPU usage
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: percentunit
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: k8s.node.cpu.time
+                            timeAggregation: rate
+                            spaceAggregation: sum
+                            reduceTo: sum
+                          disabled: true
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name)
+                          groupBy:
+                          - name: k8s.node.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: '{{k8s.node.name}}'
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: k8s.node.allocatable_cpu
+                            timeAggregation: avg
+                            spaceAggregation: sum
+                            reduceTo: sum
+                          disabled: true
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name)
+                          groupBy:
+                          - name: k8s.node.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: '{{k8s.node.name}}'
+                      - type: builder_formula
+                        spec:
+                          name: F1
+                          expression: A/B
+                          disabled: false
+                          legend: '{{k8s.node.name}}'
+                          having:
+                            expression: ''
+                          functions: []
+                          order: []
+              links: []
+          node-memory-usage-wss:
+            kind: Panel
+            spec:
+              display:
+                name: Node memory usage (WSS)
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: percentunit
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: k8s.node.memory.working_set
+                            timeAggregation: avg
+                            spaceAggregation: sum
+                            reduceTo: sum
+                          disabled: true
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name)
+                          groupBy:
+                          - name: k8s.node.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: ''
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: k8s.node.allocatable_memory
+                            timeAggregation: avg
+                            spaceAggregation: sum
+                            reduceTo: sum
+                          disabled: true
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name)
+                          groupBy:
+                          - name: k8s.node.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: ''
+                      - type: builder_formula
+                        spec:
+                          name: F1
+                          expression: A/B
+                          disabled: false
+                          legend: '{{k8s.node.name}}'
+                          having:
+                            expression: ''
+                          functions: []
+                          order: []
+              links: []
+          node-network-io:
+            kind: Panel
+            spec:
+              display:
+                name: Node network IO
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: k8s.node.network.io
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: sum
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name)
+                      groupBy:
+                      - name: interface
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: direction
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.node.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{k8s.node.name}}-{{interface}}-{{direction}}'
+              links: []
+          node-filesystem-usage:
+            kind: Panel
+            spec:
+              display:
+                name: Node filesystem usage
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: percentunit
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: k8s.node.filesystem.available
+                            timeAggregation: avg
+                            spaceAggregation: sum
+                            reduceTo: sum
+                          disabled: true
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name)
+                          groupBy:
+                          - name: k8s.node.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: ''
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: k8s.node.filesystem.capacity
+                            timeAggregation: avg
+                            spaceAggregation: sum
+                            reduceTo: sum
+                          disabled: true
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name)
+                          groupBy:
+                          - name: k8s.node.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: ''
+                      - type: builder_formula
+                        spec:
+                          name: F1
+                          expression: (B-A)/B
+                          disabled: false
+                          legend: '{{k8s.node.name}}'
+                          having:
+                            expression: ''
+                          functions: []
+                          order: []
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/node-cpu-usage'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/node-memory-usage-wss'
+            - x: 0
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/node-network-io'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/node-filesystem-usage'

@@ -1,0 +1,388 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: kubernetes-pod-metrics-overall
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v6
+      name: kubernetes-pod-metrics-overall
+      tags:
+      - key: tag
+        value: pod
+      - key: tag
+        value: k8s
+      spec:
+        display:
+          name: Kubernetes Pod Metrics - Overall
+          description: ''
+        variables:
+        - kind: ListVariable
+          spec:
+            name: k8s.cluster.name
+            display:
+              name: k8s.cluster.name
+              description: Name of the cluster
+            allowAllValue: false
+            allowMultiple: false
+            sort: none
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.cluster.name
+                signal: all
+        - kind: ListVariable
+          spec:
+            name: k8s.node.name
+            display:
+              name: k8s.node.name
+              description: The k8s node name.
+            allowAllValue: true
+            allowMultiple: true
+            sort: alphabetical-asc
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.node.name
+                signal: all
+        - kind: ListVariable
+          spec:
+            name: k8s.namespace.name
+            display:
+              name: k8s.namespace.name
+              description: The k8s namespace name
+            allowAllValue: false
+            allowMultiple: false
+            sort: alphabetical-asc
+            plugin:
+              kind: signoz/DynamicVariable
+              spec:
+                name: k8s.namespace.name
+                signal: all
+        panels:
+          pod-cpu-usage:
+            kind: Panel
+            spec:
+              display:
+                name: Pod CPU usage
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: none
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: k8s.pod.cpu.time
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: sum
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name)
+                      groupBy:
+                      - name: k8s.node.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.pod.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.namespace.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{k8s.namespace.name}}-{{k8s.pod.name}}'
+              links: []
+          pod-memory-usage-wss:
+            kind: Panel
+            spec:
+              display:
+                name: Pod memory usage (WSS)
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: k8s.pod.memory.working_set
+                        timeAggregation: avg
+                        spaceAggregation: sum
+                        reduceTo: sum
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name)
+                      groupBy:
+                      - name: k8s.node.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.namespace.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.pod.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{k8s.namespace.name}}-{{k8s.pod.name}}'
+              links: []
+          pod-network-io:
+            kind: Panel
+            spec:
+              display:
+                name: Pod network IO
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: bytes
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/BuilderQuery
+                    spec:
+                      name: A
+                      stepInterval: 60
+                      signal: metrics
+                      aggregations:
+                      - metricName: k8s.pod.network.io
+                        timeAggregation: rate
+                        spaceAggregation: sum
+                        reduceTo: sum
+                      disabled: false
+                      filter:
+                        expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name)
+                      groupBy:
+                      - name: interface
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: direction
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.node.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.namespace.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      - name: k8s.pod.name
+                        fieldContext: attribute
+                        fieldDataType: string
+                      having:
+                        expression: ''
+                      legend: '{{k8s.namespace.name}}-{{k8s.pod.name}}-{{interface}}-{{direction}}'
+              links: []
+          pod-filesystem-usage:
+            kind: Panel
+            spec:
+              display:
+                name: Pod filesystem usage
+                description: ''
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: percentunit
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                    softMin: 0
+                    softMax: 0
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/CompositeQuery
+                    spec:
+                      queries:
+                      - type: builder_query
+                        spec:
+                          name: A
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: k8s.pod.filesystem.available
+                            timeAggregation: avg
+                            spaceAggregation: sum
+                            reduceTo: sum
+                          disabled: true
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name)
+                          groupBy:
+                          - name: k8s.node.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          - name: k8s.namespace.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          - name: k8s.pod.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: ''
+                      - type: builder_query
+                        spec:
+                          name: B
+                          stepInterval: 60
+                          signal: metrics
+                          aggregations:
+                          - metricName: k8s.pod.filesystem.capacity
+                            timeAggregation: avg
+                            spaceAggregation: sum
+                            reduceTo: sum
+                          disabled: true
+                          filter:
+                            expression: (k8s.cluster.name IN $k8s.cluster.name AND k8s.node.name IN $k8s.node.name AND k8s.namespace.name IN $k8s.namespace.name)
+                          groupBy:
+                          - name: k8s.node.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          - name: k8s.namespace.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          - name: k8s.pod.name
+                            fieldContext: attribute
+                            fieldDataType: string
+                          having:
+                            expression: ''
+                          legend: ''
+                      - type: builder_formula
+                        spec:
+                          name: F1
+                          expression: (B-A)/B
+                          disabled: false
+                          legend: '{{k8s.node.name}}-{{k8s.namespace.name}}-{{k8s.pod.name}}'
+                          having:
+                            expression: ''
+                          functions: []
+                          order: []
+              links: []
+        layouts:
+        - kind: Grid
+          spec:
+            items:
+            - x: 0
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/pod-cpu-usage'
+            - x: 6
+              y: 0
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/pod-memory-usage-wss'
+            - x: 0
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/pod-network-io'
+            - x: 6
+              y: 4
+              width: 6
+              height: 4
+              content:
+                $ref: '#/spec/panels/pod-filesystem-usage'
