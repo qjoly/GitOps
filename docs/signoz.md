@@ -48,6 +48,22 @@ ArgoCD only exposes Prometheus metrics, so a Prometheus receiver added to the
 k8s-infra deployment collector (`otelDeployment.config`) scrapes the ArgoCD metrics
 services and forwards them, tagged with `cluster=mocha`.
 
+external-secrets exposes Prometheus metrics on port 8080 but the chart ships its
+ServiceMonitor disabled. `mocha/system/external-secret/external-secret.yaml` turns it
+on with `serviceMonitor.enabled=true` plus `serviceMonitor.renderMode=alwaysRender` —
+the chart's default `skipIfMissing` mode hides the ServiceMonitor behind a
+`.Capabilities.APIVersions` check, which is unreliable under ArgoCD's templating even
+though the CRD is installed. Enabling the ServiceMonitor also creates the metrics
+Service it selects. The otel-metrics target allocator picks it up from there.
+
+The metric worth watching is `externalsecret_status_condition`, labelled
+`condition` / `status` / `namespace` / `name`: a broken ExternalSecret reports
+`condition="Ready", status="False"` with value 1. The "ExternalSecret not ready"
+alert fires on it. This matters because a failing ExternalSecret is otherwise
+completely silent — the target Secret is simply never created and the workloads
+consuming it sit in `CreateContainerConfigError` indefinitely (it went unnoticed for
+four days on trmnl-server).
+
 The Traefik and ArgoCD dashboards both carry a `cluster` variable. `cluster` is a
 resource attribute, so the dashboard filters reference it with an empty type
 (`{"key":"cluster","type":""}`), not as a tag.

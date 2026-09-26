@@ -15,6 +15,7 @@ resources:
   - rules/ceph-osd-down.yaml
   - rules/cert-manager-certificate-not-ready.yaml
   - rules/clickhouse-s3-cold-storage-write-errors.yaml
+  - rules/externalsecret-not-ready.yaml
   - rules/kubernetes-container-oomkilled.yaml
   - rules/kubernetes-container-restarting.yaml
   - rules/kubernetes-node-disk-pressure.yaml
