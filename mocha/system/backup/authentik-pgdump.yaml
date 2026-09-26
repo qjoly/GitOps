@@ -85,7 +85,7 @@ spec:
                   mountPath: /work
           containers:
             - name: upload
-              image: restic/restic:0.17.3
+              image: restic/restic:0.19.1
               command: ["/bin/sh", "-c"]
               args:
                 - |
