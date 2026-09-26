@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+     
+     
+    
+    <link rel="canonical" href="https://qjoly.github.io/GitOps/spindle/"><link rel="icon" type="image/png" sizes="192x192" href="../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Spindle - GitOps</title>
+
+
+<link href="../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../css/normalize.css" rel="stylesheet">
+<link href="../css/terminal.css" rel="stylesheet">
+<link href="../css/theme.css" rel="stylesheet">
+<link href="../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "..",
+    shortcuts = "{}";
+</script>
+<script src="../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://qjoly.github.io/GitOps/" class="no-style">GitOps</a></div>
+        </header>
+        
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href=".." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Welcome aboard!</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../backup/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Backup</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../cloudflared/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Cloudflared</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../getting-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Getting Started</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../secret-management/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Secret Management</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../signoz/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">SigNoz</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="./" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">Spindle</span>
+                    </a>
+                    <meta property="position" content="6">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../zfs/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">ZFS</span>
+                    </a>
+                    <meta property="position" content="7">
+                </li>
+                
+                
+                
+                    
+                    
+
+
+<li property="itemListElement" typeof="ListItem">
+    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+    </a>
+    <meta property="position" content="8">
+</li>
+                    
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="..">Welcome aboard!</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../backup/">Backup</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../cloudflared/">Cloudflared</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../getting-started/">Getting Started</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../secret-management/">Secret Management</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../signoz/">SigNoz</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">Spindle</span>
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../zfs/">ZFS</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Changelog</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../changelog/2026-07-13-mocha-avp-to-bank-vaults/">Migration: argocd-vault-plugin (AVP) → bank-vaults / OpenBao — cluster mocha</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../changelog/2026-07-14-americano-onboarding/">Onboarding: Americano — the first podman / Materia host in this GitOps</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#spindle">Spindle</a></li>
+        <li><a href="#building-the-image-myself">Building the image myself</a></li><li><a href="#which-engine-and-why-the-dind-sidecar">Which engine, and why the dind sidecar</a></li><li><a href="#making-dind-listen-on-loopback-only">Making dind listen on loopback only</a></li><li><a href="#memory-limits-are-not-decorative">Memory limits are not decorative</a></li><li><a href="#what-spindle-serves-over-http">What spindle serves over HTTP</a></li><li><a href="#podsecurity">PodSecurity</a></li><li><a href="#log-directory">Log directory</a></li><li><a href="#registering-the-spindle">Registering the spindle</a></li><li><a href="#one-harmless-error-in-the-logs">One harmless error in the logs</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+<section id="mkdocs-terminal-content">
+    <h1 id="spindle">Spindle</h1>
+<p><a href="https://docs.tangled.org/spindles">Spindle</a> is the CI runner of <a href="https://tangled.org">Tangled</a>, a
+social coding platform built on ATProto. Registering my own spindle means the pipelines of my
+Tangled repositories run on mocha instead of someone else's hardware.</p>
+<p>It runs in the <code>spindle</code> namespace on mocha, behind
+<a href="https://spindle.mocha.thoughtless.eu">spindle.mocha.thoughtless.eu</a>.</p>
+<h2 id="building-the-image-myself">Building the image myself</h2>
+<p>There is no published container image for spindle, and that is not an oversight I could work around
+— I checked before writing any manifest:</p>
+<ul>
+<li>The project <em>does</em> publish images, but on <a href="https://atcr.io">atcr.io</a>, an ATProto-native registry,
+  and only for knots: <code>atcr.io/tangled.org/knot:latest</code>. <code>atcr.io/r/tangled.org/spindle</code> returns a
+  404, and <code>atcr.io/u/tangled.org</code> lists exactly one image.</li>
+<li><code>tngl/spindle:v1.10.0-alpha</code> is advertised in the README of the <code>spindle</code> branch of
+  <code>psychedeli.ca/knot-docker</code>, but it was never pushed — the whole <code>tngl</code> Docker Hub namespace only
+  contains <code>knot</code>.</li>
+<li><code>.tangled/workflows/build.yml</code> upstream only runs <code>go build -o spindle.out ./cmd/spindle</code>. No
+  registry login, no push.</li>
+<li><code>flake.nix</code> has no <code>dockerTools</code> / <code>buildLayeredImage</code> call anywhere.</li>
+</ul>
+<p>One trap worth naming: <code>nix build .#spindle-alpine-image</code> looks like it produces a spindle
+container. It does not — those <code>*-image</code> attributes build <strong>microVM guest rootfs</strong> bundles (a
+minirootfs plus <code>vmlinuz-virt</code>, tarred up) that spindle boots <em>to run CI jobs inside</em>. Wrong
+direction entirely.</p>
+<p>So <code>.github/workflows/spindle-image.yaml</code> clones the upstream monorepo at a tag and builds
+<code>localinfra/spindle.Dockerfile</code> into <code>ghcr.io/qjoly/spindle</code>. It is <code>workflow_dispatch</code> only, with
+the tag as an input:</p>
+<pre><code class="language-bash">gh workflow run spindle-image.yaml -f ref=v1.16.1-alpha
+</code></pre>
+<p>Then bump the tag in <code>mocha/apps/spindle/manifests/deployment.yaml</code>. Renovate does not track this,
+since upstream does not live on GitHub.</p>
+<p>That Dockerfile is marked <em>"Development only. Not for production use."</em> I use it anyway: it is a
+plain multi-stage Go build, and the alternative is maintaining my own. The <code>git clone</code> works over
+plain HTTPS — it redirects to <code>knot1.tangled.sh</code>.</p>
+<h2 id="which-engine-and-why-the-dind-sidecar">Which engine, and why the dind sidecar</h2>
+<p>Spindle ships two engines, and both still work — the microVM one is <em>"an upgrade from the existing
+Nixery engine while staying fully compatible with it, so if you already have a working Nixery
+workflow, just change <code>nixery</code> to <code>microvm</code> and it will work"</em>.</p>
+<p>I picked <strong>nixery</strong>, because it needs nothing but a Docker API: images are pulled on demand from
+<code>nixery.tangled.sh</code>. The <strong>microvm</strong> engine would require me to build NixOS/Alpine guest images with
+Nix and ship them into a PVC, since nobody distributes them.</p>
+<p>Upstream says spindle must run natively on the host because <em>"Docker-in-Docker hasn't been
+implemented yet"</em>. That turns out not to apply to a sidecar, and the code says why:</p>
+<ul>
+<li><code>spindle/engines/nixery/engine.go</code> connects with <code>client.NewClientWithOpts(client.FromEnv, ...)</code>,
+  so it honours <code>DOCKER_HOST</code>.</li>
+<li>Its <code>ContainerCreate</code> call makes <strong>no host bind mounts</strong>: <code>/tmp</code> is a tmpfs and the workspace
+  lives inside the workflow container. The only bind it can ever request comes from
+  <code>SPINDLE_SERVER_DOCKER_SOCKET</code>, which I leave unset.</li>
+</ul>
+<p>No shared filesystem is needed, so a <code>docker:dind</code> sidecar reachable over TCP is enough. Both
+containers share the pod network namespace, so <code>127.0.0.1:2375</code> works across them.</p>
+<p>mocha does have <code>/dev/kvm</code> and the <code>vmx</code> CPU flag, so switching to the microVM engine later is
+possible. The node even advertises <code>devices.kubevirt.io/kvm</code> as a schedulable resource, which is a
+cleaner way to get the device than a <code>hostPath</code>.</p>
+<h2 id="making-dind-listen-on-loopback-only">Making dind listen on loopback only</h2>
+<p>The sidecar first crashed with exit code 1. Reading
+<a href="https://github.com/docker-library/docker/blob/master/29/dind/dockerd-entrypoint.sh"><code>dockerd-entrypoint.sh</code></a>
+rather than guessing explained it. The guard is:</p>
+<pre><code class="language-sh"># no arguments passed
+# or first arg is `-f` or `--some-option`
+if [ &quot;$#&quot; -eq 0 ] || [ &quot;${1#-}&quot; != &quot;$1&quot; ]; then
+</code></pre>
+<p>My arguments started with <code>-</code>, so the script <strong>prepended</strong> its own hosts and appended mine:</p>
+<pre><code>dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375 --host=tcp://127.0.0.1:2375 ...
+</code></pre>
+<p>Two binds on port 2375, so the daemon refused to start.</p>
+<p>The crash was hiding the real problem. Had I simply dropped my arguments, dind would have started
+fine — exposing an <strong>unauthenticated root-equivalent Docker API on the pod IP</strong>, reachable from
+anywhere in the cluster. Workflow containers are created by that very daemon, sit on the same
+network, and get <code>host.docker.internal:host-gateway</code>, so untrusted pull-request code could have
+reached the socket and escaped to root on the node.</p>
+<p>Passing <code>dockerd</code> as the first argument skips the defaults block while still hitting
+<code>if [ "$1" = 'dockerd' ]</code> further down, which keeps the actual dind setup. The result is a strict
+loopback bind:</p>
+<pre><code>$ kubectl -n spindle logs deploy/spindle -c dind | grep &quot;API listen&quot;
+API listen on /var/run/docker.sock
+API listen on 127.0.0.1:2375
+</code></pre>
+<p><code>--tls=false</code> states the intent explicitly and skips the deliberate startup delay Docker adds when
+it thinks you forgot about TLS.</p>
+<h2 id="memory-limits-are-not-decorative">Memory limits are not decorative</h2>
+<p>Workflow containers are children of that <code>dockerd</code>, so their memory counts against the <strong>dind</strong>
+container's cgroup, not spindle's. The limits are sized together:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SPINDLE_NIXERY_PIPELINES_MAX_CONCURRENT_WORKFLOWS</code></td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>SPINDLE_NIXERY_PIPELINES_MAX_JOB_MEMORY_MB</code></td>
+<td>4096</td>
+</tr>
+<tr>
+<td>dind <code>limits.memory</code></td>
+<td>10Gi</td>
+</tr>
+</tbody>
+</table>
+<p>Raise either of the first two without raising the limit and the daemon gets OOM-killed mid-job. The
+upstream defaults (8 concurrent × 6144 MB) would need 48Gi.</p>
+<p>The Docker data directory is an <code>emptyDir</code> with a 30Gi limit — a throwaway image cache. Worth moving
+to a PVC if re-pulling from nixery on every restart becomes annoying.</p>
+<h2 id="what-spindle-serves-over-http">What spindle serves over HTTP</h2>
+<p>Four routes, from <code>spindle/server.go</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/</code></td>
+<td>an embedded motd, answered without touching the database, jetstream or docker</td>
+</tr>
+<tr>
+<td><code>/events</code></td>
+<td>event stream</td>
+</tr>
+<tr>
+<td><code>/logs/{knot}/{rkey}/{name}</code></td>
+<td>workflow logs, read back by the appview</td>
+</tr>
+<tr>
+<td><code>/xrpc/*</code></td>
+<td>the XRPC API</td>
+</tr>
+</tbody>
+</table>
+<p><code>/</code> is the useful probe target, precisely because it depends on nothing else. Worth spelling out
+because <code>grep</code> for route registrations is easy to get wrong here: they use <code>mux.HandleFunc(</code>, so a
+pattern like <code>mux\.(Get|Handle|Mount)\(</code> matches only the <code>/xrpc</code> mount and makes it look like the
+sole route.</p>
+<h2 id="podsecurity">PodSecurity</h2>
+<p>The dind sidecar is privileged, and mocha enforces the <code>baseline</code> PodSecurity profile cluster-wide
+(a Talos default), which forbids exactly that. Symptom: the Argo Application reports <code>Synced</code> while
+the ReplicaSet sits at <code>DESIRED 1 / CURRENT 0</code>. The reason only shows up in its events:</p>
+<pre><code>Error creating: pods &quot;spindle-…&quot; is forbidden: violates PodSecurity &quot;baseline:latest&quot;:
+privileged (container &quot;dind&quot; must not set securityContext.privileged=true)
+</code></pre>
+<p>Beware of testing this with a server-side dry run against <code>default</code> — that namespace already carries
+<code>enforce: privileged</code>, so it passes and tells you nothing.</p>
+<p>The <code>managedNamespaceMetadata</code> pattern used by <code>crowdsec</code> did <strong>not</strong> work here. The
+field was applied to the Application, but the namespace had already been created by an earlier sync
+via <code>CreateNamespace=true</code>, and Argo never retrofits the labels onto it — not even after
+<code>argocd.argoproj.io/refresh=hard</code>. It does not appear among the Application's managed resources at
+all.</p>
+<p>So the namespace is declared explicitly in <code>manifests/namespace.yaml</code>, the way <code>bank-vaults</code> does
+it, and gets applied like any other resource. <code>managedNamespaceMetadata</code> was removed to keep a
+single source of truth.</p>
+<h2 id="log-directory">Log directory</h2>
+<p><code>SPINDLE_SERVER_LOG_DIR</code> stays at its default <code>/var/log/spindle</code>, and that is load-bearing.
+<code>spindle/models/logger.go</code> opens log files with <code>os.OpenFile</code> and <strong>no</strong> <code>MkdirAll</code>, so the
+directory has to exist beforehand. The only thing that creates it is the image entrypoint, with that
+path hardcoded. Pointing the variable elsewhere silently breaks log writing.</p>
+<p>Both the SQLite databases and the logs live on one PVC, mounted twice with different <code>subPath</code>s.</p>
+<h2 id="registering-the-spindle">Registering the spindle</h2>
+<p>Nothing needs to be published for <code>did:web</code> to work. <code>serviceauth.DidWeb()</code> derives
+<code>did:web:spindle.mocha.thoughtless.eu</code> from the hostname, which suggests a DID document is required
+— but the codebase never serves <code>/.well-known/did.json</code> anywhere. That
+DID is only ever used as the <code>aud</code> claim when validating inbound service-auth JWTs.</p>
+<p>Registration happens in the Tangled UI (settings → spindles), which writes an <code>sh.tangled.spindle</code>
+record to my PDS. Spindle is already subscribed to it over jetstream, so no redeploy is needed.</p>
+<p>Health check, unauthenticated:</p>
+<pre><code class="language-bash">$ curl https://spindle.mocha.thoughtless.eu/xrpc/sh.tangled.owner
+{&quot;owner&quot;:&quot;did:plc:hqnyog7skad6m4aejb2yujxy&quot;}
+</code></pre>
+<h2 id="one-harmless-error-in-the-logs">One harmless error in the logs</h2>
+<pre><code>ERRO spindle: failed to save cursor on shutdown system=tap component=firehose error=&quot;context canceled&quot;
+</code></pre>
+<p>This is upstream cosmetics, not a misconfiguration. <code>spindle/tap_drain.go</code> shuts the embedded tap
+down on purpose once there is nothing left to backfill (<code>stop()</code> then <code>embedTap.Shutdown()</code>), and
+the cursor save races that context cancellation. It fires because no repositories are attached yet,
+and goes quiet afterwards.</p>
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>
