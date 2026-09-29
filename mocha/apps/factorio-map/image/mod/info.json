@@ -1,0 +1,9 @@
+{
+  "name": "factorio-map-shot",
+  "version": "0.1.0",
+  "factorio_version": "2.0",
+  "title": "factorio-map screenshot renderer",
+  "author": "gitops",
+  "description": "Renders one full-map screenshot per surface on load, then signals completion.",
+  "dependencies": ["base"]
+}
