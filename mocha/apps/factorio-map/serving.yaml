@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: factorio-map-nginx
+  namespace: factorio-lucca
+data:
+  default.conf.template: |
+    server {
+        listen 8080;
+        server_name _;
+        resolver 1.1.1.1 8.8.8.8 valid=300s;
+        proxy_ssl_server_name on;
+        set $bunny "storage.bunnycdn.com";
+        absolute_redirect off;
+        port_in_redirect off;
+
+        # BunnyCDN storage rejects requests carrying a Referer (anti-hotlink) with
+        # 401, so strip it (and set the AccessKey) for every proxied request.
+        proxy_set_header AccessKey "${BUNNY_PASSWORD}";
+        proxy_set_header Host $bunny;
+        proxy_set_header Referer "";
+        proxy_hide_header Set-Cookie;
+        proxy_hide_header Cache-Control;
+
+        location = / {
+            proxy_pass https://$bunny/mocha-coffee/factorio-map/index.html;
+            add_header Cache-Control "no-store" always;
+        }
+        location = /index.html {
+            proxy_pass https://$bunny/mocha-coffee/factorio-map/index.html;
+            add_header Cache-Control "no-store" always;
+        }
+        location = /index.json {
+            proxy_pass https://$bunny/mocha-coffee/factorio-map/index.json;
+            add_header Cache-Control "no-store" always;
+        }
+        location / {
+            proxy_pass https://$bunny/mocha-coffee/factorio-map$uri$is_args$args;
+            proxy_intercept_errors off;
+            add_header Cache-Control "public, max-age=300" always;
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: factorio-map-web
+  namespace: factorio-lucca
+  labels: { app: factorio-map-web }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: factorio-map-web }
+  template:
+    metadata:
+      labels: { app: factorio-map-web }
+    spec:
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.27-alpine
+          ports:
+            - containerPort: 8080
+          env:
+            - name: BUNNY_PASSWORD
+              valueFrom: { secretKeyRef: { name: factorio-map-bunny, key: AWS_SECRET_ACCESS_KEY } }
+            - name: NGINX_ENVSUBST_FILTER
+              value: "BUNNY_PASSWORD"
+          volumeMounts:
+            - name: tpl
+              mountPath: /etc/nginx/templates
+              readOnly: true
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+      volumes:
+        - name: tpl
+          configMap:
+            name: factorio-map-nginx
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: factorio-map-web
+  namespace: factorio-lucca
+spec:
+  selector: { app: factorio-map-web }
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: factorio-map
+  namespace: factorio-lucca
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+spec:
+  ingressClassName: traefik
+  tls:
+    - secretName: factorio-map-tls
+      hosts:
+        - factorio-map.mocha.thoughtless.eu
+  rules:
+    - host: factorio-map.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: factorio-map-web
+                port:
+                  number: 80

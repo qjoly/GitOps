@@ -1,0 +1,154 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: factorio-map
+  namespace: factorio-lucca
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: factorio-map-reader
+  namespace: factorio-lucca
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: factorio-map-reader
+  namespace: factorio-lucca
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: factorio-map-reader
+subjects:
+  - kind: ServiceAccount
+    name: factorio-map
+    namespace: factorio-lucca
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: factorio-map-cache
+  namespace: factorio-lucca
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: openebs-lvmpv
+  resources:
+    requests:
+      storage: 12Gi
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: factorio-map-bunny
+  namespace: factorio-lucca
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: factorio-map-bunny
+    creationPolicy: Owner
+  data:
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef: { key: restic, property: AWS_ACCESS_KEY_ID }
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef: { key: restic, property: AWS_SECRET_ACCESS_KEY }
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: atcr-pull
+  namespace: factorio-lucca
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault-backend
+  target:
+    name: atcr-pull
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      engineVersion: v2
+      mergePolicy: Replace
+      type: kubernetes.io/dockerconfigjson
+  data:
+    - secretKey: .dockerconfigjson
+      remoteRef:
+        key: tranquil-pds
+        property: dockerconfigjson
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: factorio-map-render
+  namespace: factorio-lucca
+spec:
+  schedule: "17 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 2700
+      template:
+        spec:
+          serviceAccountName: factorio-map
+          imagePullSecrets:
+            - name: atcr-pull
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: render
+              image: atcr.io/une-tasse-de.cafe/factorio-map:0.2.1
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              env:
+                - name: FA_USERNAME
+                  valueFrom: { secretKeyRef: { name: factorio-secrets, key: username } }
+                - name: FA_TOKEN
+                  valueFrom: { secretKeyRef: { name: factorio-secrets, key: token } }
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom: { secretKeyRef: { name: factorio-map-bunny, key: AWS_ACCESS_KEY_ID } }
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom: { secretKeyRef: { name: factorio-map-bunny, key: AWS_SECRET_ACCESS_KEY } }
+                - name: FACTORIO_VERSION
+                  value: "2.0.77"
+                - name: RESOLUTION
+                  value: "8192"
+                - name: KEEP
+                  value: "30"
+                - name: RENDER_TIMEOUT
+                  value: "600"
+              volumeMounts:
+                - { name: cache, mountPath: /cache }
+                - { name: work, mountPath: /work }
+              resources:
+                requests: { cpu: "2", memory: "3Gi" }
+                limits: { cpu: "11", memory: "20Gi" }
+          volumes:
+            - name: cache
+              persistentVolumeClaim:
+                claimName: factorio-map-cache
+            - name: work
+              emptyDir:
+                medium: Memory
+                sizeLimit: 12Gi

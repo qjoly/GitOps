@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Factorio Map</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/5.0.1/openseadragon.min.js"></script>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #14110d; color: #e8e2d6;
+    font: 14px/1.4 system-ui, sans-serif; }
+  #app { display: flex; flex-direction: column; height: 100%; }
+  header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 8px 14px; background: #1e1a14; border-bottom: 1px solid #3a3226; }
+  header h1 { font-size: 15px; margin: 0; color: #f4a637; letter-spacing: .5px; }
+  #tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab { padding: 4px 12px; border: 1px solid #3a3226; border-radius: 4px;
+    background: #26211a; cursor: pointer; text-transform: capitalize; }
+  .tab.active { background: #f4a637; color: #14110d; border-color: #f4a637; font-weight: 600; }
+  label.toggle { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+  #timebar { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  #timebar input[type=range] { width: 200px; }
+  #stamp { font-variant-numeric: tabular-nums; color: #b8ad99; min-width: 150px; }
+  #osd { flex: 1; background: #0d0b08; position: relative; }
+  #msg { position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; color: #b8ad99; pointer-events: none; }
+  .station { display: flex; align-items: center; gap: 4px; transform: translate(-4px, -50%);
+    white-space: nowrap; pointer-events: none; }
+  .station .dot { width: 9px; height: 9px; border-radius: 50%; flex: none;
+    background: #f4a637; border: 1px solid #000; box-shadow: 0 0 0 1px rgba(255,255,255,.4); }
+  .station .lbl { font-size: 11px; color: #fff; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 1px 2px #000;
+    background: rgba(0,0,0,.35); padding: 0 3px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>FACTORIO&nbsp;MAP</h1>
+    <div id="tabs"></div>
+    <label class="toggle"><input type="checkbox" id="stationsToggle" checked> stations</label>
+    <div id="timebar">
+      <input id="time" type="range" min="0" max="0" value="0" step="1">
+      <span id="stamp">—</span>
+    </div>
+  </header>
+  <div id="osd"><div id="msg">loading…</div></div>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+let renders = [], surfaces = [], curSurface = null, curIdx = 0, viewer = null, stations = null;
+
+function fmt(ts) {
+  const m = ts.match(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);
+  return m ? `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]} UTC` : ts;
+}
+const base = () => `renders/${renders[curIdx].timestamp}/${curSurface}`;
+
+function placeStations() {
+  if (!viewer) return;
+  viewer.clearOverlays();
+  if (!$('#stationsToggle').checked || !stations || !stations.stations) return;
+  const item = viewer.world.getItemAt(0);
+  if (!item) return;
+  const { res, cx, cy, zoom } = stations;
+  for (const st of stations.stations) {
+    if (!st.name) continue;
+    const label = st.name.replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim();
+    const px = res / 2 + (st.x - cx) * 32 * zoom;
+    const py = res / 2 + (st.y - cy) * 32 * zoom;
+    const el = document.createElement('div');
+    el.className = 'station';
+    const c = st.color;
+    const col = c ? `rgb(${(c.r*255)|0},${(c.g*255)|0},${(c.b*255)|0})` : '#f4a637';
+    el.innerHTML = `<span class="dot" style="background:${col}"></span>` +
+      (label ? `<span class="lbl"></span>` : '');
+    if (label) el.querySelector('.lbl').textContent = label;
+    el.title = label || st.name;
+    viewer.addOverlay({ element: el, location: item.imageToViewportCoordinates(px, py),
+      placement: OpenSeadragon.Placement.LEFT });
+  }
+}
+
+function loadStations() {
+  stations = null;
+  fetch(base() + '.stations.json?_=' + Date.now())
+    .then(r => r.ok ? r.json() : null)
+    .then(d => { stations = d; placeStations(); })
+    .catch(() => {});
+}
+
+function show() {
+  $('#stamp').textContent = renders[curIdx] ? fmt(renders[curIdx].timestamp) : '—';
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.s === curSurface));
+  const src = base() + '.dzi';
+  if (!viewer) {
+    viewer = OpenSeadragon({
+      id: 'osd', prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/5.0.1/images/',
+      tileSources: src, showNavigator: true, navigatorPosition: 'BOTTOM_RIGHT',
+      minZoomImageRatio: 0.5, maxZoomPixelRatio: 4, animationTime: 0.4,
+    });
+    viewer.addHandler('open', placeStations);
+  } else {
+    viewer.open(src);
+  }
+  loadStations();
+}
+
+function buildTabs() {
+  const el = $('#tabs'); el.innerHTML = '';
+  surfaces.forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'tab'; d.dataset.s = s; d.textContent = s.replace(/-/g, ' ');
+    d.onclick = () => { curSurface = s; show(); };
+    el.appendChild(d);
+  });
+}
+
+$('#stationsToggle').onchange = placeStations;
+
+fetch('index.json?_=' + Date.now()).then(r => r.json()).then(data => {
+  renders = (data.renders || []).filter(r => (r.surfaces || []).length);
+  if (!renders.length) { $('#msg').textContent = 'no renders yet'; return; }
+  const set = new Set();
+  renders.forEach(r => r.surfaces.forEach(s => set.add(s)));
+  surfaces = [...set].sort((a, b) => (a === 'nauvis' ? -1 : b === 'nauvis' ? 1 : a.localeCompare(b)));
+  curSurface = surfaces[0];
+  curIdx = renders.length - 1;
+  const slider = $('#time');
+  slider.max = renders.length - 1; slider.value = curIdx;
+  slider.oninput = () => { curIdx = +slider.value; show(); };
+  buildTabs();
+  $('#msg').remove();
+  show();
+}).catch(e => { $('#msg').textContent = 'failed to load index.json'; console.error(e); });
+</script>
+</body>
+</html>
