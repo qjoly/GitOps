@@ -1,44 +1,38 @@
 apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: factorio-map-serve
+  namespace: factorio-lucca
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: openebs-hostpath
+  resources:
+    requests:
+      storage: 80Gi
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: factorio-map-nginx
   namespace: factorio-lucca
 data:
-  default.conf.template: |
+  default.conf: |
     server {
         listen 8080;
         server_name _;
-        resolver 1.1.1.1 8.8.8.8 valid=300s;
-        proxy_ssl_server_name on;
-        set $bunny "storage.bunnycdn.com";
+        root /srv;
         absolute_redirect off;
-        port_in_redirect off;
-
-        # BunnyCDN storage rejects requests carrying a Referer (anti-hotlink) with
-        # 401, so strip it (and set the AccessKey) for every proxied request.
-        proxy_set_header AccessKey "${BUNNY_PASSWORD}";
-        proxy_set_header Host $bunny;
-        proxy_set_header Referer "";
-        proxy_hide_header Set-Cookie;
-        proxy_hide_header Cache-Control;
-
-        location = / {
-            proxy_pass https://$bunny/mocha-coffee/factorio-map/index.html;
-            add_header Cache-Control "no-store" always;
+        types {
+            application/json  json;
+            image/jpeg        jpg;
+            text/html         html;
+            application/xml   dzi;
         }
-        location = /index.html {
-            proxy_pass https://$bunny/mocha-coffee/factorio-map/index.html;
-            add_header Cache-Control "no-store" always;
-        }
-        location = /index.json {
-            proxy_pass https://$bunny/mocha-coffee/factorio-map/index.json;
-            add_header Cache-Control "no-store" always;
-        }
-        location / {
-            proxy_pass https://$bunny/mocha-coffee/factorio-map$uri$is_args$args;
-            proxy_intercept_errors off;
-            add_header Cache-Control "public, max-age=300" always;
-        }
+        default_type application/octet-stream;
+        location = / { try_files /index.html =404; add_header Cache-Control "no-store" always; }
+        location = /index.html { add_header Cache-Control "no-store" always; }
+        location = /index.json { add_header Cache-Control "no-store" always; }
+        location / { try_files $uri =404; add_header Cache-Control "public, max-age=86400" always; }
     }
 ---
 apiVersion: apps/v1
@@ -49,33 +43,65 @@ metadata:
   labels: { app: factorio-map-web }
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels: { app: factorio-map-web }
   template:
     metadata:
       labels: { app: factorio-map-web }
     spec:
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      imagePullSecrets:
+        - name: atcr-pull
       containers:
         - name: nginx
           image: nginxinc/nginx-unprivileged:1.27-alpine
           ports:
             - containerPort: 8080
-          env:
-            - name: BUNNY_PASSWORD
-              valueFrom: { secretKeyRef: { name: factorio-map-bunny, key: AWS_SECRET_ACCESS_KEY } }
-            - name: NGINX_ENVSUBST_FILTER
-              value: "BUNNY_PASSWORD"
           volumeMounts:
-            - name: tpl
-              mountPath: /etc/nginx/templates
-              readOnly: true
+            - { name: srv, mountPath: /srv, readOnly: true }
+            - { name: tpl, mountPath: /etc/nginx/conf.d, readOnly: true }
           resources:
             requests: { cpu: 10m, memory: 32Mi }
             limits: { memory: 128Mi }
           securityContext:
+            runAsUser: 101
+            runAsGroup: 101
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+        - name: sync
+          image: atcr.io/une-tasse-de.cafe/factorio-map:0.5.3
+          command: ["/usr/local/bin/sync.sh"]
+          env:
+            - name: S3_ENDPOINT
+              value: "https://rustfs.thoughtless.eu"
+            - name: S3_BUCKET
+              value: "factorio"
+            - name: SYNC_INTERVAL
+              value: "120"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom: { secretKeyRef: { name: factorio-map-s3, key: AWS_ACCESS_KEY_ID } }
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: factorio-map-s3, key: AWS_SECRET_ACCESS_KEY } }
+          volumeMounts:
+            - { name: srv, mountPath: /srv }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 1Gi }
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
             allowPrivilegeEscalation: false
             capabilities: { drop: ["ALL"] }
       volumes:
+        - name: srv
+          persistentVolumeClaim:
+            claimName: factorio-map-serve
         - name: tpl
           configMap:
             name: factorio-map-nginx

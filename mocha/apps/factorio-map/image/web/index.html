@@ -22,15 +22,22 @@
   #timebar { display: flex; align-items: center; gap: 10px; margin-left: auto; }
   #timebar input[type=range] { width: 200px; }
   #stamp { font-variant-numeric: tabular-nums; color: #b8ad99; min-width: 150px; }
+  #share { padding: 4px 10px; border: 1px solid #3a3226; border-radius: 4px;
+    background: #26211a; color: #e8e2d6; cursor: pointer; }
+  #share:hover { background: #f4a637; color: #14110d; border-color: #f4a637; }
+  #share.copied { background: #4caf50; color: #14110d; border-color: #4caf50; }
+  #coords { font-variant-numeric: tabular-nums; color: #8f8672; font-size: 12px; min-width: 118px; }
   #osd { flex: 1; background: #0d0b08; position: relative; }
   #msg { position: absolute; inset: 0; display: flex; align-items: center;
     justify-content: center; color: #b8ad99; pointer-events: none; }
   .station { display: flex; align-items: center; gap: 4px; transform: translate(-4px, -50%);
-    white-space: nowrap; pointer-events: none; }
+    white-space: nowrap; cursor: pointer; }
   .station .dot { width: 9px; height: 9px; border-radius: 50%; flex: none;
     background: #f4a637; border: 1px solid #000; box-shadow: 0 0 0 1px rgba(255,255,255,.4); }
   .station .lbl { font-size: 11px; color: #fff; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 1px 2px #000;
     background: rgba(0,0,0,.35); padding: 0 3px; border-radius: 2px; }
+  .station:hover .lbl { background: #f4a637; color: #14110d; text-shadow: none; }
+  .station:hover .dot { box-shadow: 0 0 0 2px #f4a637; }
 </style>
 </head>
 <body>
@@ -39,6 +46,8 @@
     <h1>FACTORIO&nbsp;MAP</h1>
     <div id="tabs"></div>
     <label class="toggle"><input type="checkbox" id="stationsToggle" checked> stations</label>
+    <button id="share" title="Copy a link to this exact view">🔗 link</button>
+    <span id="coords" title="cursor / view center (game tiles)">—</span>
     <div id="timebar">
       <input id="time" type="range" min="0" max="0" value="0" step="1">
       <span id="stamp">—</span>
@@ -49,6 +58,7 @@
 <script>
 const $ = (s) => document.querySelector(s);
 let renders = [], surfaces = [], curSurface = null, curIdx = 0, viewer = null, stations = null;
+let pendingView = null, hashTimer = null;
 
 function fmt(ts) {
   const m = ts.match(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);
@@ -56,18 +66,63 @@ function fmt(ts) {
 }
 const base = () => `renders/${renders[curIdx].timestamp}/${curSurface}`;
 
+// ---- shareable deep links: #s=<surface>&x=<gx>&y=<gy>&z=<zoom>&t=<render> ----
+// x,y are factorio game tiles (robust across renders), derived from the
+// per-surface {gx0,gy0,ppt} mapping in <surface>.stations.json (ppt = px/tile).
+function imgToGame(px, py) {
+  const { gx0, gy0, ppt } = stations;
+  return { x: gx0 + px / ppt, y: gy0 + py / ppt };
+}
+function gameToImg(gx, gy) {
+  const { gx0, gy0, ppt } = stations;
+  return { px: (gx - gx0) * ppt, py: (gy - gy0) * ppt };
+}
+function parseHash() {
+  const h = location.hash.replace(/^#/, '');
+  if (!h) return null;
+  const p = new URLSearchParams(h);
+  if (!p.get('s')) return null;
+  return { s: p.get('s'), x: parseFloat(p.get('x')), y: parseFloat(p.get('y')),
+    z: parseFloat(p.get('z')), t: p.get('t') || '' };
+}
+function viewCenterGame() {
+  if (!viewer || !stations) return null;
+  const item = viewer.world.getItemAt(0);
+  if (!item) return null;
+  const ip = item.viewportToImageCoordinates(viewer.viewport.getCenter());
+  const g = imgToGame(ip.x, ip.y);
+  return { x: Math.round(g.x), y: Math.round(g.y), z: +viewer.viewport.getZoom().toFixed(3) };
+}
+function writeHash() {
+  const g = viewCenterGame();
+  if (!g) return;
+  const ts = renders[curIdx] ? renders[curIdx].timestamp : '';
+  history.replaceState(null, '',
+    `#s=${encodeURIComponent(curSurface)}&x=${g.x}&y=${g.y}&z=${g.z}&t=${ts}`);
+  $('#coords').textContent = `x ${g.x}  y ${g.y}`;
+}
+const scheduleWriteHash = () => { clearTimeout(hashTimer); hashTimer = setTimeout(writeHash, 250); };
+function applyPendingView() {
+  if (!pendingView || !viewer || !stations) return;
+  const item = viewer.world.getItemAt(0);
+  if (!item) return;
+  const { px, py } = gameToImg(pendingView.x, pendingView.y);
+  if (pendingView.z) viewer.viewport.zoomTo(pendingView.z, null, true);
+  viewer.viewport.panTo(item.imageToViewportCoordinates(px, py), true);
+  viewer.viewport.applyConstraints(true);
+  pendingView = null;
+}
+
 function placeStations() {
   if (!viewer) return;
   viewer.clearOverlays();
   if (!$('#stationsToggle').checked || !stations || !stations.stations) return;
   const item = viewer.world.getItemAt(0);
   if (!item) return;
-  const { res, cx, cy, zoom } = stations;
   for (const st of stations.stations) {
     if (!st.name) continue;
     const label = st.name.replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim();
-    const px = res / 2 + (st.x - cx) * 32 * zoom;
-    const py = res / 2 + (st.y - cy) * 32 * zoom;
+    const { px, py } = gameToImg(st.x, st.y);
     const el = document.createElement('div');
     el.className = 'station';
     const c = st.color;
@@ -75,17 +130,28 @@ function placeStations() {
     el.innerHTML = `<span class="dot" style="background:${col}"></span>` +
       (label ? `<span class="lbl"></span>` : '');
     if (label) el.querySelector('.lbl').textContent = label;
-    el.title = label || st.name;
+    el.title = (label || st.name) + ' — click to zoom in';
+    el.addEventListener('click', (ev) => { ev.stopPropagation(); focusStation(st); });
     viewer.addOverlay({ element: el, location: item.imageToViewportCoordinates(px, py),
       placement: OpenSeadragon.Placement.LEFT });
   }
+}
+
+function focusStation(st) {
+  if (!viewer || !stations) return;
+  const item = viewer.world.getItemAt(0);
+  if (!item) return;
+  const { px, py } = gameToImg(st.x, st.y);
+  const p = item.imageToViewportCoordinates(px, py);
+  viewer.viewport.panTo(p, false);
+  viewer.viewport.zoomTo(viewer.viewport.getMaxZoom() * 0.5, p, false);
 }
 
 function loadStations() {
   stations = null;
   fetch(base() + '.stations.json?_=' + Date.now())
     .then(r => r.ok ? r.json() : null)
-    .then(d => { stations = d; placeStations(); })
+    .then(d => { stations = d; placeStations(); applyPendingView(); scheduleWriteHash(); })
     .catch(() => {});
 }
 
@@ -99,7 +165,15 @@ function show() {
       tileSources: src, showNavigator: true, navigatorPosition: 'BOTTOM_RIGHT',
       minZoomImageRatio: 0.5, maxZoomPixelRatio: 4, animationTime: 0.4,
     });
-    viewer.addHandler('open', placeStations);
+    viewer.addHandler('open', () => { placeStations(); applyPendingView(); });
+    viewer.addHandler('animation-finish', scheduleWriteHash);
+    new OpenSeadragon.MouseTracker({ element: viewer.element, moveHandler: (e) => {
+      const item = viewer.world.getItemAt(0);
+      if (!stations || !item) return;
+      const ip = item.viewportToImageCoordinates(viewer.viewport.pointFromPixel(e.position));
+      const g = imgToGame(ip.x, ip.y);
+      $('#coords').textContent = `x ${Math.round(g.x)}  y ${Math.round(g.y)}`;
+    } }).setTracking(true);
   } else {
     viewer.open(src);
   }
@@ -118,14 +192,25 @@ function buildTabs() {
 
 $('#stationsToggle').onchange = placeStations;
 
+$('#share').onclick = () => {
+  writeHash();
+  const b = $('#share');
+  const done = () => { b.classList.add('copied'); b.textContent = '✓ copied';
+    setTimeout(() => { b.classList.remove('copied'); b.textContent = '🔗 link'; }, 1400); };
+  if (navigator.clipboard) navigator.clipboard.writeText(location.href).then(done, done); else done();
+};
+
 fetch('index.json?_=' + Date.now()).then(r => r.json()).then(data => {
   renders = (data.renders || []).filter(r => (r.surfaces || []).length);
   if (!renders.length) { $('#msg').textContent = 'no renders yet'; return; }
   const set = new Set();
   renders.forEach(r => r.surfaces.forEach(s => set.add(s)));
   surfaces = [...set].sort((a, b) => (a === 'nauvis' ? -1 : b === 'nauvis' ? 1 : a.localeCompare(b)));
-  curSurface = surfaces[0];
+  const hv = parseHash();
+  curSurface = (hv && surfaces.includes(hv.s)) ? hv.s : surfaces[0];
   curIdx = renders.length - 1;
+  if (hv && hv.t) { const i = renders.findIndex(r => r.timestamp === hv.t); if (i >= 0) curIdx = i; }
+  if (hv && isFinite(hv.x) && isFinite(hv.y)) pendingView = { x: hv.x, y: hv.y, z: isFinite(hv.z) ? hv.z : 0 };
   const slider = $('#time');
   slider.max = renders.length - 1; slider.value = curIdx;
   slider.oninput = () => { curIdx = +slider.value; show(); };

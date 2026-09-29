@@ -46,7 +46,7 @@ spec:
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: factorio-map-bunny
+  name: factorio-map-s3
   namespace: factorio-lucca
 spec:
   refreshInterval: 1h
@@ -54,13 +54,13 @@ spec:
     name: vault-backend
     kind: ClusterSecretStore
   target:
-    name: factorio-map-bunny
+    name: factorio-map-s3
     creationPolicy: Owner
   data:
     - secretKey: AWS_ACCESS_KEY_ID
-      remoteRef: { key: restic, property: AWS_ACCESS_KEY_ID }
+      remoteRef: { key: factorio-s3, property: AWS_ACCESS_KEY_ID }
     - secretKey: AWS_SECRET_ACCESS_KEY
-      remoteRef: { key: restic, property: AWS_SECRET_ACCESS_KEY }
+      remoteRef: { key: factorio-s3, property: AWS_SECRET_ACCESS_KEY }
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -99,7 +99,7 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 1
-      activeDeadlineSeconds: 2700
+      activeDeadlineSeconds: 9000
       template:
         spec:
           serviceAccountName: factorio-map
@@ -115,7 +115,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: render
-              image: atcr.io/une-tasse-de.cafe/factorio-map:0.2.1
+              image: atcr.io/une-tasse-de.cafe/factorio-map:0.5.3
               imagePullPolicy: IfNotPresent
               securityContext:
                 allowPrivilegeEscalation: false
@@ -127,28 +127,35 @@ spec:
                 - name: FA_TOKEN
                   valueFrom: { secretKeyRef: { name: factorio-secrets, key: token } }
                 - name: AWS_ACCESS_KEY_ID
-                  valueFrom: { secretKeyRef: { name: factorio-map-bunny, key: AWS_ACCESS_KEY_ID } }
+                  valueFrom: { secretKeyRef: { name: factorio-map-s3, key: AWS_ACCESS_KEY_ID } }
                 - name: AWS_SECRET_ACCESS_KEY
-                  valueFrom: { secretKeyRef: { name: factorio-map-bunny, key: AWS_SECRET_ACCESS_KEY } }
+                  valueFrom: { secretKeyRef: { name: factorio-map-s3, key: AWS_SECRET_ACCESS_KEY } }
                 - name: FACTORIO_VERSION
                   value: "2.0.77"
-                - name: RESOLUTION
-                  value: "8192"
+                - name: MAP_ZOOM
+                  value: "0.75"
+                - name: CELL_PX
+                  value: "16384"
+                - name: JPEG_Q
+                  value: "90"
                 - name: KEEP
-                  value: "30"
+                  value: "14"
+                - name: S3_ENDPOINT
+                  value: "https://rustfs.thoughtless.eu"
+                - name: S3_BUCKET
+                  value: "factorio"
                 - name: RENDER_TIMEOUT
-                  value: "600"
+                  value: "6000"
               volumeMounts:
                 - { name: cache, mountPath: /cache }
                 - { name: work, mountPath: /work }
               resources:
                 requests: { cpu: "2", memory: "3Gi" }
-                limits: { cpu: "11", memory: "20Gi" }
+                limits: { cpu: "11", memory: "48Gi" }
           volumes:
             - name: cache
               persistentVolumeClaim:
                 claimName: factorio-map-cache
             - name: work
               emptyDir:
-                medium: Memory
-                sizeLimit: 12Gi
+                sizeLimit: 120Gi
