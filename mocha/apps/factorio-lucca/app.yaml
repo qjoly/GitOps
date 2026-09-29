@@ -76,6 +76,20 @@ spec:
                         remoteRef:
                           key: factorio
                           property: token
+                - apiVersion: v1
+                  kind: Service
+                  metadata:
+                    name: factorio-rcon
+                  spec:
+                    type: NodePort
+                    selector:
+                      app: factorio
+                    ports:
+                      - name: rcon
+                        port: 27015
+                        targetPort: 27015
+                        nodePort: 30015
+                        protocol: TCP
               
               persistence:
                 enabled: true
