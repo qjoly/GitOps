@@ -38,7 +38,8 @@ while :; do
     for ts in $wanted; do
       [ -d "$SRV/renders/$ts" ] && continue
       log "fetching render $ts"
-      if rclone copyto "$DEST/renders/$ts.tar" "/tmp/$ts.tar" --multi-thread-streams 8 --s3-chunk-size 64M 2>/dev/null; then
+      if rclone copyto "$DEST/renders/$ts.tar" "/tmp/$ts.tar" --multi-thread-streams 2 \
+        --retries 8 --retries-sleep 20s --low-level-retries 20 2>/dev/null; then
         mkdir -p "$SRV/renders/.tmp-$ts"
         if tar -C "$SRV/renders/.tmp-$ts" -xf "/tmp/$ts.tar" 2>/dev/null; then
           # tarball contains a top-level "<ts>" dir
