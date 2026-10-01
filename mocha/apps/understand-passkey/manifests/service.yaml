@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: understand-passkey
+  labels:
+    app: understand-passkey
+spec:
+  selector:
+    app: understand-passkey
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
