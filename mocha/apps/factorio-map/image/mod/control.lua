@@ -30,6 +30,9 @@ script.on_nth_tick(60, function()
     if #ents == 0 then
       if PLAN then log("FMAP_SKIP surface=" .. sname) end
     else
+      -- wipe the pollution haze so screenshots show clean ground (this is a
+      -- throwaway copy of the save, the live game is untouched)
+      pcall(function() surface.clear_pollution() end)
       local x1, y1, x2, y2 = math.huge, math.huge, -math.huge, -math.huge
       for _, e in pairs(ents) do
         local p = e.position
@@ -85,8 +88,78 @@ script.on_nth_tick(60, function()
         helpers.write_file("map/" .. sname .. ".stations.json",
           helpers.table_to_json({w = nx * CELL, h = ny * CELL, gx0 = gx0, gy0 = gy0,
             ppt = ppt, nx = nx, ny = ny, cell = CELL, stations = stations}), false)
-        log("FMAP_OK surface=" .. sname .. " grid=" .. nx .. "x" .. ny
-          .. " shots=" .. shots .. " stations=" .. #stations)
+
+        -- resource patches: bucket resources per chunk (sum remaining amount +
+        -- well count), merge adjacent same-type chunks (union-find) into patches
+        local res = surface.find_entities_filtered{type = "resource"}
+        local inf, buckets = {}, {}
+        for _, r in pairs(res) do
+          local nm = r.name
+          if inf[nm] == nil then inf[nm] = r.prototype.infinite_resource end
+          local bx = math.floor(r.position.x / 32)
+          local by = math.floor(r.position.y / 32)
+          local key = bx .. ":" .. by .. ":" .. nm
+          local b = buckets[key]
+          if not b then b = {nm = nm, bx = bx, by = by, amount = 0, count = 0}; buckets[key] = b end
+          b.amount = b.amount + r.amount
+          b.count = b.count + 1
+        end
+        local parent = {}
+        local function find(k)
+          while parent[k] ~= k do parent[k] = parent[parent[k]]; k = parent[k] end
+          return k
+        end
+        for key in pairs(buckets) do parent[key] = key end
+        for key, b in pairs(buckets) do
+          for _, d in ipairs({{1, 0}, {0, 1}, {1, 1}, {1, -1}}) do
+            local nkey = (b.bx + d[1]) .. ":" .. (b.by + d[2]) .. ":" .. b.nm
+            if buckets[nkey] then
+              local ra, rb = find(key), find(nkey)
+              if ra ~= rb then parent[ra] = rb end
+            end
+          end
+        end
+        local patches = {}
+        for key, b in pairs(buckets) do
+          local root = find(key)
+          local p = patches[root]
+          if not p then p = {nm = b.nm, amount = 0, count = 0, sx = 0, sy = 0}; patches[root] = p end
+          p.amount = p.amount + b.amount
+          p.count = p.count + b.count
+          p.sx = p.sx + (b.bx * 32 + 16) * b.amount
+          p.sy = p.sy + (b.by * 32 + 16) * b.amount
+        end
+        local rlist = {}
+        for _, p in pairs(patches) do
+          local w = p.amount > 0 and p.amount or 1
+          rlist[#rlist + 1] = {type = p.nm, amount = math.floor(p.amount), wells = p.count,
+            x = math.floor(p.sx / w), y = math.floor(p.sy / w), infinite = inf[p.nm] or false}
+        end
+        helpers.write_file("map/" .. sname .. ".resources.json",
+          helpers.table_to_json({patches = rlist}), false)
+
+        -- rail network: flat [x0,y0,x1,y1,...] of every rail tile (drawn as a
+        -- canvas highlight layer client-side). pcall per type so an unknown rail
+        -- type (across versions/DLC) never breaks the whole plan pass.
+        local rail_types = {"straight-rail", "half-diagonal-rail", "curved-rail-a",
+          "curved-rail-b", "rail-ramp", "elevated-straight-rail", "elevated-half-diagonal-rail",
+          "elevated-curved-rail-a", "elevated-curved-rail-b", "legacy-straight-rail",
+          "legacy-curved-rail"}
+        local rl = {}
+        for _, t in ipairs(rail_types) do
+          local ok, ents = pcall(function() return surface.find_entities_filtered{type = t} end)
+          if ok and ents then
+            for _, e in pairs(ents) do
+              rl[#rl + 1] = math.floor(e.position.x + 0.5)
+              rl[#rl + 1] = math.floor(e.position.y + 0.5)
+            end
+          end
+        end
+        helpers.write_file("map/" .. sname .. ".rails.json",
+          helpers.table_to_json({rails = rl}), false)
+
+        log("FMAP_OK surface=" .. sname .. " grid=" .. nx .. "x" .. ny .. " shots=" .. shots
+          .. " stations=" .. #stations .. " resources=" .. #rlist .. " rails=" .. math.floor(#rl / 2))
       end
     end
   end

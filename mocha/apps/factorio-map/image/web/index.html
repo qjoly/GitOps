@@ -28,6 +28,7 @@
   #share.copied { background: #4caf50; color: #14110d; border-color: #4caf50; }
   #coords { font-variant-numeric: tabular-nums; color: #8f8672; font-size: 12px; min-width: 118px; }
   #osd { flex: 1; background: #0d0b08; position: relative; }
+  #rails { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
   #msg { position: absolute; inset: 0; display: flex; align-items: center;
     justify-content: center; color: #b8ad99; pointer-events: none; }
   .station { display: flex; align-items: center; gap: 4px; transform: translate(-4px, -50%);
@@ -38,6 +39,12 @@
     background: rgba(0,0,0,.35); padding: 0 3px; border-radius: 2px; }
   .station:hover .lbl { background: #f4a637; color: #14110d; text-shadow: none; }
   .station:hover .dot { box-shadow: 0 0 0 2px #f4a637; }
+  .res { display: flex; align-items: center; gap: 4px; transform: translate(-4px, -50%);
+    white-space: nowrap; pointer-events: none; }
+  .res .rdot { width: 9px; height: 9px; flex: none; border: 1px solid #000;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.4); transform: rotate(45deg); }
+  .res .rlbl { font-size: 11px; color: #fff; text-shadow: 0 0 3px #000, 0 0 3px #000;
+    background: rgba(0,0,0,.5); padding: 0 3px; border-radius: 2px; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -46,6 +53,8 @@
     <h1>FACTORIO&nbsp;MAP</h1>
     <div id="tabs"></div>
     <label class="toggle"><input type="checkbox" id="stationsToggle" checked> stations</label>
+    <label class="toggle"><input type="checkbox" id="resourcesToggle" checked> resources</label>
+    <label class="toggle"><input type="checkbox" id="railsToggle" checked> rails</label>
     <button id="share" title="Copy a link to this exact view">🔗 link</button>
     <span id="coords" title="cursor / view center (game tiles)">—</span>
     <div id="timebar">
@@ -53,12 +62,21 @@
       <span id="stamp">—</span>
     </div>
   </header>
-  <div id="osd"><div id="msg">loading…</div></div>
+  <div id="osd"><canvas id="rails"></canvas><div id="msg">loading…</div></div>
 </div>
 <script>
 const $ = (s) => document.querySelector(s);
-let renders = [], surfaces = [], curSurface = null, curIdx = 0, viewer = null, stations = null;
-let pendingView = null, hashTimer = null;
+let renders = [], surfaces = [], curSurface = null, curIdx = 0, viewer = null, stations = null, resources = null, rails = null;
+let pendingView = null, hashTimer = null, shownSurface = null, opened = false;
+
+const RES_COL = { 'iron-ore': '#8fb7e0', 'copper-ore': '#e0803a', 'coal': '#333',
+  'stone': '#c9b27a', 'uranium-ore': '#5bd75b', 'crude-oil': '#a06bd0', 'scrap': '#9c8a63' };
+const fmtAmount = (n) => n >= 1e9 ? (n / 1e9).toFixed(1) + 'G' : n >= 1e6 ? (n / 1e6).toFixed(1) + 'M'
+  : n >= 1e3 ? (n / 1e3).toFixed(0) + 'k' : '' + n;
+const resLabel = (p) => {
+  const t = p.type.replace(/-ore$/, '').replace(/-/g, ' ');
+  return p.infinite ? `${t} ×${p.wells}` : `${t} ${fmtAmount(p.amount)}`;
+};
 
 function fmt(ts) {
   const m = ts.match(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);
@@ -91,7 +109,8 @@ function viewCenterGame() {
   if (!item) return null;
   const ip = item.viewportToImageCoordinates(viewer.viewport.getCenter());
   const g = imgToGame(ip.x, ip.y);
-  return { x: Math.round(g.x), y: Math.round(g.y), z: +viewer.viewport.getZoom().toFixed(3) };
+  return { x: Math.round(g.x), y: Math.round(g.y), z: +viewer.viewport.getZoom().toFixed(4),
+    w: stations.w, ppt: stations.ppt };
 }
 function writeHash() {
   const g = viewCenterGame();
@@ -107,33 +126,51 @@ function applyPendingView() {
   const item = viewer.world.getItemAt(0);
   if (!item) return;
   const { px, py } = gameToImg(pendingView.x, pendingView.y);
-  if (pendingView.z) viewer.viewport.zoomTo(pendingView.z, null, true);
+  let z = pendingView.z;
+  // preserved timelapse views carry the source render's {w,ppt}: rescale the
+  // OSD zoom so the on-screen game scale is kept even if the render size differs
+  if (z && pendingView.w && pendingView.ppt)
+    z = z * (stations.w / pendingView.w) * (pendingView.ppt / stations.ppt);
+  if (z) viewer.viewport.zoomTo(z, null, true);
   viewer.viewport.panTo(item.imageToViewportCoordinates(px, py), true);
   viewer.viewport.applyConstraints(true);
   pendingView = null;
 }
 
-function placeStations() {
+function placeOverlays() {
   if (!viewer) return;
   viewer.clearOverlays();
-  if (!$('#stationsToggle').checked || !stations || !stations.stations) return;
   const item = viewer.world.getItemAt(0);
-  if (!item) return;
-  for (const st of stations.stations) {
-    if (!st.name) continue;
-    const label = st.name.replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim();
-    const { px, py } = gameToImg(st.x, st.y);
-    const el = document.createElement('div');
-    el.className = 'station';
-    const c = st.color;
-    const col = c ? `rgb(${(c.r*255)|0},${(c.g*255)|0},${(c.b*255)|0})` : '#f4a637';
-    el.innerHTML = `<span class="dot" style="background:${col}"></span>` +
-      (label ? `<span class="lbl"></span>` : '');
-    if (label) el.querySelector('.lbl').textContent = label;
-    el.title = (label || st.name) + ' — click to zoom in';
-    el.addEventListener('click', (ev) => { ev.stopPropagation(); focusStation(st); });
-    viewer.addOverlay({ element: el, location: item.imageToViewportCoordinates(px, py),
-      placement: OpenSeadragon.Placement.LEFT });
+  if (!item || !stations) return;
+  if ($('#resourcesToggle').checked && resources && resources.patches) {
+    for (const p of resources.patches) {
+      const { px, py } = gameToImg(p.x, p.y);
+      const el = document.createElement('div');
+      el.className = 'res';
+      const col = RES_COL[p.type] || '#bdbdbd';
+      el.innerHTML = `<span class="rdot" style="background:${col}"></span><span class="rlbl"></span>`;
+      el.querySelector('.rlbl').textContent = resLabel(p);
+      viewer.addOverlay({ element: el, location: item.imageToViewportCoordinates(px, py),
+        placement: OpenSeadragon.Placement.LEFT });
+    }
+  }
+  if ($('#stationsToggle').checked && stations.stations) {
+    for (const st of stations.stations) {
+      if (!st.name) continue;
+      const label = st.name.replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim();
+      const { px, py } = gameToImg(st.x, st.y);
+      const el = document.createElement('div');
+      el.className = 'station';
+      const c = st.color;
+      const col = c ? `rgb(${(c.r*255)|0},${(c.g*255)|0},${(c.b*255)|0})` : '#f4a637';
+      el.innerHTML = `<span class="dot" style="background:${col}"></span>` +
+        (label ? `<span class="lbl"></span>` : '');
+      if (label) el.querySelector('.lbl').textContent = label;
+      el.title = (label || st.name) + ' — click to zoom in';
+      el.addEventListener('click', (ev) => { ev.stopPropagation(); focusStation(st); });
+      viewer.addOverlay({ element: el, location: item.imageToViewportCoordinates(px, py),
+        placement: OpenSeadragon.Placement.LEFT });
+    }
   }
 }
 
@@ -147,25 +184,64 @@ function focusStation(st) {
   viewer.viewport.zoomTo(viewer.viewport.getMaxZoom() * 0.5, p, false);
 }
 
-function loadStations() {
-  stations = null;
-  fetch(base() + '.stations.json?_=' + Date.now())
-    .then(r => r.ok ? r.json() : null)
-    .then(d => { stations = d; placeStations(); applyPendingView(); scheduleWriteHash(); })
-    .catch(() => {});
+// rail network highlight: a single canvas redrawn each viewport frame. The
+// game->screen mapping is linear, so derive it from two reference points and
+// place every rail tile with a cheap affine transform (+ offscreen culling).
+function drawRails() {
+  const cv = $('#rails'); if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const osd = $('#osd');
+  const dpr = window.devicePixelRatio || 1;
+  const W = osd.clientWidth, H = osd.clientHeight;
+  if (cv.width !== (W * dpr | 0) || cv.height !== (H * dpr | 0)) {
+    cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  if (!$('#railsToggle').checked || !rails || !rails.rails || !viewer || !stations) return;
+  const item = viewer.world.getItemAt(0); if (!item) return;
+  const vp = viewer.viewport;
+  const scr = (gx, gy) => { const g = gameToImg(gx, gy);
+    return vp.pixelFromPoint(item.imageToViewportCoordinates(g.px, g.py), true); };
+  const p0 = scr(0, 0), p1 = scr(1000, 1000);
+  const ax = (p1.x - p0.x) / 1000, ay = (p1.y - p0.y) / 1000;
+  const sz = Math.max(1.5, 2.2 * Math.abs(ax)), half = sz / 2;
+  ctx.fillStyle = 'rgba(0,224,255,0.72)';
+  const a = rails.rails;
+  for (let i = 0; i < a.length; i += 2) {
+    const x = p0.x + a[i] * ax, y = p0.y + a[i + 1] * ay;
+    if (x < -half || y < -half || x > W + half || y > H + half) continue;
+    ctx.fillRect(x - half, y - half, sz, sz);
+  }
+}
+
+function loadOverlays() {
+  stations = null; resources = null; rails = null;
+  const b = base(), bust = '?_=' + Date.now();
+  Promise.all([
+    fetch(b + '.stations.json' + bust).then(r => r.ok ? r.json() : null).catch(() => null),
+    fetch(b + '.resources.json' + bust).then(r => r.ok ? r.json() : null).catch(() => null),
+    fetch(b + '.rails.json' + bust).then(r => r.ok ? r.json() : null).catch(() => null),
+  ]).then(([s, r, rw]) => {
+    stations = s; resources = r; rails = rw;
+    placeOverlays(); if (opened) applyPendingView(); drawRails(); scheduleWriteHash();
+  });
 }
 
 function show() {
   $('#stamp').textContent = renders[curIdx] ? fmt(renders[curIdx].timestamp) : '—';
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.s === curSurface));
   const src = base() + '.dzi';
+  opened = false;  // gate: only restore the view once the new image has opened
   if (!viewer) {
     viewer = OpenSeadragon({
       id: 'osd', prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/5.0.1/images/',
       tileSources: src, showNavigator: true, navigatorPosition: 'BOTTOM_RIGHT',
       minZoomImageRatio: 0.5, maxZoomPixelRatio: 4, animationTime: 0.4,
     });
-    viewer.addHandler('open', () => { placeStations(); applyPendingView(); });
+    viewer.addHandler('open', () => { opened = true; placeOverlays(); applyPendingView(); drawRails(); });
+    viewer.addHandler('update-viewport', drawRails);
+    viewer.addHandler('resize', drawRails);
     viewer.addHandler('animation-finish', scheduleWriteHash);
     new OpenSeadragon.MouseTracker({ element: viewer.element, moveHandler: (e) => {
       const item = viewer.world.getItemAt(0);
@@ -175,9 +251,15 @@ function show() {
       $('#coords').textContent = `x ${Math.round(g.x)}  y ${Math.round(g.y)}`;
     } }).setTracking(true);
   } else {
+    // same surface (timelapse / render change) -> keep the current view
+    if (curSurface === shownSurface) {
+      const v = viewCenterGame();
+      if (v) pendingView = v;
+    }
     viewer.open(src);
   }
-  loadStations();
+  shownSurface = curSurface;
+  loadOverlays();
 }
 
 function buildTabs() {
@@ -190,7 +272,10 @@ function buildTabs() {
   });
 }
 
-$('#stationsToggle').onchange = placeStations;
+$('#stationsToggle').onchange = placeOverlays;
+$('#resourcesToggle').onchange = placeOverlays;
+$('#railsToggle').onchange = drawRails;
+window.addEventListener('resize', drawRails);
 
 $('#share').onclick = () => {
   writeHash();

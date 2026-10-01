@@ -136,6 +136,8 @@ for d in "$WORK"/script-output/map/*/; do
   MAP_DIR="$d" NX="$nx" NY="$ny" CELL="$cell" OUTBASE="$OUT/$name" JPEGQ="$JPEG_Q" \
     python3 /opt/factorio-map/stitch.py || { log "stitch failed for $name"; exit 1; }
   cp "$meta" "$OUT/$name.stations.json"
+  cp "$WORK/script-output/map/$name.resources.json" "$OUT/" 2>/dev/null || true
+  cp "$WORK/script-output/map/$name.rails.json" "$OUT/" 2>/dev/null || true
   rm -rf "$d"
   SURFS+=("$name")
   log "stitched $name (${nx}x${ny} cells)"
@@ -150,8 +152,11 @@ printf '{"timestamp":"%s","surfaces":[%s]}\n' "$TS" "$surf_json" > "$OUT/render.
 tar -C "$WORK/out" -cf "$WORK/$TS.tar" "$TS"
 log "tarball: $(du -sh "$WORK/$TS.tar" | cut -f1)"
 t_up0=$(date +%s)
+# gentle + resilient upload: rustfs 502s under aggressive multipart concurrency,
+# so few large chunks, low concurrency, and generous retries.
 rclone copyto "$WORK/$TS.tar" "$DEST/renders/$TS.tar" --s3-no-check-bucket --s3-no-head \
-  --s3-upload-concurrency 8 --s3-chunk-size 64M --multi-thread-streams 8
+  --s3-upload-concurrency 2 --s3-chunk-size 128M \
+  --retries 8 --retries-sleep 20s --low-level-retries 20
 log "uploaded tarball ($(($(date +%s)-t_up0))s)"
 
 rclone cat "$DEST/index.json" > "$WORK/index.json" 2>/dev/null || echo '{"renders":[]}' > "$WORK/index.json"

@@ -29,6 +29,9 @@ data:
             application/xml   dzi;
         }
         default_type application/octet-stream;
+        gzip on;
+        gzip_types application/json application/xml;
+        gzip_comp_level 5;
         location = / { try_files /index.html =404; add_header Cache-Control "no-store" always; }
         location = /index.html { add_header Cache-Control "no-store" always; }
         location = /index.json { add_header Cache-Control "no-store" always; }
@@ -75,7 +78,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities: { drop: ["ALL"] }
         - name: sync
-          image: atcr.io/une-tasse-de.cafe/factorio-map:0.5.3
+          image: atcr.io/une-tasse-de.cafe/factorio-map:0.5.6
           command: ["/usr/local/bin/sync.sh"]
           env:
             - name: S3_ENDPOINT
