@@ -16,7 +16,7 @@ spec:
   source:
     repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
     chart: opentelemetry-ebpf-instrumentation
-    targetRevision: 0.14.0
+    targetRevision: 0.14.2
     helm:
       values: |
         # DaemonSet on the single node, zero-code RED metrics and traces for every
