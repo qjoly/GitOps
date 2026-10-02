@@ -27,6 +27,9 @@ spec:
             - -c
             - |
               set -o errexit
+              # lvm-localpv needs the thin-pool dm target to provision thin
+              # volumes, and Fedora does not load it on its own
+              nsenter -t 1 -m -- modprobe dm-thin-pool || true
               while true; do
                 vgchange -aay || true
                 sleep 120
