@@ -22,7 +22,7 @@ metadata:
 spec:
   sourcePVC: knot-repositories
   trigger:
-    schedule: "40 */6 * * *"
+    manual: migrating-to-thin
   restic:
     repository: knot-repositories-restic
     copyMethod: Snapshot
@@ -45,7 +45,7 @@ metadata:
 spec:
   sourcePVC: knot-server
   trigger:
-    schedule: "10 */6 * * *"
+    manual: migrating-to-thin
   restic:
     repository: knot-server-restic
     copyMethod: Snapshot
