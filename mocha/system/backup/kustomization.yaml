@@ -5,4 +5,4 @@ resources:
   - openbao-snapshot.yaml
   - authentik-pgdump.yaml
   - volumesnapshotclass.yaml
-  - knot.yaml
+  # - knot.yaml  # re-enabled once the PVCs are on openebs-lvmpv-thin
