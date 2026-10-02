@@ -1,7 +1,7 @@
 ---
 # Direct copyMethod cannot work here: openebs-lvm refuses to mount an LV that
-# the knot pod already holds. Snapshot costs origin-size in lvmvg, so the two
-# sources are staggered instead of firing together.
+# the knot pod already holds, so the mover has to go through a snapshot. That
+# in turn means the source PVCs must live on openebs-lvmpv-thin.
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -22,11 +22,11 @@ metadata:
 spec:
   sourcePVC: knot-repositories
   trigger:
-    manual: migrating-to-thin
+    schedule: "40 */6 * * *"
   restic:
     repository: knot-repositories-restic
     copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot-thin
     cacheCapacity: 128Mi
     cacheStorageClassName: openebs-lvmpv
     pruneIntervalDays: 14
@@ -45,11 +45,11 @@ metadata:
 spec:
   sourcePVC: knot-server
   trigger:
-    manual: migrating-to-thin
+    schedule: "10 */6 * * *"
   restic:
     repository: knot-server-restic
     copyMethod: Snapshot
-    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot-thin
     cacheCapacity: 128Mi
     cacheStorageClassName: openebs-lvmpv
     pruneIntervalDays: 14

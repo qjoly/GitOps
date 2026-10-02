@@ -1,10 +1,12 @@
 ---
+# thin, not thick: lvm-localpv can create a thick snapshot but refuses to
+# provision a PVC from one ("snapshot ... is not of thin type"), and a
+# snapshot VolSync cannot restore from is of no use.
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:
-  name: openebs-lvmpv-snapshot
+  name: openebs-lvmpv-snapshot-thin
 driver: local.csi.openebs.io
 deletionPolicy: Delete
 parameters:
-  # lvmvg has no thin pool: a snapshot reserves the full origin size
-  snapType: thick
+  snapType: thin
