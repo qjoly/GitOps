@@ -10,3 +10,17 @@ parameters:
   volgroup: "lvmvg"
 provisioner: local.csi.openebs.io
 allowVolumeExpansion: true
+---
+# lvm-localpv can only restore a PVC from a *thin* snapshot, so any volume
+# meant to be backed up by VolSync has to live in the thin pool. The pool
+# itself (lvmvg_thinpool) is created by the driver on the first thin volume.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-lvmpv-thin
+parameters:
+  storage: "lvm"
+  volgroup: "lvmvg"
+  thinProvision: "yes"
+provisioner: local.csi.openebs.io
+allowVolumeExpansion: true
