@@ -1,0 +1,10 @@
+---
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: openebs-lvmpv-snapshot
+driver: local.csi.openebs.io
+deletionPolicy: Delete
+parameters:
+  # lvmvg has no thin pool: a snapshot reserves the full origin size
+  snapType: thick

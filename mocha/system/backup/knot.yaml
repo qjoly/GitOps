@@ -1,0 +1,59 @@
+---
+# Direct copyMethod cannot work here: openebs-lvm refuses to mount an LV that
+# the knot pod already holds. Snapshot costs origin-size in lvmvg, so the two
+# sources are staggered instead of firing together.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: knot
+  annotations:
+    # stub: only owns the annotation, the namespace itself lives outside Argo
+    argocd.argoproj.io/sync-options: ServerSideApply=true,Prune=false
+    # repositories are owned by uid 0 / gid git, mode 0770
+    volsync.backube/privileged-movers: "true"
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: knot-repositories
+  namespace: knot
+  labels:
+    app: knot
+spec:
+  sourcePVC: knot-repositories
+  trigger:
+    schedule: "40 */6 * * *"
+  restic:
+    repository: knot-repositories-restic
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    cacheCapacity: 128Mi
+    cacheStorageClassName: openebs-lvmpv
+    pruneIntervalDays: 14
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 3
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: knot-server
+  namespace: knot
+  labels:
+    app: knot
+spec:
+  sourcePVC: knot-server
+  trigger:
+    schedule: "10 */6 * * *"
+  restic:
+    repository: knot-server-restic
+    copyMethod: Snapshot
+    volumeSnapshotClassName: openebs-lvmpv-snapshot
+    cacheCapacity: 128Mi
+    cacheStorageClassName: openebs-lvmpv
+    pruneIntervalDays: 14
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 3

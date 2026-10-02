@@ -4,3 +4,5 @@ resources:
   - logical-dumps.yaml
   - openbao-snapshot.yaml
   - authentik-pgdump.yaml
+  - volumesnapshotclass.yaml
+  - knot.yaml
