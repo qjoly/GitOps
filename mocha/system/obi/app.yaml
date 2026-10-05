@@ -26,11 +26,24 @@ spec:
             memory: 1Gi
           limits:
             memory: 4Gi
+        volumes:
+          - name: bpffs
+            hostPath:
+              path: /sys/fs/bpf
+              type: Directory
+        volumeMounts:
+          - name: bpffs
+            mountPath: /sys/fs/bpf
+            mountPropagation: HostToContainer
         config:
           data:
             extensions:
               obi:
                 version: "2.0"
+                enrich:
+                  enrichers:
+                    kubernetes:
+                      cluster_name: mocha
             meter_provider:
               readers:
                 - periodic:
