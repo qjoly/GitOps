@@ -78,7 +78,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities: { drop: ["ALL"] }
         - name: sync
-          image: atcr.io/une-tasse-de.cafe/factorio-map:0.5.6
+          image: atcr.io/une-tasse-de.cafe/factorio-map:0.5.7
           command: ["/usr/local/bin/sync.sh"]
           env:
             - name: S3_ENDPOINT

@@ -58,6 +58,7 @@ spec:
         # Vault via the ExternalSecrets in manifests/externalsecret.yaml.
         generator:
           enabled: true
+          activeDeadlineSeconds: 300
           configMapName: image-generator-script
           env:
             GITHUB_USERNAME: qjoly
