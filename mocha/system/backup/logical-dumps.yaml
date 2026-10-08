@@ -54,7 +54,7 @@ spec:
               emptyDir: {}
           initContainers:
             - name: dump
-              image: mariadb:12.3
+              image: mariadb:13.0
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
