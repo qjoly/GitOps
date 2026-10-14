@@ -1,0 +1,179 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: atuin
+  namespace: argocd
+spec:
+  project: default
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: atuin-db
+      jsonPointers:
+        - /spec/persistentVolumeClaimRetentionPolicy
+        - /spec/podManagementPolicy
+        - /spec/revisionHistoryLimit
+      jqPathExpressions:
+        - '.spec.volumeClaimTemplates[].apiVersion'
+        - '.spec.volumeClaimTemplates[].kind'
+        - '.spec.volumeClaimTemplates[].metadata.creationTimestamp'
+        - '.spec.volumeClaimTemplates[].spec.volumeMode'
+        - '.spec.volumeClaimTemplates[].status'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: atuin
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.6.4
+    helm:
+      values: |
+        name: "atuin"
+        image:
+          repository: ghcr.io/atuinsh/atuin
+          tag: "18.23.0"
+          pullPolicy: IfNotPresent
+        deployment:
+          # The image entrypoint is the bare atuin-server binary, with no default
+          # subcommand.
+          args: ["start"]
+          port: 8888
+          memoryRequest: "128Mi"
+          cpuRequest: "50m"
+          memoryLimit: "512Mi"
+        service:
+          servicePort: 8888
+          containerPort: 8888
+        readinessProbeEnabled: true
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8888
+          initialDelaySeconds: 10
+          periodSeconds: 20
+        livenessProbeEnabled: true
+        ingress:
+          enabled: true
+          hostName: "atuin.mocha.thoughtless.eu"
+          ingressClassName: traefik
+          tls:
+            enabled: true
+            secretName: "atuin-tls"
+          annotations:
+            cert-manager.io/cluster-issuer: cloudflare
+        # Only the database keeps state; the server itself is stateless.
+        persistence:
+          enabled: false
+        variables:
+          nonSecret:
+            ATUIN_HOST: "0.0.0.0"
+            ATUIN_PORT: "8888"
+            ATUIN_OPEN_REGISTRATION: "true"
+            ATUIN_PATH: ""
+            RUST_LOG: "atuin_server=info"
+          secret:
+            existingSecret:
+              - envName: ATUIN_DB_URI
+                name: atuin-secrets
+                key: ATUIN_DB_URI
+        extraResources:
+          # The URI is composed here so the password only ever lives in OpenBao.
+          - apiVersion: external-secrets.io/v1
+            kind: ExternalSecret
+            metadata:
+              name: atuin-secrets
+            spec:
+              refreshInterval: "1h"
+              secretStoreRef:
+                name: vault-backend
+                kind: ClusterSecretStore
+              target:
+                name: atuin-secrets
+                creationPolicy: Owner
+                template:
+                  engineVersion: v2
+                  data:
+                    ATUIN_DB_URI: "postgres://atuin:{{ .db_password }}@atuin-db:5432/atuin"
+                    POSTGRES_PASSWORD: "{{ .db_password }}"
+              data:
+                - secretKey: db_password
+                  remoteRef:
+                    key: atuin
+                    property: db_password
+          - apiVersion: v1
+            kind: Service
+            metadata:
+              name: atuin-db
+            spec:
+              clusterIP: None
+              selector:
+                app: atuin-db
+              ports:
+                - name: postgres
+                  port: 5432
+                  targetPort: 5432
+          - apiVersion: apps/v1
+            kind: StatefulSet
+            metadata:
+              name: atuin-db
+            spec:
+              serviceName: atuin-db
+              replicas: 1
+              selector:
+                matchLabels:
+                  app: atuin-db
+              template:
+                metadata:
+                  labels:
+                    app: atuin-db
+                spec:
+                  containers:
+                    - name: postgres
+                      image: postgres:17-alpine
+                      env:
+                        - name: POSTGRES_DB
+                          value: atuin
+                        - name: POSTGRES_USER
+                          value: atuin
+                        - name: POSTGRES_PASSWORD
+                          valueFrom:
+                            secretKeyRef:
+                              name: atuin-secrets
+                              key: POSTGRES_PASSWORD
+                        # The image only initialises into an empty dir, not a
+                        # mount point with lost+found in it.
+                        - name: PGDATA
+                          value: /var/lib/postgresql/data/pgdata
+                      ports:
+                        - name: postgres
+                          containerPort: 5432
+                      volumeMounts:
+                        - name: data
+                          mountPath: /var/lib/postgresql/data
+                      resources:
+                        requests:
+                          cpu: 50m
+                          memory: 128Mi
+                        limits:
+                          memory: 512Mi
+                      readinessProbe:
+                        exec:
+                          command: ["pg_isready", "-U", "atuin", "-d", "atuin"]
+                        initialDelaySeconds: 10
+                        periodSeconds: 10
+              volumeClaimTemplates:
+                - metadata:
+                    name: data
+                  spec:
+                    accessModes: ["ReadWriteOnce"]
+                    storageClassName: openebs-lvmpv
+                    resources:
+                      requests:
+                        storage: 5Gi
