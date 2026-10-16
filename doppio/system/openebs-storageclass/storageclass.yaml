@@ -13,6 +13,9 @@ metadata:
   name: doppio-zfs
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
+    # parameters are immutable, so a change here is a delete and a create.
+    # Bound volumes are unaffected: a PV only keeps the class name.
+    argocd.argoproj.io/sync-options: Replace=true
 parameters:
   poolname: datapool/k8s
   # A filesystem rather than a zvol: no fixed block size to get wrong, and the
@@ -21,6 +24,10 @@ parameters:
   # Space is charged as it is written. 10 TiB of array against claims that are
   # routinely sized for the worst case.
   thinprovision: "yes"
+  # Lets two pods on the node mount the same volume — which is the only way a
+  # downloader and a reader can share one library directory. The cluster has a
+  # single node, so this is the whole of what ReadWriteMany would buy here.
+  shared: "yes"
 provisioner: zfs.csi.openebs.io
 volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Delete

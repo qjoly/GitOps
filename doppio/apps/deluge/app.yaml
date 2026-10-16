@@ -1,0 +1,77 @@
+# Deluge — the download client behind flexget.
+#
+# It writes into kavita-library, the same volume Kavita reads, which is why all
+# three live in the `media` namespace and why doppio-zfs sets `shared: "yes"`.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: deluge
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://rubxkube.github.io/charts
+    chart: deluge
+    targetRevision: 1.2.1
+    helm:
+      values: |
+        common:
+          name: "deluge"
+          image:
+            repository: linuxserver/deluge
+            tag: "2.2.0"
+            pullPolicy: IfNotPresent
+
+          deployment:
+            # The config volume is RWO and holds a state file Deluge rewrites;
+            # two pods overlapping during a rollout corrupt it.
+            strategy:
+              type: Recreate
+              rollingUpdate: null
+            podSecurityContext:
+              # The linuxserver image runs as 1000:1000. Without this the pod
+              # cannot write into a freshly provisioned dataset, which is owned
+              # by root. OnRootMismatch keeps it from walking the whole library
+              # on every start.
+              fsGroup: 1000
+              fsGroupChangePolicy: OnRootMismatch
+
+          variables:
+            secret: {}
+            nonSecret:
+              PUID: "1000"
+              PGID: "1000"
+              TZ: Europe/Paris
+
+          ingress:
+            enabled: true
+            hostName: "deluge.doppio.thoughtless.eu"
+            ingressClassName: traefik
+            tls:
+              enabled: true
+              secretName: "deluge-tls"
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt
+
+          persistence:
+            enabled: true
+            volumes:
+              - name: "config"
+                storageClassName: "doppio-zfs"
+                size: "2Gi"
+                pvcClaim: ""
+                containerMount: "/config"
+              # Not a new volume: this is Kavita's library, mounted a second
+              # time so finished downloads are already where Kavita looks.
+              - name: "downloads"
+                pvcClaim: "kavita-library"
+                containerMount: "/downloads"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: media
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true

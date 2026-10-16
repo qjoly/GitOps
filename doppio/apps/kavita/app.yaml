@@ -77,7 +77,9 @@ spec:
               containerMount: "/library"
   destination:
     server: https://kubernetes.default.svc
-    namespace: kavita
+    # Shared with deluge and flexget: kavita-library is mounted by all three,
+    # and a PVC does not cross namespaces.
+    namespace: media
   syncPolicy:
     automated:
       selfHeal: true
