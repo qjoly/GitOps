@@ -50,17 +50,19 @@ spec:
                 - |
                   set -e
                   cp /etc/flexget-config/config.yml /config/config.yml
-                  printf 'deluge:\n  password: "%s"\n' "$DELUGE_PASSWORD" \
+                  # deluge generates the daemon password on its own first
+                  # start; on a cold cluster flexget can get here first.
+                  until [ -s /rpc/password ]; do
+                    echo "waiting for deluge to generate the daemon password"
+                    sleep 5
+                  done
+                  printf 'deluge:\n  password: "%s"\n' "$(cat /rpc/password)" \
                     > /config/variables.yml
-              env:
-                - name: DELUGE_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: deluge-rpc-password
-                      key: secret
               volumeMounts:
                 - name: config
                   mountPath: /config
+                - name: rpc
+                  mountPath: /rpc
                 - name: flexget-conf
                   mountPath: /etc/flexget-config
 
@@ -120,6 +122,11 @@ spec:
               size: 2Gi
               pvcClaim: ""
               containerMount: "/config"
+            # deluge's volume, mounted a second time: it holds the one secret
+            # the two of them share.
+            - name: rpc
+              pvcClaim: "deluge-rpc"
+              containerMount: "/rpc"
   destination:
     server: https://kubernetes.default.svc
     namespace: media

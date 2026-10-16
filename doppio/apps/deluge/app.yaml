@@ -40,6 +40,14 @@ spec:
                   - -c
                   - |
                     set -e
+                    # The daemon password is generated once, here, and kept on
+                    # a volume flexget also mounts. Nothing has to put it in
+                    # git, and nothing has to be typed in by hand.
+                    if [ ! -s /rpc/password ]; then
+                      head -c16 /dev/urandom | od -An -tx1 | tr -d ' \n' \
+                        > /rpc/password
+                      chmod 0640 /rpc/password
+                    fi
                     # On a fresh volume deluge has not written auth yet, and a
                     # file holding only our user would leave deluge-web unable
                     # to reach its own daemon.
@@ -49,23 +57,19 @@ spec:
                         > /config/auth
                     fi
                     sed -i '/^flexget:/d' /config/auth
-                    printf 'flexget:%s:10\n' "$RPC_PASSWORD" >> /config/auth
+                    printf 'flexget:%s:10\n' "$(cat /rpc/password)" >> /config/auth
                     if [ -f /config/core.conf ]; then
                       sed -i 's/"allow_remote": false/"allow_remote": true/' /config/core.conf
                     else
                       printf '{\n  "file": 1,\n  "format": 1\n}{\n  "allow_remote": true,\n  "download_location": "/downloads"\n}\n' \
                         > /config/core.conf
                     fi
-                    chown 1000:1000 /config/auth /config/core.conf
-                env:
-                  - name: RPC_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                        name: deluge-rpc-password
-                        key: secret
+                    chown 1000:1000 /config/auth /config/core.conf /rpc/password
                 volumeMounts:
                   - name: config
                     mountPath: /config
+                  - name: rpc
+                    mountPath: /rpc
             podSecurityContext:
               # The linuxserver image runs as 1000:1000. Without this the pod
               # cannot write into a freshly provisioned dataset, which is owned
@@ -75,12 +79,7 @@ spec:
               fsGroupChangePolicy: OnRootMismatch
 
           variables:
-            secret:
-              data:
-                # Empty means "generate 48 random chars and keep them across
-                # upgrades". flexget reads the same Secret, so neither end ever
-                # holds a password written down in git.
-                rpc_password: ""
+            secret: {}
             nonSecret:
               PUID: "1000"
               PGID: "1000"
@@ -109,6 +108,12 @@ spec:
               - name: "downloads"
                 pvcClaim: "kavita-library"
                 containerMount: "/downloads"
+              # Just the generated daemon password, shared with flexget.
+              - name: "rpc"
+                storageClassName: "doppio-zfs"
+                size: "1Gi"
+                pvcClaim: ""
+                containerMount: "/rpc"
 
           # The chart's Service carries the web UI only. flexget speaks the
           # daemon protocol, which lives on another port.
