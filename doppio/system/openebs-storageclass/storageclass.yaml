@@ -13,9 +13,10 @@ metadata:
   name: doppio-zfs
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
-    # parameters are immutable, so a change here is a delete and a create.
-    # Bound volumes are unaffected: a PV only keeps the class name.
-    argocd.argoproj.io/sync-options: Replace=true
+    # parameters are immutable, so a change here has to be a delete and a
+    # create — Replace alone is a PUT and fails the same way. Bound volumes are
+    # unaffected: a PV only keeps the class name.
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
 parameters:
   poolname: datapool/k8s
   # A filesystem rather than a zvol: no fixed block size to get wrong, and the
