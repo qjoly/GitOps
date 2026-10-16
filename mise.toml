@@ -74,3 +74,21 @@ chmod 600 "$OUT"
 echo "wrote $OUT  (server https://${IP}:${NP})"
 KUBECONFIG="$OUT" kubectl get nodes
 '''
+
+[tasks."vault:kv"]
+description = "Run 'vault kv' in the Vault pod (e.g. list kv/, get kv/foo, put kv/foo k=v)"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+[ $# -gt 0 ] || { echo "usage: mise run vault:kv <list|get|put|patch|delete> kv/<path> [k=v ...]" >&2; exit 1; }
+CTX="${VAULT_CONTEXT:-$(kubectl config current-context)}"
+echo "context: $CTX" >&2
+# The namespace differs between clusters, so locate it from the unseal-keys Secret.
+NS="${VAULT_NAMESPACE:-$(kubectl --context "$CTX" get secret -A --field-selector metadata.name=vault-unseal-keys -o jsonpath='{.items[0].metadata.namespace}')}"
+[ -n "$NS" ] || { echo "vault-unseal-keys Secret not found on $CTX" >&2; exit 1; }
+TOKEN="$(kubectl --context "$CTX" -n "$NS" get secret vault-unseal-keys -o jsonpath='{.data.vault-root}' | base64 -d)"
+# -i lets 'put kv/foo key=-' read the value from local stdin.
+kubectl --context "$CTX" -n "$NS" exec -i vault-0 -c vault -- \
+  env VAULT_ADDR=https://127.0.0.1:8200 VAULT_SKIP_VERIFY=true VAULT_TOKEN="$TOKEN" \
+  vault kv "$@"
+'''
