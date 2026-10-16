@@ -28,6 +28,44 @@ spec:
             strategy:
               type: Recreate
               rollingUpdate: null
+
+            # Deluge keeps its users in a flat file and refuses remote clients
+            # by default, and neither is reachable from a Helm value. Seeding
+            # both here is what lets flexget talk to the daemon at all.
+            initContainers:
+              - name: seed-daemon-auth
+                image: busybox:1.37
+                command:
+                  - sh
+                  - -c
+                  - |
+                    set -e
+                    # On a fresh volume deluge has not written auth yet, and a
+                    # file holding only our user would leave deluge-web unable
+                    # to reach its own daemon.
+                    if [ ! -f /config/auth ]; then
+                      printf 'localclient:%s:10\n' \
+                        "$(head -c16 /dev/urandom | od -An -tx1 | tr -d ' \n')" \
+                        > /config/auth
+                    fi
+                    sed -i '/^flexget:/d' /config/auth
+                    printf 'flexget:%s:10\n' "$RPC_PASSWORD" >> /config/auth
+                    if [ -f /config/core.conf ]; then
+                      sed -i 's/"allow_remote": false/"allow_remote": true/' /config/core.conf
+                    else
+                      printf '{\n  "file": 1,\n  "format": 1\n}{\n  "allow_remote": true,\n  "download_location": "/downloads"\n}\n' \
+                        > /config/core.conf
+                    fi
+                    chown 1000:1000 /config/auth /config/core.conf
+                env:
+                  - name: RPC_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: deluge-rpc-password
+                        key: secret
+                volumeMounts:
+                  - name: config
+                    mountPath: /config
             podSecurityContext:
               # The linuxserver image runs as 1000:1000. Without this the pod
               # cannot write into a freshly provisioned dataset, which is owned
@@ -37,7 +75,12 @@ spec:
               fsGroupChangePolicy: OnRootMismatch
 
           variables:
-            secret: {}
+            secret:
+              data:
+                # Empty means "generate 48 random chars and keep them across
+                # upgrades". flexget reads the same Secret, so neither end ever
+                # holds a password written down in git.
+                rpc_password: ""
             nonSecret:
               PUID: "1000"
               PGID: "1000"
@@ -66,6 +109,24 @@ spec:
               - name: "downloads"
                 pvcClaim: "kavita-library"
                 containerMount: "/downloads"
+
+          # The chart's Service carries the web UI only. flexget speaks the
+          # daemon protocol, which lives on another port.
+          extraResources:
+            - apiVersion: v1
+              kind: Service
+              metadata:
+                name: deluge-daemon
+                labels:
+                  app: deluge
+              spec:
+                selector:
+                  app: deluge
+                ports:
+                  - name: daemon
+                    port: 58846
+                    targetPort: 58846
+                    protocol: TCP
   destination:
     server: https://kubernetes.default.svc
     namespace: media
