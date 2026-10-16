@@ -1,6 +1,9 @@
-# Hostpath only. mocha runs openebs-lvmpv because it has an LVM volume group;
-# doppio has a plain filesystem on the array, so the local hostpath provisioner
-# is the engine that matches the machine.
+# Two engines, on purpose.
+#
+# zfs-localpv is the one that matters: datapool is a raidz1 of four 4 TB disks,
+# so a PVC carved out of it survives a disk. hostpath stays enabled only for
+# the volumes that already live on it (vault's raft store); new claims should
+# go to the default class, doppio-zfs.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -19,10 +22,15 @@ spec:
             lvm:
               enabled: false
             zfs:
-              enabled: false
+              enabled: true
           replicated:
             mayastor:
               enabled: false
+        zfs-localpv:
+          zfsNode:
+            # k0s puts the kubelet here, not /var/lib/kubelet; with the default
+            # the node plugin mounts volumes into a directory nothing reads.
+            kubeletDir: /var/lib/k0s/kubelet
         loki:
           enabled: false
         alloy:

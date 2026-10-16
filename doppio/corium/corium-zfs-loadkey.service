@@ -1,0 +1,28 @@
+# Applied by hand on ks-stor as /etc/systemd/system/corium-zfs-loadkey.service.
+# The corium: document only carries role, network, disks and k0s addons, so
+# this unit cannot travel with it — it lives here so it is at least reviewable,
+# and so a rebuilt node can be brought back to the same state.
+#
+#   scp doppio/corium/corium-zfs-loadkey.service core@<ks-stor>:/tmp/
+#   sudo install -m0644 /tmp/corium-zfs-loadkey.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now corium-zfs-loadkey.service
+[Unit]
+Description=Load ZFS encryption keys for datapool data datasets
+# The pool must be imported first; keys must be loaded before anything tries to
+# mount or receive into these encrypted datasets (the TrueNAS replication, and
+# the openebs zfs-localpv volumes under datapool/k8s).
+After=zfs-import.target zfs-import-scan.service zfs-import-cache.service
+Wants=zfs-import.target
+Before=zfs-mount.service
+ConditionPathExists=/etc/zfs/stockage.key
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# -a covers every encryption root whose keylocation is a file, so a dataset
+# added later needs no edit here. It is expected to fail on datapool itself:
+# its key, /etc/zfs/datapool.key, was lost with the TrueNAS install.
+ExecStart=/bin/sh -c '/usr/bin/zfs load-key -a || true'
+
+[Install]
+WantedBy=zfs-mount.service

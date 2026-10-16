@@ -1,19 +1,39 @@
----
 # The default StorageClass for doppio.
 #
-# BasePath is the mount point of the array declared in
-# doppio/corium/ks-stor.yaml. The two have to agree: point this at a path that
-# is not on the array and every PVC lands on the root filesystem instead, which
-# is a 10 GiB image on a storage box.
+# Volumes are datasets under datapool/k8s, so they land on the raidz1 array and
+# inherit its lz4 compression and its encryption. datapool/k8s is its own
+# encryption root (key: /etc/zfs/stockage.key) because the key of the pool's own
+# root dataset was lost with the TrueNAS install — a child cannot be created
+# under an encryption root whose key is unavailable.
 #
-# A separate name from the chart's own `openebs-hostpath` on purpose: taking
-# over a StorageClass the Helm release also owns is a fight with no winner.
+# The dataset itself is not created by ArgoCD; see doppio/README.md.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: doppio-zfs
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+parameters:
+  poolname: datapool/k8s
+  # A filesystem rather than a zvol: no fixed block size to get wrong, and the
+  # volume can be grown in place.
+  fstype: zfs
+  # Space is charged as it is written. 10 TiB of array against claims that are
+  # routinely sized for the worst case.
+  thinprovision: "yes"
+provisioner: zfs.csi.openebs.io
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+---
+# Kept, no longer the default, for the volumes provisioned before the array was
+# usable — today that is vault's raft store. BasePath is on the root filesystem,
+# which is a 10 GiB image on a storage box, so nothing new should be sent here.
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: doppio-local
   annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
     openebs.io/cas-type: local
     cas.openebs.io/config: |
       - name: StorageType
