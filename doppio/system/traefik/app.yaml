@@ -1,9 +1,11 @@
 # The ingress controller for doppio.
 #
 # Unlike mocha, there is no Cilium LB IPAM pool here: the machine has exactly
-# one public address and it is already the node's own. So traefik publishes 80
-# and 443 as hostPorts rather than through a LoadBalancer Service — on a
-# single-node cluster that is the whole of what a LoadBalancer would have done.
+# one public address and it is already the node's own. The Service claims that
+# address with `externalIPs`, which is the one mechanism that works from both
+# sides — a hostPort reaches the node from the internet but not from a pod,
+# because Cilium's datapath never shows pod egress to the portmap DNAT rules,
+# and cert-manager's HTTP-01 self check is a pod.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -37,19 +39,22 @@ spec:
           prometheus: null
 
         service:
-          type: ClusterIP
+          spec:
+            type: ClusterIP
+            externalIPs:
+              - 51.83.141.155
 
         ports:
           web:
-            hostPort: 80
+            # Everything is redirected to TLS except the ACME challenge, which
+            # has to answer on :80 — including to cert-manager's own self check.
+            allowACMEByPass: true
             http:
               redirections:
                 entryPoint:
                   to: websecure
                   scheme: https
                   permanent: true
-          websecure:
-            hostPort: 443
 
         # One node: a second replica would sit Pending on the hostPort.
         deployment:
