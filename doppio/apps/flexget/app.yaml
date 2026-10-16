@@ -43,7 +43,7 @@ spec:
           # password next to it rather than committing it.
           initContainers:
             - name: render-config
-              image: busybox:1.37
+              image: busybox:1.38
               command:
                 - sh
                 - -c
