@@ -183,6 +183,7 @@ doppio/
 │   └── corium-zfs-loadkey.service  # copy of a unit applied by hand on the node
 ├── bootstrap/bootstrap.yml    # applied once by hand: common + the two ApplicationSets
 ├── system/                    # reconciled by the doppio-system ApplicationSet
+│   ├── argocd-config/         # the OIDC client secret, nothing else
 │   ├── bank-vaults/           # Vault, local to this cluster
 │   ├── external-secret/       # external-secrets + ClusterSecretStore → local Vault
 │   ├── misc/                  # the letsencrypt ClusterIssuer
@@ -220,16 +221,35 @@ The flexget web UI is the exception: its password has to be readable by a
 human, so it lives in this cluster's Vault at `kv/flexget`, pulled in by an
 ExternalSecret. The username is `flexget`.
 
+## Logging into ArgoCD
+
+`argocd.doppio.thoughtless.eu`, behind traefik, with a Let's Encrypt
+certificate. Accounts come from **mocha's authentik** — the provider is
+declared in `mocha/system/authentik/authentik.yaml` under the slug
+`argocd-doppio`, and membership of the `authentik Admins` group is what grants
+`role:admin`. Without it a successful login lands on nothing, since
+`policy.default` is empty.
+
+Two things do not follow from that automatically:
+
+- **The ingress and the dex connector live in `corium/ks-stor.yaml`**, not in
+  an Application, for the reason at the top of this file: ArgoCD here is a k0s
+  chart, and a second owner of `argocd-cm` would fight the Helm controller on
+  every restart. Changing them means `cctl apply`, not a git sync.
+- **The client secret is copied by hand.** mocha's provisioner mints it into
+  the `oidc-argocd-doppio` Secret on mocha; this cluster reads it from *its
+  own* Vault at `kv/argocd`, because doppio deliberately does not depend on
+  mocha's. Rotating the provider means copying the pair across again.
+
+This does put the login path on mocha: if mocha is down, OIDC here is down with
+it. The local `admin` account stays enabled as the way back in.
+
 ## Before this cluster is real
 
 - [ ] **Vault off the root filesystem.** `vault-raft-vault-0` was bound before
       the array was usable and is still on `doppio-local`, i.e. on the 10 GiB
       root image. Moving it means a Vault snapshot, a new PVC on `doppio-zfs`
       and a restore; it is the last thing left on hostpath.
-- [ ] **ArgoCD's own ingress.** traefik and the `letsencrypt` issuer are in
-      place now, so `argocd.doppio.thoughtless.eu` is a few lines away; it is
-      just not written yet. Until then, `kubectl port-forward -n argocd
-      svc/argocd-server 8080:80`.
 - [ ] **Vault keys.** `mise vault:decrypt` expects `cluster-keys.json.age` next
       to the cluster. Initialise the Vault, then commit the age-encrypted keys
       here like `mocha/` and `turing/` do.
