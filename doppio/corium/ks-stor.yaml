@@ -61,13 +61,6 @@ corium:
         bpf:
           masquerade: true
 
-        # kube-proxy is still in play here, so Cilium does not implement
-        # hostPort itself. Chaining the portmap plugin after cilium-cni is what
-        # lets traefik publish 80 and 443 on the node — the cluster has no
-        # LoadBalancer to publish them any other way.
-        cni:
-          chainingMode: portmap
-
         ipv6:
           enabled: false
 
