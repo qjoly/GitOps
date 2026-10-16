@@ -154,6 +154,26 @@ only for the volumes bound before the array was wired up.
 > replicated datasets and every PVC in one go — exactly how `datapool.key` was
 > lost.
 
+## Ingress
+
+traefik takes the machine's single public address through `externalIPs` on its
+Service, not through a LoadBalancer (no controller) and not through a hostPort.
+
+The hostPort is worth a sentence, because it looks like the obvious answer and
+it fails in a way that takes a while to see. Cilium only implements hostPort
+itself when it replaces kube-proxy, which it does not here; the fallback is the
+`portmap` CNI plugin, chained after `cilium-cni`. That publishes 80 and 443 to
+the internet correctly — and not to pods, because Cilium's datapath never shows
+pod egress to portmap's DNAT rules. The one pod that has to reach the ingress by
+its public name is cert-manager, doing the HTTP-01 self check, so no certificate
+is ever issued and nothing says why. `externalIPs` is served by the same path as
+a ClusterIP and works from both sides.
+
+Certificates come from `letsencrypt`, an HTTP-01 ClusterIssuer, rather than the
+DNS-01 Cloudflare issuer mocha and turing share: doppio's Vault is its own, and
+this cluster already answers on :80. The `web` entrypoint redirects everything
+to TLS except the ACME challenge, which is what `allowACMEByPass` is for.
+
 ## Layout
 
 ```
@@ -165,10 +185,13 @@ doppio/
 ├── system/                    # reconciled by the doppio-system ApplicationSet
 │   ├── bank-vaults/           # Vault, local to this cluster
 │   ├── external-secret/       # external-secrets + ClusterSecretStore → local Vault
+│   ├── misc/                  # the letsencrypt ClusterIssuer
 │   ├── openebs/               # zfs-localpv (+ hostpath, for what already uses it)
 │   ├── openebs-storageclass/  # doppio-zfs, the default StorageClass
-│   └── prometheus-operator-crds/  # only so common/'s ServiceMonitors render
-└── apps/                      # reconciled by the doppio-apps ApplicationSet (empty)
+│   ├── prometheus-operator-crds/  # only so common/'s ServiceMonitors render
+│   └── traefik/               # the ingress controller
+└── apps/                      # reconciled by the doppio-apps ApplicationSet
+    └── kavita/                # https://kavita.doppio.thoughtless.eu
 ```
 
 ## Before this cluster is real
@@ -177,9 +200,10 @@ doppio/
       the array was usable and is still on `doppio-local`, i.e. on the 10 GiB
       root image. Moving it means a Vault snapshot, a new PVC on `doppio-zfs`
       and a restore; it is the last thing left on hostpath.
-- [ ] **Ingress.** `configs.cm.url` says `argocd.doppio.thoughtless.eu`, but
-      there is no ingress controller in `system/` yet and no DNS record. Until
-      there is, reach ArgoCD with `kubectl port-forward -n argocd svc/argocd-server 8080:80`.
+- [ ] **ArgoCD's own ingress.** traefik and the `letsencrypt` issuer are in
+      place now, so `argocd.doppio.thoughtless.eu` is a few lines away; it is
+      just not written yet. Until then, `kubectl port-forward -n argocd
+      svc/argocd-server 8080:80`.
 - [ ] **Vault keys.** `mise vault:decrypt` expects `cluster-keys.json.age` next
       to the cluster. Initialise the Vault, then commit the age-encrypted keys
       here like `mocha/` and `turing/` do.
