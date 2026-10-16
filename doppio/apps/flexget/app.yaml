@@ -155,7 +155,7 @@ spec:
                               - '(?i)\b(raw|jpn|chinese|spanish)\b'
 
                       schedules:
-                        - tasks: [manga]
+                        - tasks: [manga,dandadan]
                           interval:
                             minutes: 30
 
