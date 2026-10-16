@@ -122,7 +122,7 @@ spec:
                           rss:
                             # Literature → English-translated. Change the `c`
                             # parameter to follow a different category.
-                            url: https://nyaa.si/?page=rss&c=3_1&f=0
+                            url: https://nyaa.si/?page=rss&q=dandadan&c=0_0&f=0
                           deluge:
                             host: deluge-daemon
                             port: 58846
@@ -131,15 +131,25 @@ spec:
                             path: /downloads/manga
 
                       tasks:
+                        dandadan:
+                          rss: "https://nyaa.si/?page=rss&q=dandadan&c=0_0&f=0"
+                          regexp:
+                            accept:
+                              - '(?i)^Dandadan \d+(\s*\(\d{4}\))?'
+                          series:
+                            - dandadan:
+                                identified_by: sequence
+                                begin: 240
+                          deluge:
+                            host: deluge-daemon
+                            port: 58846
+                            username: flexget
+                            password: '{? deluge.password ?}'
+                            path: /downloads/manga
                         manga:
                           template: nyaa
                           regexp:
                             accept:
-                              # One regexp per title to follow, matched against
-                              # the feed entry title. `(?!)` matches nothing —
-                              # it is here so the task is valid and inert until
-                              # a real title replaces it. An unfiltered nyaa
-                              # feed is thousands of entries a day.
                               - '(?!)'
                             reject:
                               - '(?i)\b(raw|jpn|chinese|spanish)\b'
