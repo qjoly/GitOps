@@ -37,6 +37,9 @@ spec:
         deployment:
           strategy:
             type: Recreate
+          # The image ships no default command: bare `flexget` looks for a
+          # subcommand and exits. /config is already on its config search path.
+          args: ["daemon", "start"]
           # flexget reads its config from its working directory, which also
           # holds the sqlite database it writes — so the ConfigMap cannot be
           # mounted there directly. Copy it in instead, and render the deluge
@@ -70,7 +73,6 @@ spec:
           secret: {}
           nonSecret:
             TZ: Europe/Paris
-            FLEXGET_CONFIG_DIR: /config
 
         configMap:
           enabled: true
