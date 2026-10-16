@@ -92,6 +92,13 @@ corium:
           replicas: 1
         server:
           replicas: 1
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            hostname: argocd.doppio.thoughtless.eu
+            tls: true
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt
         repoServer:
           replicas: 1
         applicationSet:
@@ -104,6 +111,24 @@ corium:
           cm:
             url: https://argocd.doppio.thoughtless.eu
             timeout.reconciliation: 180s
+            # Login goes through mocha's authentik. That is a real dependency:
+            # if mocha is down, so is OIDC here — the local admin account stays
+            # as the way back in.
+            dex.config: |
+              connectors:
+              - config:
+                  issuer: https://authentik.mocha.thoughtless.eu/application/o/argocd-doppio/
+                  clientID: $dex.authentik.clientID
+                  clientSecret: $dex.authentik.clientSecret
+                  insecureEnableGroups: true
+                  scopes:
+                    - openid
+                    - profile
+                    - email
+                    - groups
+                name: authentik
+                type: oidc
+                id: authentik
             # Cilium mints one CiliumIdentity per pod; without this the
             # ArgoCD UI drowns in them.
             resource.exclusions: |
@@ -114,4 +139,9 @@ corium:
                 clusters:
                   - "*"
           rbac:
-            policy.default: role:readonly
+            # Nothing by default: a successful authentik login on its own
+            # grants no access, the group mapping below does.
+            policy.default: ""
+            scopes: '[groups]'
+            policy.csv: |
+              g, authentik Admins, role:admin
