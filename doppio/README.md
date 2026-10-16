@@ -117,7 +117,6 @@ datapool                  raidz1, 4 × 4 TB, lz4, encrypted   9.9 TiB free
 ├── Administratif         read-only, replicated from TrueNAS
 ├── InfoTech              read-only, replicated from TrueNAS
 ├── Utilisateurs          read-only, replicated from TrueNAS
-├── ix-applications       TrueNAS leftover, key lost
 └── k8s                   parent of every PVC on doppio
 ```
 
@@ -126,8 +125,12 @@ boot by `corium-zfs-loadkey.service`. **The key of the pool's own root dataset,
 `/etc/zfs/datapool.key`, is gone** — it went with the TrueNAS install. The
 practical consequences:
 
-- the 161 GB written directly into `datapool`, and `ix-applications`, cannot be
-  read, and `/var/mnt/data` is a plain directory rather than a mount;
+- the 161 GB written directly into `datapool` cannot be read, and
+  `/var/mnt/data` is a plain directory rather than a mount. Nor can that space
+  be reclaimed: a pool's root dataset cannot be destroyed, only the pool can,
+  so those 161 GB are charged to the array until the day it is rebuilt;
+- `ix-applications`, the other dataset that inherited the pool key, was
+  destroyed — it held 2.4 GB of TrueNAS app state that nothing can read;
 - a dataset cannot be created under an encryption root whose key is
   unavailable, so `datapool/k8s` carries **its own** key
   (`/etc/zfs/stockage.key`, the same one the three replicated datasets use).
@@ -163,7 +166,8 @@ doppio/
 │   ├── bank-vaults/           # Vault, local to this cluster
 │   ├── external-secret/       # external-secrets + ClusterSecretStore → local Vault
 │   ├── openebs/               # zfs-localpv (+ hostpath, for what already uses it)
-│   └── openebs-storageclass/  # doppio-zfs, the default StorageClass
+│   ├── openebs-storageclass/  # doppio-zfs, the default StorageClass
+│   └── prometheus-operator-crds/  # only so common/'s ServiceMonitors render
 └── apps/                      # reconciled by the doppio-apps ApplicationSet (empty)
 ```
 
