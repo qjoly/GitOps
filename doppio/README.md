@@ -191,8 +191,34 @@ doppio/
 │   ├── prometheus-operator-crds/  # only so common/'s ServiceMonitors render
 │   └── traefik/               # the ingress controller
 └── apps/                      # reconciled by the doppio-apps ApplicationSet
+    ├── deluge/                # https://deluge.doppio.thoughtless.eu
+    ├── flexget/               # https://flexget.doppio.thoughtless.eu
     └── kavita/                # https://kavita.doppio.thoughtless.eu
 ```
+
+## The media namespace
+
+kavita, deluge and flexget are one stack in one namespace, `media`, because
+they share a volume and a PVC does not cross namespaces. `kavita-library` is
+mounted twice — Kavita reads it, deluge writes finished downloads into it —
+which is what `shared: "yes"` on the `doppio-zfs` class is for. The node is
+single, so that is the whole of what ReadWriteMany would have bought.
+
+flexget polls an RSS feed, filters it and hands matches to deluge over the
+daemon protocol. Two things about that are worth knowing before editing it:
+
+- **The feed is filtered to nothing by default.** The `accept` list in the task
+  holds `(?!)`, a regexp that matches no string. Replace it with one entry per
+  title to follow — an unfiltered nyaa feed is thousands of entries a day.
+- **The daemon password is generated on first start**, by deluge's init
+  container, and kept on the little `deluge-rpc` volume that flexget also
+  mounts. Nothing writes it to git and nothing asks anyone to type it in. The
+  chart has a generator for this, but it is built on a Helm `lookup`, and
+  ArgoCD renders with `helm template` — it produces an empty Secret.
+
+The flexget web UI is the exception: its password has to be readable by a
+human, so it lives in this cluster's Vault at `kv/flexget`, pulled in by an
+ExternalSecret. The username is `flexget`.
 
 ## Before this cluster is real
 
