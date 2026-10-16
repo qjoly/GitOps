@@ -104,28 +104,75 @@ production cluster being up.
 Unsealing follows the same `mise` tasks as the others; the unseal keys for this
 cluster are **not yet committed** — see the checklist below.
 
+## Storage
+
+The array is not what `corium/ks-stor.yaml` would build. It predates this
+cluster: four 4 TB disks in a raidz1 `datapool`, created by the TrueNAS install
+that used to run on this machine, imported as-is by Corium. That is why the
+`raid:` block in the node document is still commented out — filling it in would
+mean a reset, and a reset would mean wiping 384 GB of data that is only here.
+
+```
+datapool                  raidz1, 4 × 4 TB, lz4, encrypted   9.9 TiB free
+├── Administratif         read-only, replicated from TrueNAS
+├── InfoTech              read-only, replicated from TrueNAS
+├── Utilisateurs          read-only, replicated from TrueNAS
+├── ix-applications       TrueNAS leftover, key lost
+└── k8s                   parent of every PVC on doppio
+```
+
+Every dataset is encrypted, and the keys are files under `/etc/zfs` loaded at
+boot by `corium-zfs-loadkey.service`. **The key of the pool's own root dataset,
+`/etc/zfs/datapool.key`, is gone** — it went with the TrueNAS install. The
+practical consequences:
+
+- the 161 GB written directly into `datapool`, and `ix-applications`, cannot be
+  read, and `/var/mnt/data` is a plain directory rather than a mount;
+- a dataset cannot be created under an encryption root whose key is
+  unavailable, so `datapool/k8s` carries **its own** key
+  (`/etc/zfs/stockage.key`, the same one the three replicated datasets use).
+
+`datapool/k8s` was created once, by hand, and is not reconciled by anything:
+
+```bash
+sudo zfs create -o mountpoint=none \
+  -o encryption=aes-256-gcm -o keyformat=hex \
+  -o keylocation=file:///etc/zfs/stockage.key \
+  datapool/k8s
+```
+
+From there `openebs-storageclass` is ordinary GitOps: `doppio-zfs` is the
+default class, every PVC becomes a `datapool/k8s/pvc-*` dataset with
+`mountpoint=legacy`, thin-provisioned, inheriting the pool's compression and the
+dataset's encryption. `doppio-local` (hostpath, on the root filesystem) is kept
+only for the volumes bound before the array was wired up.
+
+> Back up `/etc/zfs/stockage.key`. It is the only copy, and losing it loses the
+> replicated datasets and every PVC in one go — exactly how `datapool.key` was
+> lost.
+
 ## Layout
 
 ```
 doppio/
-├── corium/ks-stor.yaml        # what the machine is (role, network, k0s charts)
+├── corium/
+│   ├── ks-stor.yaml           # what the machine is (role, network, k0s charts)
+│   └── corium-zfs-loadkey.service  # copy of a unit applied by hand on the node
 ├── bootstrap/bootstrap.yml    # applied once by hand: common + the two ApplicationSets
 ├── system/                    # reconciled by the doppio-system ApplicationSet
 │   ├── bank-vaults/           # Vault, local to this cluster
 │   ├── external-secret/       # external-secrets + ClusterSecretStore → local Vault
-│   ├── openebs/               # local hostpath provisioner
-│   └── openebs-storageclass/  # doppio-local, the default StorageClass
+│   ├── openebs/               # zfs-localpv (+ hostpath, for what already uses it)
+│   └── openebs-storageclass/  # doppio-zfs, the default StorageClass
 └── apps/                      # reconciled by the doppio-apps ApplicationSet (empty)
 ```
 
 ## Before this cluster is real
 
-- [ ] **Disks.** `corium/ks-stor.yaml` has a commented `raid:` block and
-      `openebs-storageclass` points at `/var/lib/doppio/local`. Run
-      `lsblk -o NAME,SIZE,MODEL` on the node, fill the block in, and make the
-      mount point match — a PVC landing on the root filesystem instead of the
-      array is silent until the disk fills. Changing `raid:` needs a reset, so
-      this is worth getting right before anything stores data.
+- [ ] **Vault off the root filesystem.** `vault-raft-vault-0` was bound before
+      the array was usable and is still on `doppio-local`, i.e. on the 10 GiB
+      root image. Moving it means a Vault snapshot, a new PVC on `doppio-zfs`
+      and a restore; it is the last thing left on hostpath.
 - [ ] **Ingress.** `configs.cm.url` says `argocd.doppio.thoughtless.eu`, but
       there is no ingress controller in `system/` yet and no DNS record. Until
       there is, reach ArgoCD with `kubectl port-forward -n argocd svc/argocd-server 8080:80`.

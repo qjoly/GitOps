@@ -29,19 +29,11 @@ corium:
     # failed boot.
     cni: custom
 
-  # TODO(disks): the storage array, once the disk layout is known.
-  #
-  # `lsblk -o NAME,SIZE,MODEL` on the node, then fill this in. The mount point
-  # is what doppio/system/openebs-storageclass hands to OpenEBS, so the two
-  # have to agree.
-  #
-  # raid:
-  #   - name: data
-  #     level: 1
-  #     devices: [/dev/nvme0n1, /dev/nvme1n1]
-  #     filesystem: ext4
-  #     mountPoint: /var/lib/doppio/local
-  #     wipe: false
+  # No `raid:` here, deliberately. The array predates this cluster: a four-disk
+  # raidz1 ZFS pool left by the TrueNAS install, imported as-is at boot and
+  # handed to openebs zfs-localpv as datapool/k8s. Declaring it would mean a
+  # reset, and a reset would wipe the 385 GB that only exists there.
+  # See the Storage section of doppio/README.md.
 
   addons:
     # --- CNI ------------------------------------------------------------
