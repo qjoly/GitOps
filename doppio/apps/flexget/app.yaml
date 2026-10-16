@@ -24,17 +24,28 @@ spec:
           tag: "3.22.4"
           pullPolicy: IfNotPresent
 
-        # No web UI and nothing to reach it with: flexget runs as a daemon on
-        # a schedule and talks outward only.
         service:
-          enabled: false
+          servicePort: 5050
+          containerPort: 5050
+
+        # The daemon takes a few seconds to bind 5050 and has no cheap health
+        # endpoint; for a single-replica personal UI, probing it buys nothing.
         startupProbeEnabled: false
         readinessProbeEnabled: false
         livenessProbeEnabled: false
+
         ingress:
-          enabled: false
+          enabled: true
+          hostName: "flexget.doppio.thoughtless.eu"
+          ingressClassName: traefik
+          tls:
+            enabled: true
+            secretName: "flexget-tls"
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt
 
         deployment:
+          port: 5050
           strategy:
             type: Recreate
           # The image ships no default command: bare `flexget` looks for a
@@ -68,6 +79,23 @@ spec:
                   mountPath: /rpc
                 - name: flexget-conf
                   mountPath: /etc/flexget-config
+            # The web UI password lives in the database, not in the config
+            # file, so it can only be set by flexget itself.
+            - name: set-web-password
+              image: flexget/flexget:3.22.4
+              command:
+                - sh
+                - -c
+                - flexget -c /config/config.yml web passwd "$WEB_PASSWORD"
+              env:
+                - name: WEB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: flexget-web
+                      key: web_password
+              volumeMounts:
+                - name: config
+                  mountPath: /config
 
         variables:
           secret: {}
@@ -83,6 +111,11 @@ spec:
                 - content:
                     config.yml: |
                       variables: /config/variables.yml
+
+                      web_server:
+                        bind: 0.0.0.0
+                        port: 5050
+                        web_ui: yes
 
                       templates:
                         nyaa:
@@ -115,6 +148,26 @@ spec:
                         - tasks: [manga]
                           interval:
                             minutes: 30
+
+        # The password is generated once and kept in doppio's Vault; the
+        # username the UI expects is `flexget`.
+        extraResources:
+          - apiVersion: external-secrets.io/v1
+            kind: ExternalSecret
+            metadata:
+              name: flexget-web
+            spec:
+              refreshInterval: "1h"
+              secretStoreRef:
+                name: vault-backend
+                kind: ClusterSecretStore
+              target:
+                name: flexget-web
+              data:
+                - secretKey: web_password
+                  remoteRef:
+                    key: flexget
+                    property: web_password
 
         persistence:
           enabled: true
