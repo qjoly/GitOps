@@ -54,3 +54,11 @@ spec:
         # One node: a second replica would sit Pending on the hostPort.
         deployment:
           replicas: 1
+
+        # And for the same reason the default rolling update deadlocks: the new
+        # pod cannot bind 80 until the old one lets go, and the old one does not
+        # let go until the new one is ready. Recreate accepts the few seconds of
+        # downtime instead.
+        updateStrategy:
+          type: Recreate
+          rollingUpdate: null
