@@ -34,7 +34,7 @@ spec:
             # both here is what lets flexget talk to the daemon at all.
             initContainers:
               - name: seed-daemon-auth
-                image: busybox:1.37
+                image: busybox:1.38
                 command:
                   - sh
                   - -c
