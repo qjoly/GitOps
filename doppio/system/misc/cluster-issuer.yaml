@@ -1,0 +1,20 @@
+# HTTP-01, not the DNS-01 Cloudflare issuer mocha and turing use.
+#
+# doppio's Vault is its own, and seeding the Cloudflare token into it just to
+# issue certificates for a cluster that already answers on :80 from a public
+# address is a secret to rotate for nothing. The cost is no wildcard: every
+# host gets its own order, and the DNS record has to exist first.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    email: cloudflare@une-pause-cafe.fr
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: traefik

@@ -1,0 +1,86 @@
+# Kavita — https://kavitareader.com
+#
+# Two volumes on purpose: /kavita/config holds the SQLite database, the covers
+# cache and the logs, /library holds nothing Kavita owns. Keeping them apart is
+# what makes the library safe to wipe and rescan, and the config worth backing
+# up on its own.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kavita
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://rubxkube.github.io/common-charts/
+    chart: common
+    targetRevision: v0.6.4
+    helm:
+      values: |
+        name: "kavita"
+        image:
+          repository: jvmilazz0/kavita
+          tag: "0.9.1"
+          pullPolicy: IfNotPresent
+
+        service:
+          servicePort: 5000
+        deployment:
+          port: 5000
+          # Kavita writes to a SQLite file; two pods on it at once corrupt it,
+          # and the volume is RWO anyway.
+          strategy:
+            type: Recreate
+
+        variables:
+          secret: {}
+          nonSecret:
+            TZ: Europe/Paris
+
+        # Kavita serves /api/health before the first scan finishes, which is
+        # what we want: a long library scan should not look like a crash.
+        readinessProbeEnabled: true
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 20
+          periodSeconds: 30
+          failureThreshold: 3
+          timeoutSeconds: 5
+
+        ingress:
+          enabled: true
+          hostName: "kavita.doppio.thoughtless.eu"
+          ingressClassName: traefik
+          tls:
+            enabled: true
+            secretName: "kavita-tls"
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt
+
+        persistence:
+          enabled: true
+          volumes:
+            - name: config
+              storageClassName: "doppio-zfs"
+              size: 10Gi
+              pvcClaim: ""
+              containerMount: "/kavita/config"
+            # Thin-provisioned, so this is a quota rather than 500 GiB taken
+            # out of the array. Grow it with `kubectl edit pvc`; the class
+            # allows expansion.
+            - name: library
+              storageClassName: "doppio-zfs"
+              size: 500Gi
+              pvcClaim: ""
+              containerMount: "/library"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kavita
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,56 @@
+# The ingress controller for doppio.
+#
+# Unlike mocha, there is no Cilium LB IPAM pool here: the machine has exactly
+# one public address and it is already the node's own. So traefik publishes 80
+# and 443 as hostPorts rather than through a LoadBalancer Service — on a
+# single-node cluster that is the whole of what a LoadBalancer would have done.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+  source:
+    repoURL: https://traefik.github.io/charts
+    targetRevision: 41.6.1
+    chart: traefik
+    helm:
+      values: |
+        accessLog:
+          enabled: true
+          format: json
+
+        # Nothing scrapes doppio yet, and the chart's default Prometheus
+        # endpoint would hand prometheus-operator-crds a ServiceMonitor that
+        # no operator reconciles.
+        metrics:
+          prometheus: null
+
+        service:
+          type: ClusterIP
+
+        ports:
+          web:
+            hostPort: 80
+            http:
+              redirections:
+                entryPoint:
+                  to: websecure
+                  scheme: https
+                  permanent: true
+          websecure:
+            hostPort: 443
+
+        # One node: a second replica would sit Pending on the hostPort.
+        deployment:
+          replicas: 1
