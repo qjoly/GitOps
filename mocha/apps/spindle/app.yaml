@@ -16,7 +16,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/charts
     chart: spindle
-    targetRevision: 0.1.1
+    targetRevision: 0.1.2
     helm:
       values: |
               common:
