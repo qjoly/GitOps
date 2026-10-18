@@ -6,4 +6,5 @@ resources:
   - otlp-ingress.yaml
   - otlp-mtls.yaml
   - oom-rbac.yaml
+  - ingress-rbac.yaml
   - clickhouse-cold-storage.yaml

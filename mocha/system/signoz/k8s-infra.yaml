@@ -91,12 +91,30 @@ spec:
                       static_configs:
                         - targets:
                             - plex-exporter.plex-exporter.svc.cluster.local:9000
+              k8sobjects/ingresses:
+                auth_type: serviceAccount
+                objects:
+                  - name: ingresses
+                    group: networking.k8s.io
+                    mode: pull
+                    interval: 10m
             processors:
               resource/cluster:
                 attributes:
                   - key: k8s.cluster.name
                     value: mocha
                     action: upsert
+              transform/ingresses:
+                error_mode: ignore
+                log_statements:
+                  - context: log
+                    statements:
+                      - set(attributes["ingress.name"], body["metadata"]["name"])
+                      - set(attributes["ingress.namespace"], body["metadata"]["namespace"])
+                      - set(attributes["ingress.class"], body["spec"]["ingressClassName"])
+                      - set(attributes["ingress.host"], body["spec"]["rules"][0]["host"])
+                      - set(attributes["ingress.path"], body["spec"]["rules"][0]["http"]["paths"][0]["path"])
+                      - set(attributes["ingress.url"], Concat(["https://", attributes["ingress.host"], attributes["ingress.path"]], "")) where attributes["ingress.host"] != nil
             service:
               pipelines:
                 metrics/argocd:
@@ -104,6 +122,16 @@ spec:
                     - prometheus
                   processors:
                     - resource/cluster
+                    - batch
+                  exporters:
+                    - otlphttp
+                logs/ingresses:
+                  receivers:
+                    - k8sobjects/ingresses
+                  processors:
+                    - resource/cluster
+                    - resource/deployenv
+                    - transform/ingresses
                     - batch
                   exporters:
                     - otlphttp

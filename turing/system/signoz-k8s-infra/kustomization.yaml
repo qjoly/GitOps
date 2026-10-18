@@ -5,3 +5,4 @@ resources:
   - app.yaml
   - mtls.yaml
   - oom-rbac.yaml
+  - ingress-rbac.yaml
