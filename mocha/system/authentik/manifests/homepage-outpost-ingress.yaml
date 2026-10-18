@@ -1,0 +1,26 @@
+# Lives here rather than next to homepage: Traefik refuses ExternalName
+# services, so the outpost path has to be served from authentik's own namespace.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homepage-outpost
+  namespace: authentik
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - home.mocha.thoughtless.eu
+      secretName: homepage-outpost-tls
+  rules:
+    - host: home.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /outpost.goauthentik.io
+            pathType: Prefix
+            backend:
+              service:
+                name: authentik-server
+                port:
+                  number: 80

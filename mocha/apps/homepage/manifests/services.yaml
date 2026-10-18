@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-services
+  namespace: homepage
+data:
+  services.yaml: |
+    # Placeholder, replaced by the homepage-generator CronJob on its first run.
+    []

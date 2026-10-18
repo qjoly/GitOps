@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homepage
+  namespace: argocd
+spec:
+  project: default
+  ignoreDifferences:
+    # The generator owns this ConfigMap's contents; self-heal must not revert it.
+    - group: ""
+      kind: ConfigMap
+      name: homepage-services
+      jsonPointers:
+        - /data
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homepage
+  source:
+    repoURL: https://github.com/qjoly/gitops.git
+    targetRevision: HEAD
+    path: mocha/apps/homepage/manifests

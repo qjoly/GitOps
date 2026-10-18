@@ -295,6 +295,12 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kubernetes.svg
             proxyProviders:
+              - slug: homepage
+                name: Homepage
+                mode: forward_single
+                externalHost: https://home.mocha.thoughtless.eu
+                accessTokenValidity: hours=24
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/startpage.svg
               - slug: prowlarr
                 name: Prowlarr
                 mode: forward_single

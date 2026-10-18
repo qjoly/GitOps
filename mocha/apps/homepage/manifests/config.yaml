@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-config
+  namespace: homepage
+data:
+  settings.yaml: |
+    title: Services
+    headerStyle: clean
+    layout:
+      mocha:
+        style: row
+        columns: 4
+      turing:
+        style: row
+        columns: 4
+  widgets.yaml: |
+    - search:
+        provider: duckduckgo
+        target: _blank
+  bookmarks.yaml: |
+    []
+  docker.yaml: |
+    {}
+  kubernetes.yaml: |
+    mode: disabled
+  custom.css: ""
+  custom.js: ""

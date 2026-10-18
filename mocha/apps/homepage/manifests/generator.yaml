@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: homepage-generator
+  namespace: homepage
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: homepage-generator
+  namespace: homepage
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "create", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: homepage-generator
+  namespace: homepage
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: homepage-generator
+subjects:
+  - kind: ServiceAccount
+    name: homepage-generator
+    namespace: homepage
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: homepage-generator
+  namespace: homepage
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          serviceAccountName: homepage-generator
+          containers:
+            - name: generator
+              image: python:3.13-alpine
+              command: ["python3", "/script/generate.py"]
+              env:
+                - name: CLICKHOUSE_URL
+                  value: http://signoz-clickhouse.signoz.svc.cluster.local:8123/
+                - name: WINDOW_MINUTES
+                  value: "30"
+                - name: NAMESPACE
+                  value: homepage
+                - name: CONFIGMAP
+                  value: homepage-services
+                - name: DEPLOYMENT
+                  value: homepage
+                - name: ICON_INDEX
+                  value: https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/tree.json
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  memory: 192Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsNonRoot: true
+                runAsUser: 1000
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+          volumes:
+            - name: script
+              configMap:
+                name: homepage-generator
