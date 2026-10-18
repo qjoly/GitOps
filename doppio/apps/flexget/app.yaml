@@ -145,7 +145,7 @@ spec:
                             port: 58846
                             username: flexget
                             password: '{? deluge.password ?}'
-                            path: /downloads/manga
+                            path: /downloads/manga/dandadan/
                         manga:
                           template: nyaa
                           regexp:
