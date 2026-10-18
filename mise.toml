@@ -12,18 +12,23 @@ echo "decrypted $SRC -> $DST (gitignored)"
 '''
 
 [tasks."vault:unseal"]
-description = "Unseal every Vault pod on the target cluster (decrypts keys in-memory)"
+description = "Unseal every sealed Vault pod with the keys from the vault-unseal-keys Secret"
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
-IDENTITY="${AGE_IDENTITY:-$HOME/.ssh/id_ed25519}"
-SRC="${VAULT_KEYS_AGE:-cluster-keys.json.age}"
 CTX="${VAULT_CONTEXT:-$(kubectl config current-context)}"
-[ -f "$SRC" ] || { echo "missing $SRC" >&2; exit 1; }
-KEY="$(age -d -i "$IDENTITY" "$SRC" | jq -r '.unseal_keys_b64[0]')"
-for pod in vault-0 vault-1 vault-2; do
-  echo "==> unseal $pod on $CTX"
-  kubectl --context "$CTX" exec -n vault "$pod" -- vault operator unseal "$KEY" || true
+NS="${VAULT_NAMESPACE:-$(kubectl --context "$CTX" get secret -A --field-selector metadata.name=vault-unseal-keys -o jsonpath='{.items[0].metadata.namespace}')}"
+[ -n "$NS" ] || { echo "vault-unseal-keys Secret not found on $CTX" >&2; exit 1; }
+vexec() { local pod=$1; shift; kubectl --context "$CTX" -n "$NS" exec "$pod" -c vault -- env VAULT_ADDR=https://127.0.0.1:8200 VAULT_SKIP_VERIFY=true "$@"; }
+KEYS="$(kubectl --context "$CTX" -n "$NS" get secret vault-unseal-keys -o json | jq -r '.data | to_entries[] | select(.key | startswith("vault-unseal-")) | .value | @base64d')"
+for pod in $(kubectl --context "$CTX" -n "$NS" get pods -l app.kubernetes.io/name=vault -o name); do
+  echo "==> $pod on $CTX/$NS"
+  # 'vault status' exits 0 only once unsealed, so feed keys until the threshold is reached.
+  for key in $KEYS; do
+    vexec "$pod" vault status >/dev/null 2>&1 && break
+    vexec "$pod" vault operator unseal "$key" >/dev/null
+  done
+  vexec "$pod" vault status | grep -E '^(Sealed|Unseal Progress)' || true
 done
 '''
 
@@ -33,9 +38,11 @@ run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 CTX="${VAULT_CONTEXT:-$(kubectl config current-context)}"
-for pod in vault-0 vault-1 vault-2; do
-  echo "==> $pod on $CTX"
-  kubectl --context "$CTX" exec -n vault "$pod" -- vault status || true
+NS="${VAULT_NAMESPACE:-$(kubectl --context "$CTX" get secret -A --field-selector metadata.name=vault-unseal-keys -o jsonpath='{.items[0].metadata.namespace}')}"
+[ -n "$NS" ] || { echo "vault-unseal-keys Secret not found on $CTX" >&2; exit 1; }
+for pod in $(kubectl --context "$CTX" -n "$NS" get pods -l app.kubernetes.io/name=vault -o name); do
+  echo "==> $pod on $CTX/$NS"
+  kubectl --context "$CTX" -n "$NS" exec "$pod" -c vault -- env VAULT_ADDR=https://127.0.0.1:8200 VAULT_SKIP_VERIFY=true vault status || true
 done
 '''
 

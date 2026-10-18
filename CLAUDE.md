@@ -9,10 +9,17 @@ changing anything in its directory.
 This is a lab. Reading and writing secrets in the clusters' Vaults is expected
 and carries no risk — do it rather than asking.
 
-The root token lives in the `vault-unseal-keys` Secret, in whichever namespace
-the cluster runs Vault in: `bank-vaults` on doppio, `vault` on the others. Read
-the token from that Secret, then `kubectl exec` into the Vault pod and run
-`vault kv put` against `https://127.0.0.1:8200` with `VAULT_SKIP_VERIFY=true`.
+Every cluster runs Vault through bank-vaults in the `bank-vaults` namespace.
+The `vault-unseal-keys` Secret there holds the root token (`vault-root`) and the
+unseal keys (`vault-unseal-N`); the `cluster-keys.json.age` files are leftovers
+from the previous setup.
+
+Use the mise tasks rather than exec'ing by hand. They read the token from that
+Secret and target `$VAULT_CONTEXT`, or the current context:
+
+- `mise run vault:kv list kv/`, `get kv/<path>`, `put kv/<path> k=v`, `patch`…
+  (any `vault kv` subcommand; `k=-` reads the value from stdin)
+- `mise run vault:status` / `mise run vault:unseal`
 
 `kv` is the KV v2 mount that the `vault-backend` ClusterSecretStore reads, so
 anything stored under `kv/` can be pulled into a namespace with an
