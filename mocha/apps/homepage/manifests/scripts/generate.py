@@ -6,6 +6,7 @@ reads one source and gets every cluster at once. Only the Python standard
 library is used, which keeps the job image a plain python:alpine.
 """
 
+import base64
 import json
 import os
 import ssl
@@ -15,6 +16,8 @@ import urllib.request
 from datetime import datetime, timezone
 
 CLICKHOUSE_URL = os.environ["CLICKHOUSE_URL"]
+CLICKHOUSE_USER = os.environ.get("CLICKHOUSE_USER", "")
+CLICKHOUSE_PASSWORD = os.environ.get("CLICKHOUSE_PASSWORD", "")
 WINDOW_MINUTES = int(os.environ.get("WINDOW_MINUTES", "30"))
 NAMESPACE = os.environ["NAMESPACE"]
 CONFIGMAP = os.environ["CONFIGMAP"]
@@ -53,6 +56,11 @@ FORMAT JSONEachRow
 
 def query_clickhouse():
     request = urllib.request.Request(CLICKHOUSE_URL, data=QUERY.encode())
+    if CLICKHOUSE_USER:
+        credentials = f"{CLICKHOUSE_USER}:{CLICKHOUSE_PASSWORD}".encode()
+        request.add_header(
+            "Authorization", "Basic " + base64.b64encode(credentials).decode()
+        )
     with urllib.request.urlopen(request, timeout=30) as response:
         body = response.read().decode()
     return [json.loads(line) for line in body.splitlines() if line.strip()]

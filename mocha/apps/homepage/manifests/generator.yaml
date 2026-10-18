@@ -1,3 +1,21 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: homepage-clickhouse
+  namespace: homepage
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: homepage-clickhouse
+  data:
+    - secretKey: password
+      remoteRef:
+        key: signoz-clickhouse
+        property: password
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -55,6 +73,13 @@ spec:
               env:
                 - name: CLICKHOUSE_URL
                   value: http://signoz-clickhouse.signoz.svc.cluster.local:8123/
+                - name: CLICKHOUSE_USER
+                  value: admin
+                - name: CLICKHOUSE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: homepage-clickhouse
+                      key: password
                 - name: WINDOW_MINUTES
                   value: "30"
                 - name: NAMESPACE
