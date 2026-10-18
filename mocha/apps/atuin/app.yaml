@@ -48,6 +48,38 @@ spec:
           memoryRequest: "128Mi"
           cpuRequest: "50m"
           memoryLimit: "512Mi"
+          # Read-only web UI, kept in the same pod so it reaches the server over
+          # the loopback and needs no service of its own to talk to it.
+          additionalContainers:
+            - name: web
+              image: ghcr.io/josegonzalez/atuin-web:v0.3.1
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: ATUIN_WEB_BIND
+                  value: "0.0.0.0:8080"
+                - name: ATUIN_WEB_SERVER_URL
+                  value: "http://127.0.0.1:8888"
+                # Sessions are served over HTTPS only, so the cookies can be
+                # flagged Secure.
+                - name: ATUIN_WEB_SECURE_COOKIES
+                  value: "true"
+                - name: ATUIN_WEB_LOG_FORMAT
+                  value: "json"
+              ports:
+                - name: web
+                  containerPort: 8080
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+              readinessProbe:
+                httpGet:
+                  path: /healthz
+                  port: 8080
+                initialDelaySeconds: 5
+                periodSeconds: 20
         service:
           servicePort: 8888
           containerPort: 8888
@@ -107,6 +139,42 @@ spec:
                   remoteRef:
                     key: atuin
                     property: db_password
+          # The chart only wires one service and one ingress to the main
+          # container; the UI gets its own pair here.
+          - apiVersion: v1
+            kind: Service
+            metadata:
+              name: atuin-web
+            spec:
+              selector:
+                app: atuin
+              ports:
+                - name: http
+                  port: 8080
+                  targetPort: 8080
+          - apiVersion: networking.k8s.io/v1
+            kind: Ingress
+            metadata:
+              name: atuin-web
+              annotations:
+                cert-manager.io/cluster-issuer: cloudflare
+            spec:
+              ingressClassName: traefik
+              rules:
+                - host: atuin-web.mocha.thoughtless.eu
+                  http:
+                    paths:
+                      - path: /
+                        pathType: Prefix
+                        backend:
+                          service:
+                            name: atuin-web
+                            port:
+                              number: 8080
+              tls:
+                - secretName: atuin-web-tls
+                  hosts:
+                    - atuin-web.mocha.thoughtless.eu
           - apiVersion: v1
             kind: Service
             metadata:
