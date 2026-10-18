@@ -117,12 +117,12 @@ spec:
                 log_statements:
                   - context: log
                     statements:
-                      - set(attributes["ingress.name"], body["metadata"]["name"])
-                      - set(attributes["ingress.namespace"], body["metadata"]["namespace"])
-                      - set(attributes["ingress.class"], body["spec"]["ingressClassName"])
-                      - set(attributes["ingress.host"], body["spec"]["rules"][0]["host"])
-                      - set(attributes["ingress.path"], body["spec"]["rules"][0]["http"]["paths"][0]["path"])
-                      - set(attributes["ingress.url"], Concat(["https://", attributes["ingress.host"], attributes["ingress.path"]], "")) where attributes["ingress.host"] != nil
+                      - set(log.attributes["ingress.name"], log.body["metadata"]["name"])
+                      - set(log.attributes["ingress.namespace"], log.body["metadata"]["namespace"])
+                      - set(log.attributes["ingress.class"], log.body["spec"]["ingressClassName"])
+                      - set(log.attributes["ingress.host"], log.body["spec"]["rules"][0]["host"])
+                      - set(log.attributes["ingress.path"], log.body["spec"]["rules"][0]["http"]["paths"][0]["path"])
+                      - set(log.attributes["ingress.url"], Concat(["https://", log.attributes["ingress.host"], log.attributes["ingress.path"]], "")) where log.attributes["ingress.host"] != nil
             service:
               pipelines:
                 logs/ingresses:
