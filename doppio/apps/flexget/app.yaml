@@ -139,7 +139,7 @@ spec:
                           series:
                             - dandadan:
                                 identified_by: sequence
-                                begin: 240
+                                begin: 100
                           deluge:
                             host: deluge-daemon
                             port: 58846
