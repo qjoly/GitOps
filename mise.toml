@@ -1,16 +1,3 @@
-[tasks."vault:decrypt"]
-description = "Decrypt the Vault unseal keys/root token (age) to cluster-keys.json"
-run = '''
-#!/usr/bin/env bash
-set -euo pipefail
-IDENTITY="${AGE_IDENTITY:-$HOME/.ssh/id_ed25519}"
-SRC="${VAULT_KEYS_AGE:-cluster-keys.json.age}"
-DST="${VAULT_KEYS:-cluster-keys.json}"
-[ -f "$SRC" ] || { echo "missing $SRC" >&2; exit 1; }
-age -d -i "$IDENTITY" "$SRC" > "$DST"
-echo "decrypted $SRC -> $DST (gitignored)"
-'''
-
 [tasks."vault:unseal"]
 description = "Unseal every sealed Vault pod with the keys from the vault-unseal-keys Secret"
 run = '''

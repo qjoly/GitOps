@@ -250,9 +250,6 @@ it. The local `admin` account stays enabled as the way back in.
       the array was usable and is still on `doppio-local`, i.e. on the 10 GiB
       root image. Moving it means a Vault snapshot, a new PVC on `doppio-zfs`
       and a restore; it is the last thing left on hostpath.
-- [ ] **Vault keys.** `mise vault:decrypt` expects `cluster-keys.json.age` next
-      to the cluster. Initialise the Vault, then commit the age-encrypted keys
-      here like `mocha/` and `turing/` do.
 - [ ] **Backup wiring.** Nothing yet consumes doppio as a backup target. The
       obvious first move is an S3 endpoint (turing already runs `rustfs`) that
       mocha's VolSync/restic jobs can point at.
