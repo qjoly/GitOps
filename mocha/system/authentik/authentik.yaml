@@ -319,3 +319,9 @@ spec:
                 externalHost: https://sonarr.americano.thoughtless.eu
                 accessTokenValidity: hours=24
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/sonarr.svg
+              - slug: slimfaas
+                name: SlimFaas
+                mode: forward_single
+                externalHost: https://slimfaas.mocha.thoughtless.eu
+                accessTokenValidity: hours=24
+                icon: https://raw.githubusercontent.com/SlimPlanet/SlimFaas/main/docs/SlimFaas.png

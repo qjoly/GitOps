@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - externalsecret.yaml
   - homepage-outpost-ingress.yaml
+  - slimfaas-outpost-ingress.yaml
