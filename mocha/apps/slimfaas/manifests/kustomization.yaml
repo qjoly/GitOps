@@ -5,3 +5,4 @@ resources:
   - slimfaas.yaml
   - ingress.yaml
   - ingress-functions.yaml
+  - function-hello.yaml

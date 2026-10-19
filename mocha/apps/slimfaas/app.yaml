@@ -18,6 +18,11 @@ spec:
         - '.spec.volumeClaimTemplates[].metadata.creationTimestamp'
         - '.spec.volumeClaimTemplates[].spec.volumeMode'
         - '.spec.volumeClaimTemplates[].status'
+    - group: apps
+      kind: Deployment
+      name: hello
+      jsonPointers:
+        - /spec/replicas
   syncPolicy:
     automated:
       selfHeal: true

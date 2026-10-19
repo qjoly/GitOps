@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello
+  namespace: slimfaas
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello
+  template:
+    metadata:
+      labels:
+        app: hello
+      annotations:
+        SlimFaas/Function: "true"
+        SlimFaas/DefaultVisibility: "Public"
+        SlimFaas/ReplicasAtStart: "1"
+        SlimFaas/ReplicasMin: "0"
+        SlimFaas/TimeoutSecondBeforeSetReplicasMin: "60"
+        SlimFaas/NumberParallelRequest: "10"
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: hello
+          image: axaguildev/fibonacci-api:0.84.16
+          env:
+            - name: ASPNETCORE_URLS
+              value: http://+:5000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 3
+            periodSeconds: 2
+          resources:
+            requests:
+              cpu: 10m
+              memory: 96Mi
+            limits:
+              memory: 96Mi
+          ports:
+            - containerPort: 5000
