@@ -117,7 +117,7 @@ Because the CA field is a bundle, adding a sender is purely additive: append its
 public certificate to `tls.ca` and re-sync. No sender ever shares a key; each has
 its own CA and client cert, so one can be revoked by dropping its CA from the
 bundle. Current members: `signoz-mtls-ca`, `signoz-mtls-traefik-ca`,
-`affogato-backup-ca`, `proxmox-ca`.
+`signoz-mtls-doppio-ca`, `proxmox-ca`.
 
 Inspect the bundle:
 

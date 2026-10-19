@@ -5,7 +5,7 @@
   "schemaVersion": 39,
   "title": "ZFS Backup (Affogato) (SigNoz / ClickHouse)",
   "uid": "zfs-backup-signoz-clickhouse",
-  "tags": ["zfs", "backup", "affogato", "signoz", "clickhouse"],
+  "tags": ["zfs", "backup", "doppio", "signoz", "clickhouse"],
   "time": { "from": "now-1h", "to": "now" },
   "refresh": "1m",
   "templating": {

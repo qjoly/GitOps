@@ -14,12 +14,12 @@ spec:
       alert: Backup ZFS pool high fragmentation
       alertType: METRIC_BASED_ALERT
       ruleType: threshold_rule
-      description: ZFS pool fragmentation above 60% on affogato.
+      description: ZFS pool fragmentation above 60% on doppio.
       labels:
         severity: warning
       annotations:
         summary: Backup pool fragmentation high
-        description: ZFS pool fragmentation above 60% on affogato.
+        description: ZFS pool fragmentation above 60% on doppio.
       condition:
         compositeQuery:
           queryType: builder
@@ -35,7 +35,7 @@ spec:
                 timeAggregation: latest
                 spaceAggregation: max
               filter:
-                expression: k8s.cluster.name = 'affogato'
+                expression: k8s.cluster.name = 'doppio'
               groupBy:
               - name: k8s.cluster.name
               - name: pool

@@ -1,0 +1,150 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: signoz-k8s-infra
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: signoz-k8s-infra
+  source:
+    repoURL: https://charts.signoz.io
+    chart: k8s-infra
+    targetRevision: 0.16.0
+    helm:
+      values: |
+        global:
+          clusterName: doppio
+          deploymentEnvironment: production
+        otelCollectorEndpoint: https://signoz-ingest.mocha.thoughtless.eu
+        otelInsecure: false
+        presets:
+          otlpExporter:
+            enabled: true
+          loggingExporter:
+            enabled: false
+        otelAgent:
+          config:
+            exporters:
+              otlphttp:
+                tls:
+                  insecure: false
+                  cert_file: /mtls/tls.crt
+                  key_file: /mtls/tls.key
+            receivers:
+              prometheus:
+                config:
+                  scrape_configs:
+                    - job_name: zfs
+                      scrape_interval: 30s
+                      static_configs:
+                        - targets:
+                            - ${env:K8S_HOST_IP}:9134
+                    - job_name: cadvisor-oom
+                      scheme: https
+                      scrape_interval: 30s
+                      metrics_path: /metrics/cadvisor
+                      authorization:
+                        credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      tls_config:
+                        insecure_skip_verify: true
+                      static_configs:
+                        - targets:
+                            - ${env:K8S_HOST_IP}:10250
+                      metric_relabel_configs:
+                        - source_labels: [__name__]
+                          regex: container_oom_events_total
+                          action: keep
+                        - source_labels: [pod]
+                          regex: .+
+                          action: keep
+            processors:
+              resource/cluster:
+                attributes:
+                  - key: k8s.cluster.name
+                    value: doppio
+                    action: upsert
+            service:
+              pipelines:
+                metrics/prometheus:
+                  receivers:
+                    - prometheus
+                  processors:
+                    - resource/cluster
+                    - batch
+                  exporters:
+                    - otlphttp
+          extraVolumes:
+            - name: mtls
+              secret:
+                secretName: signoz-mtls-client
+          extraVolumeMounts:
+            - name: mtls
+              mountPath: /mtls
+              readOnly: true
+        otelDeployment:
+          config:
+            exporters:
+              otlphttp:
+                tls:
+                  insecure: false
+                  cert_file: /mtls/tls.crt
+                  key_file: /mtls/tls.key
+            receivers:
+              k8sobjects/ingresses:
+                auth_type: serviceAccount
+                objects:
+                  - name: ingresses
+                    group: networking.k8s.io
+                    mode: pull
+                    interval: 10m
+            processors:
+              resource/cluster:
+                attributes:
+                  - key: k8s.cluster.name
+                    value: doppio
+                    action: upsert
+              transform/ingresses:
+                error_mode: ignore
+                log_statements:
+                  - context: log
+                    statements:
+                      - set(log.attributes["ingress.name"], log.body["metadata"]["name"])
+                      - set(log.attributes["ingress.namespace"], log.body["metadata"]["namespace"])
+                      - set(log.attributes["ingress.class"], log.body["spec"]["ingressClassName"])
+                      - set(log.attributes["ingress.host"], log.body["spec"]["rules"][0]["host"])
+                      - set(log.attributes["ingress.path"], log.body["spec"]["rules"][0]["http"]["paths"][0]["path"])
+                      - set(log.attributes["ingress.url"], Concat(["https://", log.attributes["ingress.host"], log.attributes["ingress.path"]], "")) where log.attributes["ingress.host"] != nil
+            service:
+              pipelines:
+                logs/ingresses:
+                  receivers:
+                    - k8sobjects/ingresses
+                  processors:
+                    - resource/cluster
+                    - resource/deployenv
+                    - transform/ingresses
+                    - batch
+                  exporters:
+                    - otlphttp
+          extraVolumes:
+            - name: mtls
+              secret:
+                secretName: signoz-mtls-client
+          extraVolumeMounts:
+            - name: mtls
+              mountPath: /mtls
+              readOnly: true

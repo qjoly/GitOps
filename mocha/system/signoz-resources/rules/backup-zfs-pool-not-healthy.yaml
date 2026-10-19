@@ -14,12 +14,12 @@ spec:
       alert: Backup ZFS pool not healthy
       alertType: METRIC_BASED_ALERT
       ruleType: threshold_rule
-      description: zfs_pool_health != 0 on affogato (0=ONLINE, 1=DEGRADED, 2=FAULTED, 3=OFFLINE, 4=UNAVAIL, 6=SUSPENDED).
+      description: zfs_pool_health != 0 on doppio (0=ONLINE, 1=DEGRADED, 2=FAULTED, 3=OFFLINE, 4=UNAVAIL, 6=SUSPENDED).
       labels:
         severity: critical
       annotations:
         summary: ZFS backup pool is not ONLINE
-        description: zfs_pool_health != 0 on affogato (0=ONLINE, 1=DEGRADED, 2=FAULTED, 3=OFFLINE, 4=UNAVAIL, 6=SUSPENDED).
+        description: zfs_pool_health != 0 on doppio (0=ONLINE, 1=DEGRADED, 2=FAULTED, 3=OFFLINE, 4=UNAVAIL, 6=SUSPENDED).
       condition:
         compositeQuery:
           queryType: builder
@@ -35,7 +35,7 @@ spec:
                 timeAggregation: latest
                 spaceAggregation: max
               filter:
-                expression: k8s.cluster.name = 'affogato'
+                expression: k8s.cluster.name = 'doppio'
               groupBy:
               - name: k8s.cluster.name
               - name: pool

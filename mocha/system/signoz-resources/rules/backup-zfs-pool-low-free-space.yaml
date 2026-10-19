@@ -14,12 +14,12 @@ spec:
       alert: Backup ZFS pool low free space
       alertType: METRIC_BASED_ALERT
       ruleType: threshold_rule
-      description: Less than ~1.5 TB free on the affogato ZFS pool.
+      description: Less than ~1.5 TB free on the doppio ZFS pool.
       labels:
         severity: warning
       annotations:
         summary: Backup pool low on free space
-        description: Less than ~1.5 TB free on the affogato ZFS pool.
+        description: Less than ~1.5 TB free on the doppio ZFS pool.
       condition:
         compositeQuery:
           queryType: builder
@@ -35,7 +35,7 @@ spec:
                 timeAggregation: latest
                 spaceAggregation: min
               filter:
-                expression: k8s.cluster.name = 'affogato'
+                expression: k8s.cluster.name = 'doppio'
               groupBy:
               - name: k8s.cluster.name
               - name: pool

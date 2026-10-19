@@ -1,0 +1,22 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: signoz-k8s-infra-otel-deployment-ingresses
+rules:
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: signoz-k8s-infra-otel-deployment-ingresses
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: signoz-k8s-infra-otel-deployment-ingresses
+subjects:
+  - kind: ServiceAccount
+    name: signoz-k8s-infra-otel-deployment
+    namespace: signoz-k8s-infra

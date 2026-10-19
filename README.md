@@ -61,7 +61,7 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 ### Not Kubernetes
 
 - [**Americano**](https://github.com/qjoly/GitOps/tree/main/americano) : a bare host running podman quadlets, reconciled by [Materia](https://github.com/stryan/materia) instead of ArgoCD. See [`americano/README.md`](./americano/README.md) for the branch trick that makes it work from a subdirectory.
-- [`external/`](./external) : OTel collector and exporter units for machines outside the clusters (Proxmox hosts, the `affogato` backup box).
+- [`external/`](./external) : OTel collector and exporter units for machines outside the clusters (Proxmox hosts).
 
 ## Guest clusters on `mocha`
 

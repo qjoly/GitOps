@@ -1,0 +1,22 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: signoz-k8s-infra-otel-agent-nodes-metrics
+rules:
+  - apiGroups: [""]
+    resources: ["nodes/metrics"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: signoz-k8s-infra-otel-agent-nodes-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: signoz-k8s-infra-otel-agent-nodes-metrics
+subjects:
+  - kind: ServiceAccount
+    name: signoz-k8s-infra-otel-agent
+    namespace: signoz-k8s-infra

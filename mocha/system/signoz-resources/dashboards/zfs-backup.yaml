@@ -18,7 +18,7 @@ spec:
       - key: tag
         value: backup
       - key: tag
-        value: affogato
+        value: doppio
       spec:
         display:
           name: ZFS Backup (Affogato)
@@ -56,7 +56,7 @@ spec:
                         reduceTo: last
                       disabled: false
                       filter:
-                        expression: k8s.cluster.name = 'affogato'
+                        expression: k8s.cluster.name = 'doppio'
                       groupBy: []
                       having:
                         expression: ''
@@ -93,7 +93,7 @@ spec:
                         reduceTo: last
                       disabled: false
                       filter:
-                        expression: k8s.cluster.name = 'affogato'
+                        expression: k8s.cluster.name = 'doppio'
                       groupBy: []
                       having:
                         expression: ''
@@ -130,7 +130,7 @@ spec:
                         reduceTo: last
                       disabled: false
                       filter:
-                        expression: k8s.cluster.name = 'affogato'
+                        expression: k8s.cluster.name = 'doppio'
                       groupBy: []
                       having:
                         expression: ''
@@ -181,7 +181,7 @@ spec:
                         reduceTo: last
                       disabled: false
                       filter:
-                        expression: k8s.cluster.name = 'affogato'
+                        expression: k8s.cluster.name = 'doppio'
                       groupBy: []
                       having:
                         expression: ''
@@ -250,7 +250,7 @@ spec:
                         reduceTo: last
                       disabled: false
                       filter:
-                        expression: k8s.cluster.name = 'affogato'
+                        expression: k8s.cluster.name = 'doppio'
                       groupBy: []
                       having:
                         expression: ''
@@ -373,7 +373,7 @@ spec:
                         reduceTo: last
                       disabled: false
                       filter:
-                        expression: k8s.cluster.name = 'affogato'
+                        expression: k8s.cluster.name = 'doppio'
                       groupBy:
                       - name: state
                         fieldContext: attribute
@@ -419,7 +419,7 @@ spec:
                         reduceTo: last
                       disabled: false
                       filter:
-                        expression: k8s.cluster.name = 'affogato' AND state = 'used'
+                        expression: k8s.cluster.name = 'doppio' AND state = 'used'
                       groupBy:
                       - name: mountpoint
                         fieldContext: attribute
@@ -473,7 +473,7 @@ spec:
                         reduceTo: last
                       disabled: false
                       filter:
-                        expression: k8s.cluster.name = 'affogato'
+                        expression: k8s.cluster.name = 'doppio'
                       groupBy: []
                       having:
                         expression: ''
@@ -524,7 +524,7 @@ spec:
                         reduceTo: last
                       disabled: false
                       filter:
-                        expression: k8s.cluster.name = 'affogato'
+                        expression: k8s.cluster.name = 'doppio'
                       groupBy:
                       - name: direction
                         fieldContext: attribute
