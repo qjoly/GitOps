@@ -10,7 +10,13 @@ In opposition to a HomeLab, a CloudLab a server rented from a cloud provider. It
 
 In my personal case, I have both a Homelab and a CloudLab. I use the CloudLab to test new technologies and the Homelab to host sensitive data and services (clusters `home` is the name of my Homelab cluster, `cortado` and `arabica` are CloudLab clusters).
 
-I have 2 n100 servers at home, both are running Proxmox and are connected to a 1G switch as well as my NAS.s
+I have 2 n100 servers at home, both running Proxmox, connected to a 1G switch as well as my NAS.
+
+As of October 2026 only `homelab-proxmox-01` is up: `homelab-proxmox-02` has been off the network
+since the end of September and the two are no longer a PVE cluster, so each one is standalone.
+See [`external/proxmox/README.md`](https://github.com/qjoly/GitOps/blob/main/external/proxmox/README.md)
+for their telemetry and the current state of node 02.
+
 ![alt text](./img/sweet-home-lab.png)
 
 *Sorry cable management enthusiasts, I'm not there yet.*
