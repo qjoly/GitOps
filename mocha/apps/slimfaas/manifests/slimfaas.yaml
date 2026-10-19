@@ -35,6 +35,9 @@ spec:
         app: slimfaas
     spec:
       serviceAccountName: slimfaas
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: slimfaas
           image: axaguildev/slimfaas:0.84.16
@@ -68,6 +71,8 @@ spec:
               value: "Private"
             - name: Logging__LogLevel__Default
               value: "Information"
+            - name: Logging__LogLevel__System.Net.Http.HttpClient
+              value: "Warning"
           volumeMounts:
             - name: slimfaas-volume
               mountPath: /database

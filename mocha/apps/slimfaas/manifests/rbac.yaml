@@ -17,7 +17,7 @@ rules:
     resources: ["pods/log"]
     verbs: ["get"]
   - apiGroups: [""]
-    resources: ["endpoints"]
+    resources: ["services", "endpoints"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources: ["replicasets"]
