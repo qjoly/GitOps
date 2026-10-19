@@ -21,6 +21,7 @@ resources:
   - rules/kubernetes-node-disk-pressure.yaml
   - rules/kubernetes-node-memory-pressure.yaml
   - rules/kubernetes-node-not-ready.yaml
+  - rules/proxmox-host-not-reporting.yaml
   - rules/proxmox-node-down.yaml
   - rules/proxmox-storage-not-available.yaml
   - dashboards/argocd.yaml
