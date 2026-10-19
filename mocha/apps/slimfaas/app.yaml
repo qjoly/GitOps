@@ -5,6 +5,19 @@ metadata:
   namespace: argocd
 spec:
   project: default
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: slimfaas
+      jsonPointers:
+        - /spec/persistentVolumeClaimRetentionPolicy
+        - /spec/revisionHistoryLimit
+      jqPathExpressions:
+        - '.spec.volumeClaimTemplates[].apiVersion'
+        - '.spec.volumeClaimTemplates[].kind'
+        - '.spec.volumeClaimTemplates[].metadata.creationTimestamp'
+        - '.spec.volumeClaimTemplates[].spec.volumeMode'
+        - '.spec.volumeClaimTemplates[].status'
   syncPolicy:
     automated:
       selfHeal: true
@@ -12,6 +25,7 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
   destination:
     server: https://kubernetes.default.svc
     namespace: slimfaas
