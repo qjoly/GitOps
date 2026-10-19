@@ -16,27 +16,28 @@ spec:
         app.kubernetes.io/name: zfs-exporter
     spec:
       hostNetwork: true
-      hostPID: true
       dnsPolicy: ClusterFirstWithHostNet
+      automountServiceAccountToken: false
       tolerations:
         - operator: Exists
       containers:
         - name: zfs-exporter
           image: ghcr.io/pdf/zfs_exporter:v2.5.0
-          args:
-            - --web.listen-address=:9134
-            - --collector.dataset-filesystem
-            - --collector.dataset-snapshot
-            - --collector.dataset-volume
           ports:
             - name: metrics
               containerPort: 9134
               protocol: TCP
           securityContext:
             privileged: true
+            readOnlyRootFilesystem: true
+          readinessProbe:
+            httpGet:
+              path: /
+              port: metrics
           volumeMounts:
-            - name: dev-zfs
-              mountPath: /dev/zfs
+            - name: host-root
+              mountPath: /host
+              readOnly: true
           resources:
             requests:
               cpu: 10m
@@ -44,7 +45,7 @@ spec:
             limits:
               memory: 128Mi
       volumes:
-        - name: dev-zfs
+        - name: host-root
           hostPath:
-            path: /dev/zfs
-            type: CharDevice
+            path: /
+            type: Directory
