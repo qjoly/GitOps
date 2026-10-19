@@ -1,7 +1,7 @@
 apiVersion: resources.signoz.io/v1alpha1
 kind: Rule
 metadata:
-  name: proxmox-host-not-reporting
+  name: proxmox-01-host-not-reporting
   namespace: signoz
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
@@ -11,15 +11,15 @@ spec:
   objectTemplate:
     spec:
       schemaVersion: v2alpha1
-      alert: Proxmox-02 host not reporting
+      alert: Proxmox-01 host not reporting
       alertType: METRIC_BASED_ALERT
       ruleType: threshold_rule
-      description: No host metrics received from proxmox-02 for 10m (collector or host down).
+      description: No host metrics received from proxmox-01 for 10m (collector or host down).
       labels:
         severity: critical
       annotations:
-        summary: Proxmox-02 sent no host metrics
-        description: No host metrics received from proxmox-02 for 10m (collector or host down).
+        summary: Proxmox-01 sent no host metrics
+        description: No host metrics received from proxmox-01 for 10m (collector or host down).
       condition:
         compositeQuery:
           queryType: builder
@@ -35,7 +35,7 @@ spec:
                 timeAggregation: latest
                 spaceAggregation: max
               filter:
-                expression: k8s.cluster.name = 'proxmox-02'
+                expression: k8s.cluster.name = 'proxmox-01'
               groupBy:
               - name: k8s.cluster.name
               - name: host.name

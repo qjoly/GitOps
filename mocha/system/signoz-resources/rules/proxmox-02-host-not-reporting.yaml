@@ -1,0 +1,62 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: proxmox-02-host-not-reporting
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: Proxmox-02 host not reporting
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: No host metrics received from proxmox-02 for 10m (collector or host down).
+      labels:
+        severity: critical
+      annotations:
+        summary: Proxmox-02 sent no host metrics
+        description: No host metrics received from proxmox-02 for 10m (collector or host down).
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: system.memory.usage
+                timeAggregation: latest
+                spaceAggregation: max
+              filter:
+                expression: k8s.cluster.name = 'proxmox-02'
+              groupBy:
+              - name: k8s.cluster.name
+              - name: host.name
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: below
+            matchType: at_least_once
+            target: 1
+            channels:
+            - discord
+        alertOnAbsent: true
+        absentFor: 10
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 10m
+          frequency: 5m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false
