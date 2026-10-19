@@ -4,3 +4,4 @@ resources:
   - rbac.yaml
   - slimfaas.yaml
   - ingress.yaml
+  - ingress-functions.yaml
