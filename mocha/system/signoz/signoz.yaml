@@ -109,3 +109,17 @@ spec:
             processors:
               batch:
                 timeout: 30s
+              filter/slimfaas-noise:
+                error_mode: ignore
+                traces:
+                  span:
+                    - 'resource.attributes["service.name"] == "slimfaas" and (IsMatch(name, "^[A-Z]+ /SlimData") or IsMatch(name, "^[A-Z]+ /apis?/") or name == "GET /health" or name == "GET /ready" or name == "GET /metrics" or name == "GET /healthz")'
+            service:
+              pipelines:
+                traces:
+                  processors:
+                    - filter/slimfaas-noise
+                    - signozspanmetrics/delta
+                    - signozspanmapper
+                    - signozllmpricing
+                    - batch

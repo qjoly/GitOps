@@ -91,6 +91,11 @@ spec:
                       static_configs:
                         - targets:
                             - plex-exporter.plex-exporter.svc.cluster.local:9000
+                    - job_name: slimfaas
+                      scrape_interval: 30s
+                      static_configs:
+                        - targets:
+                            - slimfaas-http.slimfaas.svc.cluster.local:5000
               k8sobjects/ingresses:
                 auth_type: serviceAccount
                 objects:

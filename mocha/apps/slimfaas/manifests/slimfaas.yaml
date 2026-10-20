@@ -91,10 +91,6 @@ spec:
               value: "/cluster-consensus"
             - name: OpenTelemetry__ExcludedUrls__6
               value: "/wake-function"
-            - name: OTEL_TRACES_SAMPLER
-              value: "parentbased_traceidratio"
-            - name: OTEL_TRACES_SAMPLER_ARG
-              value: "0.1"
             - name: Logging__LogLevel__Default
               value: "Information"
             - name: Logging__LogLevel__System.Net.Http.HttpClient
