@@ -82,8 +82,8 @@ spec:
                       "send_resolved": True,
                       "api_url": WEBHOOK,
                       "channel": "#alerts",
-                      "title": "[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}",
-                      "text": "{{ len .Alerts }} alert(s)\n{{ range .Alerts }}*{{ .Labels.severity }}* {{ .Annotations.summary }} —{{ range .Labels.SortedPairs }}{{ if and (ne .Name \"alertname\") (ne .Name \"severity\") (ne .Name \"ruleSource\") }} {{ .Name }}={{ .Value }}{{ end }}{{ end }}\n{{ end }}"
+                      "title": "[{{ .Status | toUpper }}] {{ if .CommonLabels.alertname }}{{ .CommonLabels.alertname }}{{ else }}{{ len .Alerts }} alerts{{ end }}",
+                      "text": "{{ len .Alerts }} alert(s)\n{{ range $i, $a := .Alerts }}{{ if lt $i 10 }}*{{ $a.Labels.severity }}* {{ $a.Annotations.summary }}{{ range $a.Labels.SortedPairs }}{{ if and (ne .Name \"alertname\") (ne .Name \"severity\") (ne .Name \"ruleId\") (ne .Name \"ruleSource\") }} {{ .Name }}={{ .Value }}{{ end }}{{ end }}\n{{ end }}{{ end }}{{ if gt (len .Alerts) 10 }}\u2026 more alerts not shown, see SigNoz{{ end }}"
                   }]
               }
               _, body = call("GET", "/api/v1/channels")
