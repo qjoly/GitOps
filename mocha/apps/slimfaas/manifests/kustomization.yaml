@@ -5,3 +5,5 @@ resources:
   - slimfaas.yaml
   - ingress.yaml
   - ingress-functions.yaml
+  - function-annotator.yaml
+  - ingress-annotator.yaml

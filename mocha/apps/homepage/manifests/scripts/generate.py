@@ -43,7 +43,8 @@ SELECT DISTINCT
     resources_string['k8s.cluster.name'] AS cluster,
     attributes_string['ingress.namespace'] AS namespace,
     attributes_string['ingress.name'] AS name,
-    attributes_string['ingress.url'] AS url
+    attributes_string['ingress.url'] AS url,
+    attributes_string['ingress.hidden'] AS hidden
 FROM signoz_logs.distributed_logs_v2
 INNER JOIN latest ON latest.cluster = resources_string['k8s.cluster.name']
 WHERE timestamp > toUnixTimestamp64Nano(now64() - INTERVAL {WINDOW_MINUTES} MINUTE)
@@ -98,6 +99,9 @@ def resolve_icon(name, index):
 def render(rows, index):
     clusters = {}
     for row in rows:
+        # Outposts and API-only ingresses opt out with homepage.thoughtless.eu/hide.
+        if (row.get("hidden") or "").lower() == "true":
+            continue
         clusters.setdefault(row["cluster"], []).append(row)
     lines = ["# Generated from the SigNoz ingress inventory. Do not edit by hand."]
     for cluster in sorted(clusters):

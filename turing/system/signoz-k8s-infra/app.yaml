@@ -118,6 +118,7 @@ spec:
                   - context: log
                     statements:
                       - set(log.attributes["ingress.name"], log.body["metadata"]["name"])
+                      - set(log.attributes["ingress.hidden"], log.body["metadata"]["annotations"]["homepage.thoughtless.eu/hide"])
                       - set(log.attributes["ingress.namespace"], log.body["metadata"]["namespace"])
                       - set(log.attributes["ingress.class"], log.body["spec"]["ingressClassName"])
                       - set(log.attributes["ingress.host"], log.body["spec"]["rules"][0]["host"])

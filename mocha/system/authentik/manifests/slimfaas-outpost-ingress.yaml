@@ -5,6 +5,7 @@ metadata:
   namespace: authentik
   annotations:
     cert-manager.io/cluster-issuer: cloudflare
+    homepage.thoughtless.eu/hide: "true"
 spec:
   ingressClassName: traefik
   tls:

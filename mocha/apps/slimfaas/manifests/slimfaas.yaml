@@ -69,6 +69,20 @@ spec:
               value: "false"
             - name: Data__DefaultVisibility
               value: "Private"
+            - name: OpenTelemetry__Enable
+              value: "true"
+            - name: OpenTelemetry__ServiceName
+              value: "slimfaas"
+            - name: OpenTelemetry__Endpoint
+              value: "http://signoz-otel-collector.signoz.svc.cluster.local:4317"
+            - name: OpenTelemetry__EnableConsoleExporter
+              value: "false"
+            - name: OpenTelemetry__ExcludedUrls__0
+              value: "/health"
+            - name: OpenTelemetry__ExcludedUrls__1
+              value: "/ready"
+            - name: OpenTelemetry__ExcludedUrls__2
+              value: "/metrics"
             - name: Logging__LogLevel__Default
               value: "Information"
             - name: Logging__LogLevel__System.Net.Http.HttpClient

@@ -1,0 +1,88 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: annotator
+  namespace: slimfaas
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: annotator
+    creationPolicy: Owner
+  data:
+    - secretKey: github_webhook_secret
+      remoteRef:
+        key: pr-gitops-grafana-annotation
+        property: github_webhook_secret
+    - secretKey: grafana_token
+      remoteRef:
+        key: pr-gitops-grafana-annotation
+        property: grafana_token
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: annotator
+  namespace: slimfaas
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: annotator
+  template:
+    metadata:
+      labels:
+        app: annotator
+      annotations:
+        SlimFaas/Function: "true"
+        SlimFaas/DefaultVisibility: "Public"
+        SlimFaas/ReplicasAtStart: "1"
+        SlimFaas/ReplicasMin: "0"
+        SlimFaas/TimeoutSecondBeforeSetReplicasMin: "300"
+        SlimFaas/NumberParallelRequest: "5"
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: annotator
+          image: ghcr.io/qjoly/pr-gitops-grafana-annotation:sha-d9d84b5
+          env:
+            - name: LISTEN_ADDR
+              value: ":8080"
+            - name: GITHUB_REPO
+              value: "qjoly/gitops"
+            - name: GRAFANA_URL
+              value: "http://grafana.monitoring.svc.cluster.local"
+            - name: ANNOTATION_TAGS
+              value: "gitops,deploy"
+            - name: GITHUB_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: annotator
+                  key: github_webhook_secret
+            - name: GRAFANA_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: annotator
+                  key: grafana_token
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 1
+            periodSeconds: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          ports:
+            - containerPort: 8080

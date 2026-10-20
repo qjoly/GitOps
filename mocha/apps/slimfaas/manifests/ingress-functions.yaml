@@ -16,6 +16,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: cloudflare
     traefik.ingress.kubernetes.io/router.middlewares: slimfaas-functions-ratelimit@kubernetescrd
+    homepage.thoughtless.eu/hide: "true"
 spec:
   ingressClassName: traefik
   tls:
