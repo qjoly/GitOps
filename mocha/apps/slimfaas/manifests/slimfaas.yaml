@@ -80,9 +80,21 @@ spec:
             - name: OpenTelemetry__ExcludedUrls__0
               value: "/health"
             - name: OpenTelemetry__ExcludedUrls__1
-              value: "/ready"
-            - name: OpenTelemetry__ExcludedUrls__2
               value: "/metrics"
+            - name: OpenTelemetry__ExcludedUrls__2
+              value: "/ready"
+            - name: OpenTelemetry__ExcludedUrls__3
+              value: "/SlimData"
+            - name: OpenTelemetry__ExcludedUrls__4
+              value: "/status-functions"
+            - name: OpenTelemetry__ExcludedUrls__5
+              value: "/cluster-consensus"
+            - name: OpenTelemetry__ExcludedUrls__6
+              value: "/wake-function"
+            - name: OTEL_TRACES_SAMPLER
+              value: "parentbased_traceidratio"
+            - name: OTEL_TRACES_SAMPLER_ARG
+              value: "0.1"
             - name: Logging__LogLevel__Default
               value: "Information"
             - name: Logging__LogLevel__System.Net.Http.HttpClient
