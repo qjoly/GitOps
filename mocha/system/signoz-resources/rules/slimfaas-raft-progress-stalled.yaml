@@ -1,0 +1,59 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: slimfaas-raft-progress-stalled
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: SlimFaas Raft progress stalled
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: slimdata_raft_progress_stalled = 1 on mocha, meaning local WAL entries stayed unapplied with no applied-index progress. Async queues and scaling decisions stop advancing.
+      labels:
+        severity: critical
+      annotations:
+        summary: SlimFaas consensus is not applying entries
+        description: slimdata_raft_progress_stalled = 1 on mocha, meaning local WAL entries stayed unapplied with no applied-index progress. Async queues and scaling decisions stop advancing.
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: slimdata_raft_progress_stalled
+                timeAggregation: latest
+                spaceAggregation: max
+              filter:
+                expression: k8s.cluster.name = 'mocha'
+              groupBy:
+              - name: k8s.cluster.name
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: above
+            matchType: all_the_times
+            target: 0
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 5m
+          frequency: 1m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

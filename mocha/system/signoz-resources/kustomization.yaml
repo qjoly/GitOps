@@ -25,6 +25,7 @@ resources:
   - rules/proxmox-02-host-not-reporting.yaml
   - rules/proxmox-node-down.yaml
   - rules/proxmox-storage-not-available.yaml
+  - rules/slimfaas-raft-progress-stalled.yaml
   - dashboards/argocd.yaml
   - dashboards/cert-manager.yaml
   - dashboards/clickhouse-cold-storage.yaml
