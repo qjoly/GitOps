@@ -52,7 +52,7 @@ spec:
             cpu: 50m
             memory: 512Mi
         trivy:
-          command: rootfs
+          command: image
           ignoreUnfixed: true
           mode: Standalone
           resources:
