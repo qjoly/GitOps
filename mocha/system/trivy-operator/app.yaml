@@ -28,6 +28,10 @@ spec:
           excludeNodes: kubernetes.io/os=linux
         operator:
           builtInTrivyServer: false
+          privateRegistryScanSecretsNames:
+            blueweave: atcr-pull
+            factorio-lucca: atcr-pull
+            tranquil-pds: atcr-pull
           infraAssessmentScannerEnabled: true
           metricsClusterComplianceInfo: true
           metricsConfigAuditInfo: true
