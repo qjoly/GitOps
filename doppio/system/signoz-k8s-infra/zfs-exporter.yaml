@@ -22,7 +22,7 @@ spec:
         - operator: Exists
       containers:
         - name: zfs-exporter
-          image: ghcr.io/pdf/zfs_exporter:v2.5.0
+          image: ghcr.io/pdf/zfs_exporter:v2.5.1
           ports:
             - name: metrics
               containerPort: 9134
