@@ -1,0 +1,79 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trivy-operator
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trivy-system
+  source:
+    repoURL: https://aquasecurity.github.io/helm-charts/
+    chart: trivy-operator
+    targetRevision: 0.37.0
+    helm:
+      values: |
+        compliance:
+          cron: '*/5 * * * *'
+          reportType: all
+        nodeCollector:
+          excludeNodes: kubernetes.io/os=linux
+        operator:
+          builtInTrivyServer: false
+          infraAssessmentScannerEnabled: true
+          metricsClusterComplianceInfo: true
+          metricsConfigAuditInfo: true
+          metricsImageInfo: true
+          metricsInfraAssessmentInfo: true
+          metricsRbacAssessmentInfo: true
+          metricsVulnIdEnabled: false
+          scanJobTTL: 10m
+          scanJobsConcurrentLimit: 3
+        podSecurityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 50m
+            memory: 512Mi
+        trivy:
+          command: rootfs
+          ignoreUnfixed: true
+          mode: Standalone
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          server:
+            resources:
+              limits:
+                memory: 1Gi
+              requests:
+                cpu: 100m
+                memory: 256Mi
+          storageClassName: openebs-hostpath
+          storageSize: 5Gi
+        trivyOperator:
+          scanJobPodTemplateContainerSecurityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+              - DAC_OVERRIDE
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsUser: 0
