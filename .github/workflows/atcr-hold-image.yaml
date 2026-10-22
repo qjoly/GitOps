@@ -13,7 +13,7 @@ jobs:
   build:
     # Native arm64: the hold links SQLite with CGO, cross-building it under QEMU
     # takes ages.
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     steps:
       - name: Clone at-container-registry
         run: git clone --depth 1 --branch "${{ inputs.ref }}" https://tangled.org/evan.jarrett.net/at-container-registry atcr
