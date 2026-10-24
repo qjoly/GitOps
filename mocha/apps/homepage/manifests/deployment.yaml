@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: homepage
-          image: ghcr.io/gethomepage/homepage:v2.5.0
+          image: ghcr.io/gethomepage/homepage:v2.7.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
