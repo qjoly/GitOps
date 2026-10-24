@@ -44,9 +44,9 @@ spec:
           className: traefik
           annotations:
             cert-manager.io/cluster-issuer: cloudflare
-            external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
-            external-dns.alpha.kubernetes.io/hostname: rustfs.thoughtless.eu
-            external-dns.alpha.kubernetes.io/target: "82.64.54.199"
+            external-dns.kubernetes.io/cloudflare-proxied: "false"
+            external-dns.kubernetes.io/hostname: rustfs.thoughtless.eu
+            external-dns.kubernetes.io/target: "82.64.54.199"
           hosts:
             - host: rustfs.thoughtless.eu
               paths:

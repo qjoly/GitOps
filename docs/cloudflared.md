@@ -161,9 +161,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-    external-dns.alpha.kubernetes.io/hostname: nginx.thoughtless.eu
-    external-dns.alpha.kubernetes.io/target: 2f3b093d-bd57-4708-8d54-42723da21338.cfargotunnel.com
+    external-dns.kubernetes.io/cloudflare-proxied: "true"
+    external-dns.kubernetes.io/hostname: nginx.thoughtless.eu
+    external-dns.kubernetes.io/target: 2f3b093d-bd57-4708-8d54-42723da21338.cfargotunnel.com
   name: nginx
   namespace: default
 spec:
