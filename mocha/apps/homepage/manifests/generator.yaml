@@ -68,7 +68,7 @@ spec:
           serviceAccountName: homepage-generator
           containers:
             - name: generator
-              image: python:3.13-alpine
+              image: python:3.15-alpine
               command: ["python3", "/script/generate.py"]
               env:
                 - name: CLICKHOUSE_URL
