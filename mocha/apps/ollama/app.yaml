@@ -1,0 +1,64 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ollama
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ollama
+  source:
+    repoURL: https://otwld.github.io/ollama-helm
+    chart: ollama
+    targetRevision: 1.91.0
+    helm:
+      values: |
+        ollama:
+          models:
+            pull:
+              - gpt-oss:20b
+
+        extraEnv:
+          - name: OLLAMA_KEEP_ALIVE
+            value: "30m"
+          - name: OLLAMA_MAX_LOADED_MODELS
+            value: "1"
+          - name: OLLAMA_NUM_PARALLEL
+            value: "1"
+          - name: OLLAMA_CONTEXT_LENGTH
+            value: "8192"
+
+        persistentVolume:
+          enabled: true
+          size: 20Gi
+          storageClass: openebs-lvmpv
+          accessModes:
+            - ReadWriteOnce
+
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2Gi
+          limits:
+            cpu: "10"
+            memory: 24Gi
+
+        readinessProbe:
+          initialDelaySeconds: 60
+          failureThreshold: 60
+
+        livenessProbe:
+          initialDelaySeconds: 120
+          failureThreshold: 30
+
+        terminationGracePeriodSeconds: 30
+
+        tests:
+          enabled: false
