@@ -31,7 +31,7 @@ spec:
               mountPath: /config
       containers:
         - name: hermes
-          image: docker.io/nousresearch/hermes-agent:0.22.5
+          image: docker.io/nousresearch/hermes-agent:v0.22.5
           args:
             - gateway
             - run
