@@ -6,7 +6,7 @@ metadata:
 data:
   config.yaml: |
     model:
-      default: "qwen3:8b"
+      default: "gpt-oss:20b"
       provider: "custom"
       base_url: "http://ollama.ollama.svc.cluster.local:11434/v1"
 
@@ -20,7 +20,7 @@ data:
 
     discord:
       require_mention: true
-      auto_thread: true
+      auto_thread: false
 
     database:
       journal_mode: "wal"
