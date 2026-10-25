@@ -1,0 +1,20 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hermes
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: hermes
+  source:
+    repoURL: https://github.com/qjoly/gitops.git
+    targetRevision: HEAD
+    path: mocha/apps/hermes/manifests

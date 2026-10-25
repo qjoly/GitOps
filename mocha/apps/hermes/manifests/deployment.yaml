@@ -1,0 +1,70 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hermes
+  labels:
+    app.kubernetes.io/name: hermes
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hermes
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hermes
+    spec:
+      initContainers:
+        - name: seed-config
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - test -f /opt/data/config.yaml || cp /config/config.yaml /opt/data/config.yaml
+          volumeMounts:
+            - name: data
+              mountPath: /opt/data
+            - name: config
+              mountPath: /config
+      containers:
+        - name: hermes
+          image: docker.io/nousresearch/hermes-agent:0.22.5
+          args:
+            - gateway
+            - run
+          env:
+            - name: OLLAMA_HOST
+              value: http://ollama.ollama.svc.cluster.local:11434
+            - name: HERMES_API_TIMEOUT
+              value: "1800"
+            - name: DISCORD_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes
+                  key: bot_token
+            - name: DISCORD_ALLOWED_USERS
+              valueFrom:
+                secretKeyRef:
+                  name: hermes
+                  key: allowed_users
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          volumeMounts:
+            - name: data
+              mountPath: /opt/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hermes-data
+        - name: config
+          configMap:
+            name: hermes-config
+      terminationGracePeriodSeconds: 60
