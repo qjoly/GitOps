@@ -54,22 +54,19 @@ spec:
         persistence:
           storageClassName: openebs-lvmpv
 
-        # signoz-api-key, github-credentials and trmnl-upload-token come from
-        # Vault via the ExternalSecrets in manifests/externalsecret.yaml.
+        # signoz-api-key and trmnl-upload-token come from Vault via the
+        # ExternalSecrets in manifests/externalsecret.yaml.
         generator:
           enabled: true
           activeDeadlineSeconds: 300
           configMapName: image-generator-script
-          env:
-            GITHUB_USERNAME: qjoly
           secretEnv:
             - envName: SIGNOZ_API_KEY
               name: signoz-api-key
               key: api_key
-            - envName: GITHUB_TOKEN
-              name: github-credentials
-              key: token
           # One screen per cluster, each writing to its own slot on the display.
+          # The slot also offsets the panel rotation, so the two screens never
+          # sit on the same subject.
           screens:
             - name: mocha
               env:
