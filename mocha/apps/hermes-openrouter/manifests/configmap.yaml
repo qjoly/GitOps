@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-openrouter-config
+data:
+  config.yaml: |
+    model:
+      default: "nvidia/nemotron-3-super-120b-a12b:free"
+      provider: "openrouter"
+      base_url: "https://openrouter.ai/api/v1"
+
+    fallback_providers:
+      - provider: openrouter
+        model: "google/gemma-4-31b-it:free"
+      - provider: openrouter
+        model: "nvidia/nemotron-3.5-lightning:free"
+
+    platforms:
+      discord:
+        enabled: true
+
+    discord:
+      require_mention: true
+      auto_thread: false
+
+    database:
+      journal_mode: "wal"
