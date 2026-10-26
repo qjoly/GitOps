@@ -1,0 +1,77 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: proxyauthk8s
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: proxyauthk8s
+  sources:
+    - repoURL: ghcr.io/batleforc/proxyauthk8s
+      chart: chart-crd
+      targetRevision: 0.4.0
+    - repoURL: ghcr.io/batleforc/proxyauthk8s
+      chart: chart
+      targetRevision: 0.4.0
+      helm:
+        releaseName: proxyauthk8s
+        values: |
+          ingress:
+            className: traefik
+            host: proxyauth.mocha.thoughtless.eu
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+            tls:
+              enabled: true
+              secretName: proxyauth-tls
+
+          oidc:
+            source: secret
+            objectName: proxyauthk8s-back-oidc
+
+          back:
+            redis:
+              source: env
+              value:
+                url: redis://dragonfly.proxyauthk8s.svc:6379
+            logFormat: json
+
+          metrics:
+            prometheus:
+              enabled: true
+            serviceMonitor:
+              enabled: true
+    - repoURL: ghcr.io/dragonflydb/dragonfly/helm
+      chart: dragonfly
+      targetRevision: v1.40.1
+      helm:
+        releaseName: dragonfly
+        values: |
+          # Sessions only: one snapshot a minute is enough to survive a restart.
+          storage:
+            enabled: true
+            requests: 512Mi
+            storageClassName: openebs-lvmpv
+          extraArgs:
+            - --dbfilename=dump-{timestamp}
+            - --snapshot_cron=* * * * *
+          podSecurityContext:
+            fsGroup: 2000
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+    - repoURL: https://github.com/qjoly/gitops.git
+      targetRevision: HEAD
+      path: mocha/apps/proxyauthk8s/manifests

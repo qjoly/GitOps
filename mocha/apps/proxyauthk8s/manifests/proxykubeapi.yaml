@@ -1,0 +1,29 @@
+apiVersion: weebo.si.rs/v1
+kind: ProxyKubeApi
+metadata:
+  name: mocha
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  enabled: true
+  expose_via_dashboard: true
+  cert:
+    ConfigMap:
+      name: kube-root-ca.crt
+      key: ca.crt
+  service:
+    KubernetesService:
+      name: kubernetes
+      namespace: default
+      port: 443
+  auth_config:
+    validate_against: OidcProvider
+    oidc_provider:
+      enabled: true
+      issuer_url: https://authentik.mocha.thoughtless.eu/application/o/proxyauthk8s/
+      client_id: proxyauthk8s
+      audience: proxyauthk8s
+      extra_scope: openid profile email offline_access
+      config_from:
+        Secret:
+          name: proxyauthk8s-oidc-provider

@@ -306,7 +306,22 @@ spec:
                 scopes: [email, profile, openid, offline_access]
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kubernetes.svg
-
+              # ProxyAuthK8S: the dashboard and the kubectl plugin both come back
+              # through the back, which holds the secret -> confidential.
+              - slug: proxyauthk8s
+                name: Provider for ProxyAuthK8S (mocha)
+                appName: ProxyAuthK8S
+                clientType: confidential
+                clientID: proxyauthk8s
+                redirectURIs:
+                  - https://proxyauth.mocha.thoughtless.eu/auth/callback
+                  - https://proxyauth.mocha.thoughtless.eu/auth/callback/proxyauthk8s/mocha
+                  - https://proxyauth.mocha.thoughtless.eu/clusters/proxyauthk8s/mocha/auth/callback
+                  - http://localhost:18000/auth/callback/proxyauthk8s/mocha
+                scopes: [email, profile, openid, offline_access]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kubernetes.svg
+                secretName: oidc-proxyauthk8s
             proxyProviders:
               - slug: homepage
                 name: Homepage
