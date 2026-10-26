@@ -28,5 +28,23 @@ data:
       require_mention: true
       auto_thread: true
 
+    mcp_servers:
+      email:
+        url: "http://127.0.0.1:8080/mcp"
+        trust: untrusted
+        prompts: false
+        resources: false
+        connect_timeout: 120
+        tools:
+          include:
+            - list_emails
+            - search_emails
+            - get_email
+            - get_emails
+            - get_thread
+            - list_mailboxes
+            - list_accounts
+            - get_email_stats
+
     database:
       journal_mode: "wal"

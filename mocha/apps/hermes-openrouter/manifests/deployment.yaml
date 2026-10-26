@@ -63,6 +63,36 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /opt/data
+        - name: email-mcp
+          image: ghcr.io/codefuturist/email-mcp:0.6.0
+          args:
+            - http
+          env:
+            - name: MCP_EMAIL_ADDRESS
+              value: catchall@une-pause-cafe.fr
+            - name: MCP_EMAIL_IMAP_HOST
+              value: mail.infomaniak.com
+            - name: MCP_EMAIL_SMTP_HOST
+              value: mail.infomaniak.com
+            - name: MCP_EMAIL_READ_ONLY
+              value: "true"
+            - name: MCP_EMAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-openrouter
+                  key: mail_password
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: mcp-cache
+              mountPath: /home/node/.cache/email-mcp
+            - name: mcp-state
+              mountPath: /home/node/.local/state/email-mcp
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -70,4 +100,8 @@ spec:
         - name: config
           configMap:
             name: hermes-openrouter-config
+        - name: mcp-cache
+          emptyDir: {}
+        - name: mcp-state
+          emptyDir: {}
       terminationGracePeriodSeconds: 60
