@@ -295,8 +295,8 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kubernetes.svg
               - slug: joel-k8s-oidc
-                name: Provider for Kubernetes API (joel)
-                appName: Kubernetes (joel)
+                name: Provider for Kubernetes API (joel-k8s-oidc)
+                appName: Kubernetes (mocha)
                 clientType: public
                 clientID: joel-k8s-oidc
                 redirectURIs:
