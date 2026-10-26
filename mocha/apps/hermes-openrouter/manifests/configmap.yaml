@@ -6,15 +6,17 @@ metadata:
 data:
   config.yaml: |
     model:
-      default: "nvidia/nemotron-3-super-120b-a12b:free"
-      provider: "openrouter"
-      base_url: "https://openrouter.ai/api/v1"
+      default: gemini-3.7-flash
+      provider: gemini
+      base_url: https://generativelanguage.googleapis.com/v1beta
 
     fallback_providers:
-      - provider: openrouter
-        model: "google/gemma-4-31b-it:free"
-      - provider: openrouter
-        model: "nvidia/nemotron-3.5-lightning:free"
+      - provider: custom
+        model: gpt-oss:20b
+        base_url: http://ollama.ollama.svc.cluster.local:11434/v1
+
+    fallback:
+      min_switch_reset_seconds: 0
 
     platforms:
       discord:

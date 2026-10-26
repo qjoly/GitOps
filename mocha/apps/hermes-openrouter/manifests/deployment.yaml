@@ -36,11 +36,13 @@ spec:
             - gateway
             - run
           env:
-            - name: OPENROUTER_API_KEY
+            - name: GEMINI_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: hermes-openrouter
-                  key: openrouter_api_key
+                  key: gemini_api_key
+            - name: HERMES_API_TIMEOUT
+              value: "1800"
             - name: DISCORD_BOT_TOKEN
               valueFrom:
                 secretKeyRef:
