@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autovod
+  namespace: autovod
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: autovod
+  template:
+    metadata:
+      labels:
+        app: autovod
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: autovod
+          image: ghcr.io/qjoly/autovod:9b185a1a46338847c9a0220c2d19956a37783642
+          env:
+            - name: STREAMER_NAME
+              value: cuistops
+            - name: TWITCH_OAUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: autovod
+                  key: twitch_oauth_token
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: secrets
+              mountPath: /secrets
+              readOnly: true
+            - name: workdir
+              mountPath: /workdir
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: config
+          configMap:
+            name: autovod-config
+        - name: secrets
+          secret:
+            secretName: autovod
+            defaultMode: 0400
+        - name: workdir
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

@@ -1,0 +1,34 @@
+name: autovod-image
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: jenslys/autovod commit to build
+        default: 9b185a1a46338847c9a0220c2d19956a37783642
+        required: true
+permissions:
+  contents: read
+  packages: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: mocha/apps/autovod/image
+          build-args: AUTOVOD_REF=${{ inputs.ref }}
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/qjoly/autovod:${{ inputs.ref }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

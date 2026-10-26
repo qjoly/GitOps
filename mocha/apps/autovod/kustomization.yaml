@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: autovod
+resources:
+  - namespace.yaml
+  - externalsecret.yaml
+  - deployment.yaml
+configMapGenerator:
+  - name: autovod-config
+    files:
+      - cuistops.config
