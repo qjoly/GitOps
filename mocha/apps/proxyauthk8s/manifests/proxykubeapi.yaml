@@ -21,8 +21,7 @@ spec:
     oidc_provider:
       enabled: true
       issuer_url: https://authentik.mocha.thoughtless.eu/application/o/proxyauthk8s/
-      client_id: proxyauthk8s
-      audience: proxyauthk8s
+      accept_authorized_party: true
       extra_scope: openid profile email offline_access
       config_from:
         Secret:
