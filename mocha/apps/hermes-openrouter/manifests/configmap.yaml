@@ -32,10 +32,10 @@ data:
       email:
         url: "http://127.0.0.1:8080/mcp"
         trust: untrusted
-        prompts: false
-        resources: false
         connect_timeout: 120
         tools:
+          prompts: false
+          resources: false
           include:
             - list_emails
             - search_emails
