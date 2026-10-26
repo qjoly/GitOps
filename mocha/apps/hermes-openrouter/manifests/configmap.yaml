@@ -6,14 +6,16 @@ metadata:
 data:
   config.yaml: |
     model:
-      default: gemini-3.7-flash
-      provider: gemini
-      base_url: https://generativelanguage.googleapis.com/v1beta
+      default: "openai/gpt-oss-20b"
+      provider: "openrouter"
+      base_url: "https://openrouter.ai/api/v1"
 
     fallback_providers:
+      - provider: openrouter
+        model: "mistralai/mistral-nemo"
       - provider: custom
-        model: gpt-oss:20b
-        base_url: http://ollama.ollama.svc.cluster.local:11434/v1
+        model: "gpt-oss:20b"
+        base_url: "http://ollama.ollama.svc.cluster.local:11434/v1"
 
     fallback:
       min_switch_reset_seconds: 0
