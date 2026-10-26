@@ -295,8 +295,8 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kubernetes.svg
               - slug: joel-k8s-oidc
-                name: Provider for Kubernetes API (joel-k8s-oidc)
-                appName: Kubernetes (mocha)
+                name: Provider for Kubernetes API (joel)
+                appName: Kubernetes (joel)
                 clientType: public
                 clientID: joel-k8s-oidc
                 redirectURIs:
@@ -312,6 +312,7 @@ spec:
                 name: Provider for ProxyAuthK8S (mocha)
                 appName: ProxyAuthK8S
                 clientType: public
+                clientID: proxyauthk8s
                 redirectURIs:
                   - https://proxyauth.mocha.thoughtless.eu/auth/callback
                   - https://proxyauth.mocha.thoughtless.eu/auth/callback/proxyauthk8s/mocha
