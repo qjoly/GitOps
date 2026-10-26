@@ -20,7 +20,7 @@ data:
 
     discord:
       require_mention: true
-      auto_thread: false
+      auto_thread: true
 
     database:
       journal_mode: "wal"
