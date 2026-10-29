@@ -65,3 +65,26 @@ helm upgrade --install agent oci://ghcr.io/batleforc/proxyauthk8s/chart-agent \
 
 The release name matters: it fixes the ServiceAccount name
 (`agent-proxyauthk8s-agent`), which the `ProxyKubeApi` names as its `subject`.
+
+### Reaching the cluster
+
+The kubeconfig the dashboard offers for download embeds a static id token that
+dies after an hour. The `kubectl proxyauth` plugin renews it instead, so prefer
+its kubeconfig (`~/.kube/ristretto.yaml`, an `exec` credential plugin).
+
+```sh
+# once per machine
+curl -sSL -O https://github.com/batleforc/ProxyAuthK8S/releases/download/v0.4.0/kubectl-proxyauth_v0.4.0_darwin_arm64.tar.gz
+tar xzf kubectl-proxyauth_v0.4.0_darwin_arm64.tar.gz
+install -m 0755 kubectl-proxyauth ~/.local/bin/
+kubectl proxyauth config set-def \
+  --server-url https://proxyauth.mocha.thoughtless.eu --namespace proxyauthk8s
+
+# SSO, then per cluster; both open a browser
+kubectl proxyauth login
+kubectl proxyauth -n proxyauthk8s login ristretto
+
+kubectl --kubeconfig ~/.kube/ristretto.yaml get nodes
+```
+
+The token lands in the system keyring, not in the kubeconfig.
