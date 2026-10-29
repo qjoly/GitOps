@@ -7,19 +7,18 @@ data:
   generate_image.py: |
     #!/usr/bin/env python3
     """
-    Generates the screen image for the self-hosted trmnl-server.
+    Generates the screen images for the self-hosted trmnl-server.
 
-    The display hangs on a wall and is read from a few metres away, which caps the
-    useful content at a handful of lines. Rather than shrinking everything to fit,
-    the screen shows one subject per refresh and rotates between them:
+    The device cycles through the slots on its own (slot_index in the patched
+    trmnl_server.py), so each slot holds a fixed subject rather than a rotation
+    driven from here:
 
-      0 - ALERTS : active SigNoz alerts
-      1 - DISK   : fullest PVCs on the cluster
-      2 - NODES  : CPU and memory pressure per node
+      slot 0 - HEALTH    : active alerts, then ArgoCD applications off their target
+      slot 1 - VOLUMES   : PVC fill per cluster
+      slot 2 - RESOURCES : CPU and memory, used and reserved, then per-node detail
 
-    The rotation is derived from the clock rather than stored, since the CronJob
-    keeps no state between runs. The slot is folded in so the two screens never
-    show the same panel at the same time.
+    Every screen puts the clusters side by side so they can be compared without
+    waiting for the display to flip.
     """
     import os
     import sys
@@ -34,8 +33,9 @@ data:
 
     SIGNOZ_URL = os.environ.get("SIGNOZ_URL", "http://signoz.signoz.svc.cluster.local:8080")
     SIGNOZ_KEY = os.environ["SIGNOZ_API_KEY"]
-    CLUSTER_NAME = os.environ.get("CLUSTER_NAME", "mocha")
-    SLOT = os.environ.get("SLOT", "0")  # "0" -> screen.bmp, "1" -> screen1.bmp
+    CLUSTERS = [c.strip() for c in os.environ.get("CLUSTERS", "mocha,turing").split(",") if c.strip()]
+    SCREEN = os.environ.get("SCREEN", "HEALTH").upper()
+    SLOT = os.environ.get("SLOT", "0")
     UPLOAD_URL = os.environ.get(
         "UPLOAD_URL",
         f"https://trmnl-server.trmnl-server.svc.cluster.local:443/custom/upload_screen?slot={SLOT}",
@@ -43,9 +43,16 @@ data:
     UPLOAD_TOKEN = os.environ["UPLOAD_TOKEN"]
 
     WIDTH, HEIGHT = 800, 480
-    HEADER_H = 62
-    MARGIN = 22
-    ROTATION_SECONDS = int(os.environ.get("ROTATION_SECONDS", "900"))
+    MARGIN = 14
+    TOPBAR_H = 32
+    GUTTER = 16
+    COL_W = (WIDTH - MARGIN * 2 - GUTTER) // 2
+
+    F_BAR = 21      # top bar
+    F_CLUSTER = 19  # cluster name, white on black
+    F_BODY = 16
+    F_SMALL = 13
+
     DISK_WARN_PCT = float(os.environ.get("DISK_WARN_PCT", "85"))
     NODE_WARN_PCT = float(os.environ.get("NODE_WARN_PCT", "85"))
 
@@ -58,7 +65,7 @@ data:
 
 
     def scalar_query(queries, window_ms=1_800_000):
-        """Runs a scalar query_range and returns {queryName: [(group..., value)]}."""
+        """Runs a scalar query_range and returns {queryName: [row, ...]}."""
         end = now_ms()
         body = {
             "schemaVersion": "v1",
@@ -70,10 +77,7 @@ data:
         }
         resp = session.post(f"{SIGNOZ_URL}/api/v5/query_range", json=body, timeout=20)
         resp.raise_for_status()
-        out = {}
-        for result in resp.json()["data"]["data"]["results"]:
-            out[result["queryName"]] = result.get("data") or []
-        return out
+        return {r["queryName"]: (r.get("data") or []) for r in resp.json()["data"]["data"]["results"]}
 
 
     def metric_query(name, metric, time_agg, space_agg, group_by, expression, disabled=False):
@@ -99,8 +103,7 @@ data:
 
     def get_active_alerts():
         """SigNoz rules are not scoped to a cluster. A rule carrying a `cluster`
-        label is honoured; everything else is treated as global and shown on both
-        screens."""
+        label is attributed to it; everything else is treated as global."""
         resp = session.get(f"{SIGNOZ_URL}/api/v1/rules", timeout=15)
         resp.raise_for_status()
         alerts = []
@@ -108,18 +111,82 @@ data:
             if rule.get("state") in ("inactive", "disabled"):
                 continue
             labels = rule.get("labels") or {}
-            if labels.get("cluster", CLUSTER_NAME) != CLUSTER_NAME:
-                continue
-            alerts.append({"name": rule["alert"], "critical": labels.get("severity") == "critical"})
+            alerts.append(
+                {
+                    "name": rule["alert"],
+                    "critical": labels.get("severity") == "critical",
+                    "cluster": labels.get("cluster"),
+                }
+            )
         alerts.sort(key=lambda a: not a["critical"])
         return alerts
 
 
-    def get_disk_usage():
+    def get_argocd_drift(cluster):
+        """argocd_app_info carries one series per application, valued 1, with the
+        sync and health state as attributes. Counting series therefore counts
+        applications."""
+        base = f"k8s.cluster.name = '{cluster}'"
+        results = scalar_query(
+            [
+                metric_query("A", "argocd_app_info", "latest", "count", [], base),
+                metric_query("B", "argocd_app_info", "latest", "count", ["name"],
+                             f"{base} AND sync_status != 'Synced'"),
+                metric_query("C", "argocd_app_info", "latest", "count", ["name"],
+                             f"{base} AND health_status != 'Healthy'"),
+            ]
+        )
+        total = int(results.get("A", [[0]])[0][-1]) if results.get("A") else 0
+        out_of_sync = [r[0] for r in results.get("B", [])]
+        degraded = [r[0] for r in results.get("C", [])]
+        return {"total": total, "out_of_sync": out_of_sync, "degraded": degraded}
+
+
+    def get_cluster_resources(cluster):
+        where = f"k8s.cluster.name = '{cluster}'"
+        results = scalar_query(
+            [
+                metric_query("A", "k8s.node.cpu.time", "rate", "sum", [], where),
+                metric_query("B", "k8s.node.allocatable_cpu", "latest", "sum", [], where),
+                metric_query("C", "k8s.node.memory.working_set", "latest", "sum", [], where),
+                metric_query("D", "k8s.node.allocatable_memory", "latest", "sum", [], where),
+                metric_query("E", "k8s.container.cpu_request", "latest", "sum", [], where),
+                metric_query("F", "k8s.container.memory_request", "latest", "sum", [], where),
+                metric_query("G", "k8s.pod.phase", "latest", "count", [], where),
+                metric_query("H", "k8s.namespace.phase", "latest", "count", [], where),
+                metric_query("I", "k8s.deployment.desired", "latest", "sum", [], where),
+                metric_query("J", "k8s.deployment.available", "latest", "sum", [], where),
+                metric_query("K", "k8s.node.condition_ready", "latest", "sum", [], where),
+            ]
+        )
+
+        def one(key):
+            rows = results.get(key) or []
+            return rows[0][-1] if rows else None
+
+        cpu_alloc, mem_alloc = one("B"), one("D")
+        return {
+            "cpu_used_pct": 100 * one("A") / cpu_alloc if one("A") and cpu_alloc else None,
+            "cpu_req_pct": 100 * one("E") / cpu_alloc if one("E") and cpu_alloc else None,
+            "mem_used_pct": 100 * one("C") / mem_alloc if one("C") and mem_alloc else None,
+            "mem_req_pct": 100 * one("F") / mem_alloc if one("F") and mem_alloc else None,
+            "cpu_label": f"{one('A'):.1f} used / {one('E'):.1f} req of {cpu_alloc:.0f}c"
+            if one("A") and one("E") and cpu_alloc else "",
+            "mem_label": f"{human_bytes(one('C'))} used / {human_bytes(one('F'))} req "
+            f"of {human_bytes(mem_alloc)}" if one("C") and one("F") and mem_alloc else "",
+            "nodes": int(one("K")) if one("K") else 0,
+            "pods": int(one("G")) if one("G") else 0,
+            "namespaces": int(one("H")) if one("H") else 0,
+            "replicas_desired": int(one("I")) if one("I") else 0,
+            "replicas_available": int(one("J")) if one("J") else 0,
+        }
+
+
+    def get_disk_usage(cluster):
         """Fill ratio per PVC. The metric also covers configMap/secret/emptyDir
-        volumes, which carry an empty claim name and would otherwise show up as the
-        node filesystem."""
-        where = f"k8s.cluster.name = '{CLUSTER_NAME}' AND k8s.persistentvolumeclaim.name != ''"
+        volumes, whose claim name is present but empty - without the filter they
+        come back as the node filesystem."""
+        where = f"k8s.cluster.name = '{cluster}' AND k8s.persistentvolumeclaim.name != ''"
         group = ["k8s.namespace.name", "k8s.persistentvolumeclaim.name"]
         results = scalar_query(
             [
@@ -130,28 +197,27 @@ data:
             ]
         )
         sizes = {(r[0], r[1]): r[-1] for r in results.get("C", [])}
-        volumes = []
-        for row in results.get("F1", []):
-            ns, pvc, pct = row[0], row[1], row[-1]
-            volumes.append({"ns": ns, "pvc": pvc, "pct": pct, "size": sizes.get((ns, pvc))})
-        # PVCs backed by one shared filesystem (CephFS on turing) all report the
-        # pool, not the claim, and would otherwise fill the panel with the same row.
-        collapsed = {}
+        volumes = [
+            {"ns": r[0], "pvc": r[1], "pct": r[-1], "size": sizes.get((r[0], r[1]))}
+            for r in results.get("F1", [])
+        ]
+        # PVCs sharing one filesystem (CephFS on turing) all report the pool rather
+        # than the claim, and would otherwise repeat the same row.
+        groups = {}
         for vol in volumes:
-            key = (round(vol["pct"], 1), round((vol["size"] or 0) / 1e9, 1))
-            collapsed.setdefault(key, []).append(vol)
+            groups.setdefault((round(vol["pct"], 1), round((vol["size"] or 0) / 1e9, 1)), []).append(vol)
         merged = []
-        for group in collapsed.values():
-            head = group[0]
-            if len(group) > 1:
-                head = dict(head, ns="", pvc=f"{len(group)} PVCs on a shared volume")
+        for members in groups.values():
+            head = members[0]
+            if len(members) > 1:
+                head = dict(head, ns="", pvc=f"{len(members)} PVCs, shared volume")
             merged.append(head)
         merged.sort(key=lambda v: v["pct"], reverse=True)
         return merged
 
 
-    def get_node_usage():
-        where = f"k8s.cluster.name = '{CLUSTER_NAME}'"
+    def get_node_usage(cluster):
+        where = f"k8s.cluster.name = '{cluster}'"
         group = ["k8s.node.name"]
         results = scalar_query(
             [
@@ -172,12 +238,10 @@ data:
             nodes.append(
                 {
                     "name": name,
-                    "cpu_used": cpu_used,
-                    "cpu_total": cpu_total,
                     "cpu_pct": 100 * cpu_used / cpu_total if cpu_used and cpu_total else None,
-                    "mem_used": mem_used,
-                    "mem_total": mem_total,
                     "mem_pct": 100 * mem_used / mem_total if mem_used and mem_total else None,
+                    "cpu_label": f"{cpu_used:.1f}/{cpu_total:.0f}c" if cpu_used and cpu_total else "",
+                    "mem_label": f"{human_bytes(mem_used)}/{human_bytes(mem_total)}" if mem_used else "",
                 }
             )
         return nodes
@@ -195,11 +259,11 @@ data:
     }
 
 
-    def sanitize(text):
-        text = "" if text is None else str(text)
+    def sanitize(value):
+        value = "" if value is None else str(value)
         for uni, ascii_ in _UNICODE_TO_ASCII.items():
-            text = text.replace(uni, ascii_)
-        return text
+            value = value.replace(uni, ascii_)
+        return value
 
 
     def font(size):
@@ -214,13 +278,13 @@ data:
             font=font(size),
             fill=fill,
             anchor=anchor,
-            stroke_width=max(1, size // 22) if bold else 0,
+            stroke_width=1 if bold else 0,
             stroke_fill=fill,
         )
 
 
-    def fit(draw, body, size, max_width, bold=False):
-        """Shortens with a middle ellipsis: PVC and pod names differ by their tail."""
+    def fit(draw, body, size, max_width):
+        """Middle ellipsis: PVC and node names are told apart by their tail."""
         body = sanitize(body)
         f = font(size)
         if draw.textlength(body, font=f) <= max_width:
@@ -228,12 +292,15 @@ data:
         lo, hi = 1, len(body)
         while lo < hi:
             mid = (lo + hi + 1) // 2
-            head, tail = body[: mid // 2], body[-(mid - mid // 2) :]
-            if draw.textlength(f"{head}..{tail}", font=f) <= max_width:
+            if draw.textlength(f"{body[: mid // 2]}..{body[-(mid - mid // 2):]}", font=f) <= max_width:
                 lo = mid
             else:
                 hi = mid - 1
         return f"{body[: lo // 2]}..{body[-(lo - lo // 2):]}"
+
+
+    def plural(count, singular):
+        return f"{count} {singular}{'' if count == 1 else 's'}"
 
 
     def human_bytes(value):
@@ -241,205 +308,256 @@ data:
             return "?"
         for unit in ("B", "K", "M", "G", "T"):
             if value < 1024:
-                return f"{value:.0f}{unit}" if unit != "B" else f"{value:.0f}B"
+                return f"{value:.0f}{unit}"
             value /= 1024
         return f"{value:.0f}P"
 
 
-    def draw_bar(draw, x, y, w, h, frac):
-        draw.rectangle((x, y, x + w, y + h), outline=0, width=3)
-        inner = w - 8
+    def band(draw, x, y, w, label, size=F_CLUSTER, right=None):
+        """Filled bar with reversed text - the only section marker that still
+        separates cleanly once the content is this dense."""
+        h = size + 9
+        draw.rectangle((x, y, x + w, y + h), fill=0)
+        text(draw, (x + 7, y + 3), label, size, bold=True, fill=1)
+        if right:
+            text(draw, (x + w - 7, y + 4), right, F_SMALL, fill=1, anchor="ra")
+        return y + h + 6
+
+
+    def mini_bar(draw, x, y, w, h, frac):
+        draw.rectangle((x, y, x + w, y + h), outline=0, width=1)
+        inner = w - 4
         filled = int(max(0.0, min(1.0, frac)) * inner)
         if filled > 0:
-            draw.rectangle((x + 4, y + 4, x + 4 + filled, y + h - 4), fill=0)
+            draw.rectangle((x + 2, y + 2, x + 2 + filled, y + h - 2), fill=0)
 
 
-    def draw_pct(draw, right, y, pct, size, warn):
-        """Warning levels get the inverted treatment - it is the only emphasis that
-        survives at this viewing distance."""
+    def pct_label(draw, right, y, pct, warn):
         label = "?" if pct is None else f"{pct:.0f}%"
-        w = draw.textlength(label, font=font(size))
         if warn:
-            draw.rectangle((right - w - 14, y - 6, right + 6, y + size + 8), fill=0)
-            text(draw, (right, y), label, size, bold=True, fill=1, anchor="ra")
+            w = draw.textlength(label, font=font(F_BODY))
+            draw.rectangle((right - w - 6, y - 2, right + 3, y + F_BODY + 4), fill=0)
+            text(draw, (right, y), label, F_BODY, bold=True, fill=1, anchor="ra")
         else:
-            text(draw, (right, y), label, size, bold=True, anchor="ra")
+            text(draw, (right, y), label, F_BODY, bold=True, anchor="ra")
 
 
-    def draw_header(img, draw, panel_name):
-        draw.rectangle((0, 0, WIDTH, HEADER_H), fill=0)
-        text(draw, (MARGIN, 10), CLUSTER_NAME.upper(), 38, bold=True, fill=1)
-        text(draw, (WIDTH - MARGIN, 16), panel_name, 30, bold=True, fill=1, anchor="ra")
+    def topbar(draw, title, note=""):
+        draw.rectangle((0, 0, WIDTH, TOPBAR_H), fill=0)
+        text(draw, (MARGIN, 4), title, F_BAR, bold=True, fill=1)
+        stamp = datetime.now(DISPLAY_TZ).strftime("%a %d %b  %H:%M")
+        text(draw, (WIDTH - MARGIN, 7), stamp, F_SMALL, fill=1, anchor="ra")
+        if note:
+            text(draw, (WIDTH // 2, 7), note, F_SMALL, fill=1, anchor="ma")
+        return TOPBAR_H + 8
 
 
-    def draw_footer(draw, index):
-        """Dots show where the rotation stands, so a glance tells you another
-        subject is coming rather than that the screen is stuck."""
-        stamp = datetime.now(DISPLAY_TZ).strftime("%a %d %b %H:%M")
-        text(draw, (WIDTH - MARGIN, HEIGHT - 26), stamp, 18, anchor="ra")
-        x = MARGIN
-        for i in range(len(PANELS)):
-            box = (x, HEIGHT - 22, x + 12, HEIGHT - 10)
-            draw.rectangle(box, outline=0, width=2, fill=0 if i == index else 1)
-            x += 20
-
-
-    def panel_alerts(draw, alerts):
-        top = HEADER_H + 40
+    def alert_block(draw, x, y, w, alerts, limit):
+        for alert in alerts[:limit]:
+            marker = (x + 2, y + 4, x + 11, y + 13)
+            # Hollow for warnings, solid for critical.
+            draw.rectangle(marker, outline=0, width=2, fill=0 if alert["critical"] else 1)
+            scope = f"[{alert['cluster']}] " if alert["cluster"] else ""
+            text(draw, (x + 18, y), fit(draw, scope + alert["name"], F_BODY, w - 20), F_BODY)
+            y += F_BODY + 5
         if not alerts:
-            text(draw, (WIDTH // 2, top + 40), "ALL CLEAR", 110, bold=True, anchor="ma")
-            text(draw, (WIDTH // 2, top + 210), "no active alert", 36, anchor="ma")
-            return
-        count = str(len(alerts))
-        text(draw, (MARGIN, top - 10), count, 150, bold=True)
-        number_w = draw.textlength(count, font=font(150))
-        label = "ALERT FIRING" if len(alerts) == 1 else "ALERTS FIRING"
-        text(draw, (MARGIN + number_w + 30, top + 50), label, 40, bold=True)
-        y = top + 170
-        for alert in alerts[:3]:
-            if y > HEIGHT - 80:
+            text(draw, (x + 2, y), "No active alert", F_BODY)
+            y += F_BODY + 5
+        return y
+
+
+    def node_block(draw, x, y, w, nodes):
+        bar_x = x + 18
+        bar_w = w - 18 - 56
+        for node in nodes:
+            text(draw, (x + 2, y), fit(draw, node["name"], F_BODY, w - 70), F_BODY, bold=True)
+            text(draw, (x + w, y + 1), node["mem_label"], F_SMALL, anchor="ra")
+            y += F_BODY + 4
+            for key, label in (("cpu", "C"), ("mem", "R")):
+                pct = node[f"{key}_pct"]
+                text(draw, (x + 2, y - 2), label, F_SMALL)
+                mini_bar(draw, bar_x, y, bar_w, 10, (pct or 0) / 100)
+                pct_label(draw, x + w, y - 3, pct, pct is not None and pct >= NODE_WARN_PCT)
+                y += 15
+            y += 6
+        if not nodes:
+            text(draw, (x + 2, y), "No data", F_BODY)
+            y += F_BODY + 5
+        return y
+
+
+    def volume_block(draw, x, y, w, volumes, limit, bottom):
+        for vol in volumes[:limit]:
+            if y + 28 > bottom:
                 break
-            marker = (MARGIN, y + 10, MARGIN + 18, y + 28)
-            # Hollow marker for warnings, solid for critical.
-            draw.rectangle(marker, outline=0, width=3, fill=0 if alert["critical"] else 1)
-            text(draw, (MARGIN + 36, y), fit(draw, alert["name"], 34, WIDTH - MARGIN * 2 - 36), 34)
-            y += 52
-
-
-    def panel_disk(draw, volumes):
-        top = HEADER_H + 20
-        if not volumes:
-            text(draw, (WIDTH // 2, top + 80), "NO DATA", 90, bold=True, anchor="ma")
-            return
-        row_h = 96
-        pct_w = 150
-        for vol in volumes[:4]:
             warn = vol["pct"] is not None and vol["pct"] >= DISK_WARN_PCT
             name = f"{vol['ns']}/{vol['pvc']}" if vol["ns"] else vol["pvc"]
-            text(draw, (MARGIN, top), fit(draw, name, 30, WIDTH - MARGIN * 2 - pct_w), 30)
-            draw_pct(draw, WIDTH - MARGIN, top, vol["pct"], 38, warn)
-            size = human_bytes(vol["size"])
-            text(draw, (WIDTH - MARGIN, top + 46), size, 22, anchor="ra")
-            draw_bar(draw, MARGIN, top + 44, WIDTH - MARGIN * 2 - 80, 36, (vol["pct"] or 0) / 100)
-            top += row_h
+            text(draw, (x + 2, y), fit(draw, name, F_BODY, w - 92), F_BODY)
+            text(draw, (x + w - 48, y + 1), human_bytes(vol["size"]), F_SMALL, anchor="ra")
+            pct_label(draw, x + w, y, vol["pct"], warn)
+            y += F_BODY + 3
+            mini_bar(draw, x + 2, y, w - 4, 9, (vol["pct"] or 0) / 100)
+            y += 18
+        if not volumes:
+            text(draw, (x + 2, y), "No data", F_BODY)
+        return y
 
 
-    def _node_rows(node):
-        return (
-            ("cpu", "CPU", f"{node['cpu_used']:.1f}/{node['cpu_total']:.0f}c"
-             if node["cpu_used"] is not None and node["cpu_total"] else ""),
-            ("mem", "RAM", f"{human_bytes(node['mem_used'])}/{human_bytes(node['mem_total'])}"
-             if node["mem_used"] is not None else ""),
-        )
+    def drift_block(draw, x, y, w, drift):
+        if drift["total"] == 0:
+            text(draw, (x + 2, y), "No metrics", F_BODY)
+            return y + F_BODY + 5
+        if not drift["out_of_sync"] and not drift["degraded"]:
+            text(draw, (x + 2, y), "All synced and healthy", F_BODY)
+            return y + F_BODY + 5
+        for label, names, solid in (
+            ("Degraded", drift["degraded"], True),
+            ("OutOfSync", drift["out_of_sync"], False),
+        ):
+            if not names:
+                continue
+            text(draw, (x + 2, y), f"{label} ({len(names)})", F_SMALL, bold=True)
+            y += F_SMALL + 4
+            for name in names[:6]:
+                marker = (x + 6, y + 4, x + 13, y + 11)
+                draw.rectangle(marker, outline=0, width=2, fill=0 if solid else 1)
+                text(draw, (x + 20, y), fit(draw, name, F_BODY, w - 22), F_BODY)
+                y += F_BODY + 4
+            if len(names) > 6:
+                text(draw, (x + 20, y), f"+{len(names) - 6} more", F_SMALL)
+                y += F_SMALL + 4
+            y += 4
+        return y
 
 
-    def panel_nodes(draw, nodes):
-        top = HEADER_H + 18
-        available = HEIGHT - top - 46
-        if not nodes:
-            text(draw, (WIDTH // 2, top + 80), "NO DATA", 90, bold=True, anchor="ma")
-            return
-        visible = nodes[:4]
-        block = available // len(visible)
-
-        if len(visible) <= 2:
-            # Room to breathe: node name on its own line, thick bars, absolute values.
-            bar_h = min(66, (block - 60) // 2 - 8)
-            name_size = 40
-            node_h = name_size + 10 + bar_h * 2 + 20
-            y = top + max(0, (available - node_h * len(visible)) // 2)
-            bar_x, right_w = MARGIN + 92, 160
-            bar_w = WIDTH - MARGIN - right_w - bar_x
-            for node in visible:
-                text(draw, (MARGIN, y), fit(draw, node["name"], name_size, WIDTH - MARGIN * 2),
-                     name_size, bold=True)
-                row = y + name_size + 10
-                for key, label, detail in _node_rows(node):
-                    pct = node[f"{key}_pct"]
-                    text(draw, (MARGIN, row + (bar_h - 26) // 2), label, 26)
-                    draw_bar(draw, bar_x, row, bar_w, bar_h, (pct or 0) / 100)
-                    draw_pct(draw, WIDTH - MARGIN, row, pct, 34, pct is not None and pct >= NODE_WARN_PCT)
-                    if detail:
-                        text(draw, (WIDTH - MARGIN, row + 40), detail, 20, anchor="ra")
-                    row += bar_h + 6
-                y += node_h
-            return
-
-        # Three nodes or more: the name moves to a left column and the bars thin
-        # out. Bar length still carries the reading, so height can go.
-        name_size = 28
-        bar_h = max(18, min(30, (block - 22) // 2 - 6))
-        name_w = 180
-        bar_x = MARGIN + name_w + 42
-        right_w = 110
-        bar_w = WIDTH - MARGIN - right_w - bar_x
-        y = top + max(0, (available - block * len(visible)) // 2)
-        for node in visible:
-            pair_h = bar_h * 2 + 6
-            text(draw, (MARGIN, y + (pair_h - name_size) // 2),
-                 fit(draw, node["name"], name_size, name_w), name_size, bold=True)
-            row = y
-            for key, label, _ in _node_rows(node):
-                pct = node[f"{key}_pct"]
-                text(draw, (bar_x - 32, row + (bar_h - 20) // 2), label[0], 20)
-                draw_bar(draw, bar_x, row, bar_w, bar_h, (pct or 0) / 100)
-                draw_pct(draw, WIDTH - MARGIN, row - 2, pct, 26,
-                         pct is not None and pct >= NODE_WARN_PCT)
-                row += bar_h + 6
-            y += block
-        if len(nodes) > len(visible):
-            text(draw, (WIDTH - MARGIN, HEIGHT - 48), f"+{len(nodes) - len(visible)} more", 20, anchor="ra")
+    def meter(draw, x, y, w, label, used_pct, req_pct, detail):
+        """Two bars per resource: what is actually consumed, and what is reserved by
+        requests. Reserved above 100% is the interesting case, so it is not clamped
+        out of sight - the percentage stays readable even when the bar is full."""
+        text(draw, (x + 2, y), label, F_SMALL, bold=True)
+        text(draw, (x + w, y), detail, F_SMALL, anchor="ra")
+        y += F_SMALL + 4
+        for tag, pct in (("used", used_pct), ("req", req_pct)):
+            text(draw, (x + 2, y - 1), tag, F_SMALL)
+            mini_bar(draw, x + 34, y, w - 34 - 46, 10, (pct or 0) / 100)
+            pct_label(draw, x + w, y - 3, pct, pct is not None and pct >= 100)
+            y += 15
+        return y + 5
 
 
-    PANELS = ("ALERTS", "DISK", "NODES")
+    def screen_health(draw):
+        alerts = get_active_alerts()
+        firing = len(alerts)
+        y = topbar(draw, "HEALTH")
+
+        y = band(draw, MARGIN, y, WIDTH - MARGIN * 2, "ALERTS", right=f"{firing} firing")
+        y = alert_block(draw, MARGIN, y, WIDTH - MARGIN * 2, alerts, 5) + 8
+
+        for index, cluster in enumerate(CLUSTERS[:2]):
+            x = MARGIN + index * (COL_W + GUTTER)
+            try:
+                drift = get_argocd_drift(cluster)
+            except Exception as e:
+                print(f"[warn] argocd for {cluster}: {e}", file=sys.stderr)
+                drift = {"total": 0, "out_of_sync": [], "degraded": []}
+            col_y = band(draw, x, y, COL_W, cluster.upper(), right=plural(drift["total"], "app"))
+            drift_block(draw, x, col_y, COL_W, drift)
+
+        mid = MARGIN + COL_W + GUTTER // 2
+        draw.line((mid, y, mid, HEIGHT - MARGIN), fill=0, width=1)
 
 
-    def current_panel():
-        override = os.environ.get("PANEL")
-        if override:
-            return PANELS.index(override.upper())
-        # Offsetting by the slot keeps the two screens on different subjects.
-        return (int(time.time()) // ROTATION_SECONDS + int(SLOT)) % len(PANELS)
+    def screen_volumes(draw):
+        y = topbar(draw, "VOLUMES")
+        for index, cluster in enumerate(CLUSTERS[:2]):
+            x = MARGIN + index * (COL_W + GUTTER)
+            try:
+                volumes = get_disk_usage(cluster)
+            except Exception as e:
+                print(f"[warn] volumes for {cluster}: {e}", file=sys.stderr)
+                volumes = []
+            over = sum(1 for v in volumes if v["pct"] and v["pct"] >= DISK_WARN_PCT)
+            col_y = band(draw, x, y, COL_W, cluster.upper(),
+                         right=f"{over} over {DISK_WARN_PCT:.0f}%" if over
+                         else plural(len(volumes), "volume"))
+            volume_block(draw, x, col_y, COL_W, volumes, 12, HEIGHT - MARGIN)
+
+        mid = MARGIN + COL_W + GUTTER // 2
+        draw.line((mid, y, mid, HEIGHT - MARGIN), fill=0, width=1)
 
 
-    def render(index):
+    def screen_resources(draw):
+        y = topbar(draw, "RESOURCES")
+        for index, cluster in enumerate(CLUSTERS[:2]):
+            x = MARGIN + index * (COL_W + GUTTER)
+            try:
+                res = get_cluster_resources(cluster)
+            except Exception as e:
+                print(f"[warn] resources for {cluster}: {e}", file=sys.stderr)
+                res = None
+            try:
+                nodes = get_node_usage(cluster)
+            except Exception as e:
+                print(f"[warn] nodes for {cluster}: {e}", file=sys.stderr)
+                nodes = []
+
+            col_y = band(draw, x, y, COL_W, cluster.upper(),
+                         right=plural(res["nodes"] if res else len(nodes), "node"))
+            if not res:
+                text(draw, (x + 2, col_y), "No data", F_BODY)
+                continue
+
+            # k8s.deployment.* counts replicas, not Deployment objects.
+            short = res["replicas_desired"] - res["replicas_available"]
+            counters = f"{res['pods']} pods   {res['namespaces']} ns   " + (
+                f"{plural(short, 'replica')} short" if short > 0
+                else plural(res["replicas_desired"], "replica")
+            )
+            text(draw, (x + 2, col_y), counters, F_BODY)
+            col_y += F_BODY + 8
+
+            col_y = meter(draw, x, col_y, COL_W, "CPU", res["cpu_used_pct"], res["cpu_req_pct"],
+                          res["cpu_label"])
+            col_y = meter(draw, x, col_y, COL_W, "MEMORY", res["mem_used_pct"], res["mem_req_pct"],
+                          res["mem_label"])
+            col_y = band(draw, x, col_y, COL_W, "NODES", size=F_SMALL + 2)
+            node_block(draw, x, col_y, COL_W, nodes[:4])
+
+        mid = MARGIN + COL_W + GUTTER // 2
+        draw.line((mid, y, mid, HEIGHT - MARGIN), fill=0, width=1)
+
+
+    SCREENS = {
+        "HEALTH": screen_health,
+        "VOLUMES": screen_volumes,
+        "RESOURCES": screen_resources,
+    }
+
+
+    def render():
         img = Image.new("1", (WIDTH, HEIGHT), 1)
         draw = ImageDraw.Draw(img)
-        name = PANELS[index]
-        draw_header(img, draw, name)
-
-        if name == "ALERTS":
-            panel_alerts(draw, get_active_alerts())
-        elif name == "DISK":
-            panel_disk(draw, get_disk_usage())
-        else:
-            panel_nodes(draw, get_node_usage())
-
-        draw_footer(draw, index)
+        SCREENS[SCREEN](draw)
         return img
 
 
     def main():
-        index = current_panel()
         try:
-            img = render(index)
+            img = render()
         except Exception as e:
-            print(f"[error] panel {PANELS[index]} failed: {e}", file=sys.stderr)
+            print(f"[error] screen {SCREEN} failed: {e}", file=sys.stderr)
             img = Image.new("1", (WIDTH, HEIGHT), 1)
             draw = ImageDraw.Draw(img)
-            draw_header(img, draw, PANELS[index])
-            text(draw, (WIDTH // 2, HEADER_H + 120), "NO DATA", 90, bold=True, anchor="ma")
-            text(draw, (WIDTH // 2, HEADER_H + 230), "collection failed", 30, anchor="ma")
-            draw_footer(draw, index)
-
-        buf = BytesIO()
-        img.save(buf, format="BMP")
+            topbar(draw, SCREEN, "collection failed")
+            text(draw, (WIDTH // 2, HEIGHT // 2), "NO DATA", 60, bold=True, anchor="mm")
 
         if os.environ.get("PREVIEW_PATH"):
             img.save(os.environ["PREVIEW_PATH"])
             print(f"wrote preview to {os.environ['PREVIEW_PATH']}")
             return
 
+        buf = BytesIO()
+        img.save(buf, format="BMP")
         resp = requests.post(
             UPLOAD_URL,
             data=buf.getvalue(),
@@ -448,7 +566,7 @@ data:
             timeout=15,
         )
         resp.raise_for_status()
-        print(f"uploaded {PANELS[index]} to slot {SLOT}: {resp.json()}")
+        print(f"uploaded {SCREEN} to slot {SLOT}: {resp.json()}")
 
 
     if __name__ == "__main__":

@@ -210,10 +210,30 @@ data:
     db_file = os.path.join(current_dir, "db/clientData.txt")
     db_client_log_file = os.path.join(current_dir, "db/clientLog.txt")
 
+    # The display cycles through these slots, one request each. Slot 0 is the
+    # configured image_path, slots 1..N-1 live at images/screenN.bmp, so each slot
+    # can be refreshed independently by its own generator run.
+    SCREEN_SLOTS = max(1, int(os.environ.get("SCREEN_SLOTS", "2")))
+
+
+    def slot_suffix(slot):
+        return "" if slot == 0 else str(slot)
+
+
+    def slot_image_path(slot):
+        if slot == 0:
+            return config_manager.config["image_path"]
+        return f"images/screen{slot}.bmp"
+
+
+    def slot_send_key(slot):
+        return "current_send_image" if slot == 0 else f"current_send_image_{slot}"
+
+
     global_state = {
         ## initialize last shown image
         "image": {
-            "bmp_send_switch": True,
+            "slot_index": 0,
             "current_image_url": (
                 "https://" + get_ip_address() + ":" + str(SERVER_PORT) + "/image/dummy.bmp"
             ),
@@ -223,14 +243,13 @@ data:
             # In-memory object to store the last sent image as a blob
             "current_orig_image": None,
             "current_send_image": BytesIO(),
-            # Second slot, served at /image/screen1.bmp - lets bmp_send_switch
-            # alternate between two genuinely different images (e.g. one
-            # dashboard per cluster) instead of showing the same buffer twice.
-            "current_send_image_1": BytesIO(),
         },
         "server": {"uptime": 0, "cpu_load": 0, "current_time": 0},
         "client": {"battery_voltage": 0, "battery_voltage_max": 0},
     }
+
+    for _slot in range(1, SCREEN_SLOTS):
+        global_state["image"][slot_send_key(_slot)] = BytesIO()
 
     # start client data
     last_client_data = {
@@ -719,25 +738,22 @@ data:
         )
 
 
-    @app.route("/image/screen1.bmp", methods=["GET"])
-    def serve_image_screen1():
+    @app.route("/image/screen<int:slot>.bmp", methods=["GET"])
+    def serve_image_slot(slot):
         """
-        Serve the current image for screen1.bmp.
-        This function logs the request with a timestamp and context, then serves the
-        current image stored in `global_state['image']['current_send_image']` as a BMP file.
+        Serve the current image for any slot above 0 (/image/screen1.bmp, ...).
         """
-        # Log the request with timestamp and context
+        buffer = global_state["image"].get(slot_send_key(slot))
+        if buffer is None:
+            return send_file(get_no_image(), mimetype="image/bmp")
         add_log_entry(
-            "Request received at /image/screen1.bmp",
+            f"Request received at /image/screen{slot}.bmp",
             f"serving image for IP: {request.remote_addr}",
         )
         logger.info(
-            "[API] /image/screen1.bmp - serving image for IP: %s", request.remote_addr
+            "[API] /image/screen%s.bmp - serving image for IP: %s", slot, request.remote_addr
         )
-        return send_file(
-            BytesIO(global_state["image"]["current_send_image_1"].getvalue()),
-            mimetype="image/bmp",
-        )
+        return send_file(BytesIO(buffer.getvalue()), mimetype="image/bmp")
 
 
     @app.route("/image/original.bmp", methods=["GET"])
@@ -756,8 +772,8 @@ data:
         return send_file(get_no_image(), mimetype="image/bmp")
 
 
-    @app.route("/image/original1.bmp", methods=["GET"])
-    def serve_orig_image1():
+    @app.route("/image/original<int:slot>.bmp", methods=["GET"])
+    def serve_orig_image_slot(slot):
         """
         Serve the original image if available, otherwise serve a default 'no image' placeholder.
         """
@@ -891,34 +907,15 @@ data:
 
         # Respond with a JSON containing status and url
         # Determine the image URL based on the current request count
-        if global_state["image"]["bmp_send_switch"]:
-            global_state["image"]["current_image_url"] = (
-                "https://"
-                + get_ip_address()
-                + ":"
-                + str(SERVER_PORT)
-                + "/image/original.bmp"
-            )
-            global_state["image"]["current_image_url_adapted"] = (
-                "https://" + get_ip_address() + ":" + str(SERVER_PORT) + "/image/screen.bmp"
-            )
-            global_state["image"]["bmp_send_switch"] = False
-        else:
-            global_state["image"]["current_image_url"] = (
-                "https://"
-                + get_ip_address()
-                + ":"
-                + str(SERVER_PORT)
-                + "/image/original1.bmp"
-            )
-            global_state["image"]["current_image_url_adapted"] = (
-                "https://"
-                + get_ip_address()
-                + ":"
-                + str(SERVER_PORT)
-                + "/image/screen1.bmp"
-            )
-            global_state["image"]["bmp_send_switch"] = True
+        slot = global_state["image"]["slot_index"] % SCREEN_SLOTS
+        global_state["image"]["slot_index"] = (slot + 1) % SCREEN_SLOTS
+        base_url = "https://" + get_ip_address() + ":" + str(SERVER_PORT)
+        global_state["image"]["current_image_url"] = (
+            f"{base_url}/image/original{slot_suffix(slot)}.bmp"
+        )
+        global_state["image"]["current_image_url_adapted"] = (
+            f"{base_url}/image/screen{slot_suffix(slot)}.bmp"
+        )
 
         response = {
             "status": 0,
@@ -933,19 +930,11 @@ data:
             "action": "",
         }
         # generate the footer image as a in memory image as time of requested at client if configured
-        # slot 0 -> images/screen.bmp (served at /image/screen.bmp), slot 1 ->
-        # images/screen1.bmp (served at /image/screen1.bmp) - lets bmp_send_switch
-        # alternate between two independently-updated dashboards.
-        serving_slot_1 = global_state["image"]["current_image_url_adapted"].endswith(
-            "screen1.bmp"
-        )
-        slot_image_path = "images/screen1.bmp" if serving_slot_1 else config_manager.config[
-            "image_path"
-        ]
-        send_key = "current_send_image_1" if serving_slot_1 else "current_send_image"
+        current_slot_path = slot_image_path(slot)
+        send_key = slot_send_key(slot)
 
         try:
-            orig_image = load_image(slot_image_path)
+            orig_image = load_image(current_slot_path)
         except FileNotFoundError:
             dummy_path = os.path.join(current_dir, "web/dummy.bmp")
             with open(dummy_path, "rb") as image_file:
@@ -1111,8 +1100,8 @@ data:
     def upload_screen():
         """
         Accept a raw BMP body and write it to disk.
-        ?slot=1 targets images/screen1.bmp (served at /image/screen1.bmp via
-        bmp_send_switch alternation); default (slot=0) targets the configured
+        ?slot=N targets images/screenN.bmp, which the display reaches at
+        /image/screenN.bmp as it cycles; default (slot=0) targets the configured
         image_path (images/screen.bmp).
         Protected by a shared-secret bearer token (UPLOAD_TOKEN env var) since
         it's reachable through the public ingress.
@@ -1123,7 +1112,9 @@ data:
             return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
         slot = request.args.get("slot", "0")
-        relative_path = "images/screen1.bmp" if slot == "1" else config_manager.config["image_path"]
+        if not slot.isdigit() or int(slot) >= SCREEN_SLOTS:
+            return jsonify({"status": "error", "message": "Unknown slot"}), 400
+        relative_path = slot_image_path(int(slot))
         image_path = os.path.join(current_dir, relative_path)
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
         tmp_path = image_path + ".tmp"
@@ -1445,7 +1436,7 @@ data:
 
 
     if __name__ == "__main__":
-        global_state["image"]["bmp_send_switch"] = True
+        global_state["image"]["slot_index"] = 0
         # Generate a self-signed certificate and key
         cert_file = os.path.join(current_dir, "ssl/cert.pem")
         key_file = os.path.join(current_dir, "ssl/key.pem")
@@ -1472,7 +1463,6 @@ data:
         )
         http_server.serve_forever()
     # %%
-
   config.py: |
     '''
     This module provides the ConfigManager class for managing configuration settings
@@ -1586,4 +1576,3 @@ data:
             logger.info('[Config] setting time zone to %s', time_zone)
             self.config['time_zone'] = time_zone
             self.write_config()
-

@@ -44,6 +44,8 @@ spec:
       values: |
         server:
           hostname: trmnl.mocha.thoughtless.eu
+          extraEnv:
+            SCREEN_SLOTS: "3"
           patch:
             enabled: true
             configMapName: trmnl-server-patch
@@ -64,18 +66,22 @@ spec:
             - envName: SIGNOZ_API_KEY
               name: signoz-api-key
               key: api_key
-          # One screen per cluster, each writing to its own slot on the display.
-          # The slot also offsets the panel rotation, so the two screens never
-          # sit on the same subject.
+          env:
+            CLUSTERS: mocha,turing
+          # One subject per slot; the display cycles through them by itself.
           screens:
-            - name: mocha
+            - name: health
               env:
-                CLUSTER_NAME: mocha
+                SCREEN: HEALTH
                 SLOT: "0"
-            - name: turing
+            - name: volumes
               env:
-                CLUSTER_NAME: turing
+                SCREEN: VOLUMES
                 SLOT: "1"
+            - name: resources
+              env:
+                SCREEN: RESOURCES
+                SLOT: "2"
 
         ingressRoute:
           enabled: true
