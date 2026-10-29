@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: virt-daemon
+  namespace: virtink-system
+spec:
+  template:
+    spec:
+      volumes:
+        - name: kubelet-pods
+          hostPath:
+            path: /var/lib/k0s/kubelet/pods

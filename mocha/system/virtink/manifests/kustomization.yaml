@@ -6,3 +6,10 @@ kind: Kustomization
 # the release bundles its own Certificate/Issuer + webhooks. Creates virtink-system.
 resources:
   - https://github.com/smartxworks/virtink/releases/download/v0.17.0/virtink.yaml
+
+# k0s keeps the kubelet root at /var/lib/k0s/kubelet, while upstream Virtink
+# assumes /var/lib/kubelet. virt-daemon then never finds a VM's ch.sock and
+# every VirtualMachine stays stuck in Scheduled. The device-plugins mount hides
+# the problem: that path is a Kubernetes constant, so KVM still registers.
+patches:
+  - path: patch-kubelet-root.yaml
