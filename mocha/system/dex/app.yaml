@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dex
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dex
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  sources:
+    - repoURL: https://charts.dexidp.io
+      chart: dex
+      targetRevision: 0.26.0
+      helm:
+        values: |
+          image:
+            tag: v2.46.1
+          configSecret:
+            create: false
+            name: dex-config
+          envVars:
+            - name: DEX_SESSIONS_ENABLED
+              value: "true"
+          deploymentAnnotations:
+            reloader.stakater.com/auto: "true"
+          ingress:
+            enabled: true
+            className: traefik
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+            hosts:
+              - host: dex.mocha.thoughtless.eu
+                paths:
+                  - path: /
+                    pathType: Prefix
+            tls:
+              - secretName: dex-tls
+                hosts:
+                  - dex.mocha.thoughtless.eu
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+    - repoURL: https://github.com/qjoly/gitops.git
+      targetRevision: HEAD
+      path: mocha/system/dex/manifests
