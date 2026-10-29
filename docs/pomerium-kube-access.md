@@ -125,5 +125,10 @@ succeeds and kubectl then rejects the credential it just received.
 `pomerium-cli` only ever emits `v1`, so the kubeconfig must declare `v1`, not
 `v1beta1`. Regenerate it with `mise run kube-lab:kubeconfig`.
 
+**`interactiveMode must be specified for kube-lab to use exec authentication
+plugin`.** `interactiveMode` is optional in `v1beta1` but required in `v1`.
+`IfAvailable` is the right value here: the first call opens a browser, later
+ones reuse the cached token without needing a terminal.
+
 **`kubectl exec` or `port-forward` hangs.** Those ride upgraded streams; the
 route needs `allow_spdy: true` and `allow_websockets: true`.

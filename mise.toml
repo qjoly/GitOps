@@ -133,6 +133,10 @@ users:
         apiVersion: client.authentication.k8s.io/v1
         command: ${SHIM}
         args: [k8s, exec-credential, ${ROUTE}]
+        # Required in v1 (it was optional in v1beta1). IfAvailable lets the
+        # first call open a browser, and later calls reuse the cached token
+        # without a terminal.
+        interactiveMode: IfAvailable
 EOF
 chmod 600 "$OUT"
 echo "wrote $OUT  (route $ROUTE)"
