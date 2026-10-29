@@ -128,7 +128,9 @@ users:
   - name: kube-lab
     user:
       exec:
-        apiVersion: client.authentication.k8s.io/v1beta1
+        # pomerium-cli only ever emits v1; declaring v1beta1 makes kubectl
+        # reject the credential it just received.
+        apiVersion: client.authentication.k8s.io/v1
         command: ${SHIM}
         args: [k8s, exec-credential, ${ROUTE}]
 EOF

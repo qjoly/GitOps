@@ -119,5 +119,11 @@ so it regenerates its signing keys on every restart and invalidates every token
 it ever issued. Sign in again. A persistent backend is required for anything
 beyond a lab.
 
+**`exec plugin is configured to use API version client.authentication.k8s.io/v1beta1,
+plugin returned version client.authentication.k8s.io/v1`.** The browser login
+succeeds and kubectl then rejects the credential it just received.
+`pomerium-cli` only ever emits `v1`, so the kubeconfig must declare `v1`, not
+`v1beta1`. Regenerate it with `mise run kube-lab:kubeconfig`.
+
 **`kubectl exec` or `port-forward` hangs.** Those ride upgraded streams; the
 route needs `allow_spdy: true` and `allow_websockets: true`.
