@@ -79,6 +79,13 @@ spec:
             enabled: true
             mode: separate
             replicaCount: 2
+            # Same reason as back.env: unset, the OTLP exporter retries against
+            # localhost and floods the logs.
+            env:
+              - name: OTEL_EXPORTER_OTLP_ENDPOINT
+                value: http://signoz-otel-collector.signoz.svc.cluster.local:4317
+              - name: OTEL_SERVICE_NAME
+                value: proxyauthk8s-gateway
             ingress:
               enabled: true
               className: traefik
