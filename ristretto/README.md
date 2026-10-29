@@ -40,6 +40,16 @@ The apiserver trusts the `ristretto-oidc` client of mocha's authentik (see
 `email`: authentik sends `email_verified: false` and Kubernetes then refuses an
 email username.
 
+## RBAC
+
+`rbac/cluster-admin.yaml` binds the OIDC identity to `cluster-admin`. The
+apiserver runs with `oidc-username-claim: sub` and `oidc-username-prefix: "-"`,
+so the username is the `sub` verbatim — an email, not a prefixed issuer path.
+
+```sh
+kubectl apply -f rbac/cluster-admin.yaml
+```
+
 ## ProxyAuthK8S
 
 The cluster sits behind the home NAT, so mocha cannot reach its apiserver. The

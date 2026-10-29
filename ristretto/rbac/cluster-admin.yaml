@@ -1,0 +1,14 @@
+# The apiserver runs with oidc-username-claim: sub and oidc-username-prefix: "-",
+# so the username is the sub verbatim, with no issuer prefix.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: oidc-cluster-admin
+subjects:
+  - kind: User
+    name: github@une-pause-cafe.fr
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
