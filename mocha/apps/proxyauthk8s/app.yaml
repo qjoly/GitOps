@@ -64,8 +64,6 @@ spec:
                 value: warn
               - name: OTEL_EXPORTER_OTLP_ENDPOINT
                 value: http://signoz-otel-collector.signoz.svc.cluster.local:4317
-              - name: OIDC_AUDIENCE_VALIDATION
-                value: warn
               - name: OTEL_SERVICE_NAME
                 value: proxyauthk8s
 
