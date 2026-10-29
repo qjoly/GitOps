@@ -86,3 +86,53 @@ kubectl --context "$CTX" -n "$NS" exec -i vault-0 -c vault -- \
   env VAULT_ADDR=https://127.0.0.1:8200 VAULT_SKIP_VERIFY=true VAULT_TOKEN="$TOKEN" \
   vault kv "$@"
 '''
+
+[tools]
+# kubectl credential plugin for routes fronted by Pomerium. Not in the mise or
+# aqua registries, and the archive ships the binary as pomerium-cli rather than
+# the repo name, hence the exe option.
+"github:pomerium/cli" = { version = "0.33.1", exe = "pomerium-cli" }
+
+[tasks."kube-lab:kubeconfig"]
+description = "Write a kubeconfig for the Pomerium-fronted kube-lab API server"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+ROUTE="${POMERIUM_KUBE_ROUTE:-https://kube-lab.mocha.thoughtless.eu}"
+OUT="${KUBE_LAB_KUBECONFIG:-$HOME/kubeconfig.kube-lab}"
+# kubectl resolves the plugin against its own PATH, which will not include the
+# repo-local mise environment. The shim always works.
+SHIM="${MISE_SHIMS:-$HOME/.local/share/mise/shims}/pomerium-cli"
+[ -x "$SHIM" ] || { echo "pomerium-cli shim not found: $SHIM (run: mise install)" >&2; exit 1; }
+
+# Written by hand rather than with `kubectl config set-credentials`: that
+# rewrites an absolute exec command into a path relative to the kubeconfig,
+# which then only resolves when kubectl runs from that directory.
+# No CA data and no credentials land here either: Pomerium presents a public
+# certificate, and the token is fetched per call by the exec plugin.
+rm -f "$OUT"
+cat > "$OUT" <<EOF
+apiVersion: v1
+kind: Config
+clusters:
+  - name: kube-lab
+    cluster:
+      server: ${ROUTE}
+contexts:
+  - name: kube-lab
+    context:
+      cluster: kube-lab
+      user: kube-lab
+current-context: kube-lab
+users:
+  - name: kube-lab
+    user:
+      exec:
+        apiVersion: client.authentication.k8s.io/v1beta1
+        command: ${SHIM}
+        args: [k8s, exec-credential, ${ROUTE}]
+EOF
+chmod 600 "$OUT"
+echo "wrote $OUT  (route $ROUTE)"
+echo "first call opens a browser for the Dex -> authentik login"
+'''
