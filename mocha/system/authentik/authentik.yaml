@@ -128,6 +128,16 @@ spec:
               authorizationFlow: default-provider-authorization-implicit-consent
               invalidationFlow: default-provider-invalidation-flow
               subMode: user_email
+            # ProxyAuthK8S derives dashboard-<namespace>-<name> when a
+            # ProxyKubeApi sets no dashboard_group, and shows a cluster only to
+            # members of that group.
+            groups:
+              - name: dashboard-proxyauthk8s-mocha
+                members:
+                  - github@une-pause-cafe.fr
+              - name: dashboard-proxyauthk8s-ristretto
+                members:
+                  - github@une-pause-cafe.fr
             oauth2Providers:
               - slug: vaultwarden
                 name: Provider for Vaultwarden
