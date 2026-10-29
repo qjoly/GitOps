@@ -39,10 +39,11 @@ spec:
           audience: proxyauth
           jwks: '{"keys":[{"use":"sig","kty":"RSA","kid":"YLj9bAu04g33X3lrNwnNnsWZF5D5LnT8NLDwBW3B9Yc","alg":"RS256","n":"21beoAQCvN2pA613QKTesOGHKL1f23Lr7xIeVGGdnTjMKaywuNAC1smOhws0mgHoPNGdZMDtt9SBgbw5YzeFQdkp45b8XVpPTN6t1ohsNXkwdykgChUzmzxcidA__VdR9Knul9ETQJhtUh7HH5vhdh8yh-O6Gt4vyCJ3GfsTBbtV5hN24Xiz3ZS9JcuiOnBpNvJY6quGJAtLlQ_KPEH3T5HPVBc_ou0YqbzMX_RJjoMFTV1PAD65WzngkvbN5Afv-AX0T4ykXSWciWAiZeOR5SXer0ehiFrBhUPNUVOSBceVmTRmUSJzQpaBwaG9cT3HbRau9J2tjcbk11UJFlyCLdFibsWo-T4Lt5vdl7QAejS13JivAbYQ5wF8ZIcdfxgRb6zUzKSaTFUdUJHwz429V1vJvK3jXqeACdWWa3MnGqbmlFdKP-m0_qrxrz5I_LBcCQlZBzvaItiwq987jgZF0D4tkMg6BOMIN8_ckg3D7YlP7wtgrc2riNYaK_sYK_oxNQVTxjFWR8J_4UXTnr-_BiNxi51fuSBuO4rg3dXesAlc3ok-qFbVwHUhgImofnWIwwc7x_mSxqbJFAnQJD8FJxp9uWXAdqz7ES-AFAV9w3G27qcIW4kqRrIwRNrMwzQ5RPtEG4ycKoeDF6DppITsvID9yY6IUPrfusU0JHi4sx8","e":"AQAB"}]}'
   auth_config:
-    validate_against: OidcProvider
+    # The apiserver validates the id token the dashboard hands out; authentik's
+    # /userinfo would refuse it, it only takes access tokens.
+    validate_against: Kubernetes
     oidc_provider:
       enabled: true
-      accept_authorized_party: true
       issuer_url: https://authentik.mocha.thoughtless.eu/application/o/ristretto-oidc/
       client_id: ristretto-oidc
       extra_scope: openid profile email offline_access

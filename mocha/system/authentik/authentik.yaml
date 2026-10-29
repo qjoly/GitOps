@@ -300,6 +300,10 @@ spec:
                 redirectURIs:
                   - http://localhost:8000
                   - http://localhost:18000
+                  # The per-cluster login ProxyAuthK8S runs for this cluster.
+                  - https://proxyauth.mocha.thoughtless.eu/auth/callback/proxyauthk8s/mocha
+                  - https://proxyauth.mocha.thoughtless.eu/clusters/proxyauthk8s/mocha/auth/callback
+                  - http://localhost:18000/auth/callback/proxyauthk8s/mocha
                 # offline_access: refresh token, otherwise a browser login per hour.
                 scopes: [email, profile, openid, offline_access]
                 subMode: user_email

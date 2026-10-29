@@ -17,12 +17,15 @@ spec:
       namespace: default
       port: 443
   auth_config:
-    validate_against: OidcProvider
+    # Kubernetes, not OidcProvider: the dashboard hands out an id token, which
+    # authentik's /userinfo refuses — it only takes access tokens. The apiserver
+    # validates the id token itself, which is what it is configured for.
+    validate_against: Kubernetes
     oidc_provider:
       enabled: true
-      issuer_url: https://authentik.mocha.thoughtless.eu/application/o/proxyauthk8s/
-      accept_authorized_party: true
+      # mocha-oidc, the client this cluster's apiserver trusts (see
+      # mocha/corium/mocha.yaml); a token minted for any other client is
+      # rejected on arrival.
+      issuer_url: https://authentik.mocha.thoughtless.eu/application/o/mocha-oidc/
+      client_id: mocha-oidc
       extra_scope: openid profile email offline_access
-      config_from:
-        Secret:
-          name: proxyauthk8s-oidc-provider
