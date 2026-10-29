@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ristretto-ca
+data:
+  ca.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIBiTCCAS+gAwIBAgIQJ8OuXX9oeH6VDS21UqlQ0zAKBggqhkjOPQQDAjAVMRMw
+    EQYDVQQKEwprdWJlcm5ldGVzMB4XDTI2MTAyOTEwMTExMFoXDTM2MTAyNjEwMTEx
+    MFowFTETMBEGA1UEChMKa3ViZXJuZXRlczBZMBMGByqGSM49AgEGCCqGSM49AwEH
+    A0IABNtFActi7GocxT35Q2cLggmxCJjnUzAhah80ch/ws/pgrrEXAEX5XorNETF6
+    8aJfhIay1vok0lH5GWgIuvk1kXCjYTBfMA4GA1UdDwEB/wQEAwIChDAdBgNVHSUE
+    FjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4E
+    FgQU6NSIeermNBAOm5U0tfXHBeZjZPkwCgYIKoZIzj0EAwIDSAAwRQIge7xLaRmV
+    fA7ZDS6EawQ3ItVndY4evf5uZKnSHuSRmd4CIQCLqe425rSan3QjzG0r8DeEMlMp
+    aNBGbj4opDjyQyjjNw==
+    -----END CERTIFICATE-----
+---
+apiVersion: weebo.si.rs/v1
+kind: ProxyKubeApi
+metadata:
+  name: ristretto
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  enabled: true
+  expose_via_dashboard: true
+  cert:
+    ConfigMap:
+      name: ristretto-ca
+      key: ca.crt
+  # Behind the home NAT: the agent dials the gateway, the proxy never dials in.
+  service:
+    Agent:
+      server_name: kubernetes.default.svc
+      bootstrap:
+        ServiceAccountToken:
+          subject: system:serviceaccount:proxyauth-agent:agent-proxyauthk8s-agent
+          audience: proxyauth
+          jwks: '{"keys":[{"use":"sig","kty":"RSA","kid":"YLj9bAu04g33X3lrNwnNnsWZF5D5LnT8NLDwBW3B9Yc","alg":"RS256","n":"21beoAQCvN2pA613QKTesOGHKL1f23Lr7xIeVGGdnTjMKaywuNAC1smOhws0mgHoPNGdZMDtt9SBgbw5YzeFQdkp45b8XVpPTN6t1ohsNXkwdykgChUzmzxcidA__VdR9Knul9ETQJhtUh7HH5vhdh8yh-O6Gt4vyCJ3GfsTBbtV5hN24Xiz3ZS9JcuiOnBpNvJY6quGJAtLlQ_KPEH3T5HPVBc_ou0YqbzMX_RJjoMFTV1PAD65WzngkvbN5Afv-AX0T4ykXSWciWAiZeOR5SXer0ehiFrBhUPNUVOSBceVmTRmUSJzQpaBwaG9cT3HbRau9J2tjcbk11UJFlyCLdFibsWo-T4Lt5vdl7QAejS13JivAbYQ5wF8ZIcdfxgRb6zUzKSaTFUdUJHwz429V1vJvK3jXqeACdWWa3MnGqbmlFdKP-m0_qrxrz5I_LBcCQlZBzvaItiwq987jgZF0D4tkMg6BOMIN8_ckg3D7YlP7wtgrc2riNYaK_sYK_oxNQVTxjFWR8J_4UXTnr-_BiNxi51fuSBuO4rg3dXesAlc3ok-qFbVwHUhgImofnWIwwc7x_mSxqbJFAnQJD8FJxp9uWXAdqz7ES-AFAV9w3G27qcIW4kqRrIwRNrMwzQ5RPtEG4ycKoeDF6DppITsvID9yY6IUPrfusU0JHi4sx8","e":"AQAB"}]}'
+  auth_config:
+    validate_against: OidcProvider
+    oidc_provider:
+      enabled: true
+      accept_authorized_party: true
+      issuer_url: https://authentik.mocha.thoughtless.eu/application/o/ristretto-oidc/
+      client_id: ristretto-oidc
+      extra_scope: openid profile email offline_access

@@ -1,0 +1,13 @@
+machine:
+  network:
+    interfaces:
+      - interface: ens18
+        addresses:
+          - 192.168.0.188/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.0.1
+    nameservers:
+      - 192.168.0.1
+  install:
+    disk: /dev/sda

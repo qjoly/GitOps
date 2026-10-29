@@ -322,6 +322,22 @@ spec:
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kubernetes.svg
                 secretName: oidc-proxyauthk8s
+              # Same shape as mocha-oidc: kubelogin runs the flow, no secret.
+              - slug: ristretto-oidc
+                name: Provider for Kubernetes API (ristretto)
+                appName: Kubernetes (ristretto)
+                clientType: public
+                clientID: ristretto-oidc
+                redirectURIs:
+                  - http://localhost:8000
+                  - http://localhost:18000
+                  # The per-cluster login ProxyAuthK8S runs for this cluster.
+                  - https://proxyauth.mocha.thoughtless.eu/auth/callback/proxyauthk8s/ristretto
+                  - https://proxyauth.mocha.thoughtless.eu/clusters/proxyauthk8s/ristretto/auth/callback
+                  - http://localhost:18000/auth/callback/proxyauthk8s/ristretto
+                scopes: [email, profile, openid, offline_access]
+                subMode: user_email
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/talos.svg
             proxyProviders:
               - slug: homepage
                 name: Homepage

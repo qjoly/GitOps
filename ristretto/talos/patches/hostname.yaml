@@ -1,0 +1,6 @@
+# Talos 1.13 moved the hostname out of v1alpha1, and refuses a static hostname
+# next to the generated default auto: stable.
+apiVersion: v1alpha1
+kind: HostnameConfig
+auto: off
+hostname: ristretto

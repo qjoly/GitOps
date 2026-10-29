@@ -74,6 +74,22 @@ spec:
               enabled: true
             serviceMonitor:
               enabled: true
+
+          # ristretto sits behind the home NAT: the proxy cannot dial its
+          # apiserver, so its agent dials out to this gateway instead.
+          agentGateway:
+            enabled: true
+            mode: separate
+            replicaCount: 2
+            ingress:
+              enabled: true
+              className: traefik
+              host: agent-proxyauth.mocha.thoughtless.eu
+              annotations:
+                cert-manager.io/cluster-issuer: cloudflare
+              tls:
+                enabled: true
+                secretName: proxyauth-agent-tls
     - repoURL: ghcr.io/dragonflydb/dragonfly/helm
       chart: dragonfly
       targetRevision: v1.40.1

@@ -1,0 +1,8 @@
+proxy:
+  url: wss://agent-proxyauth.mocha.thoughtless.eu/agent/v1/connect
+  cluster: proxyauthk8s/ristretto
+tlsMode: inner
+upstream: https://kubernetes.default.svc:443
+bootstrap:
+  method: ServiceAccountToken
+  audience: proxyauth

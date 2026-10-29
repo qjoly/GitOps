@@ -1,0 +1,10 @@
+cluster:
+  apiServer:
+    extraArgs:
+      oidc-issuer-url: https://authentik.mocha.thoughtless.eu/application/o/ristretto-oidc/
+      oidc-client-id: ristretto-oidc
+      # sub, not email: authentik sends email_verified:false and Kubernetes
+      # refuses an email username claim unless it is true.
+      oidc-username-claim: sub
+      oidc-username-prefix: "-"
+      oidc-groups-claim: groups
