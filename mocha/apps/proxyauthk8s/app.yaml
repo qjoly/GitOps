@@ -79,6 +79,7 @@ spec:
             enabled: true
             mode: separate
             replicaCount: 2
+            tokenSecretName: proxyauthk8s-gateway-token
             # Same reason as back.env: unset, the OTLP exporter retries against
             # localhost and floods the logs.
             env:
