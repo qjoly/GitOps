@@ -8,7 +8,16 @@ agent values here are versioned for traceability and applied by hand.
 
 `talos/patches/` holds the config patches fed to `talosctl gen config`. The
 secrets (`secrets.yaml`, `talosconfig`) live in `~/.talos/ristretto` and are
-never committed.
+never committed; the copy of record is OpenBao on mocha, under
+`kv/talos-ristretto`. Losing both means losing control of the cluster.
+
+```sh
+mkdir -p ~/.talos/ristretto
+export VAULT_CONTEXT=mocha-corium
+mise run vault:kv get -field=secrets.yaml kv/talos-ristretto > ~/.talos/ristretto/secrets.yaml
+mise run vault:kv get -field=talosconfig kv/talos-ristretto > ~/.talos/ristretto/talosconfig
+chmod 600 ~/.talos/ristretto/secrets.yaml
+```
 
 ```sh
 talosctl gen config ristretto https://192.168.0.188:6443 \
