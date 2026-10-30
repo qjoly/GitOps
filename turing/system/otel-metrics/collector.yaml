@@ -7,7 +7,7 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   mode: statefulset
-  image: otel/opentelemetry-collector-contrib:0.163.2
+  image: otel/opentelemetry-collector-contrib:0.164.0
   serviceAccount: otel-metrics-collector
   env:
     - name: POD_NAME
