@@ -17,7 +17,7 @@ spec:
   source:
     repoURL: https://otwld.github.io/ollama-helm
     chart: ollama
-    targetRevision: 1.91.0
+    targetRevision: 1.93.0
     helm:
       values: |
         ollama:
