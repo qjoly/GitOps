@@ -28,7 +28,7 @@ spec:
   sources:
     - repoURL: ghcr.io/batleforc/proxyauthk8s
       chart: chart-crd
-      targetRevision: 0.4.0
+      targetRevision: 0.5.0
     - repoURL: ghcr.io/batleforc/proxyauthk8s
       chart: chart
       targetRevision: 0.4.0
