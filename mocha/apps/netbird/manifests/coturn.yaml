@@ -82,11 +82,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: coturn
-  annotations:
-    lbipam.cilium.io/sharing-key: "public"
-    lbipam.cilium.io/sharing-cross-namespace: "*"
+# Not a LoadBalancer: Cilium only shares the single public IP between services
+# with the same traffic policy, and Traefik needs Local to see client IPs.
 spec:
-  type: LoadBalancer
+  type: NodePort
+  externalIPs:
+    - 5.196.80.72
   selector:
     app: coturn
   ports:
