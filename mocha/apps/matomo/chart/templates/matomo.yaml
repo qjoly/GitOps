@@ -3,8 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: matomo-data
   annotations:
-    # config.ini.php (including the salt), the UI-installed plugins and the GeoIP
-    # databases only exist here.
+    # The UI-installed plugins and the GeoIP databases only exist here.
     argocd.argoproj.io/sync-options: Prune=false
 spec:
   accessModes: ["ReadWriteOnce"]
@@ -44,6 +43,53 @@ spec:
       labels:
         app: matomo
     spec:
+      # Rewrites config.ini.php from Vault when it has lost its database section,
+      # which is what a volume restored empty looks like. A complete file is left
+      # alone, so settings changed from the UI survive restarts.
+      initContainers:
+        - name: config
+          image: {{ .Values.image }}
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: matomo-db
+                  key: db_password
+            - name: SALT
+              valueFrom:
+                secretKeyRef:
+                  name: matomo-db
+                  key: salt
+          command:
+            - sh
+            - -c
+            - |
+              f=/var/www/html/config/config.ini.php
+              grep -q '^\[database\]' "$f" 2>/dev/null && exit 0
+              mkdir -p "${f%/*}"
+              cat > "$f" <<EOF
+              ; <?php exit; ?> DO NOT REMOVE THIS LINE
+              [database]
+              host = "matomo-db"
+              username = "{{ .Values.db.user }}"
+              password = "$DB_PASSWORD"
+              dbname = "{{ .Values.db.name }}"
+              tables_prefix = "matomo_"
+              adapter = "PDO\MYSQL"
+              charset = "utf8mb4"
+              collation = "utf8mb4_general_ci"
+
+              [General]
+              salt = "$SALT"
+              trusted_hosts[] = "{{ .Values.ingress.host }}"
+              assume_secure_protocol = 1
+              proxy_client_headers[] = "HTTP_X_FORWARDED_FOR"
+              proxy_host_headers[] = "HTTP_X_FORWARDED_HOST"
+              EOF
+              chown -R 33:33 "${f%/*}"
+          volumeMounts:
+            - name: data
+              mountPath: /var/www/html
       containers:
         - name: matomo
           image: {{ .Values.image }}
