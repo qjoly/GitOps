@@ -34,6 +34,14 @@ addons:
             - 10.244.0.0/16
       ipv6:
         enabled: false
+      k8sClientRateLimit:
+        burst: 20
+        qps: 10
+      k8sServiceHost: 5.196.80.72
+      k8sServicePort: 6443
+      kubeProxyReplacement: true
+      l2announcements:
+        enabled: true
       operator:
         replicas: 1
       routingMode: tunnel
@@ -78,6 +86,9 @@ api:
 k0s:
   patch:
     spec:
+      network:
+        kubeProxy:
+          disabled: true
       api:
         extraArgs:
           oidc-issuer-url: https://authentik.mocha.thoughtless.eu/application/o/mocha-oidc/
