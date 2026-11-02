@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Disposable gVisor sandboxes on mocha. The local checkout stays the source of truth:
+# code is copied in, changes come back as a git patch, and git/gh only ever run locally.
+set -euo pipefail
+
+here=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+k() { kubectl --kubeconfig "${SBX_KUBECONFIG:-$here/../../kubeconfig}" --context "${SBX_CONTEXT:-mocha}" -n "${SBX_NAMESPACE:-sandboxes}" "$@"; }
+pod() { k get sandboxclaim "$1" -o jsonpath='{.status.sandbox.name}'; }
+
+usage() {
+  cat >&2 <<'EOF'
+usage: sbx <command>
+  up [name]             claim a sandbox, print its name (expires after $SBX_TTL seconds, default 4h)
+  push <name> [dir]     replace /work with the git checkout at dir (tracked + untracked, minus ignored)
+  exec <name> -- cmd…   run cmd in /work
+  diff <name>           print changes made in /work since the push; apply with: sbx diff x | git apply
+  down <name>           delete the sandbox
+  ls                    list sandboxes
+Build artifacts are gitignored and stay out of diff: fetch them with kubectl cp.
+EOF
+  exit 2
+}
+
+cmd=${1:-}; shift || true
+case $cmd in
+  up)
+    exp=$(( $(date +%s) + ${SBX_TTL:-14400} ))
+    exp=$(date -u -d "@$exp" +%FT%TZ 2>/dev/null || date -u -r "$exp" +%FT%TZ)
+    meta="generateName: sbx-"; [[ -n ${1:-} ]] && meta="name: $1"
+    name=$(k create -o jsonpath='{.metadata.name}' -f - <<EOF
+apiVersion: extensions.agents.x-k8s.io/v1beta1
+kind: SandboxClaim
+metadata:
+  $meta
+spec:
+  warmPoolRef: { name: dev }
+  lifecycle: { shutdownPolicy: Delete, shutdownTime: "$exp" }
+EOF
+)
+    k wait "sandboxclaim/$name" --for=condition=Ready --timeout=5m >/dev/null
+    echo "$name"
+    ;;
+  push)
+    [[ $# -ge 1 ]] || usage
+    cd "${2:-.}"
+    # ls-files still lists tracked files deleted from the working tree, tar would choke on them.
+    { git ls-files -z -co --exclude-standard; printf '.git\0'; } |
+      while IFS= read -r -d '' f; do [[ -e $f || -L $f ]] && printf '%s\0' "$f"; done |
+      COPYFILE_DISABLE=1 tar --null -T - -czf - |
+      k exec -i "$(pod "$1")" -- bash -ec '
+        find /work -mindepth 1 -delete
+        tar xzf - -C /work --no-same-owner --warning=no-unknown-keyword
+        cd /work
+        # Snapshot what was pushed, local uncommitted edits included, so diff only shows sandbox work.
+        git add -A
+        git -c user.name=sbx -c user.email=sbx@localhost commit -qm "sbx base" --allow-empty --no-verify
+        git tag -f sbx-base >/dev/null'
+    ;;
+  exec)
+    [[ $# -ge 1 ]] || usage
+    name=$1; shift; [[ ${1:-} == -- ]] && shift
+    [[ $# -ge 1 ]] || usage
+    k exec -i "$(pod "$name")" -- "$@"
+    ;;
+  diff)
+    [[ $# -eq 1 ]] || usage
+    k exec "$(pod "$1")" -- bash -ec 'cd /work && git add -A && git diff --cached --binary sbx-base'
+    ;;
+  down)
+    [[ $# -eq 1 ]] || usage
+    k delete sandboxclaim "$1" --wait=false
+    ;;
+  ls) k get sandboxclaims ;;
+  *) usage ;;
+esac
