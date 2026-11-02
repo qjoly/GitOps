@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sandboxes
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sandboxes
+  source:
+    repoURL: https://github.com/qjoly/gitops.git
+    targetRevision: HEAD
+    path: mocha/apps/sandboxes/manifests

@@ -1,0 +1,57 @@
+# Managed network policy: internet egress only, no cluster-internal traffic.
+apiVersion: extensions.agents.x-k8s.io/v1beta1
+kind: SandboxTemplate
+metadata:
+  name: dev
+  namespace: sandboxes
+spec:
+  networkPolicyManagement: Managed
+  envVarsInjectionPolicy: Disallowed
+  volumeClaimTemplatesPolicy: Disallowed
+  podTemplate:
+    spec:
+      runtimeClassName: gvisor
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 2
+      containers:
+        - name: dev
+          image: buildpack-deps:trixie
+          workingDir: /work
+          command:
+            - sh
+            - -c
+            # mise installs whatever toolchain the pushed repo declares; a failed download must not kill the sandbox.
+            - curl -fsSL https://mise.run | sh || true; exec sleep infinity
+          env:
+            - name: PATH
+              value: /root/.local/share/mise/shims:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+            - name: MISE_YES
+              value: "1"
+            - name: MISE_TRUSTED_CONFIG_PATHS
+              value: /work
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "4"
+              memory: 8Gi
+          # gVisor keeps the root filesystem in memory: anything that grows goes to disk instead.
+          volumeMounts:
+            - { name: scratch, mountPath: /work, subPath: work }
+            - { name: scratch, mountPath: /root, subPath: home }
+            - { name: scratch, mountPath: /tmp, subPath: tmp }
+      volumes:
+        - name: scratch
+          emptyDir:
+            sizeLimit: 30Gi
+---
+apiVersion: extensions.agents.x-k8s.io/v1beta1
+kind: SandboxWarmPool
+metadata:
+  name: dev
+  namespace: sandboxes
+spec:
+  replicas: 1
+  sandboxTemplateRef:
+    name: dev
