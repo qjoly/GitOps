@@ -6,8 +6,8 @@ backup**. One node: `ks-stor`.
 Its address is deliberately not in this repo: substitute `<ks-stor>` in the
 commands below.
 
-Unlike `mocha/` and `turing/`, doppio is **not** Talos and **not** managed by Omni.
-It runs [Corium](https://github.com/Corium-OS/Corium) — a bootc image around k0s —
+Unlike `turing/`, doppio is **not** Talos and **not** managed by Omni. Like
+`mocha/`, it runs [Corium](https://github.com/Corium-OS/Corium) — a bootc image around k0s —
 and is driven with `cctl` instead of `omnictl`/`talosctl`. There is no
 `template.yaml` and no `patches/` here; the equivalent is one document,
 [`corium/ks-stor.yaml`](./corium/ks-stor.yaml).
@@ -15,12 +15,12 @@ and is driven with `cctl` instead of `omnictl`/`talosctl`. There is no
 ## Who owns what
 
 This is the part worth reading before changing anything, because doppio splits
-ownership differently from the Talos clusters.
+ownership differently from turing.
 
-| Layer | mocha / turing | doppio |
+| Layer | turing (Talos) | doppio and mocha (Corium) |
 |---|---|---|
-| Day 0 (CNI + ArgoCD) | Talos `extraManifests` → raw `common/cilium` + `common/argocd` | k0s Helm charts, declared in `corium/ks-stor.yaml` |
-| Day 2 on those | `helmfile apply` in CI | `cctl apply --file corium/ks-stor.yaml` |
+| Day 0 (CNI + ArgoCD) | Talos `extraManifests` → raw `common/cilium` + `common/argocd` | k0s Helm charts, declared in `corium/<node>.yaml` |
+| Day 2 on those | `helmfile apply` in CI | `cctl apply <node> --file corium/<node>.yaml` |
 | cert-manager | `common/cert-manager.yaml` via the `common` Application | same |
 | Everything else | ApplicationSets over `system/*` and `apps/*` | same |
 
@@ -32,7 +32,8 @@ declared in one file, versions pinned and bumped by Renovate.
 `common/` is still consumed, exactly as on the other clusters — the `common`
 Application is a non-recursive directory source, so what it actually reconciles
 is `common/cert-manager.yaml`. The `common/cilium/` and `common/argocd/` trees
-next to it are day-0 material for Talos and are simply not used here.
+next to it are day-0 material for turing's Talos `extraManifests` and are not used
+here, nor on mocha.
 
 ## Install
 
@@ -190,6 +191,7 @@ doppio/
 │   ├── openebs/               # zfs-localpv (+ hostpath, for what already uses it)
 │   ├── openebs-storageclass/  # doppio-zfs, the default StorageClass
 │   ├── prometheus-operator-crds/  # only so common/'s ServiceMonitors render
+│   ├── signoz-k8s-infra/      # k8s-infra collector + zfs_exporter → mocha's SigNoz
 │   └── traefik/               # the ingress controller
 └── apps/                      # reconciled by the doppio-apps ApplicationSet
     ├── deluge/                # https://deluge.doppio.thoughtless.eu
