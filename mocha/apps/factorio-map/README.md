@@ -32,8 +32,8 @@ per render, ONE tarball on S3. `MAP_ZOOM` sets sharpness (px/tile = 32·zoom;
 `factorio-map-web` serves the tiles **from a PVC**, not from S3 (rustfs throttles
 per-object GETs and can't feed a deep-zoom viewer). A **`sync` sidecar** (same
 image, `sync.sh`) polls `index.json`, downloads each new `<ts>.tar` and extracts
-it onto an `openebs-hostpath` PVC (the LVM VG only had ~52 Gi free; hostpath uses
-the node's ~397 Gi); **nginx** serves the PVC. Creds from `factorio-map-s3`
+it onto an `openebs-hostpath` PVC (the LVM VG has little free space, hostpath uses
+the node's root filesystem); **nginx** serves the PVC. Creds from `factorio-map-s3`
 (OpenBao `kv/factorio-s3`). Published at
 `https://factorio-map.mocha.thoughtless.eu` via Traefik.
 
@@ -49,8 +49,8 @@ zooms to it.
 > per-object transfers (a native map is ~150k tiles). So: grid to beat the
 > screenshot cap, batch to bound RAM, tarball to beat the object-count ceiling.
 
-> `anti_alias` renders at 2× then downscales — at 16384² the 32768² intermediate
-> blows llvmpipe's texture limit, so AA is only used when `shot_res ≤ 8192`.
+> `anti_alias` is off: it renders at 2× then downscales, and at 16384² the 32768²
+> intermediate blows llvmpipe's texture limit.
 
 > `/work` is a **disk-backed** emptyDir, not tmpfs: a `medium: Memory` scratch
 > dir counts against the container memory cgroup and OOM-killed the renderer.
@@ -73,6 +73,7 @@ Then bump the tag in `renderer.yaml`.
 - `MAP_ZOOM` — px/tile = 32·zoom (0.5=16, 0.75=24, 1.0=native 32). More = sharper
   but ~4× the cells/tiles/time/storage per doubling.
 - `PER_BATCH` — cells per factorio invocation (RAM ≈ `PER_BATCH`·~1 GiB + game).
+  Not set in the CronJob, so `render.sh` uses 16.
 - `CELL_PX` (16384), `JPEG_Q` (90), `KEEP`, `RENDER_TIMEOUT`.
 
 ## Follow-ups
