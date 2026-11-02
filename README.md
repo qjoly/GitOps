@@ -3,7 +3,7 @@
 This folder holds the [Materia](https://github.com/stryan/materia) configuration for the
 **`Americano`** host (`sonarr.americano.thoughtless.eu`, `85.17.65.41`).
 
-Unlike `mocha/` and `turing/` (Talos Kubernetes clusters reconciled by ArgoCD), `Americano` is a
+Unlike the Kubernetes clusters (`mocha/`, `turing/`, `doppio/`, reconciled by ArgoCD), `Americano` is a
 bare host running its stack as **podman quadlets**. Materia is its GitOps engine: it clones a
 repo, figures out which components are assigned to the host, and renders the quadlets into
 `/etc/containers/systemd/`.
@@ -19,7 +19,7 @@ So:
 1. The readable, reviewable source of truth lives here in `americano/` on `main`.
 2. The GitHub Action [`.github/workflows/materia-americano.yaml`](../.github/workflows/materia-americano.yaml)
    republishes the **contents of `americano/`** to the **root of the `americano` branch** on every
-   push (force-pushed, single commit).
+   push that touches it (one commit per change, on top of the branch history).
 3. Materia on the host is pointed at this repo, branch `americano`:
 
    ```
@@ -50,7 +50,7 @@ americano/
 
 ```toml
 [Hosts.Americano]
-components = ["nginx", "sonarr", "radarr", "overseerr"]
+components = ["nginx", "sonarr", "radarr", "overseerr", "prowlarr"]
 ```
 
 > **Casing matters.** The folder and branch are lowercase `americano`, but `[Hosts.Americano]`
@@ -82,11 +82,11 @@ components = ["nginx", "sonarr", "radarr", "overseerr"]
 - Materia installs each component into its own directory
   `/etc/containers/systemd/<name>/` with a `.materia_managed` marker.
 - **Cleanup is disabled**: Materia only touches the components listed above. Every other app on
-  the host (plex, prowlarr, traefik, deluge, …) is a manual flat quadlet and is left alone. To
+  the host (plex, traefik, deluge, …) is a manual flat quadlet and is left alone. To
   bring one under GitOps, move it into a component here (and delete the old flat
   `/etc/containers/systemd/<name>.container`, or you get a duplicate unit).
 - The host cron runs `materia update` every 15 min (uses the absolute binary path
   `/usr/local/bin/materia`).
-- `sonarr` / `radarr` carry the label
+- `sonarr` / `radarr` / `prowlarr` carry the label
   `traefik.http.routers.<app>.middlewares=authentik@file` — that is the Authentik SSO gate
   (forward-auth). Don't drop it when editing those quadlets.
