@@ -66,8 +66,7 @@ No shared filesystem is needed, so a `docker:dind` sidecar reachable over TCP is
 containers share the pod network namespace, so `127.0.0.1:2375` works across them.
 
 mocha does have `/dev/kvm` and the `vmx` CPU flag, so switching to the microVM engine later is
-possible. The node even advertises `devices.virtink.io/kvm` as a schedulable resource, which is a
-cleaner way to get the device than a `hostPath`.
+possible.
 
 ## Making dind listen on loopback only
 

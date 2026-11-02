@@ -51,11 +51,10 @@ The home cluster runs [Talos](https://www.talos.dev/) (don't hesitate to check [
 - restic CronJobs (database dumps, OpenBao snapshots) to S3 (**`mocha`**)
 - [Spegel](https://spegel.dev/) to share images between nodes (**`turing`**)
 - [Reloader](https://github.com/stakater/Reloader) to restart workloads when a ConfigMap/Secret changes
-- Cluster API ([Virtink](https://github.com/smartxworks/virtink) + [Kamaji](https://kamaji.clastix.io/) providers) for guest clusters on `mocha`
 
 ### Clusters
 
-- [**Mocha**](https://github.com/qjoly/GitOps/tree/main/mocha) : single bare-metal node hosted by OVH (128GB RAM, 8 CPU, 2x512GB NVMe), running Corium. Production cluster, also hosts SigNoz and the guest clusters. Its node document is [`mocha/corium/mocha.yaml`](./mocha/corium/mocha.yaml).
+- [**Mocha**](https://github.com/qjoly/GitOps/tree/main/mocha) : single bare-metal node hosted by OVH (128GB RAM, 8 CPU, 2x512GB NVMe), running Corium. Production cluster, also hosts SigNoz. Its node document is [`mocha/corium/mocha.yaml`](./mocha/corium/mocha.yaml).
 - [**Turing**](https://github.com/qjoly/GitOps/tree/main/turing) : cluster made of small devices (ARM and x86) at home. Local hosting, storage (Rook + NAS) and testing.
 - [**Doppio**](https://github.com/qjoly/GitOps/tree/main/doppio) : single bare-metal node at OVH, kept for storage and backup. The odd one out — it runs [Corium](https://github.com/Corium-OS/Corium) (bootc + k0s) rather than Talos, so it is driven with `cctl` and has no Omni template. See [`doppio/README.md`](./doppio/README.md).
 - [**Ristretto**](https://github.com/qjoly/GitOps/tree/main/ristretto) : single-node Talos VM on Proxmox, not managed by ArgoCD and reachable through ProxyAuthK8S. See [`ristretto/README.md`](./ristretto/README.md).
@@ -66,12 +65,6 @@ The home cluster runs [Talos](https://www.talos.dev/) (don't hesitate to check [
 
 - [**Americano**](https://github.com/qjoly/GitOps/tree/main/americano) : a bare host running podman quadlets, reconciled by [Materia](https://github.com/stryan/materia) instead of ArgoCD. See [`americano/README.md`](./americano/README.md) for the branch trick that makes it work from a subdirectory.
 - [`external/`](./external) : OTel collector and exporter units for machines outside the clusters (Proxmox hosts).
-
-## Guest clusters on `mocha`
-
-Instead of a second physical cluster for tests, `mocha` is meant to host [Cluster API](https://cluster-api.sigs.k8s.io/) guest clusters: a control plane hosted by Kamaji as pods, and workers as Virtink VMs. Their pod and service CIDRs live inside the guest, so they can overlap with the host cluster.
-
-The only one defined is [`mocha/apps/kube-lab`](./mocha/apps/kube-lab). It does not sync yet: the CAPI core, the kubeadm bootstrap provider, CAAPH and the Kamaji operator are not installed. See [`mocha/clusters/README.md`](./mocha/clusters/README.md).
 
 ## Usage
 
