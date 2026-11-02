@@ -80,12 +80,6 @@ spec:
               prometheus:
                 config:
                   scrape_configs:
-                    - job_name: argocd
-                      scrape_interval: 30s
-                      static_configs:
-                        - targets:
-                            - argocd-metrics.argocd.svc.cluster.local:8082
-                            - argocd-server-metrics.argocd.svc.cluster.local:8083
                     - job_name: plex
                       scrape_interval: 30s
                       static_configs:
@@ -123,7 +117,7 @@ spec:
                       - set(log.attributes["ingress.url"], Concat(["https://", log.attributes["ingress.host"], log.attributes["ingress.path"]], "")) where log.attributes["ingress.host"] != nil
             service:
               pipelines:
-                metrics/argocd:
+                metrics/static:
                   receivers:
                     - prometheus
                   processors:
