@@ -119,6 +119,14 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
+          # The chart default renders empty limits/requests maps that Argo CD
+          # reports as a drift forever. No memory limit: Dragonfly sizes itself
+          # from it and refuses to start below 256Mi per thread.
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits: null
     - repoURL: https://github.com/qjoly/gitops.git
       targetRevision: HEAD
       path: mocha/apps/proxyauthk8s/manifests
