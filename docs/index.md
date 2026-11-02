@@ -8,7 +8,7 @@ First things first, let's explain what a CloudLab is.
 
 In opposition to a HomeLab, a CloudLab a server rented from a cloud provider. It's a great way to experiment with new technologies without the need to buy hardware and deal with the noise and heat of the servers.
 
-In my personal case, I have both a Homelab and a CloudLab. I use the CloudLab to test new technologies and the Homelab to host sensitive data and services (clusters `home` is the name of my Homelab cluster, `cortado` and `arabica` are CloudLab clusters).
+In my personal case, I have both a Homelab and a CloudLab. I use the CloudLab to test new technologies and the Homelab to host sensitive data and services (`turing` is the Homelab cluster, `mocha` and `doppio` are the CloudLab clusters, both on OVH).
 
 I have 2 n100 servers at home, both running Proxmox, connected to a 1G switch as well as my NAS.
 
@@ -25,19 +25,19 @@ for their telemetry and the current state of node 02.
 
 Like many people in the k8s-at-home community, I use Kubernetes to manage my services and prioritize Helm charts to deploy them. But many services / applications doesn't have a Helm chart (or the one provided doesn't respect my requirements) so I chose [to write my own templates](https://github.com/RubxKube/common-charts/) (If you start looking at my configuration, you will sometimes see `common-charts` instead of the official Helm chart).
 
-To install and managed my Kubernetes cluster, I use [Talos](https://talos.dev/), a modern OS for Kubernetes. It's a great way to have a minimal OS that is easy to manage and secure. On top of that, I also have [Omni](https://omni.siderolabs.com/tutorials/getting_started/) to manage my cluster. Omni allows me to manage many clusters from a single interface and provides features like gRPC Proxy (to access the Kubernetes API of all clusters, directly from Omni and by using a standard Kubeconfig, [e.g. here](https://github.com/qjoly/GitOps/blob/750b83bf148b64d17f8af15213b78c26335a41f8/cortado/kubeconfig)), RBAC, Deployments, and more.
+The Homelab cluster runs [Talos](https://talos.dev/), managed by a self-hosted [Omni](https://omni.siderolabs.com/tutorials/getting_started/) instance, which gives one interface, a gRPC proxy to every Kubernetes API and RBAC. Its template is [`turing/template.yaml`](https://github.com/qjoly/GitOps/blob/main/turing/template.yaml), applied with `omnictl`.
 
-All Omni templates are stored in this repository (e.g. [here](https://github.com/qjoly/GitOps/blob/750b83bf148b64d17f8af15213b78c26335a41f8/cortado/template.yaml)) and are applied with `omnictl`.
+The CloudLab servers run [Corium](https://github.com/Corium-OS/Corium) (bootc + k0s), driven with `cctl` from one node document per server (e.g. [`mocha/corium/mocha.yaml`](https://github.com/qjoly/GitOps/blob/main/mocha/corium/mocha.yaml)).
 
 Here are just a few of the technologies and applications I use :
-- [**Omni** (Self-hosted)](https://www.siderolabs.com/platform/saas-for-kubernetes/) : Manage all nodes between clusters and regions.
+- [**Omni** (Self-hosted)](https://www.siderolabs.com/platform/saas-for-kubernetes/) : Manage the Talos nodes (`turing`).
 - [Cilium](https://cilium.io/) as CNI and LB (ARP mode)
 - [ArgoCD](https://argoproj.github.io/argo-cd/) to manage the GitOps workflow
-- [Nginx Ingress Controller](https://kubernetes.github.io/ingress-nginx/) for Ingress management (and [Istio](https://istio.io/) deployed on some clusters)
+- [Traefik](https://traefik.io/) for Ingress management
 - [Cert Manager](https://cert-manager.io/) for TLS certificates.
-- [Longhorn](https://longhorn.io/) for storage based on nodes disks (**Only on the `home` cluster**).
+- [Rook](https://rook.io/) (Ceph) and [csi-driver-nfs](https://github.com/kubernetes-csi/csi-driver-nfs) for the NAS (**`turing`**).
+- [OpenEBS](https://openebs.io/): LVM on `mocha`, ZFS on `doppio`.
 - [External Secrets](https://external-secrets.io/latest/) to fetch secrets from a remote store.
-- [Vault](https://www.vaultproject.io/) as a secret store to store secrets.
-- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet (**Only on the `home` cluster**).
-- [ZFS](https://openzfs.github.io/openzfs-docs/) + [Local-Path-Provisioner](https://github.com/rancher/local-path-provisioner) to create persistent volumes on the mounted ZFS filesystem (**Only on CloudLab cluster**).
-- [Volsync](https://github.com/backube/volsync) to create backup and send backup (using restic) to a minio server (**Only on CloudLab cluster**).
+- [OpenBao](https://openbao.org/) (through bank-vaults) as the secret store, one per cluster.
+- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet (**`turing`**).
+- restic CronJobs to back up databases and OpenBao to S3 (**`mocha`**).

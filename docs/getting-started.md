@@ -11,35 +11,15 @@ Let's see how to install our baremetal cluster on OVH.
 
 *I didn't test vRack (private network between multiple servers) with OVH. If used it, please let me know how it went :smile:*.
 
-## OVH Install Talos
+## OVH install with Corium
 
-OVH provides many ways to install an OS on your server (Templates, [Bring-your-own-image](https://help.ovhcloud.com/csm/en-dedicated-servers-bringyourownimage?id=kb_article_view&sysparm_article=KB0043281)) but I will use the Rescue Mode to install Talos.
+Both OVH servers (`mocha` and `doppio`) run [Corium](https://github.com/Corium-OS/Corium), a bootc image around k0s, installed from the Rescue Mode.
 
 ![alt text](./img/boot-in-rescue.png)
 ![alt text](./img/boot-in-rescue-part2.png)
 
-After rebooting in Rescue Mode, you will receive an email with the credentials (or just the IP if you provided an SSH Key) to connect to the server. You can connect to the server using SSH.
+After rebooting in Rescue Mode, you will receive an email with the credentials (or just the IP if you provided an SSH Key) to connect to the server.
 
-Once connected, you can download the Talos image and install it on the server.
-
-If you're using Omni, you can download the image with the following command:
-
-```bash
-omnictl download iso --arch amd64 --extensions zfs --talos-version v1.9.1 # ZFS is optional, but I use it to create a ZFS pool, see more in ./docs/zfs.md
-```
-
-Then, you can use `dd` to write the image to the system disk.
-```bash
-dd if=talos.iso of=/dev/sda bs=4M status=progress
-26+1 records in
-26+1 records out
-112099328 bytes (112 MB, 107 MiB) copied, 1.50875 s, 74.3 MB/s
-```
-
-*For now, Talos doesn't handle RAID*.
-
-After writing the image to the disk, you can reboot the server and boot on the disk.
+From there, follow [Corium's rescue install guide](https://github.com/Corium-OS/Corium/blob/main/docs/install/rescue.md), then claim the node with `cctl` and its node document (`mocha/corium/mocha.yaml` or `doppio/corium/ks-stor.yaml`). The full procedure, including the `awaitConfig` setting you must not forget, is in [`doppio/README.md`](https://github.com/qjoly/GitOps/blob/main/doppio/README.md#install).
 
 ![alt text](./img/boot-from-disk.png)
-
-You should have a Talos node running on your server !
