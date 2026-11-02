@@ -3,19 +3,12 @@ kind: Application
 metadata:
   name: proxyauthk8s
   namespace: argocd
+  annotations:
+    # The apiserver fills defaults into the Dragonfly volumeClaimTemplates that
+    # only a server-side diff knows about.
+    argocd.argoproj.io/compare-options: ServerSideDiff=true
 spec:
   project: default
-  ignoreDifferences:
-    - group: apps
-      kind: StatefulSet
-      name: dragonfly
-      jsonPointers:
-        - /spec/persistentVolumeClaimRetentionPolicy
-        - /spec/podManagementPolicy
-        - /spec/revisionHistoryLimit
-      jqPathExpressions:
-        - '.spec.volumeClaimTemplates[].spec.volumeMode'
-        - '.spec.volumeClaimTemplates[].status'
   syncPolicy:
     automated:
       selfHeal: true
@@ -119,9 +112,8 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
-          # The chart default renders empty limits/requests maps that Argo CD
-          # reports as a drift forever. No memory limit: Dragonfly sizes itself
-          # from it and refuses to start below 256Mi per thread.
+          # No memory limit: Dragonfly sizes itself from it and refuses to start
+          # below 256Mi per thread.
           resources:
             requests:
               cpu: 50m
