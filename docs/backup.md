@@ -6,7 +6,6 @@ Backups run on `mocha` as CronJobs defined in [`mocha/system/backup/`](https://g
 |---|---|---|---|---|
 | `authentik-pgdump` | `authentik` | `30 0 * * *` | `pg_dump` of Authentik | `mocha-coffee/authentik-postgres` |
 | `matomo-db-dump` | `matomo` | `0 1 * * *` | MariaDB dump | `mocha-coffee/matomo-db` |
-| `toutou-db-dump` | `toutou` | `15 1 * * *` | database dump | `mocha-coffee/toutou-db` |
 | `tranquil-pds-db-dump` | `tranquil-pds` | `30 1 * * *` | database dump | `mocha-coffee/tranquil-pds-db` |
 | `openbao-snapshot` | `bank-vaults` | `0 */6 * * *` | OpenBao raft snapshot | `mocha-coffee/openbao-raft` |
 
