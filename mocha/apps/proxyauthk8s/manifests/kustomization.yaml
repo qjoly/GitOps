@@ -4,3 +4,4 @@ resources:
   - externalsecret.yaml
   - proxykubeapi.yaml
   - ristretto.yaml
+  - ultralab.yaml
