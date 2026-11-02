@@ -106,7 +106,7 @@ mise run vault:status
 | `materia-americano.yaml` | Republishes `americano/` to the root of the `americano` branch for Materia |
 | `tangled-mirror.yaml` | Mirrors the repo to tangled |
 | `page.yaml` | Builds and publishes the mkdocs site ([docs](https://qjoly.github.io/GitOps/)) |
-| `spindle-image.yaml`, `abcdesktop-image.yaml`, `atcr-hold-image.yaml`, `autovod-image.yaml` | Build the container images for a few self-hosted apps |
+| `spindle-image.yaml`, `abcdesktop-image.yaml`, `atcr-hold-image.yaml` | Build the container images for a few self-hosted apps |
 
 ### Automatic cluster template sync
 
