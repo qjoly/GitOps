@@ -7,8 +7,9 @@
 <div align="center">
 
   [![Blog](https://img.shields.io/badge/Blog-blue?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://a-cup-of.coffee/)
-  [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.35.6-blue?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
-  [![Linux](https://img.shields.io/badge/Talos-v1.13.5-blue?style=for-the-badge&logo=linux&logoColor=white)](https://talos.dev/)
+  [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.36-blue?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+  [![Talos](https://img.shields.io/badge/Talos-v1.13-blue?style=for-the-badge&logo=linux&logoColor=white)](https://talos.dev/)
+  [![Corium](https://img.shields.io/badge/Corium-k0s-blue?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/Corium-OS/Corium)
 
 </div>
 
@@ -16,7 +17,7 @@
 
 <div align="center">
 
-*Homelab setup based on Omni and Talos.*
+*Homelab setup based on Talos, Omni and Corium.*
 
 </div>
 
@@ -26,11 +27,12 @@ This repository contains the configuration files for my homelab. The homelab is 
 
 ## Stack
 
-To avoid headaches and to keep things simple, I use [Talos](https://www.talos.dev/) to manage the Kubernetes cluster (don't hesitate to check [a little article I wrote about it](https://a-cup-of.coffee/blog/talos/)). To be more specific, I have a self-hosted [Omni](https://www.siderolabs.com/platform/saas-for-kubernetes/) instance to manage all clusters with a single endpoint and secure them with SSO.
+The home cluster runs [Talos](https://www.talos.dev/) (don't hesitate to check [a little article I wrote about it](https://a-cup-of.coffee/blog/talos/)), managed by a self-hosted [Omni](https://www.siderolabs.com/platform/saas-for-kubernetes/) instance. The two OVH servers run [Corium](https://github.com/Corium-OS/Corium) (bootc + k0s) and are driven with `cctl`.
 
 ### Core Components
 
-- [**Omni** (Self-hosted)](https://www.siderolabs.com/platform/saas-for-kubernetes/) : Manage all nodes between clusters and regions.
+- [**Omni** (Self-hosted)](https://www.siderolabs.com/platform/saas-for-kubernetes/) : Manage the Talos nodes (**`turing`**).
+- [**Corium**](https://github.com/Corium-OS/Corium) : bootc + k0s image for the OVH servers (**`mocha`**, **`doppio`**).
 - [Cilium](https://cilium.io/) as CNI and LB (ARP mode)
 - [ArgoCD](https://argoproj.github.io/argo-cd/) to manage the GitOps workflow
 - [Traefik](https://doc.traefik.io/traefik/getting-started/install-traefik/#use-the-helm-chart) as Ingress controller (and for middleware management)
@@ -38,23 +40,25 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 - [External DNS](https://kubernetes-sigs.github.io/external-dns/) to publish records from Ingresses
 - Storage:
   - [Rook](https://rook.io/) (Ceph) on `turing`, plus [csi-driver-nfs](https://github.com/kubernetes-csi/csi-driver-nfs) for the NAS.
-  - [OpenEBS](https://openebs.io/) + LVM on `mocha` (`openebs-lvmpv` is the only StorageClass there).
+  - [OpenEBS](https://openebs.io/) on `mocha`: LVM (`openebs-lvmpv` by default, `openebs-lvmpv-thin`) and `openebs-hostpath`.
+  - OpenEBS ZFS on `doppio` (`doppio-zfs`).
 - [External Secrets](https://external-secrets.io/latest/) to fetch secrets from a remote store
-- [Vault](https://www.vaultproject.io/) (via [bank-vaults](https://bank-vaults.dev/)) as secret store
-- [Authentik](https://goauthentik.io/) for SSO / forward-auth (**`mocha`**)
+- [OpenBao](https://openbao.org/) (via [bank-vaults](https://bank-vaults.dev/)) as secret store, one per cluster
+- [Authentik](https://goauthentik.io/) for SSO / forward-auth, and [Dex](https://dexidp.io/) (**`mocha`**)
 - [SigNoz](https://signoz.io/) + [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator) for metrics, logs and traces
 - [CrowdSec](https://www.crowdsec.net/) to filter traffic hitting the Ingress (**`mocha`**)
 - [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet (**`turing`**)
-- [Volsync](https://github.com/backube/volsync) to back up PVCs with restic (**`mocha`**)
+- restic CronJobs (database dumps, OpenBao snapshots) to S3 (**`mocha`**)
 - [Spegel](https://spegel.dev/) to share images between nodes (**`turing`**)
 - [Reloader](https://github.com/stakater/Reloader) to restart workloads when a ConfigMap/Secret changes
-- Cluster API ([KubeVirt](https://kubevirt.io/) + Talos providers) to run guest clusters on `mocha`
+- Cluster API ([Virtink](https://github.com/smartxworks/virtink) + [Kamaji](https://kamaji.clastix.io/) providers) for guest clusters on `mocha`
 
 ### Clusters
 
-- [**Mocha**](https://github.com/qjoly/GitOps/tree/main/mocha) : single bare-metal node hosted by OVH (128GB RAM, 8 CPU, 2x512GB NVMe). Production cluster, also the management plane for guest clusters.
+- [**Mocha**](https://github.com/qjoly/GitOps/tree/main/mocha) : single bare-metal node hosted by OVH (128GB RAM, 8 CPU, 2x512GB NVMe), running Corium. Production cluster, also hosts SigNoz and the guest clusters. Its node document is [`mocha/corium/mocha.yaml`](./mocha/corium/mocha.yaml).
 - [**Turing**](https://github.com/qjoly/GitOps/tree/main/turing) : cluster made of small devices (ARM and x86) at home. Local hosting, storage (Rook + NAS) and testing.
 - [**Doppio**](https://github.com/qjoly/GitOps/tree/main/doppio) : single bare-metal node at OVH, kept for storage and backup. The odd one out — it runs [Corium](https://github.com/Corium-OS/Corium) (bootc + k0s) rather than Talos, so it is driven with `cctl` and has no Omni template. See [`doppio/README.md`](./doppio/README.md).
+- [**Ristretto**](https://github.com/qjoly/GitOps/tree/main/ristretto) : single-node Talos VM on Proxmox, not managed by ArgoCD and reachable through ProxyAuthK8S. See [`ristretto/README.md`](./ristretto/README.md).
 
 `cortado` and the standalone `kubevirt` cluster have been retired — the old configs live in the git history.
 
@@ -65,39 +69,29 @@ To avoid headaches and to keep things simple, I use [Talos](https://www.talos.de
 
 ## Guest clusters on `mocha`
 
-Instead of a second physical cluster for tests, `mocha` hosts [Cluster API](https://cluster-api.sigs.k8s.io/) guest clusters running as KubeVirt VMs — plain Talos + Cilium clusters, one values file each.
+Instead of a second physical cluster for tests, `mocha` is meant to host [Cluster API](https://cluster-api.sigs.k8s.io/) guest clusters: a control plane hosted by Kamaji as pods, and workers as Virtink VMs. Their pod and service CIDRs live inside the guest, so they can overlap with the host cluster.
 
-Two reasons to keep them around:
-
-1. **Network isolation**: their pod/service CIDRs live inside the VMs, so they can overlap freely with the host cluster (and with each other).
-2. **Configuration testing**: same core components as production, disposable.
-
-Creating, destroying and adopting them is documented in [`mocha/clusters/README.md`](./mocha/clusters/README.md). The chart doing the work is [`qjoly/kubevirt-capi-easy`](https://github.com/qjoly/kubevirt-capi-easy). For the story of the previous (Omni-managed) KubeVirt setup, see [my article about Omni and Kubevirt](https://a-cup-of.coffee/blog/omni/).
+The only one defined is [`mocha/apps/kube-lab`](./mocha/apps/kube-lab). It does not sync yet: the CAPI core, the kubeadm bootstrap provider, CAAPH and the Kamaji operator are not installed. See [`mocha/clusters/README.md`](./mocha/clusters/README.md).
 
 ## Usage
 
-To use this repository, you need to have the Omni CLI installed. You can find the installation instructions [here](https://omni.siderolabs.com/how-to-guides/install-and-configure-omnictl).
-
-Download the `omniconfig` file from the Omni instance and merge it with the one in your home directory.
+**`turing`** is driven by Omni. Install [`omnictl`](https://omni.siderolabs.com/how-to-guides/install-and-configure-omnictl), merge the `omniconfig` downloaded from the Omni instance, then:
 
 ```bash
 omnictl config merge ./omniconfig.yaml
+omnictl cluster template sync -f turing/template.yaml
+omnictl kubeconfig --cluster turing
 ```
 
-Then, you can deploy the cluster based on the MachineClass you have configured.
+**`mocha`** and **`doppio`** are driven by `cctl` with their node document, see [`doppio/README.md`](./doppio/README.md) for the full procedure:
 
 ```bash
-cd mocha
-omnictl cluster template sync -f template.yaml
+cctl apply <node> --file mocha/corium/mocha.yaml
 ```
 
-This will create a new cluster based on the configuration you have set in the `template.yaml` file. You can download the kubeconfig file using the following command:
+[`mocha/kubeconfig`](./mocha/kubeconfig) logs into `mocha` through Authentik (OIDC).
 
-```bash
-omnictl kubeconfig --cluster mocha
-```
-
-Recurring operations (Vault unseal, guest cluster kubeconfig) are `mise` tasks:
+Recurring operations (Vault unseal and KV access) are `mise` tasks:
 
 ```bash
 mise tasks          # list them
@@ -108,19 +102,15 @@ mise run vault:status
 
 | Workflow | What it does |
 |----------|--------------|
-| `omni-template-sync.yaml` | Syncs the Omni cluster templates on every push to `main` (see below) |
+| `omni-template-sync.yaml` | Syncs the Omni cluster template of `turing` on every push to `main` (see below) |
 | `materia-americano.yaml` | Republishes `americano/` to the root of the `americano` branch for Materia |
 | `tangled-mirror.yaml` | Mirrors the repo to tangled |
 | `page.yaml` | Builds and publishes the mkdocs site ([docs](https://qjoly.github.io/GitOps/)) |
-| `spindle-image.yaml`, `abcdesktop-image.yaml`, `atcr-hold-image.yaml` | Build the container images for a few self-hosted apps |
+| `spindle-image.yaml`, `abcdesktop-image.yaml`, `atcr-hold-image.yaml`, `autovod-image.yaml` | Build the container images for a few self-hosted apps |
 
 ### Automatic cluster template sync
 
-The workflow `.github/workflows/omni-template-sync.yaml` runs `omnictl cluster template sync` automatically on every push to `main` that modifies files under `turing/` or `mocha/`.
-
-A `detect` job inspects the diff and builds a matrix of changed clusters. A parallel `sync` job then syncs each one independently — touching only `mocha/` never triggers a `turing` sync, and a failure in one cluster does not block the other.
-
-`archives/` is intentionally excluded from CI sync. More details in [`docs/github-actions.md`](./docs/github-actions.md).
+The workflow `.github/workflows/omni-template-sync.yaml` runs `omnictl cluster template sync` and `helmfile apply` on every push to `main` that modifies `turing/template.yaml`, `turing/patches/`, `turing/helmfile.yaml` or `turing/helm/`. On a pull request it posts the dry-run and the `helmfile diff` as a comment.
 
 It authenticates against Omni using a **service account** (not a Kubernetes ServiceAccount — it is an Omni-native token-based credential).
 
@@ -154,16 +144,16 @@ kind: Config
 clusters:
   - cluster:
       server: https://omni.home.une-tasse-de.cafe:8100/
-    name: omni-mocha
+    name: omni-turing
 contexts:
   - context:
-      cluster: omni-mocha
+      cluster: omni-turing
       namespace: default
-      user: omni-mocha-quentinj@une-pause-cafe.fr
-    name: omni-mocha
-current-context: omni-mocha
+      user: omni-turing-quentinj@une-pause-cafe.fr
+    name: omni-turing
+current-context: omni-turing
 users:
-- name: omni-mocha-quentinj@une-pause-cafe.fr
+- name: omni-turing-quentinj@une-pause-cafe.fr
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -172,7 +162,7 @@ users:
         - get-token
         - --oidc-issuer-url=https://omni.home.une-tasse-de.cafe/oidc
         - --oidc-client-id=native
-        - --oidc-extra-scope=cluster:mocha
+        - --oidc-extra-scope=cluster:turing
       command: kubectl
       env: null
       provideClusterInfo: false
