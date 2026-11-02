@@ -35,8 +35,9 @@ the tag as an input:
 gh workflow run spindle-image.yaml -f ref=v1.16.1-alpha
 ```
 
-Then bump the tag in `mocha/apps/spindle/manifests/deployment.yaml`. Renovate does not track this,
-since upstream does not live on GitHub.
+The image tag is set by the `spindle` chart from `https://rubxkube.github.io/charts`: bump it in the
+chart, then bump `targetRevision` in `mocha/apps/spindle/app.yaml`. Renovate tracks the chart, not
+the image, since upstream does not live on GitHub.
 
 That Dockerfile is marked *"Development only. Not for production use."* I use it anyway: it is a
 plain multi-stage Go build, and the alternative is maintaining my own. The `git clone` works over
@@ -65,7 +66,7 @@ No shared filesystem is needed, so a `docker:dind` sidecar reachable over TCP is
 containers share the pod network namespace, so `127.0.0.1:2375` works across them.
 
 mocha does have `/dev/kvm` and the `vmx` CPU flag, so switching to the microVM engine later is
-possible. The node even advertises `devices.kubevirt.io/kvm` as a schedulable resource, which is a
+possible. The node even advertises `devices.virtink.io/kvm` as a schedulable resource, which is a
 cleaner way to get the device than a `hostPath`.
 
 ## Making dind listen on loopback only
@@ -121,7 +122,7 @@ container's cgroup, not spindle's. The limits are sized together:
 Raise either of the first two without raising the limit and the daemon gets OOM-killed mid-job. The
 upstream defaults (8 concurrent × 6144 MB) would need 48Gi.
 
-The Docker data directory is an `emptyDir` with a 30Gi limit — a throwaway image cache. Worth moving
+The Docker data directory is an `emptyDir` with no size limit — a throwaway image cache. Worth moving
 to a PVC if re-pulling from nixery on every restart becomes annoying.
 
 ## What spindle serves over HTTP
@@ -142,27 +143,19 @@ sole route.
 
 ## PodSecurity
 
-The dind sidecar is privileged, and mocha enforces the `baseline` PodSecurity profile cluster-wide
-(a Talos default), which forbids exactly that. Symptom: the Argo Application reports `Synced` while
-the ReplicaSet sits at `DESIRED 1 / CURRENT 0`. The reason only shows up in its events:
+The dind sidecar is privileged. mocha enforces no PodSecurity profile by default, but the `spindle`
+namespace carries `enforce: privileged` anyway, so the pod keeps scheduling if a `baseline` default
+comes back. Without it, the Argo Application reports `Synced` while the ReplicaSet sits at
+`DESIRED 1 / CURRENT 0`, and the reason only shows up in its events:
 
 ```
 Error creating: pods "spindle-…" is forbidden: violates PodSecurity "baseline:latest":
 privileged (container "dind" must not set securityContext.privileged=true)
 ```
 
-Beware of testing this with a server-side dry run against `default` — that namespace already carries
-`enforce: privileged`, so it passes and tells you nothing.
-
-The `managedNamespaceMetadata` pattern used by `crowdsec` did **not** work here. The
-field was applied to the Application, but the namespace had already been created by an earlier sync
-via `CreateNamespace=true`, and Argo never retrofits the labels onto it — not even after
-`argocd.argoproj.io/refresh=hard`. It does not appear among the Application's managed resources at
-all.
-
-So the namespace is declared explicitly in `manifests/namespace.yaml`, the way `bank-vaults` does
-it, and gets applied like any other resource. `managedNamespaceMetadata` was removed to keep a
-single source of truth.
+The namespace is declared through the chart's `extraResources` in `mocha/apps/spindle/app.yaml`,
+not with `managedNamespaceMetadata`: Argo never adds those labels to a namespace that an earlier
+`CreateNamespace=true` sync already created.
 
 ## Log directory
 
@@ -171,7 +164,8 @@ single source of truth.
 directory has to exist beforehand. The only thing that creates it is the image entrypoint, with that
 path hardcoded. Pointing the variable elsewhere silently breaks log writing.
 
-Both the SQLite databases and the logs live on one PVC, mounted twice with different `subPath`s.
+The SQLite databases and the logs live on two PVCs on `openebs-lvmpv`: `spindle-data` (10Gi,
+`/var/lib/spindle`) and `spindle-logs` (2Gi, `/var/log/spindle`).
 
 ## Registering the spindle
 
