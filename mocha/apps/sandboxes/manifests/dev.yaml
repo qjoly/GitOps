@@ -21,7 +21,7 @@ spec:
             - sh
             - -c
             # mise installs whatever toolchain the pushed repo declares; a failed download must not kill the sandbox.
-            - curl -fsSL https://mise.run | sh || true; exec sleep infinity
+            - curl -fsSL https://mise.run | sh || true; touch /tmp/ready; exec sleep infinity
           env:
             - name: PATH
               value: /root/.local/share/mise/shims:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -29,6 +29,11 @@ spec:
               value: "1"
             - name: MISE_TRUSTED_CONFIG_PATHS
               value: /work
+          # A claim is handed out only once the mise install attempt is over.
+          readinessProbe:
+            exec:
+              command: [test, -e, /tmp/ready]
+            periodSeconds: 2
           resources:
             requests:
               cpu: 500m
