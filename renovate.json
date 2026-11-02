@@ -51,6 +51,14 @@
         "major"
       ],
       "enabled": false
+    },
+    {
+      "description": "Group the ProxyAuthK8S chart with its CRD chart: the controller refuses to start against CRDs older than the app (checks spec.upstream_auth), and both publish the same versions",
+      "matchPackageNames": [
+        "ghcr.io/batleforc/proxyauthk8s/chart",
+        "ghcr.io/batleforc/proxyauthk8s/chart-crd"
+      ],
+      "groupName": "proxyauthk8s"
     }
   ],
   "argocd": {
