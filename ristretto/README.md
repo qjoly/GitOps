@@ -59,7 +59,7 @@ in `mocha/apps/proxyauthk8s/manifests/ristretto.yaml`.
 
 ```sh
 helm upgrade --install agent oci://ghcr.io/batleforc/proxyauthk8s/chart-agent \
-  --version 0.4.0 -n proxyauth-agent --create-namespace \
+  --version 0.5.0 -n proxyauth-agent --create-namespace \
   -f proxyauth-agent/values.yaml
 ```
 
@@ -74,8 +74,8 @@ its kubeconfig (`~/.kube/ristretto.yaml`, an `exec` credential plugin).
 
 ```sh
 # once per machine
-curl -sSL -O https://github.com/batleforc/ProxyAuthK8S/releases/download/v0.4.0/kubectl-proxyauth_v0.4.0_darwin_arm64.tar.gz
-tar xzf kubectl-proxyauth_v0.4.0_darwin_arm64.tar.gz
+curl -sSL -O https://github.com/batleforc/ProxyAuthK8S/releases/download/v0.5.0/kubectl-proxyauth_v0.5.0_darwin_arm64.tar.gz
+tar xzf kubectl-proxyauth_v0.5.0_darwin_arm64.tar.gz
 install -m 0755 kubectl-proxyauth ~/.local/bin/
 kubectl proxyauth config set-def \
   --server-url https://proxyauth.mocha.thoughtless.eu --namespace proxyauthk8s
