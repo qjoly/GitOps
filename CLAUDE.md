@@ -1,15 +1,18 @@
 # GitOps
 
-Clusters: `mocha` and `turing` (Talos, driven by Omni), `doppio` (Corium/k0s on
-an OVH box, driven by `cctl`). Each has a `README.md` worth reading before
-changing anything in its directory.
+Clusters: `turing` (Talos, driven by Omni, context `omni-turing`), `mocha` and
+`doppio` (Corium/k0s on OVH boxes, driven by `cctl`, mocha's context is
+`mocha-corium`), `ristretto` (standalone Talos VM, not under ArgoCD). Read the
+cluster's `README.md` before changing anything in its directory.
+`mocha/template.yaml` and `mocha/patches/` are Talos leftovers that nothing
+applies: mocha's node config is `mocha/corium/mocha.yaml`.
 
 ## Vault
 
 This is a lab. Reading and writing secrets in the clusters' Vaults is expected
 and carries no risk — do it rather than asking.
 
-Every cluster runs Vault through bank-vaults in the `bank-vaults` namespace.
+Every cluster runs Vault (OpenBao image) through bank-vaults in the `bank-vaults` namespace.
 The `vault-unseal-keys` Secret there holds the root token (`vault-root`) and the
 unseal keys (`vault-unseal-N`); the `cluster-keys.json.age` files are leftovers
 from the previous setup.
