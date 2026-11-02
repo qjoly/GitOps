@@ -14,7 +14,9 @@ collector and the web UI.
 - The UI is exposed at `signoz.mocha.thoughtless.eu` through a Traefik ingress with
   a cert-manager certificate.
 - ClickHouse persists its data on the `openebs-lvmpv` storage class.
-- Telemetry is collected by the `k8s-infra` agent, one per cluster.
+- Every cluster (mocha, turing, doppio) runs the `k8s-infra` agent. mocha and turing
+  also run an `otel-metrics` collector that scrapes ServiceMonitors and PodMonitors,
+  and mocha runs OBI for eBPF auto-instrumentation.
 
 mocha collects its own telemetry through the in-cluster collector. Other clusters
 push to an OTLP endpoint exposed over the internet and protected with mTLS.
@@ -32,21 +34,33 @@ mocha talks to its collector in-cluster over plain HTTP:
 otelCollectorEndpoint: http://signoz-otel-collector.signoz.svc.cluster.local:4318
 ```
 
-The agent does not produce application traces on its own. To trace an application,
-instrument it with an OpenTelemetry SDK and point it at the collector.
+The agent does not produce application traces on its own. On mocha, OBI
+(`mocha/system/obi/`) traces HTTP and gRPC workloads through eBPF with no code
+change. Use an OpenTelemetry SDK for richer spans, or on the other clusters.
+
+## ServiceMonitors (otel-metrics)
+
+On mocha and turing, `*/system/otel-operator/` installs the OpenTelemetry Operator
+and `*/system/otel-metrics/` defines an `OpenTelemetryCollector` whose target
+allocator discovers every ServiceMonitor and PodMonitor. On mocha the collector runs
+in the `signoz` namespace and exports in-cluster; on turing it runs in
+`signoz-k8s-infra` and exports to the mTLS endpoint with the
+`signoz-otel-mtls-client` certificate. doppio has neither.
 
 ## Application metrics
 
 Some applications ship their own metrics on top of what k8s-infra collects.
 
 Traefik exports its metrics over OTLP (`metrics.otlp` in its Helm values). On mocha
-it sends to the in-cluster collector; on other clusters it sends to the mTLS ingest
-endpoint with a client certificate. Each Traefik tags its metrics with
-`cluster=<name>` through `resourceAttributes`, which needs Traefik v3.5 or newer.
+it sends to the in-cluster collector; on turing it sends to the mTLS ingest endpoint
+with a client certificate. doppio's Traefik exports nothing. Each Traefik tags its
+metrics with `k8s.cluster.name: <name>` through `metrics.otlp.resourceAttributes`,
+which needs Traefik v3.5 or newer.
 
-ArgoCD only exposes Prometheus metrics, so a Prometheus receiver added to the
-k8s-infra deployment collector (`otelDeployment.config`) scrapes the ArgoCD metrics
-services and forwards them, tagged with `cluster=mocha`.
+ArgoCD only exposes Prometheus metrics, collected through a ServiceMonitor by
+otel-metrics on mocha and turing. The argo-cd chart does not create the
+`argocd-metrics` Service on mocha, so it is defined next to its ServiceMonitor in
+`mocha/system/servicemonitors/servicemonitors.yaml`.
 
 external-secrets exposes Prometheus metrics on port 8080 but the chart ships its
 ServiceMonitor disabled. `mocha/system/external-secret/external-secret.yaml` turns it
@@ -64,9 +78,9 @@ completely silent — the target Secret is simply never created and the workload
 consuming it sit in `CreateContainerConfigError` indefinitely (it went unnoticed for
 four days on trmnl-server).
 
-The Traefik and ArgoCD dashboards both carry a `cluster` variable. `cluster` is a
-resource attribute, so the dashboard filters reference it with an empty type
-(`{"key":"cluster","type":""}`), not as a tag.
+The Traefik and ArgoCD dashboards both carry a multi-select `k8s.cluster.name`
+variable, with every cluster selected by default. Their queries filter with
+`k8s.cluster.name IN $k8s.cluster.name`.
 
 ## Exposing SigNoz over the internet (mTLS)
 
@@ -83,7 +97,7 @@ machine — the only requirement is a client certificate from a trusted CA.
 flowchart LR
     subgraph senders["Senders (each with its own client cert)"]
         remote["Remote cluster<br/>k8s-infra agent"]
-        machine["Standalone machine<br/>otelcol (Proxmox, backups)"]
+        machine["Standalone machine<br/>otelcol (proxmox-01/02)"]
     end
 
     subgraph mocha["mocha cluster"]
@@ -116,8 +130,14 @@ The trust and enforcement live in `otlp-mtls.yaml`:
 Because the CA field is a bundle, adding a sender is purely additive: append its CA
 public certificate to `tls.ca` and re-sync. No sender ever shares a key; each has
 its own CA and client cert, so one can be revoked by dropping its CA from the
-bundle. Current members: `signoz-mtls-ca`, `signoz-mtls-traefik-ca`,
-`signoz-mtls-doppio-ca`, `proxmox-ca`.
+bundle. Current members:
+
+| CA | Sender |
+|---|---|
+| `signoz-mtls-ca` | turing k8s-infra and otel-metrics |
+| `signoz-mtls-traefik-ca` | turing Traefik |
+| `signoz-mtls-doppio-ca` | doppio |
+| `proxmox-ca` | the Proxmox hosts |
 
 Inspect the bundle:
 
@@ -171,7 +191,7 @@ produced and mounted differs (cluster vs. standalone machine, below).
 
 ### Sender is a standalone machine (no Kubernetes)
 
-Used by the Proxmox host and the backup jobs. There is no k8s-infra agent; run a
+Used by the two Proxmox hosts (configs in `external/proxmox/`). There is no k8s-infra agent; run a
 standalone OpenTelemetry Collector (or point an app's OTLP exporter) at the endpoint.
 
 1. Generate a CA and a client certificate on the machine, e.g. with `openssl` or
