@@ -1,7 +1,7 @@
 # doppio — the node document.
 #
-# This file plays the role `mocha/patches/` and `turing/patches/` play for the
-# Talos clusters: it is what the machine is, in git, reviewable.
+# This file plays the role `turing/patches/` plays for the Talos cluster: it is
+# what the machine is, in git, reviewable.
 #
 # Day 0   `cctl enroll <ip> --code <code> --config doppio/corium/ks-stor.yaml`
 # Day 2   `cctl apply <ip> --file doppio/corium/ks-stor.yaml`

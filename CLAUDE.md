@@ -3,9 +3,8 @@
 Clusters: `turing` (Talos, driven by Omni, context `omni-turing`), `mocha` and
 `doppio` (Corium/k0s on OVH boxes, driven by `cctl`, mocha's context is
 `mocha-corium`), `ristretto` (standalone Talos VM, not under ArgoCD). Read the
-cluster's `README.md` before changing anything in its directory.
-`mocha/template.yaml` and `mocha/patches/` are Talos leftovers that nothing
-applies: mocha's node config is `mocha/corium/mocha.yaml`.
+cluster's `README.md` before changing anything in its directory. mocha's node
+config is `mocha/corium/mocha.yaml`.
 
 ## Vault
 

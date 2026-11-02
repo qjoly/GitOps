@@ -9,10 +9,6 @@ on:
       - "turing/patches/**"
       - "turing/helmfile.yaml"
       - "turing/helm/**"
-      - "mocha/template.yaml"
-      - "mocha/patches/**"
-      - "mocha/helmfile.yaml"
-      - "mocha/helm/**"
   pull_request:
     branches:
       - main
@@ -21,10 +17,6 @@ on:
       - "turing/patches/**"
       - "turing/helmfile.yaml"
       - "turing/helm/**"
-      - "mocha/template.yaml"
-      - "mocha/patches/**"
-      - "mocha/helmfile.yaml"
-      - "mocha/helm/**"
   # Manual re-run: the push trigger is path-filtered, so a CI-only fix
   # cannot replay a sync that failed for infra reasons.
   workflow_dispatch:
@@ -32,7 +24,7 @@ on:
       cluster:
         description: Cluster to sync
         type: choice
-        options: [turing, mocha]
+        options: [turing]
         required: true
 
 permissions:
@@ -43,7 +35,7 @@ jobs:
   # ----------------------------------------------------------------
   # Detect which clusters were actually touched in this push/PR.
   # Watches both Omni template files and Helm files.
-  # Outputs a JSON array, e.g. ["turing"] or ["mocha"] or ["turing","mocha"].
+  # Outputs a JSON array, e.g. ["turing"].
   # ----------------------------------------------------------------
   detect:
     runs-on: ubuntu-latest
@@ -68,7 +60,7 @@ jobs:
           fi
           clusters=$(
             git diff --name-only $range \
-              | grep -E '^(turing|mocha)/(template\.yaml|patches/|helmfile\.yaml|helm/)' \
+              | grep -E '^(turing)/(template\.yaml|patches/|helmfile\.yaml|helm/)' \
               | cut -d/ -f1 \
               | sort -u \
               | jq -Rsc 'split("\n") | map(select(length > 0))'
