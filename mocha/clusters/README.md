@@ -1,75 +1,38 @@
-# Guest clusters (KubeVirt + Talos)
+# Guest clusters
 
-GitOps-managed [Cluster API](https://cluster-api.sigs.k8s.io/) guest clusters
-running as KubeVirt VMs on top of `mocha`. Each cluster is a plain Talos +
-Cilium Kubernetes cluster.
+> [!WARNING]
+> Nothing in this directory runs. It belongs to the KubeVirt + Talos setup,
+> which did not survive the move of `mocha` to Corium: KubeVirt, CDI and the
+> Talos CAPI providers are not installed, `talos-poc` is gone, and
+> [`../bootstrap/as-clusters.yml`](../bootstrap/as-clusters.yml) is not applied.
 
-The chart doing the work lives in
-[`qjoly/kubevirt-capi-easy`](https://github.com/qjoly/kubevirt-capi-easy)
-(`charts/kubevirt-talos`). Here we only keep the per-cluster values.
+## Current approach: Virtink + Kamaji
 
-## Create a cluster
+The guest cluster in progress is [`../apps/kube-lab`](../apps/kube-lab): a
+control plane hosted by Kamaji as pods on `mocha`, workers as Virtink VMs, and
+Cilium pushed into the guest by CAAPH.
 
-1. Drop a file in [`values/`](./values/) — one file per cluster. The name of
-   `talosCluster.name` becomes both the cluster name and its namespace.
+Installed on `mocha`:
 
-   ```yaml
-   # values/dev-quentin.yaml
-   global:
-     namespace: dev-quentin
-   talosCluster:
-     name: dev-quentin
-     talosImageURL: https://factory.talos.dev/image/<hash>/v1.13.7/openstack-amd64.raw.xz
-     workerMachineCount: 2
-   ```
+- Virtink v0.17.0 ([`../system/virtink`](../system/virtink))
+- CAPI Virtink provider v0.7.0 ([`../system/capi-provider-virtink`](../system/capi-provider-virtink))
+- CAPI Kamaji control-plane provider v0.21.0 ([`../system/capi-cp-kamaji`](../system/capi-cp-kamaji))
 
-   Everything not set falls back to the chart defaults
-   (`charts/kubevirt-talos/values.yaml`).
+Missing, so `kube-lab` fails to sync: the CAPI core, the kubeadm bootstrap
+provider, CAAPH and the Kamaji operator.
 
-2. Commit. The `mocha-guest-clusters` ApplicationSet
-   ([`../bootstrap/as-clusters.yml`](../bootstrap/as-clusters.yml)) picks the
-   file up and creates an Argo CD `Application` named `cluster-<name>`.
+The guest pod CIDR must not overlap `mocha`'s pod CIDR (`10.244.0.0/16`): the
+worker VMs sit on `mocha`'s pod network.
 
-## Destroy a cluster
+## Old approach: KubeVirt + Talos
 
-Delete its file and commit. Argo CD prunes the `Application`, which deletes the
-`Cluster` object and lets CAPI tear the VMs down.
+`values/` holds one file per cluster for the
+[`qjoly/kubevirt-capi-easy`](https://github.com/qjoly/kubevirt-capi-easy) chart
+(`charts/kubevirt-talos`), and the `mocha-guest-clusters` ApplicationSet would
+create one `cluster-<name>` Application per file. Bringing it back requires
+KubeVirt + CDI, the `kubevirt`, `talos`, `helm` and `in-cluster` CAPI providers,
+and the `talos` `VirtualMachineClusterPreference`.
 
-## Run several
-
-Add several files. The ApplicationSet fans out, one `Application` per file.
-Pod/Service CIDRs live *inside* each guest's VMs, so they can safely be
-identical across clusters — no need to keep them disjoint.
-
-## Get the kubeconfig
-
-```bash
-mise run talos-poc:kubeconfig   # see ../../mise.toml (parameterised by env)
-```
-
-## Prerequisites (management plane, already on `mocha`)
-
-- CAPI providers: `kubevirt` (infra), `talos` (control-plane + bootstrap),
-  `helm` (addon), `in-cluster` (ipam).
-- KubeVirt + CDI, the `openebs-lvmpv` StorageClass (the only one on `mocha`;
-  `longhorn` is not installed), and the `talos`
-  `VirtualMachineClusterPreference` (`kubevirt-capi-easy/talosVMCP.yaml`).
-  `openebs-lvmpv`'s CSI `fsGroupPolicy` is `ReadWriteOnceWithFSType`, so the boot
-  DataVolume uses `rootVolumeMode: Filesystem` — a raw `Block` volume makes the
-  non-root CDI importer fail with `cannot open /dev/cdi-block-volume: Permission
-  denied`.
-
-## Adopting an existing, hand-applied cluster
-
-`talos-poc` was first created manually on Talos `v1.9.5`. That cluster has since
-been deleted and re-created from these exact values on Talos `v1.13.7` (`t1137`,
-k8s `v1.36.2`), verified booting to two `Ready` nodes with Cilium. It currently
-runs as a hand-applied cluster (the ApplicationSet is not applied yet), so
-adopting it under Argo CD should show no diff.
-
-More generally, before letting the ApplicationSet auto-sync an already-running
-cluster, review the Argo CD diff: resource names carry the `talosCode` suffix, so
-a mismatch (e.g. `t195` vs `t1137`) makes CAPI roll new machine templates.
-Syncing a cluster still on an older Talos build will roll its VMs onto the new
-image — do it deliberately. Either set `talosCode`/`talosVersion` to match the
-live cluster or recreate it from scratch.
+On `openebs-lvmpv`, keep `rootVolumeMode: Filesystem`: a raw `Block` volume
+makes the CDI importer fail with `cannot open /dev/cdi-block-volume: Permission
+denied`.
