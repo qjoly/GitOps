@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ultra-cluster-ca
+data:
+  ca.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIBPjCB8aADAgECAhBuwS1kuWSffTCEF0HeL/4FMAUGAytlcDAQMQ4wDAYDVQQK
+    EwV0YWxvczAeFw0yNjAxMzAxMTA4NDNaFw0zNjAxMjgxMTA4NDNaMBAxDjAMBgNV
+    BAoTBXRhbG9zMCowBQYDK2VwAyEAn9YR0JAE994OnWW7TN14kl/VMwlhtQlBZ4XW
+    tekJqtWjYTBfMA4GA1UdDwEB/wQEAwIChDAdBgNVHSUEFjAUBggrBgEFBQcDAQYI
+    KwYBBQUHAwIwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUasU14IGo6WhfLacx
+    NBqip+bSq74wBQYDK2VwA0EALvCkUiG/2lNqCVxw5LiR3kZQ/6vAMqPnRqsmrx0X
+    vRflgtXlAqPFJe7xXZe7N1WkMISrpncE+5KmZsHxhuytAA==
+    -----END CERTIFICATE-----
+---
+apiVersion: weebo.si.rs/v1
+kind: ProxyKubeApi
+metadata:
+  name: ultra-cluster
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  enabled: true
+  expose_via_dashboard: true
+  cert:
+    ConfigMap:
+      name: ultra-cluster-ca
+      key: ca.crt
+  # Behind the home NAT: the agent dials the gateway, the proxy never dials in.
+  service:
+    Agent:
+      server_name: kubernetes.default.svc
+      bootstrap:
+        ServiceAccountToken:
+          subject: system:serviceaccount:proxyauth-agent:agent-proxyauthk8s-agent
+          audience: proxyauth
+          jwks: '{"keys":[{"use":"sig","kty":"RSA","kid":"gzWG78ShEgXzKGzjj21Dxl9YHRM7ZadNcHmJ0ZfHcl8","alg":"RS256","n":"vhSjAVH9UFPG1Nas4xX_OHhuzr3HGrfaV9ZZBivqcpdmFp1RNLMJReCVR0Q8Lv9nIKKWTEf2u-KQSAw-EOzG6bT56hSMgIniWogvVoL_Iv6f6SAs-IzleAeYNbD7pVqiXxUzpR-Prtd5OL7it01mUNpjiZB3QylNyUNRyWrxlOyZpEISIpw3CSL5Pv-qpxbRqMMvqK7ESEOCII8g68PUfDXb44t5qausMg9y-ayoX5x8BMQlSRN88AVkOy2CHl6qQhopEVIY0wuNGhgFypfnR1jKSatuknBG6ieQDHDvVq2_AXryjsSKqiRv5ny-eZyZl87-Y1Lmung5vbEtpY8EXlMPJxX795zOSfbZ73CYdm41yWqPmY-U9_ueAEzHxb5v-VM5E5MTho7Yz5L9NRDBdX-aFwceAgijnx6SXioqTyeWbYRqP0XDho4czLwiDv5u0p-oTpjbIFOwWBnyFRxX2YAu26RPmGQfHJAQ0--x7Uro-WagYCpK7zA12T2RMtgTZ9Iee_3rre6PKbk9_Xogy1a6lmXlVDx5jJdspsAL0ecMFVskoahwWsyPjuwUf9ajV6WMdp0rbnZnCOHi3Eo6z-c4FS5zhPPIo42D2M1e9yoIkHlX8mAs1GwN3qcVBYDDMBgFslsdpxnjyR7YY8pHnpaAL8ws3gLvGcG4Xa8gLzU","e":"AQAB"}]}'
+  auth_config:
+    validate_against: Kubernetes
+    oidc_provider:
+      enabled: true
+      issuer_url: https://authentik.mocha.thoughtless.eu/application/o/joel-k8s-oidc/
+      client_id: joel-k8s-oidc
+      extra_scope: openid profile email offline_access
