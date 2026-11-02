@@ -138,6 +138,9 @@ spec:
               - name: dashboard-proxyauthk8s-ristretto
                 members:
                   - github@une-pause-cafe.fr
+              - name: dashboard-proxyauthk8s-ultra-cluster
+                members:
+                  - github@une-pause-cafe.fr
             oauth2Providers:
               - slug: vaultwarden
                 name: Provider for Vaultwarden
@@ -306,6 +309,10 @@ spec:
                 redirectURIs:
                   - http://localhost:8000
                   - http://localhost:18000
+                  # The per-cluster login ProxyAuthK8S runs for ultra-cluster.
+                  - https://proxyauth.mocha.thoughtless.eu/auth/callback/proxyauthk8s/ultra-cluster
+                  - https://proxyauth.mocha.thoughtless.eu/clusters/proxyauthk8s/ultra-cluster/auth/callback
+                  - http://localhost:18000/auth/callback/proxyauthk8s/ultra-cluster
                 # offline_access: refresh token, otherwise a browser login per hour.
                 scopes: [email, profile, openid, offline_access]
                 subMode: user_email
