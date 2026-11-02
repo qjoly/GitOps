@@ -1,112 +1,38 @@
-## Backup system
+# Backup
 
-When I created the `cortado` cluster (which is a single node cluster), I used a ZFS zpool (created manually) and [local-path-provisionner](https://github.com/rancher/local-path-provisioner) to create persistent volumes on the mounted ZFS filesystem.
+Backups run on `mocha` as CronJobs defined in [`mocha/system/backup/`](https://github.com/qjoly/GitOps/tree/main/mocha/system/backup). Each job writes a dump to an `emptyDir`, then a `restic` container pushes it to BunnyCDN S3 and prunes old snapshots (7 daily, 4 weekly, 6 monthly).
 
-To backup the data, I use [volsync](https://github.com/backube/volsync) to create backup and send backup (using restic) to a minio server.
+| CronJob | Namespace | Schedule | What | Repository |
+|---|---|---|---|---|
+| `authentik-pgdump` | `authentik` | `30 0 * * *` | `pg_dump` of Authentik | `mocha-coffee/authentik-postgres` |
+| `matomo-db-dump` | `matomo` | `0 1 * * *` | MariaDB dump | `mocha-coffee/matomo-db` |
+| `toutou-db-dump` | `toutou` | `15 1 * * *` | database dump | `mocha-coffee/toutou-db` |
+| `tranquil-pds-db-dump` | `tranquil-pds` | `30 1 * * *` | database dump | `mocha-coffee/tranquil-pds-db` |
+| `openbao-snapshot` | `bank-vaults` | `0 */6 * * *` | OpenBao raft snapshot | `mocha-coffee/openbao-raft` |
 
-I will have a restic repository per backup source.
+Repositories live under `s3:https://de-s3.storage.bunnycdn.com/`. A job initialises its repository on the first run.
 
-### Create a restic repository
-```bash
-export AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY
-export AWS_SECRET_ACCESS_KEY=YOUR_SECRET_KEY
-export RESTIC_PASSWORD=REPOSITORY_PASSWORD
-export RESTIC_REPOSITORY=s3:http://MINIO_URL:9000/BUCKET
-```
+## Credentials
 
-From your workstation, create the repository
-```bash
-restic init
-```
+The S3 keys and the restic password are in Vault under `kv/restic` (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `RESTIC_PASSWORD`). Each job has its own ExternalSecret (`restic-<job>`) that adds the `RESTIC_REPOSITORY` of that job.
 
-Then, create a secret in the cluster with the credentials to access the repository
-```bash
-kubectl create secret generic -n kube-system restic-credentials \
-  --from-literal=AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-  --from-literal=AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-  --from-literal=RESTIC_PASSWORD=$RESTIC_PASSWORD \
-  --from-literal=RESTIC_REPOSITORY=$RESTIC_REPOSITORY
-```
+## Add a backup
 
-<details>
-<summary>Use an ExternalSecret</summary>
+Copy one of the blocks in `logical-dumps.yaml` (ExternalSecret + CronJob), change the namespace, the dump command, the repository path and the `--tag`, then commit.
 
-```yaml
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: restic-credentials
-  namespace: komga
-spec:
-  refreshInterval: "30s"
-  secretStoreRef:
-    name: vault-backend
-    kind: ClusterSecretStore
-  target:
-    name: restic-credentials
-  data:
-    - secretKey: AWS_ACCESS_KEY_ID
-      remoteRef:
-        key: restic
-        property: AWS_ACCESS_KEY_ID
-    - secretKey: AWS_SECRET_ACCESS_KEY
-      remoteRef:
-        key: restic
-        property: AWS_SECRET_ACCESS_KEY
-    - secretKey: RESTIC_PASSWORD
-      remoteRef:
-        key: restic
-        property: RESTIC_PASSWORD
-    - secretKey: RESTIC_REPOSITORY
-      remoteRef:
-        key: restic
-        property: RESTIC_REPOSITORY
-```
-
-</details>
-
-
-You can now create a `ReplicationSource` to backup a specific PVC.
-
-```yaml
-apiVersion: volsync.backube/v1alpha1
-kind: ReplicationSource
-metadata:
-  name: komga
-spec:
-  # The PVC name to backup
-  sourcePVC: komga-data
-  trigger:
-    schedule: "*/5 * * * *"
-  restic:
-    pruneIntervalDays: 7
-    repository: restic-credentials
-    retain:
-      hourly: 6
-      daily: 5
-      weekly: 4
-      monthly: 2
-      yearly: 1
-    copyMethod: Direct
-```
-
-From your workstation, you can see backups
+## Restore
 
 ```bash
-$ restic snapshots
-repository f8c8acc2 opened (version 2, compression level auto)
-created new cache in /Users/qjoly/Library/Caches/restic
-ID        Time                 Host        Tags        Paths  Size
------------------------------------------------------------------------
-7ebbffdd  2024-12-24 09:38:48  volsync                 /data  1.689 MiB
-8a7574a4  2024-12-24 09:55:06  volsync                 /data  1.689 MiB
-9b5b7a1a  2024-12-24 10:00:07  volsync                 /data  1.689 MiB
------------------------------------------------------------------------
-3 snapshots
+export VAULT_CONTEXT=mocha-corium
+export AWS_ACCESS_KEY_ID=$(mise run vault:kv get -field=AWS_ACCESS_KEY_ID kv/restic)
+export AWS_SECRET_ACCESS_KEY=$(mise run vault:kv get -field=AWS_SECRET_ACCESS_KEY kv/restic)
+export RESTIC_PASSWORD=$(mise run vault:kv get -field=RESTIC_PASSWORD kv/restic)
+export RESTIC_REPOSITORY=s3:https://de-s3.storage.bunnycdn.com/mocha-coffee/matomo-db
+
+restic snapshots
+restic restore latest --target ./restore
 ```
 
-### Restore a backup
+## PVC backups with VolSync
 
-Eh, eh, this is still a work in progress. I will update this section when I have more information.
-
-![](https://media.tenor.com/udq1uD9WHSQAAAAM/oops.gif)
+VolSync is installed (`mocha/system/storage/volsync.yaml`) but no PVC is backed up with it yet. [`knot.yaml`](https://github.com/qjoly/GitOps/blob/main/mocha/system/backup/knot.yaml) holds the ReplicationSources for knot; it stays out of the kustomization until the knot PVCs move to `openebs-lvmpv-thin`, because openebs-lvm refuses the `Direct` copy method and only thin volumes can be snapshotted.
