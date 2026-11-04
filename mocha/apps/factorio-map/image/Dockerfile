@@ -1,4 +1,4 @@
-FROM debian:12-slim
+FROM debian:13-slim
 
 ARG KUBECTL_VERSION=v1.31.3
 
