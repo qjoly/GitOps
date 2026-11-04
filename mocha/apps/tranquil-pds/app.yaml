@@ -32,7 +32,7 @@ spec:
   source:
     repoURL: https://rubxkube.github.io/charts
     chart: tranquil-pds
-    targetRevision: 0.2.0
+    targetRevision: 0.2.1
     helm:
       values: |
         # Pinned to a digest that ships the built-in frontend (/app UI).
