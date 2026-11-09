@@ -18,7 +18,7 @@ spec:
   sources:
     - repoURL: ghcr.io/batlehub/batlehub/charts
       chart: batlehub
-      targetRevision: 1.10.0
+      targetRevision: 1.9.0
       helm:
         valuesObject:
           ingress:
