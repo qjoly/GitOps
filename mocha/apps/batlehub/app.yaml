@@ -22,6 +22,10 @@ spec:
       path: helm/batlehub
       helm:
         valuesObject:
+          # Built by the batlehub-image workflow: the official image has no web console.
+          image:
+            repository: ghcr.io/qjoly/batlehub
+            tag: "1.9.0"
           ingress:
             enabled: true
             className: traefik
@@ -45,6 +49,7 @@ spec:
               port: 8080
               # Traefik's pod range, so the advertised URLs keep the https scheme.
               trusted_proxies: ["10.244.0.0/16"]
+              static_dir: /app/ui/dist
             database:
               type: postgresql
               url: "postgresql://batlehub@batlehub-db:5432/batlehub"
