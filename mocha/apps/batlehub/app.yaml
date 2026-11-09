@@ -22,10 +22,6 @@ spec:
       path: helm/batlehub
       helm:
         valuesObject:
-          # Built by the batlehub-image workflow: the official image has no web console.
-          image:
-            repository: ghcr.io/qjoly/batlehub
-            tag: "1.9.0"
           ingress:
             enabled: true
             className: traefik
