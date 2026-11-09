@@ -16,10 +16,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: batlehub
   sources:
-    # The project publishes no chart repository, so the chart comes from the release tag.
-    - repoURL: https://github.com/batlehub/batlehub.git
-      targetRevision: v1.9.0
-      path: helm/batlehub
+    - repoURL: ghcr.io/batlehub/batlehub/charts
+      chart: batlehub
+      targetRevision: 1.10.0
       helm:
         valuesObject:
           ingress:
