@@ -65,6 +65,13 @@ spec:
               - type: goproxy
                 name: go
                 rbac: *public
+              # Reserved to token holders so the GitHub API quota is not spent by anyone on the internet.
+              - type: github
+                name: github
+                rbac:
+                  anonymous: []
+                  user: ["releases:read", "source:read"]
+                  admin: ["*"]
     - repoURL: https://github.com/qjoly/gitops.git
       targetRevision: HEAD
       path: mocha/apps/batlehub/manifests
