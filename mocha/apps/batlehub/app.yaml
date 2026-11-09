@@ -1,0 +1,69 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: batlehub
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: batlehub
+  sources:
+    # The project publishes no chart repository, so the chart comes from the release tag.
+    - repoURL: https://github.com/batlehub/batlehub.git
+      targetRevision: v1.9.0
+      path: helm/batlehub
+      helm:
+        valuesObject:
+          ingress:
+            enabled: true
+            className: traefik
+            host: batlehub.mocha.thoughtless.eu
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+            tls:
+              - secretName: batlehub-tls
+                hosts:
+                  - batlehub.mocha.thoughtless.eu
+          persistence:
+            storageClass: openebs-hostpath
+            size: 20Gi
+          # The database URL and the admin token live in this second layer, which replaces the chart's placeholders.
+          credentials:
+            enabled: true
+            existingSecret: batlehub-credentials
+          config:
+            server:
+              host: "0.0.0.0"
+              port: 8080
+              # Traefik's pod range, so the advertised URLs keep the https scheme.
+              trusted_proxies: ["10.244.0.0/16"]
+            database:
+              type: postgresql
+              url: "postgresql://batlehub@batlehub-db:5432/batlehub"
+            registries:
+              - type: npm
+                name: npm
+                rbac: &public
+                  anonymous: ["releases:read", "source:read"]
+                  user: ["releases:read", "source:read"]
+                  admin: ["*"]
+              - type: pypi
+                name: pypi
+                rbac: *public
+              - type: cargo
+                name: cargo
+                rbac: *public
+              - type: goproxy
+                name: go
+                rbac: *public
+    - repoURL: https://github.com/qjoly/gitops.git
+      targetRevision: HEAD
+      path: mocha/apps/batlehub/manifests
