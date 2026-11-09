@@ -141,6 +141,12 @@ spec:
               - name: dashboard-proxyauthk8s-ultra-cluster
                 members:
                   - github@une-pause-cafe.fr
+              # Mapped to the user and admin roles of batlehub.
+              - name: batlehub-users
+                members: []
+              - name: batlehub-admins
+                members:
+                  - github@une-pause-cafe.fr
             oauth2Providers:
               - slug: vaultwarden
                 name: Provider for Vaultwarden
@@ -349,6 +355,20 @@ spec:
                 scopes: [email, profile, openid, offline_access]
                 subMode: user_email
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/talos.svg
+              - slug: batlehub
+                name: Provider for BatleHub
+                appName: BatleHub
+                clientType: confidential
+                clientID: batlehub
+                redirectURIs:
+                  - https://batlehub.mocha.thoughtless.eu/api/v1/auth/oidc/callback
+                scopes: [email, profile, openid]
+                subMode: user_email
+                icon: https://raw.githubusercontent.com/batlehub/batlehub/main/ui/public/logo.svg
+                secretName: oidc-batlehub
+                accessGroups:
+                  - batlehub-users
+                  - batlehub-admins
             proxyProviders:
               - slug: homepage
                 name: Homepage
