@@ -1,0 +1,90 @@
+# Secrets come from secrets.toml (ExternalSecret angos-credentials), merged over
+# this file. Listener, storage and cache changes need a rollout restart.
+
+[server]
+bind_address = "0.0.0.0"
+port = 8000
+
+[global]
+update_pull_time = true
+# Traefik's pod range, so client IPs and the scheme come from the ingress.
+trusted_proxies = ["10.244.0.0/16"]
+
+# Blobs and metadata share the angos bucket of turing's rustfs.
+[blob_store.s3]
+endpoint = "https://s3.thoughtless.eu"
+bucket = "angos"
+region = "us-east-1"
+
+[metadata_store.s3]
+endpoint = "https://s3.thoughtless.eu"
+bucket = "angos"
+region = "us-east-1"
+
+[auth.token_service]
+realm = "https://registry.mocha.thoughtless.eu/token"
+ttl_secs = 3600
+
+# ID tokens of the authentik public client used by the UI.
+[auth.oidc.authentik]
+issuer = "https://authentik.mocha.thoughtless.eu/application/o/angos/"
+required_audience = "angos"
+
+[global.access_policy]
+default = "deny"
+rules = [
+  # Kubelet probes. /metrics stays closed: the ingress cannot hide it.
+  "request.action in ['healthz', 'readyz']",
+  # The UI shell, needed before anyone signs in.
+  "request.action in ['ui-asset', 'ui-config']",
+  # Password identity for docker login and CI.
+  "identity.username == 'admin'",
+  '''identity.oidc != null && identity.oidc.provider_name == 'authentik' &&
+     'groups' in identity.oidc.claims &&
+     'angos-admins' in identity.oidc.claims['groups']''',
+  '''identity.oidc != null && identity.oidc.provider_name == 'authentik' &&
+     'groups' in identity.oidc.claims &&
+     'angos-users' in identity.oidc.claims['groups'] &&
+     request.action in ['get-api-version', 'get-token', 'get-manifest', 'get-blob',
+       'get-referrers', 'list-catalog', 'list-tags', 'list-repositories',
+       'list-namespaces', 'list-revisions']''',
+]
+
+# Hosted images: registry.mocha.thoughtless.eu/qjoly/<image>.
+# angos prune clears every namespace no [repository] declares.
+[repository."qjoly"]
+
+# Pull-through caches, kept while cached within 7 days or pulled within 30.
+[repository."hub"]
+namespace = "docker.io"
+immutable_tags = true
+immutable_tags_exclusions = ["^latest$", "^main$", "^master$", "^stable$", "^edge$", "^nightly.*$"]
+
+[[repository."hub".upstream]]
+# docker.io itself only serves the website.
+url = "https://registry-1.docker.io"
+
+[repository."hub".retention_policy]
+rules = [
+  "image.pushed_at > now() - days(7)",
+  "image.last_pulled_at > now() - days(30)",
+]
+
+[repository."ghcr"]
+namespace = "ghcr.io"
+
+[[repository."ghcr".upstream]]
+url = "https://ghcr.io"
+
+[repository."ghcr".retention_policy]
+rules = [
+  "image.pushed_at > now() - days(7)",
+  "image.last_pulled_at > now() - days(30)",
+]
+
+[ui]
+enabled = true
+
+[ui.oidc]
+provider = "authentik"
+client_id = "angos"

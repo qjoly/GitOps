@@ -1,0 +1,17 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: angos
+resources:
+  - externalsecret.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - cronjobs.yaml
+# A fixed name, so an edit reloads the running registry in place instead of rolling it.
+configMapGenerator:
+  - name: angos-config
+    files:
+      - config.toml
+    options:
+      disableNameSuffixHash: true
