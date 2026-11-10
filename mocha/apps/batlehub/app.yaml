@@ -31,9 +31,18 @@ spec:
               - secretName: batlehub-tls
                 hosts:
                   - batlehub.mocha.thoughtless.eu
+          # The chart's 512Mi got OOMKilled under normal use.
+          resources:
+            requests:
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          # Artifacts live in the batlehub bucket of turing's rustfs.
           persistence:
-            storageClass: openebs-hostpath
-            size: 20Gi
+            enabled: false
+          envFrom:
+            - secretRef:
+                name: batlehub-s3
           # The database URL and the admin token live in this second layer, which replaces the chart's placeholders.
           credentials:
             enabled: true
@@ -48,6 +57,14 @@ spec:
             database:
               type: postgresql
               url: "postgresql://batlehub@batlehub-db:5432/batlehub"
+            storage:
+              type: s3
+              bucket: batlehub
+              region: us-east-1
+              endpoint_url: https://s3.thoughtless.eu
+              force_path_style: true
+              # Drops the chart's filesystem default, which Helm would merge in.
+              path: null
             registries:
               - type: npm
                 name: npm
