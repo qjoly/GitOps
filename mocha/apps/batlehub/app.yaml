@@ -31,12 +31,12 @@ spec:
               - secretName: batlehub-tls
                 hosts:
                   - batlehub.mocha.thoughtless.eu
-          # The chart's 512Mi got OOMKilled under normal use.
+          # Large npm packuments (renovate: 75 MB) took 1Gi down; 2Gi is upstream's production value.
           resources:
             requests:
               memory: 256Mi
             limits:
-              memory: 1Gi
+              memory: 2Gi
           # Artifacts live in the batlehub bucket of turing's rustfs.
           persistence:
             enabled: false
