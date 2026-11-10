@@ -39,6 +39,17 @@ spec:
               value: /opt/scanner:/opt/scanner/usr/local/bin
             - name: XDG_CACHE_HOME
               value: /tmp
+            # angos 1.12.5 hands grype SYFT_REGISTRY_AUTH_*, which grype ignores;
+            # grype inherits these instead.
+            - name: GRYPE_REGISTRY_AUTH_AUTHORITY
+              value: registry.mocha.thoughtless.eu
+            - name: GRYPE_REGISTRY_AUTH_USERNAME
+              value: scanner
+            - name: GRYPE_REGISTRY_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: angos-scanner
+                  key: password
           ports:
             - name: http
               containerPort: 8766
@@ -76,6 +87,9 @@ spec:
         - name: config
           secret:
             secretName: angos-scanner
+            items:
+              - key: scanner.toml
+                path: scanner.toml
         - name: grype
           image:
             reference: docker.io/anchore/grype:v0.121.3
