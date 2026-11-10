@@ -147,6 +147,12 @@ spec:
               - name: batlehub-admins
                 members:
                   - github@une-pause-cafe.fr
+              # angos-users pull and browse the registry, angos-admins also push and delete.
+              - name: angos-users
+                members: []
+              - name: angos-admins
+                members:
+                  - github@une-pause-cafe.fr
             oauth2Providers:
               - slug: vaultwarden
                 name: Provider for Vaultwarden
@@ -369,6 +375,20 @@ spec:
                 accessGroups:
                   - batlehub-users
                   - batlehub-admins
+              # The Angos UI runs the PKCE flow in the browser and sends the ID token.
+              - slug: angos
+                name: Provider for Angos
+                appName: Angos
+                clientType: public
+                clientID: angos
+                redirectURIs:
+                  - https://registry.mocha.thoughtless.eu/
+                scopes: [email, profile, openid]
+                subMode: user_email
+                icon: https://raw.githubusercontent.com/project-angos/angos/main/website/static/img/logo.svg
+                accessGroups:
+                  - angos-users
+                  - angos-admins
             proxyProviders:
               - slug: homepage
                 name: Homepage
