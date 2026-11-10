@@ -63,8 +63,6 @@ spec:
               region: us-east-1
               endpoint_url: https://s3.thoughtless.eu
               force_path_style: true
-              # Drops the chart's filesystem default, which Helm would merge in.
-              path: null
             registries:
               - type: npm
                 name: npm
