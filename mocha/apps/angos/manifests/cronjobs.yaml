@@ -126,3 +126,67 @@ spec:
             - name: credentials
               secret:
                 secretName: angos-credentials
+---
+# Queues a rescan of the qjoly images whose report is older than the scan rule allows.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: angos-scan-refresh
+  labels:
+    app: angos
+spec:
+  schedule: "30 4 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 600
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: angos
+            job: scan-refresh
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: scan-refresh
+              # Same tag as the Deployment: a newer layout would read the store as unknown keys.
+              image: ghcr.io/project-angos/angos:1.12.5
+              args: ["-c", "/config/config.toml", "-c", "/credentials/secrets.toml", "reconcile", "scan"]
+              env:
+                - name: RUST_LOG
+                  value: info
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+                - name: credentials
+                  mountPath: /credentials
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
+          volumes:
+            - name: config
+              configMap:
+                name: angos-config
+            - name: credentials
+              secret:
+                secretName: angos-credentials

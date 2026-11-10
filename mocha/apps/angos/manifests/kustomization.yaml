@@ -8,6 +8,7 @@ resources:
   - service.yaml
   - ingress.yaml
   - cronjobs.yaml
+  - scanner.yaml
 # A fixed name, so an edit reloads the running registry in place instead of rolling it.
 configMapGenerator:
   - name: angos-config

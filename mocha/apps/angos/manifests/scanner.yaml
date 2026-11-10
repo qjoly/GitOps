@@ -1,0 +1,99 @@
+---
+# Pulls an image as `scanner`, runs grype on it and answers with a SARIF report,
+# which the registry attaches to the image as a referrer.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: angos-scanner
+  labels:
+    app: angos-scanner
+spec:
+  replicas: 1
+  # One pod at a time: each one downloads the ~2 GB grype database at start.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: angos-scanner
+  template:
+    metadata:
+      labels:
+        app: angos-scanner
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: scanner
+          image: ghcr.io/project-angos/angos:1.12.5
+          args: ["-c", "/scanner/scanner.toml", "scanner", "grype"]
+          env:
+            - name: RUST_LOG
+              value: info
+            # grype comes from the image volume, its database goes to /tmp.
+            - name: PATH
+              value: /opt/scanner:/opt/scanner/usr/local/bin
+            - name: XDG_CACHE_HOME
+              value: /tmp
+          ports:
+            - name: http
+              containerPort: 8766
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: config
+              mountPath: /scanner
+              readOnly: true
+            - name: grype
+              mountPath: /opt/scanner
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          # The service listens only once the grype database is loaded.
+          startupProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+      volumes:
+        - name: config
+          secret:
+            secretName: angos-scanner
+        - name: grype
+          image:
+            reference: docker.io/anchore/grype:v0.121.3
+            pullPolicy: IfNotPresent
+        - name: tmp
+          emptyDir:
+            sizeLimit: 8Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: angos-scanner
+  labels:
+    app: angos-scanner
+spec:
+  selector:
+    app: angos-scanner
+  ports:
+    - name: http
+      port: 8766
+      targetPort: http

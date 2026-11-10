@@ -30,6 +30,10 @@ ttl_secs = 3600
 issuer = "https://authentik.mocha.thoughtless.eu/application/o/angos/"
 required_audience = "angos"
 
+# Only repositories with a scan table are scanned. The token is in secrets.toml.
+[global.scan]
+url = "http://angos-scanner:8766"
+
 [global.access_policy]
 default = "deny"
 rules = [
@@ -48,11 +52,20 @@ rules = [
      request.action in ['get-api-version', 'get-token', 'get-manifest', 'get-blob',
        'get-referrers', 'list-catalog', 'list-tags', 'list-repositories',
        'list-namespaces', 'list-revisions']''',
+  # angos-scanner pulls what it scans. Optional request fields need has().
+  '''identity.username == 'scanner' &&
+     (request.action in ['get-api-version', 'get-token'] ||
+      (request.action in ['get-manifest', 'get-blob'] &&
+       has(request.namespace) && request.namespace.startsWith('qjoly/')))''',
 ]
 
 # Hosted images: registry.mocha.thoughtless.eu/qjoly/<image>.
 # angos prune clears every namespace no [repository] declares.
 [repository."qjoly"]
+
+# Scanned as pushed (scanned_at is 0), then weekly through angos-scan-refresh.
+[repository."qjoly".scan]
+rules = ["image.scanned_at < now() - days(7)"]
 
 # Pull-through caches, kept while cached within 7 days or pulled within 30.
 [repository."hub"]
