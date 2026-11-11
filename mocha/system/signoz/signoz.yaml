@@ -74,19 +74,6 @@ spec:
           # instead of dropping to read-only. This merges into the operator-generated
           # <zookeeper> config and does not touch the node list.
           files:
-            # The system.*_log tables have no TTL by default and had grown to ~8GiB,
-            # a third of what filled the disk on 2026-11-11. Drop the purely
-            # introspective ones and cap the rest at 3 days.
-            config.d/system-log-ttl.xml: |
-              <clickhouse>
-                <trace_log remove="1"/>
-                <processors_profile_log remove="1"/>
-                <asynchronous_metric_log remove="1"/>
-                <zookeeper_log remove="1"/>
-                <query_log><ttl>event_date + INTERVAL 3 DAY DELETE</ttl></query_log>
-                <part_log><ttl>event_date + INTERVAL 3 DAY DELETE</ttl></part_log>
-                <metric_log><ttl>event_date + INTERVAL 3 DAY DELETE</ttl></metric_log>
-              </clickhouse>
             config.d/zookeeper-timeouts.xml: |
               <clickhouse>
                 <zookeeper>
