@@ -25,7 +25,7 @@ spec:
           image:
             pullPolicy: IfNotPresent
           persistence:
-            storageClass: openebs-lvmpv
+            storageClass: openebs-lvmpv-thin
             size: 5Gi
           extraEnv:
             - name: MAINTENANT_BASE_URL
