@@ -30,6 +30,9 @@ spec:
           extraEnv:
             - name: MAINTENANT_BASE_URL
               value: https://maintenant.mocha.thoughtless.eu
+            # Socket only, reached through kubectl exec --mcp-stdio; /mcp stays off.
+            - name: MAINTENANT_MCP_SOCKET
+              value: "true"
           ingress:
             enabled: true
             className: traefik
