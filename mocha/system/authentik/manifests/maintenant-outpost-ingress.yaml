@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: maintenant-outpost
+  namespace: authentik
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+    homepage.thoughtless.eu/hide: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - maintenant.mocha.thoughtless.eu
+      secretName: maintenant-outpost-tls
+  rules:
+    - host: maintenant.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /outpost.goauthentik.io
+            pathType: Prefix
+            backend:
+              service:
+                name: authentik-server
+                port:
+                  number: 80

@@ -420,3 +420,9 @@ spec:
                 externalHost: https://slimfaas.mocha.thoughtless.eu
                 accessTokenValidity: hours=24
                 icon: https://raw.githubusercontent.com/SlimPlanet/SlimFaas/main/docs/SlimFaas.png
+              - slug: maintenant
+                name: Maintenant
+                mode: forward_single
+                externalHost: https://maintenant.mocha.thoughtless.eu
+                accessTokenValidity: hours=24
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/uptime-kuma.svg

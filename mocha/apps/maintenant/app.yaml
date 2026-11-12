@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: maintenant
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: maintenant
+  sources:
+    # The chart is not published to a Helm repo, only shipped in the source tree.
+    - repoURL: https://github.com/kolapsis/maintenant.git
+      targetRevision: v1.11.0
+      path: deploy/helm/maintenant
+      helm:
+        releaseName: maintenant
+        values: |
+          image:
+            pullPolicy: IfNotPresent
+          persistence:
+            storageClass: openebs-lvmpv
+            size: 5Gi
+          extraEnv:
+            - name: MAINTENANT_BASE_URL
+              value: https://maintenant.mocha.thoughtless.eu
+          ingress:
+            enabled: true
+            className: traefik
+            host: maintenant.mocha.thoughtless.eu
+            annotations:
+              cert-manager.io/cluster-issuer: cloudflare
+              # No built-in auth: anyone reaching it can edit monitors.
+              traefik.ingress.kubernetes.io/router.middlewares: maintenant-authentik@kubernetescrd
+            tls:
+              - secretName: maintenant-tls
+                hosts:
+                  - maintenant.mocha.thoughtless.eu
+    - repoURL: https://github.com/qjoly/gitops.git
+      targetRevision: HEAD
+      path: mocha/apps/maintenant/manifests
