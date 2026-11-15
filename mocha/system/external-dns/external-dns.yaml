@@ -14,23 +14,21 @@ spec:
     chart: external-dns
     targetRevision: 1.23.0
     helm:
-      parameters:
-        - name: sources[0]
-          value: ingress
-        - name: policy
-          value: sync
-        - name: provider.name
-          value: cloudflare
-        - name: env[0].name
-          value: CF_API_TOKEN
-        - name: env[0].valueFrom.secretKeyRef.name
-          value: cloudflare-api-key
-        - name: env[0].valueFrom.secretKeyRef.key
-          value: apiKey
-        - name: txtPrefix
-          value: "mocha-"
-        - name: serviceMonitor.enabled
-          value: "false"
+      values: |
+        sources:
+          - ingress
+        policy: sync
+        provider:
+          name: cloudflare
+        env:
+          - name: CF_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-api-key
+                key: apiKey
+        txtPrefix: mocha-
+        serviceMonitor:
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: external-dns
