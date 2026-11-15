@@ -53,9 +53,13 @@ addons:
     repository:
       name: argo
       url: https://argoproj.github.io/argo-helm
+    # CPU requests keep ArgoCD out of BestEffort, which starves when the node is saturated.
     values:
       applicationSet:
         replicas: 1
+        resources:
+          requests:
+            cpu: 50m
       configs:
         cm:
           resource.exclusions: |
@@ -71,12 +75,33 @@ addons:
           server.insecure: true
       controller:
         replicas: 1
+        resources:
+          requests:
+            cpu: 250m
+      dex:
+        resources:
+          requests:
+            cpu: 10m
+      notifications:
+        resources:
+          requests:
+            cpu: 10m
+      redis:
+        resources:
+          requests:
+            cpu: 25m
       redis-ha:
         enabled: false
       repoServer:
         replicas: 1
+        resources:
+          requests:
+            cpu: 100m
       server:
         replicas: 1
+        resources:
+          requests:
+            cpu: 50m
 upgrades:
   automatic: none
   schedule: daily
