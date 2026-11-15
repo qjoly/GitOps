@@ -11,6 +11,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
+      prune: true
     syncOptions:
       - CreateNamespace=true
   destination:
@@ -31,6 +32,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
+      prune: true
     syncOptions:
       - CreateNamespace=true
   destination:

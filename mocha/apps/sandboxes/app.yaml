@@ -8,6 +8,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
+      prune: true
   destination:
     server: https://kubernetes.default.svc
     namespace: sandboxes
