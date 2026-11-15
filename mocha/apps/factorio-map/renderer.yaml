@@ -93,6 +93,8 @@ metadata:
   namespace: factorio-lucca
 spec:
   schedule: "17 3 * * *"
+  # Paused until the game resumes; set to false to bring the nightly render back.
+  suspend: true
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 3
