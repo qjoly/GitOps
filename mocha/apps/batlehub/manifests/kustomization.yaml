@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - externalsecret.yaml
   - postgres.yaml
+  - middleware.yaml

@@ -1,0 +1,20 @@
+# npm ci requests lockfile URLs (<pkg>/-/<file>-<version>.tgz), a route batlehub
+# lacks: map them to its <pkg>/<version>/tarball route. The scope's slash must stay
+# encoded for batlehub to match.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: npm-tarball
+spec:
+  replacePathRegex:
+    regex: ^/proxy/npm/([^@/][^/]*)/-/.*-(\d+\.\d+\.\d+[^/]*)\.tgz$
+    replacement: /proxy/npm/${1}/${2}/tarball
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: npm-scoped-tarball
+spec:
+  replacePathRegex:
+    regex: ^/proxy/npm/(@[^/]+)/([^/]+)/-/.*-(\d+\.\d+\.\d+[^/]*)\.tgz$
+    replacement: /proxy/npm/${1}%2F${2}/${3}/tarball
