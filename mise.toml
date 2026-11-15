@@ -2,7 +2,7 @@
 # Ships cctl, which drives the Corium nodes (mocha, doppio).
 "github:Corium-OS/Corium" = "0.5.0"
 # Static analysis of Argo CD manifests, see docs/octodoctor.md.
-"github:OctopusDeploy/octodoctor-argocd" = { version = "0.5.0", exe = "octodoctor" }
+"github:OctopusDeploy/octodoctor-argocd" = "0.5.0"
 
 [tasks."vault:unseal"]
 description = "Unseal every sealed Vault pod with the keys from the vault-unseal-keys Secret"
