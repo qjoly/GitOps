@@ -38,6 +38,15 @@
         "ghcr.io/batleforc/proxyauthk8s/chart-crd"
       ],
       "groupName": "proxyauthk8s"
+    },
+    {
+      "description": "Corium: the OS image and cctl move together. ghcr also carries all-digit commit tags that would read as versions",
+      "matchPackageNames": [
+        "ghcr.io/corium-os/corium",
+        "Corium-OS/Corium"
+      ],
+      "allowedVersions": "/^v?\\d+\\.\\d+\\.\\d+$/",
+      "groupName": "corium"
     }
   ],
   "argocd": {
@@ -62,7 +71,7 @@
       "customType": "regex",
       "description": "Corium node documents: Helm add-ons pinned under addons[] (no manager understands this shape)",
       "managerFilePatterns": [
-        "/doppio/corium/.*\\.yaml$/"
+        "/(doppio|mocha)/corium/.*\\.yaml$/"
       ],
       "matchStrings": [
         "chart: [^/\\s]+/(?<depName>\\S+)\\s+version: (?<currentValue>\\S+)\\s+namespace: \\S+\\s+repository:\\s+name: \\S+\\s+url: (?<registryUrl>\\S+)"

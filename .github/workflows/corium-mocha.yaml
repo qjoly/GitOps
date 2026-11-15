@@ -1,0 +1,61 @@
+name: corium-mocha
+
+# Rolls mocha/corium out to the node: image.yaml with cctl upgrade (reboots the
+# single node), then mocha.yaml with cctl apply (a no-op when nothing changed).
+on:
+  push:
+    branches: [main]
+    paths:
+      - mocha/corium/**
+      - .github/workflows/corium-mocha.yaml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: corium-mocha
+  cancel-in-progress: false
+
+jobs:
+  rollout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NODE: 5.196.80.72
+      MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # Installs cctl at the version pinned in mise.toml.
+      - uses: jdx/mise-action@v5
+
+      - name: Load the operator identity
+        env:
+          CLIENT_CRT: ${{ secrets.CORIUM_CLIENT_CRT }}
+          CLIENT_KEY: ${{ secrets.CORIUM_CLIENT_KEY }}
+          FINGERPRINT: ${{ secrets.CORIUM_MOCHA_FINGERPRINT }}
+        run: |
+          if [ -z "$CLIENT_CRT" ] || [ -z "$CLIENT_KEY" ] || [ -z "$FINGERPRINT" ]; then
+            echo "::error::Set CORIUM_CLIENT_CRT, CORIUM_CLIENT_KEY and CORIUM_MOCHA_FINGERPRINT"
+            exit 1
+          fi
+          umask 077
+          mkdir -p ~/.corium
+          printf '%s\n' "$CLIENT_CRT" > ~/.corium/client.crt
+          printf '%s\n' "$CLIENT_KEY" > ~/.corium/client.key
+          printf 'nodes:\n  "%s:7443":\n    fingerprint: %s\n' "$NODE" "$FINGERPRINT" > ~/.corium/config.yaml
+          cctl health "$NODE"
+
+      - name: Upgrade the OS image
+        run: |
+          want=$(yq '.image' mocha/corium/image.yaml)
+          have=$(cctl status -json "$NODE" | jq -r '.os.booted.image')
+          if [ "$want" = "$have" ]; then
+            echo "Already on $want"
+          else
+            cctl upgrade -image "$want" "$NODE"
+          fi
+
+      - name: Apply the node document
+        run: cctl apply -file mocha/corium/mocha.yaml "$NODE"

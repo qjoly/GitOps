@@ -82,6 +82,8 @@ omnictl kubeconfig --cluster turing
 cctl apply <node> --file mocha/corium/mocha.yaml
 ```
 
+On `mocha` CI does it: a push to `mocha/corium/` runs [`corium-mocha`](./.github/workflows/corium-mocha.yaml), which upgrades the node to the image in `image.yaml` (a reboot) and then applies `mocha.yaml`. Renovate bumps both, so merging its PR rolls the node.
+
 [`mocha/kubeconfig`](./mocha/kubeconfig) logs into `mocha` through Authentik (OIDC).
 
 Recurring operations (Vault unseal and KV access) are `mise` tasks:

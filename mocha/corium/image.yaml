@@ -1,0 +1,2 @@
+# OS image mocha boots. Bumped by Renovate, rolled out by the corium-mocha workflow (reboots the node).
+image: ghcr.io/corium-os/corium:0.5.0
