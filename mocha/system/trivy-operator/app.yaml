@@ -27,7 +27,8 @@ spec:
         nodeCollector:
           excludeNodes: kubernetes.io/os=linux
         operator:
-          builtInTrivyServer: false
+          # Standalone scan pods share one fs cache across containers and fail on its lock.
+          builtInTrivyServer: true
           privateRegistryScanSecretsNames:
             blueweave: atcr-pull
             factorio-lucca: atcr-pull
@@ -54,7 +55,7 @@ spec:
         trivy:
           command: image
           ignoreUnfixed: true
-          mode: Standalone
+          mode: ClientServer
           resources:
             limits:
               memory: 1Gi
