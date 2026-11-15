@@ -1,3 +1,7 @@
+[tools]
+# Ships cctl, which drives the Corium nodes (mocha, doppio).
+"github:Corium-OS/Corium" = "0.5.0"
+
 [tasks."vault:unseal"]
 description = "Unseal every sealed Vault pod with the keys from the vault-unseal-keys Secret"
 run = '''
