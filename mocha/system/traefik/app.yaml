@@ -20,6 +20,10 @@ spec:
     chart: traefik
     helm:
       values: |
+        # Out of BestEffort, so a saturated node does not starve the ingress.
+        resources:
+          requests:
+            cpu: 100m
         accessLog:
           enabled: true
           format: json
