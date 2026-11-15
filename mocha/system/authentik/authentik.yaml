@@ -108,7 +108,7 @@ spec:
     # Runs as an ArgoCD PostSync hook on every sync (idempotent).
     - repoURL: ghcr.io/qjoly/charts
       chart: authentik-provisioner
-      targetRevision: 0.3.3
+      targetRevision: 0.3.4
       helm:
         values: |
           authentik:
