@@ -27,6 +27,7 @@ spec:
             host: batlehub.mocha.thoughtless.eu
             annotations:
               cert-manager.io/cluster-issuer: cloudflare
+              traefik.ingress.kubernetes.io/router.middlewares: batlehub-npm-tarball@kubernetescrd,batlehub-npm-scoped-tarball@kubernetescrd
             tls:
               - secretName: batlehub-tls
                 hosts:
