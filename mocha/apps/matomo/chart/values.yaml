@@ -17,7 +17,7 @@ matomo:
       memory: 1Gi
 
 db:
-  image: mariadb:12.3
+  image: mariadb:13.0
   storage: 8Gi
   name: matomo
   user: matomo
