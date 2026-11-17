@@ -40,7 +40,8 @@ spec:
             - name: XDG_CACHE_HOME
               value: /tmp
             # angos 1.12.5 hands grype SYFT_REGISTRY_AUTH_*, which grype ignores;
-            # grype inherits these instead.
+            # grype inherits these instead. Drop the three when moving past
+            # 1.12.5: fixed upstream by project-angos/angos#356.
             - name: GRYPE_REGISTRY_AUTH_AUTHORITY
               value: registry.mocha.thoughtless.eu
             - name: GRYPE_REGISTRY_AUTH_USERNAME
