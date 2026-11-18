@@ -1,0 +1,12 @@
+# Deny every in-cluster connection to the pod. NetBird traffic is decrypted
+# on wt0 inside the pod netns, so it never crosses this policy; the WireGuard
+# UDP packets themselves are replies to flows the sidecar opened, which the
+# policy lets through.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-ingress
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
