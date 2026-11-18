@@ -32,7 +32,7 @@ spec:
           containers:
             - name: prune
               # Same tag as the Deployment: a newer layout would read the store as unknown keys.
-              image: ghcr.io/project-angos/angos:1.12.5
+              image: ghcr.io/project-angos/angos:1.13.0
               args: ["-c", "/config/config.toml", "-c", "/credentials/secrets.toml", "prune", "-u", "24h"]
               env:
                 - name: RUST_LOG
@@ -96,7 +96,7 @@ spec:
           containers:
             - name: scrub
               # Same tag as the Deployment: a newer layout would read the store as unknown keys.
-              image: ghcr.io/project-angos/angos:1.12.5
+              image: ghcr.io/project-angos/angos:1.13.0
               args: ["-c", "/config/config.toml", "-c", "/credentials/secrets.toml", "scrub"]
               env:
                 - name: RUST_LOG
@@ -160,7 +160,7 @@ spec:
           containers:
             - name: scan-refresh
               # Same tag as the Deployment: a newer layout would read the store as unknown keys.
-              image: ghcr.io/project-angos/angos:1.12.5
+              image: ghcr.io/project-angos/angos:1.13.0
               args: ["-c", "/config/config.toml", "-c", "/credentials/secrets.toml", "reconcile", "scan"]
               env:
                 - name: RUST_LOG
