@@ -1,0 +1,19 @@
+# STUN server embedded in the relay (NB_ENABLE_STUN), replacing coturn.
+# Not a LoadBalancer: Cilium only shares the single public IP between services
+# with the same traffic policy, and Traefik needs Local to see client IPs.
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-relay-stun
+spec:
+  type: NodePort
+  externalIPs:
+    - 5.196.80.72
+  selector:
+    app.kubernetes.io/instance: netbird
+    app.kubernetes.io/name: netbird-relay
+  ports:
+    - name: stun
+      port: 3478
+      targetPort: 3478
+      protocol: UDP

@@ -32,7 +32,6 @@ spec:
             envFromSecret:
               RELAY_PASSWORD: netbird/relayPassword
               DATASTORE_ENCRYPTION_KEY: netbird/datastoreEncryptionKey
-              TURN_PASSWORD: netbird/turnPassword
             configmap: |-
               {
                 "Stuns": [
@@ -43,19 +42,6 @@ spec:
                     "Password": ""
                   }
                 ],
-                "TURNConfig": {
-                  "TimeBasedCredentials": false,
-                  "CredentialsTTL": "12h0m0s",
-                  "Secret": "secret",
-                  "Turns": [
-                    {
-                      "Proto": "udp",
-                      "URI": "turn:5.196.80.72:3478",
-                      "Username": "netbird",
-                      "Password": "{{ .TURN_PASSWORD }}"
-                    }
-                  ]
-                },
                 "Relay": {
                   "Addresses": ["rels://netbird.mocha.thoughtless.eu:443/relay"],
                   "CredentialsTTL": "24h",
@@ -130,6 +116,10 @@ spec:
               NB_LOG_LEVEL: info
               NB_LISTEN_ADDRESS: ":33080"
               NB_EXPOSED_ADDRESS: "rels://netbird.mocha.thoughtless.eu:443/relay"
+              # Embedded STUN replaces coturn; exposed by relay-stun.yaml.
+              NB_ENABLE_STUN: "true"
+              NB_STUN_PORTS: "3478"
+              NB_STUN_LOG_LEVEL: info
           dashboard:
             image:
               tag: v2.90.7

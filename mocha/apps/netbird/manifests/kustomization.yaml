@@ -3,5 +3,5 @@ kind: Kustomization
 namespace: netbird
 resources:
   - externalsecret.yaml
-  - coturn.yaml
+  - relay-stun.yaml
   - ingressroute.yaml
