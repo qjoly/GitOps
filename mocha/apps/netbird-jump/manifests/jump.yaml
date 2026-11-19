@@ -54,6 +54,26 @@ spec:
               mountPath: /etc/coredns
               readOnly: true
       containers:
+        # Transparent entry for clients without proxy support: routes TLS by
+        # SNI (HTTP by Host) through the NetBird SOCKS5 proxy (mise run nb:tunnel).
+        - name: sni
+          image: gogost/gost:3.3.3
+          args: ["-L", "sni://127.0.0.1:8443", "-F", "socks5://127.0.0.1:1080"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
         - name: netbird
           image: netbirdio/netbird:0.83.1
           env:
