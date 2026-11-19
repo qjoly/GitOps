@@ -45,6 +45,9 @@ addons:
       operator:
         replicas: 1
       routingMode: tunnel
+      # Per-packet LB for pods, so ClusterIPs work for traffic a pod forwards (NetBird router).
+      socketLB:
+        hostNamespaceOnly: true
       tunnelProtocol: vxlan
   - name: argocd
     chart: argo/argo-cd
