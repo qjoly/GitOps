@@ -34,13 +34,13 @@ Firefox + FoxyProxy ──SOCKS5──▶ kubectl port-forward ──▶ netbird
 
    | Field | Value |
    |---|---|
-   | Type | SOCKS5 |
+   | Type | SOCKS5, not HTTP |
    | Hostname / Port | `127.0.0.1` / `1080` |
    | Proxy DNS | **on**: the pod resolves the names |
 
-   Add an include pattern to it: type Wildcard, `*.nb.mocha.thoughtless.eu`.
-   Then switch FoxyProxy to "Proxy by Patterns", so only those hosts use the
-   tunnel.
+   Add an include pattern to it: type Wildcard (not Reg Exp),
+   `*.nb.mocha.thoughtless.eu`, without scheme. Then switch FoxyProxy to
+   "Proxy by Patterns", so only those hosts use the tunnel.
 
 3. Browse `https://nginx-test.nb.mocha.thoughtless.eu/`, or check from a shell:
 
@@ -53,6 +53,7 @@ Firefox + FoxyProxy ──SOCKS5──▶ kubectl port-forward ──▶ netbird
 | Symptom | Cause |
 |---|---|
 | Connection refused on 127.0.0.1:1080 | The port-forward is down: see step 1 |
+| `Empty reply from server` | Plain HTTP sent to the SOCKS port: proxy type is HTTP, or `curl` without `--socks5-hostname` |
 | Timeout or 404 | Proxy DNS is off, or the hostname is missing from `hostAliases`: the public wildcard `*.mocha.thoughtless.eu` answers instead |
 | Timeout on a hostname listed in `hostAliases` | The NetBird path: check the router conntrack in `netbird-operator`. The ClusterIP only answers forwarded traffic because Cilium has `socketLB.hostNamespaceOnly` (`mocha/corium/mocha.yaml`) |
 
