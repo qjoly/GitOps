@@ -49,6 +49,31 @@ Firefox + FoxyProxy ──SOCKS5──▶ kubectl port-forward ──▶ netbird
    curl --socks5-hostname 127.0.0.1:1080 https://check.nb.mocha.thoughtless.eu/
    ```
 
+## Every app, without a proxy (macOS, admin rights)
+
+For CLIs and apps without proxy support. Only `*.nb.mocha.thoughtless.eu` is
+affected; it skips the jump and port-forwards straight to traefik-internal
+(same RBAC requirement, NetBird peers by IP still need the jump).
+
+```
+app ──DNS──▶ /etc/resolver ──▶ local CoreDNS (127.0.0.1) ; app ──:443──▶ pf ──:8443──▶ kubectl port-forward ──▶ traefik-internal
+```
+
+Once, from the repo (asks for sudo): `mise install && mise run nb:setup`.
+It writes `/etc/resolver/nb.mocha.thoughtless.eu` and a pf redirect
+`127.0.0.1:443 → 8443`, reloaded at boot. `mise run nb:teardown` undoes it.
+
+Then, whenever needed: `mise run nb:tunnel` (Ctrl-C to stop).
+
+```bash
+curl https://check.nb.mocha.thoughtless.eu/
+```
+
+- `dig` and `nslookup` ignore `/etc/resolver`: check with
+  `dscacheutil -q host -a name check.nb.mocha.thoughtless.eu`.
+- Firefox DNS over HTTPS bypasses it too: add `nb.mocha.thoughtless.eu` to
+  `network.trr.excluded-domains`, and turn FoxyProxy off for that pattern.
+
 ## Troubleshooting
 
 | Symptom | Cause |

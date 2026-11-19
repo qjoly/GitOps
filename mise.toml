@@ -3,6 +3,8 @@
 "github:Corium-OS/Corium" = "0.5.0"
 # Static analysis of Argo CD manifests, see docs/octodoctor.md.
 "github:OctopusDeploy/octodoctor-argocd" = "0.5.0"
+# Local resolver for *.nb.mocha.thoughtless.eu, see mocha/apps/netbird-jump/README.md.
+"github:coredns/coredns" = "1.15.0"
 
 [tasks."vault:unseal"]
 description = "Unseal every sealed Vault pod with the keys from the vault-unseal-keys Secret"
@@ -81,4 +83,76 @@ OUT="${OCTODOCTOR_OUT:-${TMPDIR:-/tmp}/octodoctor}"
 mkdir -p "$OUT" && cd "$OUT"
 octodoctor -e -c "$CTX" --fail-on none --limit 200
 echo "report: $(ls -td "$OUT"/argocd-manifests-export-*/ | head -1)octodoctor-output/index.html"
+'''
+
+# *.nb.mocha.thoughtless.eu on macOS without NetBird: /etc/resolver sends the
+# zone to a local CoreDNS that answers 127.0.0.1, pf maps 127.0.0.1:443 to the
+# unprivileged port-forward of traefik-internal. Only that zone is affected.
+[tasks."nb:setup"]
+description = "One-time macOS setup (sudo): /etc/resolver entry and pf redirect 443 -> 8443"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+sudo mkdir -p /etc/resolver
+printf 'nameserver 127.0.0.1\nport 53535\n' | sudo tee /etc/resolver/nb.mocha.thoughtless.eu >/dev/null
+echo 'rdr pass on lo0 inet proto tcp from any to 127.0.0.1 port 443 -> 127.0.0.1 port 8443' \
+  | sudo tee /etc/pf.anchors/nb.mocha >/dev/null
+# The default pf.conf evaluates com.apple/*, so the anchor needs no pf.conf edit.
+# The daemon reloads it at boot; pfctl -E keeps pf enabled alongside other users.
+sudo tee /Library/LaunchDaemons/eu.thoughtless.nb-mocha.plist >/dev/null <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>eu.thoughtless.nb-mocha</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string><string>-c</string>
+    <string>/sbin/pfctl -a com.apple/nb.mocha -f /etc/pf.anchors/nb.mocha &amp;&amp; /sbin/pfctl -E</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+</dict>
+</plist>
+PLIST
+sudo launchctl bootout system/eu.thoughtless.nb-mocha 2>/dev/null || true
+sudo launchctl bootstrap system /Library/LaunchDaemons/eu.thoughtless.nb-mocha.plist
+sudo pfctl -a com.apple/nb.mocha -s nat 2>/dev/null
+'''
+
+[tasks."nb:tunnel"]
+description = "Serve *.nb.mocha.thoughtless.eu locally: CoreDNS + port-forward to traefik-internal (Ctrl-C to stop)"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+export KUBECONFIG="${KUBECONFIG:-$MISE_PROJECT_ROOT/mocha/kubeconfig}"
+corefile="$(mktemp)"
+cat >"$corefile" <<'COREFILE'
+nb.mocha.thoughtless.eu:53535 {
+    bind 127.0.0.1
+    template IN A {
+        answer "{% raw %}{{ .Name }}{% endraw %} 60 IN A 127.0.0.1"
+    }
+    template IN AAAA {
+        rcode NOERROR
+    }
+}
+COREFILE
+coredns -conf "$corefile" -quiet &
+dns=$!
+trap 'kill "$dns" 2>/dev/null; rm -f "$corefile"' EXIT
+# port-forward drops on idle and on pod restarts.
+while true; do
+  kubectl ${NB_CONTEXT:+--context "$NB_CONTEXT"} -n traefik-internal port-forward svc/traefik-internal 8443:443 || true
+  sleep 1
+done
+'''
+
+[tasks."nb:teardown"]
+description = "Undo nb:setup (sudo)"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+sudo launchctl bootout system/eu.thoughtless.nb-mocha 2>/dev/null || true
+sudo pfctl -a com.apple/nb.mocha -F all 2>/dev/null || true
+sudo rm -f /Library/LaunchDaemons/eu.thoughtless.nb-mocha.plist /etc/pf.anchors/nb.mocha /etc/resolver/nb.mocha.thoughtless.eu
 '''
