@@ -1,6 +1,6 @@
-# nginx reachable only through NetBird: no Service, no Ingress, and the
-# NetworkPolicy drops in-cluster ingress. Traffic arrives on the sidecar's
-# wt0 interface, inside the pod network namespace, where nginx listens.
+# Sample of a NetBird-only app: an Ingress on the traefik-internal class,
+# reachable at https://nginx-test.nb.mocha.thoughtless.eu from NetBird peers
+# allowed by the users-to-k8s-traefik-internal policy.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -17,9 +17,6 @@ metadata:
     app: nginx-test
 spec:
   replicas: 1
-  strategy:
-    # A single peer per setup key hostname, avoid two pods racing.
-    type: Recreate
   selector:
     matchLabels:
       app: nginx-test
@@ -47,47 +44,38 @@ spec:
           volumeMounts:
             - name: html
               mountPath: /usr/share/nginx/html
-        - name: netbird
-          # Kept in line with the management server version.
-          image: netbirdio/netbird:0.83.1
-          env:
-            - name: NB_SETUP_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: netbird-test
-                  key: setupKey
-            - name: NB_MANAGEMENT_URL
-              value: https://netbird.mocha.thoughtless.eu:443
-            - name: NB_HOSTNAME
-              value: nginx-test
-            - name: NB_LOG_LEVEL
-              value: info
-          securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
-                - SYS_RESOURCE
-          resources:
-            requests:
-              cpu: 10m
-              memory: 32Mi
-            limits:
-              memory: 128Mi
-          volumeMounts:
-            - name: netbird-state
-              mountPath: /var/lib/netbird
-            # Only used if kernel WireGuard is unavailable (userspace fallback).
-            - name: tun
-              mountPath: /dev/net/tun
       volumes:
-        - name: tun
-          hostPath:
-            path: /dev/net/tun
-            type: CharDevice
         - name: html
           configMap:
             name: nginx-test
-        # Ephemeral peer: a restart registers a fresh one, the old one is
-        # garbage-collected by the management server.
-        - name: netbird-state
-          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-test
+spec:
+  selector:
+    app: nginx-test
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-test
+spec:
+  # Served by the NetBird-only Traefik; the *.nb wildcard is its default cert.
+  ingressClassName: traefik-internal
+  rules:
+    - host: nginx-test.nb.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-test
+                port:
+                  name: http

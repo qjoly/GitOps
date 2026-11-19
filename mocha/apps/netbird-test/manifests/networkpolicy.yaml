@@ -1,12 +1,14 @@
-# Deny every in-cluster connection to the pod. NetBird traffic is decrypted
-# on wt0 inside the pod netns, so it never crosses this policy; the WireGuard
-# UDP packets themselves are replies to flows the sidecar opened, which the
-# policy lets through.
+# Only the NetBird-only Traefik may reach the app.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: deny-ingress
+  name: allow-traefik-internal
 spec:
   podSelector: {}
   policyTypes:
     - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik-internal
