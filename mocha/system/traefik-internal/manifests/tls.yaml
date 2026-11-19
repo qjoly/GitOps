@@ -1,0 +1,23 @@
+# Wildcard certificate served by default for every private hostname, so
+# private Ingresses don't need their own tls section.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-nb
+spec:
+  secretName: wildcard-nb-tls
+  dnsNames:
+    - "*.nb.mocha.thoughtless.eu"
+  issuerRef:
+    name: cloudflare
+    kind: ClusterIssuer
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSStore
+metadata:
+  # TLSStores are not filtered by ingress class; the public Traefik ignores
+  # this one through its defaultTLSResourcesNamespace (traefik).
+  name: default
+spec:
+  defaultCertificate:
+    secretName: wildcard-nb-tls

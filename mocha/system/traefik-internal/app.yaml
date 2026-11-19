@@ -1,0 +1,76 @@
+# Second Traefik, reachable only through NetBird: ClusterIP Service, exposed to
+# NetBird peers by the netbird-operator (see mocha/system/netbird-operator).
+# Private Ingresses use ingressClassName: traefik-internal; private
+# IngressRoutes need the kubernetes.io/ingress.class: traefik-internal
+# annotation. Hostnames live under *.nb.mocha.thoughtless.eu.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik-internal
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik-internal
+  sources:
+    - repoURL: https://traefik.github.io/charts
+      targetRevision: 42.4.1
+      chart: traefik
+      helm:
+        # CRDs are owned by the public Traefik release.
+        skipCrds: true
+        values: |
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          accessLog:
+            enabled: true
+            format: json
+          metrics:
+            prometheus: null
+            otlp:
+              enabled: true
+              addEntryPointsLabels: true
+              addRoutersLabels: true
+              addServicesLabels: true
+              resourceAttributes:
+                k8s.cluster.name: mocha
+              http:
+                enabled: true
+                endpoint: http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/metrics
+          ingressClass:
+            enabled: true
+            isDefaultClass: false
+            name: traefik-internal
+          providers:
+            kubernetesCRD:
+              ingressClass: traefik-internal
+              # The default TLSStore below must not leak to the public Traefik.
+              defaultTLSResourcesNamespace: traefik-internal
+            kubernetesIngress:
+              ingressClass: traefik-internal
+              publishedService:
+                enabled: false
+          ports:
+            web:
+              http:
+                redirections:
+                  entryPoint:
+                    to: websecure
+                    scheme: https
+                    permanent: true
+          service:
+            spec:
+              type: ClusterIP
+    - repoURL: https://github.com/qjoly/gitops.git
+      targetRevision: HEAD
+      path: mocha/system/traefik-internal/manifests

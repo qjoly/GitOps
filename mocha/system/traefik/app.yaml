@@ -40,6 +40,15 @@ spec:
             http:
               enabled: true
               endpoint: http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/metrics
+        providers:
+          kubernetesCRD:
+            # TLSStores are not filtered by class: ignore traefik-internal's
+            # default store (*.nb wildcard).
+            defaultTLSResourcesNamespace: traefik
+          kubernetesIngress:
+            # Without it, Traefik serves every IngressClass of its controller,
+            # traefik-internal included, and would publish private Ingresses.
+            ingressClass: traefik
         service:
           # Cluster would have kube-proxy rewrite every client IP to the node's.
           spec:
