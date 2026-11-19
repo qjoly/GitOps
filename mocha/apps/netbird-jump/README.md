@@ -42,11 +42,11 @@ Firefox + FoxyProxy ──SOCKS5──▶ kubectl port-forward ──▶ netbird
    `*.nb.mocha.thoughtless.eu`, without scheme. Then switch FoxyProxy to
    "Proxy by Patterns", so only those hosts use the tunnel.
 
-3. Check from a shell. Any name works: one without an Ingress gets a 404 from
-   traefik-internal, which proves the whole path.
+3. Browse `https://check.nb.mocha.thoughtless.eu/` (whoami, from
+   [`netbird-check`](../netbird-check)), or check from a shell:
 
    ```bash
-   curl -I --socks5-hostname 127.0.0.1:1080 https://check.nb.mocha.thoughtless.eu/
+   curl --socks5-hostname 127.0.0.1:1080 https://check.nb.mocha.thoughtless.eu/
    ```
 
 ## Troubleshooting
