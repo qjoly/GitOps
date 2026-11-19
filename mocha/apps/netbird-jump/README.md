@@ -1,38 +1,60 @@
 # netbird-jump
 
-Reach NetBird-only services from a machine where the NetBird client can't be
-installed: an unprivileged NetBird peer (netstack mode) runs in mocha and
-exposes a SOCKS5 proxy, reached with `kubectl port-forward`.
+Reach NetBird-only services (`*.nb.mocha.thoughtless.eu`) from a machine where
+the NetBird client can't be installed: an unprivileged NetBird peer (netstack
+mode) runs in mocha and exposes a SOCKS5 proxy, reached with
+`kubectl port-forward`.
 
 ```
 Firefox + FoxyProxy ──SOCKS5──▶ kubectl port-forward ──▶ netbird-jump pod ──NetBird──▶ traefik-internal / peers
 ```
 
+## Prerequisites
+
+- `kubectl` with the [kubelogin](https://github.com/int128/kubelogin) plugin
+  (`kubectl oidc-login`).
+- [`mocha/kubeconfig`](../../kubeconfig): logs in through authentik. Port-forward
+  needs the authentik `Admins` group, the only one bound in mocha.
+- Outbound access to `5.196.80.72:6443`.
+
 ## Use it
 
-Keep the port-forward running (it drops on idle and on pod restarts):
+1. Open the tunnel and keep it running. It drops on idle and when the pod
+   restarts, hence the loop:
 
-```bash
-while true; do
-  kubectl --context mocha-corium -n netbird-jump port-forward deploy/netbird-jump 1080:1080
-  sleep 1
-done
-```
+   ```bash
+   export KUBECONFIG=mocha/kubeconfig
+   while true; do
+     kubectl -n netbird-jump port-forward deploy/netbird-jump 1080:1080
+     sleep 1
+   done
+   ```
 
-FoxyProxy (Firefox):
+2. In FoxyProxy (Firefox), add a proxy:
 
-| Field | Value |
+   | Field | Value |
+   |---|---|
+   | Type | SOCKS5 |
+   | Hostname / Port | `127.0.0.1` / `1080` |
+   | Proxy DNS | **on**: the pod resolves the names |
+
+   Add an include pattern to it: type Wildcard, `*.nb.mocha.thoughtless.eu`.
+   Then switch FoxyProxy to "Proxy by Patterns", so only those hosts use the
+   tunnel.
+
+3. Browse `https://nginx-test.nb.mocha.thoughtless.eu/`, or check from a shell:
+
+   ```bash
+   curl --socks5-hostname 127.0.0.1:1080 https://nginx-test.nb.mocha.thoughtless.eu/
+   ```
+
+## Troubleshooting
+
+| Symptom | Cause |
 |---|---|
-| Type | SOCKS5 |
-| Host / Port | `127.0.0.1` / `1080` |
-| Proxy DNS | **on** (names are resolved by the pod) |
-| Pattern | `*.nb.mocha.thoughtless.eu` |
-
-Check from a shell:
-
-```bash
-curl --socks5-hostname 127.0.0.1:1080 https://nginx-test.nb.mocha.thoughtless.eu/
-```
+| Connection refused on 127.0.0.1:1080 | The port-forward is down: see step 1 |
+| Timeout or 404 | Proxy DNS is off, or the hostname is missing from `hostAliases`: the public wildcard `*.mocha.thoughtless.eu` answers instead |
+| Timeout on a hostname listed in `hostAliases` | The NetBird path: check the router conntrack in `netbird-operator`. The ClusterIP only answers forwarded traffic because Cilium has `socketLB.hostNamespaceOnly` (`mocha/corium/mocha.yaml`) |
 
 ## Add a service
 
