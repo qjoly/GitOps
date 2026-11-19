@@ -1,0 +1,15 @@
+# Every private hostname is served by traefik-internal (ClusterIP pinned in mocha/system/traefik-internal).
+nb.mocha.thoughtless.eu:53 {
+    bind 127.0.0.1
+    template IN A {
+        answer "{{ .Name }} 60 IN A 10.96.208.53"
+    }
+    template IN AAAA {
+        rcode NOERROR
+    }
+}
+.:53 {
+    bind 127.0.0.1
+    forward . 10.96.0.10
+    cache 30
+}

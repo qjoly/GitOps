@@ -5,3 +5,7 @@ resources:
   - externalsecret.yaml
   - jump.yaml
   - networkpolicy.yaml
+configMapGenerator:
+  - name: netbird-jump-dns
+    files:
+      - Corefile

@@ -54,15 +54,15 @@ Firefox + FoxyProxy ──SOCKS5──▶ kubectl port-forward ──▶ netbird
 |---|---|
 | Connection refused on 127.0.0.1:1080 | The port-forward is down: see step 1 |
 | `Empty reply from server` | Plain HTTP sent to the SOCKS port: proxy type is HTTP, or `curl` without `--socks5-hostname` |
-| Timeout or 404 | Proxy DNS is off, or the hostname is missing from `hostAliases`: the public wildcard `*.mocha.thoughtless.eu` answers instead |
-| Timeout on a hostname listed in `hostAliases` | The NetBird path: check the router conntrack in `netbird-operator`. The ClusterIP only answers forwarded traffic because Cilium has `socketLB.hostNamespaceOnly` (`mocha/corium/mocha.yaml`) |
+| Timeout or 404 | Proxy DNS is off: the public wildcard `*.mocha.thoughtless.eu` answers instead |
+| Timeout with Proxy DNS on | The NetBird path: check the router conntrack in `netbird-operator`. The ClusterIP only answers forwarded traffic because Cilium has `socketLB.hostNamespaceOnly` (`mocha/corium/mocha.yaml`) |
 
 ## Add a service
 
-Netstack mode has no NetBird DNS, so the pod resolves names through its
-`/etc/hosts`. Add the hostname to `hostAliases` in `manifests/jump.yaml`
-(no wildcard support), pointing at `10.96.208.53` for anything served by
-traefik-internal, or at the peer's NetBird IP otherwise.
+Nothing to do for an Ingress of class `traefik-internal`: netstack mode has no
+NetBird DNS, so a CoreDNS sidecar ([`manifests/Corefile`](manifests/Corefile))
+resolves every `*.nb.mocha.thoughtless.eu` name to traefik-internal. A NetBird
+peer outside traefik-internal needs its own entry there.
 
 The peer joins the `users` NetBird group (setup key `k8s-netbird-jump`,
 `kv/netbird` `jump_setup_key`), so it gets the same access as your devices.
