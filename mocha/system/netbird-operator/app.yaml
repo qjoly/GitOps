@@ -1,0 +1,49 @@
+# NetBird Kubernetes operator: runs the in-cluster routing peer (NetworkRouter)
+# and publishes Services to NetBird peers (NetworkResource). It talks to the
+# self-hosted management API with a service user PAT (kv/netbird
+# operator_api_key). It does not write access policies: those live in NetBird.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: netbird-operator
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: netbird-operator
+  sources:
+    - repoURL: ghcr.io/netbirdio/helm-charts
+      chart: netbird-operator
+      targetRevision: 0.9.0
+      helm:
+        values: |
+          managementURL: https://netbird.mocha.thoughtless.eu:443
+          cluster:
+            name: mocha
+          netbirdAPI:
+            keyFromSecret:
+              name: netbird-mgmt-api-key
+              key: NB_API_KEY
+          webhook:
+            enableCertManager: true
+            # The pod webhook matches every pod CREATE in the cluster: with
+            # Fail, an operator outage would block all pod creations.
+            failurePolicy: Ignore
+          operator:
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
+    - repoURL: https://github.com/qjoly/gitops.git
+      targetRevision: HEAD
+      path: mocha/system/netbird-operator/manifests

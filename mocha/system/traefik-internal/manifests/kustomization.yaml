@@ -3,3 +3,4 @@ kind: Kustomization
 namespace: traefik-internal
 resources:
   - tls.yaml
+  - netbird.yaml

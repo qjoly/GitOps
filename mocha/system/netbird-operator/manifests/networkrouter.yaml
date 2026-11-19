@@ -1,0 +1,18 @@
+# In-cluster routing peer. The operator creates the NetBird network, its
+# group and an ephemeral setup key, then runs the router pods here (they are
+# privileged: NET_ADMIN, SYS_ADMIN, SYS_RESOURCE).
+# Services are published with a NetworkResource next to them, which also adds
+# <service>.<namespace>.nb.mocha.thoughtless.eu to the NetBird DNS zone below.
+apiVersion: netbird.io/v1alpha1
+kind: NetworkRouter
+metadata:
+  name: mocha
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  # The zone must already exist in NetBird (DNS > Zones).
+  dnsZoneRef:
+    name: nb.mocha.thoughtless.eu
+  workloadOverride:
+    # Single node cluster: more replicas would only share its fate.
+    replicas: 1

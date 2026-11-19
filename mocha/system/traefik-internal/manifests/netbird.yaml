@@ -1,0 +1,29 @@
+# Publishes the traefik-internal ClusterIP to NetBird peers through the
+# routing peer (mocha/system/netbird-operator). Access is granted by a NetBird
+# policy towards the k8s-traefik-internal group, managed in NetBird itself.
+# *.nb.mocha.thoughtless.eu is a CNAME, in the NetBird zone, to the record
+# the operator creates: traefik-internal.traefik-internal.nb.mocha.thoughtless.eu
+apiVersion: netbird.io/v1alpha1
+kind: Group
+metadata:
+  name: traefik-internal
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  name: k8s-traefik-internal
+---
+apiVersion: netbird.io/v1alpha1
+kind: NetworkResource
+metadata:
+  name: traefik-internal
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  networkRouterRef:
+    name: mocha
+    namespace: netbird-operator
+  serviceRef:
+    name: traefik-internal
+  groups:
+    - localRef:
+        name: traefik-internal
