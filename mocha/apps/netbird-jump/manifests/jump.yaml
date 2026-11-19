@@ -40,6 +40,9 @@ spec:
             capabilities:
               drop:
                 - ALL
+              # /coredns carries this file capability; exec fails without it.
+              add:
+                - NET_BIND_SERVICE
           resources:
             requests:
               cpu: 5m
