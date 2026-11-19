@@ -60,6 +60,10 @@ spec:
               ingressClass: traefik-internal
               publishedService:
                 enabled: false
+          # A ClusterIP Service has no LoadBalancer status to copy; publish a
+          # stable hostname instead so Ingresses (and ArgoCD) see an address.
+          additionalArguments:
+            - --providers.kubernetesingress.ingressendpoint.hostname=traefik-internal.traefik-internal.svc.cluster.local
           ports:
             web:
               http:
