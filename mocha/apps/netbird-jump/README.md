@@ -55,9 +55,43 @@ For CLIs and apps without proxy support. Only `*.nb.mocha.thoughtless.eu` is
 affected, and it still goes through NetBird: a gost sidecar in the jump routes
 each connection by TLS SNI (or HTTP Host) through the SOCKS5 proxy.
 
-```
-app ──DNS──▶ /etc/resolver ──▶ local CoreDNS: 127.0.0.1
-app ──:443/:80──▶ pf ──:8443──▶ kubectl port-forward ──▶ gost (SNI) ──SOCKS5──▶ NetBird
+Green is installed once by `nb:setup`, blue runs with `nb:tunnel`.
+
+```mermaid
+flowchart LR
+  subgraph mac["Mac"]
+    app["App or CLI<br/>https://x.nb.mocha.thoughtless.eu"]
+    ff["Firefox + FoxyProxy"]
+    resolver["/etc/resolver/nb.mocha.thoughtless.eu"]
+    pf["pf: 127.0.0.1:443/80 → 8443<br/>reloaded at boot"]
+    dns["CoreDNS 127.0.0.1:53535<br/>*.nb → 127.0.0.1"]
+    pfwd["kubectl port-forward<br/>8443 + 1080"]
+  end
+  subgraph pod["mocha: pod netbird-jump"]
+    gost["gost :8443<br/>destination = SNI / Host"]
+    socks["NetBird SOCKS5 :1080<br/>netstack"]
+    cdns["CoreDNS sidecar<br/>*.nb → traefik-internal"]
+  end
+  subgraph netbird["NetBird"]
+    router["Routing peer mocha"]
+    ext["Peers outside mocha"]
+  end
+  traefik["traefik-internal → app"]
+
+  app -- "resolve name" --> resolver --> dns
+  app -- "then connect 127.0.0.1:443" --> pf --> pfwd
+  ff -- "SOCKS5 :1080" --> pfwd
+  pfwd -- "Kubernetes API" --> gost
+  pfwd -- ":1080" --> socks
+  gost --> socks
+  socks -. "resolve" .-> cdns
+  socks -- "WireGuard" --> router --> traefik
+  socks -- "WireGuard" --> ext
+
+  classDef setup fill:#d4edda,stroke:#2e7d32
+  classDef tunnel fill:#d6e4ff,stroke:#1e4fd8
+  class resolver,pf setup
+  class dns,pfwd tunnel
 ```
 
 Once, from the repo (asks for sudo): `mise install && mise run nb:setup`.
