@@ -1,0 +1,68 @@
+# NetBird jump host for machines that can't run the NetBird client: an
+# unprivileged netstack peer exposing a SOCKS5 proxy on 127.0.0.1:1080 inside
+# the pod, reached only through `kubectl port-forward` (see README.md).
+#
+# Netstack mode has no NetBird DNS: the proxy resolves names with the pod's
+# /etc/hosts, filled by hostAliases below. hostAliases take no wildcard, so
+# add every private hostname (*.nb.mocha.thoughtless.eu) here.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-jump
+  labels:
+    app: netbird-jump
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: netbird-jump
+  template:
+    metadata:
+      labels:
+        app: netbird-jump
+    spec:
+      hostAliases:
+        # traefik-internal (ClusterIP pinned in mocha/system/traefik-internal).
+        - ip: 10.96.208.53
+          hostnames:
+            - nginx-test.nb.mocha.thoughtless.eu
+      automountServiceAccountToken: false
+      containers:
+        - name: netbird
+          image: netbirdio/netbird:0.83.1
+          env:
+            - name: NB_SETUP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-jump
+                  key: setupKey
+            - name: NB_MANAGEMENT_URL
+              value: https://netbird.mocha.thoughtless.eu:443
+            - name: NB_HOSTNAME
+              value: k8s-jump
+            - name: NB_USE_NETSTACK_MODE
+              value: "true"
+            # Unauthenticated: keep the default 127.0.0.1 bind so only
+            # port-forward reaches it, never another pod.
+            - name: NB_SOCKS5_LISTENER_PORT
+              value: "1080"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: state
+              mountPath: /var/lib/netbird
+      volumes:
+        # Ephemeral peer: a restart registers a fresh one.
+        - name: state
+          emptyDir: {}

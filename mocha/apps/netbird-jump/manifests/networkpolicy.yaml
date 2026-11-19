@@ -1,0 +1,10 @@
+# Nothing in the cluster has a reason to connect to the jump pod;
+# kubectl port-forward enters the pod netns and is not affected.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-ingress
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

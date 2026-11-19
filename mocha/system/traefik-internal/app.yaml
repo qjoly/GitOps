@@ -75,6 +75,8 @@ spec:
           service:
             spec:
               type: ClusterIP
+              # Pinned: hardcoded in netbird-jump's hostAliases.
+              clusterIP: 10.96.208.53
     - repoURL: https://github.com/qjoly/gitops.git
       targetRevision: HEAD
       path: mocha/system/traefik-internal/manifests
