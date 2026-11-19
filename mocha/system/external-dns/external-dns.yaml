@@ -27,6 +27,9 @@ spec:
                 name: cloudflare-api-key
                 key: apiKey
         txtPrefix: mocha-
+        # Keep traefik-internal (NetBird-only) hostnames out of public DNS.
+        extraArgs:
+          ingress-class: traefik
         serviceMonitor:
           enabled: false
   destination:
