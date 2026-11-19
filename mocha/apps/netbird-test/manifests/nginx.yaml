@@ -49,7 +49,7 @@ spec:
               mountPath: /usr/share/nginx/html
         - name: netbird
           # Kept in line with the management server version.
-          image: netbirdio/netbird:0.75.0
+          image: netbirdio/netbird:0.83.1
           env:
             - name: NB_SETUP_KEY
               valueFrom:

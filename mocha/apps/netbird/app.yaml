@@ -24,7 +24,7 @@ spec:
           fullnameOverride: netbird
           management:
             image:
-              tag: 0.75.0
+              tag: 0.83.1
             persistentVolume:
               enabled: true
               size: 256Mi
@@ -106,10 +106,10 @@ spec:
               }
           signal:
             image:
-              tag: 0.75.0
+              tag: 0.83.1
           relay:
             image:
-              tag: 0.75.0
+              tag: 0.83.1
             envFromSecret:
               NB_AUTH_SECRET: netbird/relayPassword
             env:
@@ -122,7 +122,7 @@ spec:
               NB_STUN_LOG_LEVEL: info
           dashboard:
             image:
-              tag: v2.90.7
+              tag: v2.97.0
             env:
               NETBIRD_MGMT_API_ENDPOINT: https://netbird.mocha.thoughtless.eu:443
               NETBIRD_MGMT_GRPC_API_ENDPOINT: https://netbird.mocha.thoughtless.eu:443
