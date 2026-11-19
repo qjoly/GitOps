@@ -85,17 +85,18 @@ octodoctor -e -c "$CTX" --fail-on none --limit 200
 echo "report: $(ls -td "$OUT"/argocd-manifests-export-*/ | head -1)octodoctor-output/index.html"
 '''
 
-# *.nb.mocha.thoughtless.eu on macOS without NetBird: /etc/resolver sends the
-# zone to a local CoreDNS that answers 127.0.0.1, pf maps 127.0.0.1:443 to the
-# unprivileged port-forward of traefik-internal. Only that zone is affected.
+# *.nb.mocha.thoughtless.eu on macOS without the NetBird client: /etc/resolver
+# sends the zone to a local CoreDNS that answers 127.0.0.1, pf maps
+# 127.0.0.1:443/80 to a port-forward of the netbird-jump SNI sidecar, which
+# goes through NetBird. Only that zone is affected.
 [tasks."nb:setup"]
-description = "One-time macOS setup (sudo): /etc/resolver entry and pf redirect 443 -> 8443"
+description = "One-time macOS setup (sudo): /etc/resolver entry and pf redirect 443/80 -> 8443"
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 sudo mkdir -p /etc/resolver
 printf 'nameserver 127.0.0.1\nport 53535\n' | sudo tee /etc/resolver/nb.mocha.thoughtless.eu >/dev/null
-echo 'rdr pass on lo0 inet proto tcp from any to 127.0.0.1 port 443 -> 127.0.0.1 port 8443' \
+echo 'rdr pass on lo0 inet proto tcp from any to 127.0.0.1 port { 80, 443 } -> 127.0.0.1 port 8443' \
   | sudo tee /etc/pf.anchors/nb.mocha >/dev/null
 # The default pf.conf evaluates com.apple/*, so the anchor needs no pf.conf edit.
 # The daemon reloads it at boot; pfctl -E keeps pf enabled alongside other users.
@@ -120,7 +121,7 @@ sudo pfctl -a com.apple/nb.mocha -s nat 2>/dev/null
 '''
 
 [tasks."nb:tunnel"]
-description = "Serve *.nb.mocha.thoughtless.eu locally: CoreDNS + port-forward to traefik-internal (Ctrl-C to stop)"
+description = "Serve *.nb.mocha.thoughtless.eu locally through NetBird: CoreDNS + port-forward to netbird-jump (Ctrl-C to stop)"
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
@@ -142,7 +143,8 @@ dns=$!
 trap 'kill "$dns" 2>/dev/null; rm -f "$corefile"' EXIT
 # port-forward drops on idle and on pod restarts.
 while true; do
-  kubectl ${NB_CONTEXT:+--context "$NB_CONTEXT"} -n traefik-internal port-forward svc/traefik-internal 8443:443 || true
+  # 8443: SNI entry for every app; 1080: SOCKS5 for FoxyProxy.
+  kubectl ${NB_CONTEXT:+--context "$NB_CONTEXT"} -n netbird-jump port-forward deploy/netbird-jump 8443:8443 1080:1080 || true
   sleep 1
 done
 '''

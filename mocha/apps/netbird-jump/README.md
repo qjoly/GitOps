@@ -52,18 +52,20 @@ Firefox + FoxyProxy ──SOCKS5──▶ kubectl port-forward ──▶ netbird
 ## Every app, without a proxy (macOS, admin rights)
 
 For CLIs and apps without proxy support. Only `*.nb.mocha.thoughtless.eu` is
-affected; it skips the jump and port-forwards straight to traefik-internal
-(same RBAC requirement, NetBird peers by IP still need the jump).
+affected, and it still goes through NetBird: a gost sidecar in the jump routes
+each connection by TLS SNI (or HTTP Host) through the SOCKS5 proxy.
 
 ```
-app ──DNS──▶ /etc/resolver ──▶ local CoreDNS (127.0.0.1) ; app ──:443──▶ pf ──:8443──▶ kubectl port-forward ──▶ traefik-internal
+app ──DNS──▶ /etc/resolver ──▶ local CoreDNS: 127.0.0.1
+app ──:443/:80──▶ pf ──:8443──▶ kubectl port-forward ──▶ gost (SNI) ──SOCKS5──▶ NetBird
 ```
 
 Once, from the repo (asks for sudo): `mise install && mise run nb:setup`.
 It writes `/etc/resolver/nb.mocha.thoughtless.eu` and a pf redirect
-`127.0.0.1:443 → 8443`, reloaded at boot. `mise run nb:teardown` undoes it.
+`127.0.0.1:443/80 → 8443`, reloaded at boot. `mise run nb:teardown` undoes it.
 
-Then, whenever needed: `mise run nb:tunnel` (Ctrl-C to stop).
+Then, whenever needed: `mise run nb:tunnel` (Ctrl-C to stop). It also
+forwards 1080, so FoxyProxy keeps working without the loop of step 1.
 
 ```bash
 curl https://check.nb.mocha.thoughtless.eu/
@@ -87,8 +89,17 @@ curl https://check.nb.mocha.thoughtless.eu/
 
 Nothing to do for an Ingress of class `traefik-internal`: netstack mode has no
 NetBird DNS, so a CoreDNS sidecar ([`manifests/Corefile`](manifests/Corefile))
-resolves every `*.nb.mocha.thoughtless.eu` name to traefik-internal. A NetBird
-peer outside traefik-internal needs its own entry there.
+resolves every `*.nb.mocha.thoughtless.eu` name to traefik-internal.
+
+An app outside this cluster needs its NetBird IP in that zone block, before the
+`template` lines:
+
+```
+hosts {
+    100.92.1.2 app.nb.mocha.thoughtless.eu
+    fallthrough
+}
+```
 
 The peer joins the `users` NetBird group (setup key `k8s-netbird-jump`,
 `kv/netbird` `jump_setup_key`), so it gets the same access as your devices.
