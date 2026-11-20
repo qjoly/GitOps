@@ -17,7 +17,7 @@ spec:
   sources:
     # The chart is not published to a Helm repo, only shipped in the source tree.
     - repoURL: https://github.com/kolapsis/maintenant.git
-      targetRevision: v1.11.0
+      targetRevision: v1.12.0
       path: deploy/helm/maintenant
       helm:
         releaseName: maintenant
