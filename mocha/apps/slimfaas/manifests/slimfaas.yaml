@@ -40,7 +40,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: slimfaas
-          image: axaguildev/slimfaas:0.88.1
+          image: axaguildev/slimfaas:0.89.1
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
