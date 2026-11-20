@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: scanner
-          image: ghcr.io/project-angos/angos:1.12.5
+          image: ghcr.io/project-angos/angos:1.13.0
           args: ["-c", "/scanner/scanner.toml", "scanner", "grype"]
           env:
             - name: RUST_LOG
