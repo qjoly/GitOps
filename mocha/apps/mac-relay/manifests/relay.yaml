@@ -29,7 +29,7 @@ spec:
         runAsGroup: 65532
       containers:
         - name: chisel
-          image: jpillora/chisel:1.12.0
+          image: jpillora/chisel:1.13.0
           # --reverse lets clients ask for R: listeners such as :8080.
           args: ["server", "--host", "0.0.0.0", "--port", "2333", "--reverse", "--auth", "$(CHISEL_AUTH)"]
           env:
