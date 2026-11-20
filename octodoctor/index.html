@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+     
+     
+    
+    <link rel="canonical" href="https://qjoly.github.io/GitOps/octodoctor/"><link rel="icon" type="image/png" sizes="192x192" href="../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>OctoDoctor - GitOps</title>
+
+
+<link href="../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../css/normalize.css" rel="stylesheet">
+<link href="../css/terminal.css" rel="stylesheet">
+<link href="../css/theme.css" rel="stylesheet">
+<link href="../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "..",
+    shortcuts = "{}";
+</script>
+<script src="../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://qjoly.github.io/GitOps/" class="no-style">GitOps</a></div>
+        </header>
+        
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href=".." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Welcome aboard!</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../backup/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Backup</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../cloudflared/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Cloudflared</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../getting-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Getting Started</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="./" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">OctoDoctor</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../sandboxes/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Sandboxes</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../secret-management/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Secret Management</span>
+                    </a>
+                    <meta property="position" content="6">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../signoz/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">SigNoz</span>
+                    </a>
+                    <meta property="position" content="7">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../spindle/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Spindle</span>
+                    </a>
+                    <meta property="position" content="8">
+                </li>
+                
+                
+                
+                    
+                    
+
+
+<li property="itemListElement" typeof="ListItem">
+    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+    </a>
+    <meta property="position" content="9">
+</li>
+                    
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="..">Welcome aboard!</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../backup/">Backup</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../cloudflared/">Cloudflared</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../getting-started/">Getting Started</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">OctoDoctor</span>
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../sandboxes/">Sandboxes</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../secret-management/">Secret Management</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../signoz/">SigNoz</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../spindle/">Spindle</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Changelog</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../changelog/2026-07-13-mocha-avp-to-bank-vaults/">Migration: argocd-vault-plugin (AVP) → bank-vaults / OpenBao — cluster mocha</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../changelog/2026-07-14-americano-onboarding/">Onboarding: Americano — the first podman / Materia host in this GitOps</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../changelog/2026-11-20-mac-relay/">Definitive URL for a Mac port on NetBird: mac-relay</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#octodoctor">OctoDoctor</a></li>
+        <li><a href="#running-it">Running it</a></li><li><a href="#first-analysis-2026-11-15-v050">First analysis (2026-11-15, v0.5.0)</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+<section id="mkdocs-terminal-content">
+    <h1 id="octodoctor">OctoDoctor</h1>
+<p><a href="https://octodoctor-argocd.readthedocs.io/">OctoDoctor</a> checks Argo CD
+Applications, ApplicationSets, AppProjects and the <code>argocd-*</code> ConfigMaps/Secrets
+against a set of <a href="https://octodoctor-argocd.readthedocs.io/en/latest/rules/">rules</a>.
+It is read-only and pinned in <code>mise.toml</code>.</p>
+<h2 id="running-it">Running it</h2>
+<pre><code class="language-bash">mise run octodoctor:scan            # manifests tracked in git
+mise run octodoctor:scan mocha      # a single directory
+mise run octodoctor:export doppio   # live Argo CD, through a kube context
+</code></pre>
+<p>Both tasks print the path of <code>index.html</code>. Reports and exports go to
+<code>$TMPDIR/octodoctor</code> (override with <code>OCTODOCTOR_OUT</code>), never into the repo.
+Secret values are redacted by the export.</p>
+<p>Prefer <code>export</code>: the repo scan misses things.</p>
+<ul>
+<li>Only the <strong>first document</strong> of a multi-document YAML file is read, so the
+  ApplicationSets in <code>turing/bootstrap/bootstrap.yml</code> and
+  <code>doppio/bootstrap/bootstrap.yml</code> are not seen.</li>
+<li>Applications generated by the ApplicationSets don't exist in git.</li>
+<li><code>omni-turing</code> needs an OIDC browser login before <code>export</code> works.</li>
+</ul>
+<h2 id="first-analysis-2026-11-15-v050">First analysis (2026-11-15, v0.5.0)</h2>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Severity</th>
+<th>Hits (mocha / doppio, live)</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://octodoctor-argocd.readthedocs.io/en/latest/rules/r05-permissive-source-repos/">R05</a> AppProject <code>sourceRepos: '*'</code></td>
+<td>high</td>
+<td><code>default</code> / <code>default</code></td>
+<td>Accepted: single tenant, everything runs in <code>default</code>.</td>
+</tr>
+<tr>
+<td><a href="https://octodoctor-argocd.readthedocs.io/en/latest/rules/r17-parameter-overrides/">R17</a> Helm <code>parameters</code></td>
+<td>high</td>
+<td>external-dns, external-secrets / external-secrets</td>
+<td>Fixed: moved to <code>values</code>, rendered output unchanged. Turing had the same two.</td>
+</tr>
+<tr>
+<td><a href="https://octodoctor-argocd.readthedocs.io/en/latest/rules/r22-no-webhooks-configured/">R22</a> No webhook in <code>argocd-secret</code></td>
+<td>medium</td>
+<td>1 / 1</td>
+<td>Fixed on mocha: the GitHub webhook already existed, but Argo CD accepted unsigned calls. Its secret now comes from <code>kv/argocd</code> (<code>webhook_github_secret</code>).</td>
+</tr>
+<tr>
+<td><a href="https://octodoctor-argocd.readthedocs.io/en/latest/rules/r06-missing-manifest-generate-paths/">R06</a> No <code>manifest-generate-paths</code></td>
+<td>medium</td>
+<td>98 / 25</td>
+<td>Only useful with R22. Then set it in the ApplicationSet templates.</td>
+</tr>
+<tr>
+<td><a href="https://octodoctor-argocd.readthedocs.io/en/latest/rules/r14-prune-enabled/">R14</a> <code>prune: true</code></td>
+<td>medium</td>
+<td>22 / 22</td>
+<td>Ignored: intended.</td>
+</tr>
+<tr>
+<td><a href="https://octodoctor-argocd.readthedocs.io/en/latest/rules/r15-hardcoded-helm-values/">R15</a> Inline Helm <code>values</code></td>
+<td>medium</td>
+<td>35 / 10</td>
+<td>Ignored: values live next to the Application in git anyway.</td>
+</tr>
+<tr>
+<td><a href="https://octodoctor-argocd.readthedocs.io/en/latest/rules/r19-pinned-target-revision/">R19</a> <code>targetRevision</code> not <code>HEAD</code></td>
+<td>medium</td>
+<td>common, maintenant / common</td>
+<td>False positive: <code>main</code> for <code>common</code>, upstream tag pin for maintenant (and spegel on turing).</td>
+</tr>
+<tr>
+<td>R25/R26 Multi-source with several charts</td>
+<td>medium</td>
+<td>authentik, proxyauthk8s / –</td>
+<td>Ignored: chart + its CRDs/provisioner + local manifests, one lifecycle.</td>
+</tr>
+</tbody>
+</table>
+<p>Passed: no anonymous access, sync timeouts, automated sync, no kustomize
+overrides. Inactive: no Image Updater, matrix/merge generators or PR generators.</p>
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>
