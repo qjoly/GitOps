@@ -83,7 +83,7 @@ spec:
                   readOnly: true
           containers:
             - name: upload
-              image: restic/restic:0.19.1
+              image: restic/restic:0.20.0
               command: ["/bin/sh", "-c"]
               args:
                 - |
