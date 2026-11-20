@@ -1,0 +1,98 @@
+# Reverse-tunnel relay for the Mac. A chisel server whose control port 2333 is
+# reached only through `kubectl port-forward` (mise run nb:mac on the Mac), and
+# whose reverse listener :8080 is served to NetBird peers as
+# https://mac.nb.mocha.thoughtless.eu by traefik-internal. The Mac requests the
+# reverse forward with `R:8080:127.0.0.1:<port>`, so the Mac needs neither a
+# NetBird client nor a stable IP: the URL is definitive.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mac-relay
+  labels:
+    app: mac-relay
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mac-relay
+  template:
+    metadata:
+      labels:
+        app: mac-relay
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+      containers:
+        - name: chisel
+          image: jpillora/chisel:1.12.0
+          # --reverse lets clients ask for R: listeners such as :8080.
+          args: ["server", "--host", "0.0.0.0", "--port", "2333", "--reverse", "--auth", "$(CHISEL_AUTH)"]
+          env:
+            - name: CHISEL_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: mac-relay
+                  key: auth
+          ports:
+            - name: control
+              containerPort: 2333
+            - name: mac
+              containerPort: 8080
+          readinessProbe:
+            tcpSocket:
+              port: control
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mac-relay
+spec:
+  selector:
+    app: mac-relay
+  ports:
+    - name: control
+      port: 2333
+      targetPort: control
+    - name: mac
+      port: 8080
+      targetPort: mac
+---
+# The definitive URL for the Mac's port. traefik-internal serves the *.nb
+# wildcard cert (system/traefik-internal/manifests/tls.yaml) and the NetBird
+# zone wildcard *.nb CNAMEs to traefik-internal, so this host resolves for
+# every NetBird peer with no extra DNS record. Port 8080 only answers while a
+# Mac is connected (chisel reverse listener); otherwise traefik returns 502.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mac
+spec:
+  ingressClassName: traefik-internal
+  rules:
+    - host: mac.nb.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mac-relay
+                port:
+                  name: mac

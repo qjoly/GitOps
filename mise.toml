@@ -5,6 +5,8 @@
 "github:OctopusDeploy/octodoctor-argocd" = "0.5.0"
 # Local resolver for *.nb.mocha.thoughtless.eu, see mocha/apps/netbird-jump/README.md.
 "github:coredns/coredns" = "1.15.0"
+# Reverse-tunnel client for nb:mac, see mocha/apps/mac-relay/README.md.
+"github:jpillora/chisel" = "1.12.0"
 
 [tasks."vault:unseal"]
 description = "Unseal every sealed Vault pod with the keys from the vault-unseal-keys Secret"
@@ -145,6 +147,32 @@ trap 'kill "$dns" 2>/dev/null; rm -f "$corefile"' EXIT
 while true; do
   # 8443: SNI entry for every app; 1080: SOCKS5 for FoxyProxy.
   kubectl ${NB_CONTEXT:+--context "$NB_CONTEXT"} -n netbird-jump port-forward deploy/netbird-jump 8443:8443 1080:1080 || true
+  sleep 1
+done
+'''
+
+# Publish a local port of this Mac as https://mac.nb.mocha.thoughtless.eu to
+# every NetBird peer: chisel dials the mac-relay pod over kubectl port-forward
+# and asks it to forward :8080 back to the Mac (R:8080). The URL is definitive:
+# the *.nb wildcard already resolves to traefik-internal everywhere, so no DNS
+# record and no NetBird client on the Mac are needed.
+# Needs NB_MAC_RELAY_AUTH (the kv/netbird mac_relay_auth value, user:password)
+# and optionally NB_MAC_PORT (local port, default 3000).
+[tasks."nb:mac"]
+description = "Expose a local Mac port as https://mac.nb.mocha.thoughtless.eu via mac-relay (Ctrl-C to stop)"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+export KUBECONFIG="${KUBECONFIG:-$MISE_PROJECT_ROOT/mocha/kubeconfig}"
+AUTH="${NB_MAC_RELAY_AUTH:?set NB_MAC_RELAY_AUTH to the kv/netbird mac_relay_auth value (user:password)}"
+LOCAL_PORT="${NB_MAC_PORT:-3000}"
+# The port-forward drops on idle and on pod restarts, hence the loop.
+while true; do
+  kubectl ${NB_CONTEXT:+--context "$NB_CONTEXT"} -n mac-relay port-forward deploy/mac-relay 2333:2333 &
+  pf=$!
+  chisel client --auth "$AUTH" --keepalive 10s 127.0.0.1:2333 "R:8080:127.0.0.1:$LOCAL_PORT" || true
+  kill "$pf" 2>/dev/null || true
+  wait "$pf" 2>/dev/null || true
   sleep 1
 done
 '''

@@ -126,7 +126,13 @@ NetBird DNS, so a CoreDNS sidecar ([`manifests/Corefile`](manifests/Corefile))
 resolves every `*.nb.mocha.thoughtless.eu` name to traefik-internal.
 
 An app outside this cluster needs its NetBird IP in that zone block, before the
-`template` lines:
+`template` lines. To expose a port of the **Mac** itself with a definitive URL
+(`https://mac.nb.mocha.thoughtless.eu/`), no DNS edit is needed: see
+[`mac-relay`](../mac-relay/README.md), which rides the `*.nb` wildcard through
+traefik-internal.
+
+For reference, a non-cluster app still needs its NetBird IP in that zone block,
+before the `template` lines:
 
 ```
 hosts {
