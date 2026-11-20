@@ -58,7 +58,7 @@ spec:
               emptyDir: {}
           initContainers:
             - name: pgdump
-              image: postgres:17.12-bookworm
+              image: postgres:19.0-bookworm
               command: ["/bin/sh", "-c"]
               args:
                 - |
