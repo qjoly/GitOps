@@ -5,3 +5,4 @@ resources:
   - externalsecret.yaml
   - relay-stun.yaml
   - ingressroute.yaml
+  - metrics-service.yaml

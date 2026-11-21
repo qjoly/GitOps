@@ -83,3 +83,57 @@ spec:
     - port: metrics
       path: /metrics
       interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: netbird-management-metrics
+  namespace: netbird
+spec:
+  namespaceSelector:
+    matchNames:
+      - netbird
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: netbird-metrics
+      netbird.io/component: management
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: netbird-signal-metrics
+  namespace: netbird
+spec:
+  namespaceSelector:
+    matchNames:
+      - netbird
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: netbird-metrics
+      netbird.io/component: signal
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: netbird-relay-metrics
+  namespace: netbird
+spec:
+  namespaceSelector:
+    matchNames:
+      - netbird
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: netbird-metrics
+      netbird.io/component: relay
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s

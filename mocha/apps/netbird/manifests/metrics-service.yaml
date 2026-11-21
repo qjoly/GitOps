@@ -1,0 +1,55 @@
+# Prometheus metrics endpoints (container port 9090) for management, signal
+# and relay. The Helm chart does not expose this port on its own Services.
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-management-metrics
+  labels:
+    app.kubernetes.io/instance: netbird
+    app.kubernetes.io/name: netbird-metrics
+    netbird.io/component: management
+spec:
+  selector:
+    app.kubernetes.io/instance: netbird
+    app.kubernetes.io/name: netbird-management
+  ports:
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-signal-metrics
+  labels:
+    app.kubernetes.io/instance: netbird
+    app.kubernetes.io/name: netbird-metrics
+    netbird.io/component: signal
+spec:
+  selector:
+    app.kubernetes.io/instance: netbird
+    app.kubernetes.io/name: netbird-signal
+  ports:
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-relay-metrics
+  labels:
+    app.kubernetes.io/instance: netbird
+    app.kubernetes.io/name: netbird-metrics
+    netbird.io/component: relay
+spec:
+  selector:
+    app.kubernetes.io/instance: netbird
+    app.kubernetes.io/name: netbird-relay
+  ports:
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
