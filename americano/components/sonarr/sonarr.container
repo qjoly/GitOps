@@ -19,6 +19,11 @@ Label=traefik.http.routers.sonarr.rule=Host(`sonarr.americano.thoughtless.eu`)
 Label=traefik.http.services.sonarr.loadbalancer.server.port=8989
 Label=traefik.http.routers.sonarr.tls.certresolver=letsencrypt
 Label=traefik.http.routers.sonarr.middlewares=authentik@file
+# NetBird-only URL (no authentik on purpose): https://sonarr.nb.mocha.thoughtless.eu
+Label=traefik.http.routers.sonarr-nb.entrypoints=secure
+Label=traefik.http.routers.sonarr-nb.rule=Host(`sonarr.nb.mocha.thoughtless.eu`)
+Label=traefik.http.routers.sonarr-nb.tls.certresolver=letsencrypt
+Label=traefik.http.routers.sonarr-nb.service=sonarr
 
 [Service]
 Restart=always

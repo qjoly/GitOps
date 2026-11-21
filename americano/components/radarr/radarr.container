@@ -19,6 +19,11 @@ Label=traefik.http.routers.radarr.entrypoints=secure
 Label=traefik.http.routers.radarr.rule=Host(`radarr.americano.thoughtless.eu`)
 Label=traefik.http.routers.radarr.tls.certresolver=letsencrypt
 Label=traefik.http.routers.radarr.middlewares=authentik@file
+# NetBird-only URL (no authentik on purpose): https://radarr.nb.mocha.thoughtless.eu
+Label=traefik.http.routers.radarr-nb.entrypoints=secure
+Label=traefik.http.routers.radarr-nb.rule=Host(`radarr.nb.mocha.thoughtless.eu`)
+Label=traefik.http.routers.radarr-nb.tls.certresolver=letsencrypt
+Label=traefik.http.routers.radarr-nb.service=radarr
 
 [Service]
 Restart=always
