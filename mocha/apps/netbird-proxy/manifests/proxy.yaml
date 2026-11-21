@@ -30,7 +30,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: netbird-proxy
-          image: netbirdio/reverse-proxy:0.83.1
+          image: netbirdio/reverse-proxy:0.83.2
           env:
             - name: NB_PROXY_DOMAIN
               value: px.mocha.thoughtless.eu
