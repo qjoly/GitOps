@@ -7,8 +7,9 @@ data:
   config.yaml: |
     model:
       default: "mistral-large-latest"
-      provider: "mistral"
+      provider: "custom"
       base_url: "https://api.mistral.ai/v1"
+      key_env: "MISTRAL_API_KEY"
 
     fallback_providers:
       - provider: custom
