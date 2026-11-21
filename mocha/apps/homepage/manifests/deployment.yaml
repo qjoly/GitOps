@@ -26,7 +26,7 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
             - name: HOMEPAGE_ALLOWED_HOSTS
-              value: "$(MY_POD_IP):3000,home.mocha.thoughtless.eu"
+              value: "$(MY_POD_IP):3000,home.mocha.thoughtless.eu,home.nb.mocha.thoughtless.eu"
           resources:
             requests:
               cpu: 25m
