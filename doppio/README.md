@@ -191,7 +191,7 @@ doppio/
 │   ├── openebs/               # zfs-localpv (+ hostpath, for what already uses it)
 │   ├── openebs-storageclass/  # doppio-zfs, the default StorageClass
 │   ├── prometheus-operator-crds/  # only so common/'s ServiceMonitors render
-│   ├── signoz-k8s-infra/      # k8s-infra collector + zfs_exporter → mocha's SigNoz
+│   ├── signoz-k8s-infra/      # k8s-infra collector + zfs_exporter + replication-exporter → mocha's SigNoz
 │   └── traefik/               # the ingress controller
 └── apps/                      # reconciled by the doppio-apps ApplicationSet
     ├── deluge/                # https://deluge.doppio.thoughtless.eu

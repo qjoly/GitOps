@@ -54,6 +54,11 @@ spec:
                       static_configs:
                         - targets:
                             - ${env:K8S_HOST_IP}:9134
+                    - job_name: zfs-replication
+                      scrape_interval: 30s
+                      static_configs:
+                        - targets:
+                            - ${env:K8S_HOST_IP}:9135
                     - job_name: cadvisor-oom
                       scheme: https
                       scrape_interval: 30s

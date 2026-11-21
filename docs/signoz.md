@@ -28,6 +28,12 @@ metrics, cluster metrics and Kubernetes events. The `global.clusterName` value s
 the `k8s.cluster.name` resource attribute on everything the agent sends, which is
 how telemetry from each cluster is kept separate in the UI.
 
+On doppio, the agent also scrapes a small sidecar of the `zfs-exporter` DaemonSet
+(`zfs-replication-exporter.yaml`) on port 9135. It reports the age of the newest
+snapshot of each TrueNAS-replicated dataset (`zfs_replication_snapshot_age_seconds`),
+which is what the "Backup ZFS replication stale" rule alerts on past 36h — TrueNAS
+pushes one snapshot per day, so a higher age means the replication stopped.
+
 mocha talks to its collector in-cluster over plain HTTP:
 
 ```

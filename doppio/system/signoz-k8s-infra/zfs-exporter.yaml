@@ -44,8 +44,51 @@ spec:
               memory: 32Mi
             limits:
               memory: 128Mi
+        - name: replication-exporter
+          image: python:3.13-alpine
+          ports:
+            - name: replication-metrics
+              containerPort: 9135
+              protocol: TCP
+          env:
+            - name: ZFS_POOL
+              value: datapool
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+          securityContext:
+            privileged: true
+            readOnlyRootFilesystem: true
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: replication-metrics
+          volumeMounts:
+            - name: host-root
+              mountPath: /host
+              readOnly: true
+            - name: host-dev
+              mountPath: /host/dev
+            - name: exporter-script
+              mountPath: /app
+              readOnly: true
+          command:
+            - python3
+            - /app/server.py
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
       volumes:
         - name: host-root
           hostPath:
             path: /
             type: Directory
+        - name: host-dev
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: exporter-script
+          configMap:
+            name: zfs-replication-exporter

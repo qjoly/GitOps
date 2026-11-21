@@ -10,6 +10,7 @@ resources:
   - rules/backup-zfs-pool-high-fragmentation.yaml
   - rules/backup-zfs-pool-low-free-space.yaml
   - rules/backup-zfs-pool-not-healthy.yaml
+  - rules/backup-zfs-replication-stale.yaml
   - rules/ceph-cluster-not-healthy.yaml
   - rules/ceph-mon-quorum-degraded.yaml
   - rules/ceph-osd-down.yaml

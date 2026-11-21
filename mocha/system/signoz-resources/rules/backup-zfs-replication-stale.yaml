@@ -1,0 +1,63 @@
+---
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: backup-zfs-replication-stale
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: Backup ZFS replication stale
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: Newest snapshot on a TrueNAS-replicated dataset of doppio is older than 36h. TrueNAS pushes one snapshot per day (auto-YYYY-MM-DD_00-00), so anything past 36h means the replication stopped.
+      labels:
+        severity: critical
+      annotations:
+        summary: No TrueNAS replication received for 36h on a doppio dataset
+        description: The newest snapshot on a dataset replicated from TrueNAS to doppio is older than 36h. TrueNAS pushes one snapshot per day, so the replication has stopped.
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: zfs_replication_snapshot_age_seconds
+                timeAggregation: latest
+                spaceAggregation: max
+              filter:
+                expression: k8s.cluster.name = 'doppio'
+              groupBy:
+              - name: k8s.cluster.name
+              - name: dataset
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: above
+            matchType: at_least_once
+            target: 129600
+            channels:
+            - discord
+        alertOnAbsent: true
+        absentFor: 30
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 30m
+          frequency: 5m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false
