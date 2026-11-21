@@ -67,6 +67,10 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 15
           securityContext:
+            # The image defaults to USER netbird (uid 1000): the embedded
+            # WireGuard peer and the state directory need root.
+            runAsUser: 0
+            runAsGroup: 0
             privileged: true
           resources:
             requests:
