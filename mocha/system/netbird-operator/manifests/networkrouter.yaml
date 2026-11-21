@@ -11,6 +11,14 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   # The zone must already exist in NetBird (DNS > Zones).
+  # NetBird-side state for that zone (not in git), set once via the API:
+  # - zone distribution_groups: users, americano AND this router's group
+  #   (without the router group, the router forwards instead of serving records)
+  # - a DNS nameserver for domain nb.mocha.thoughtless.eu pointing at the
+  #   router's current NetBird IP, assigned to groups users + americano.
+  # WARNING: the router's setup key is ephemeral, so a router pod restart
+  # gives it a NEW IP. Update the nameserver IP after any router restart,
+  # or every peer loses *.nb resolution.
   dnsZoneRef:
     name: nb.mocha.thoughtless.eu
   workloadOverride:
