@@ -92,8 +92,10 @@ One-time setup on the host (the key is never committed):
      | ssh root@test.americano.thoughtless.eu "podman secret create netbird-americano -"
    ```
 
-   The key is the reusable ephemeral key `americano` in the NetBird dashboard
-   (auto-group `americano`). Rotate it by creating a new key and re-running step 1.
+   The key is the reusable non-ephemeral key `americano` in the NetBird
+   dashboard (auto-group `americano`). Non-ephemeral plus the persisted
+   `/var/lib/netbird` volume keep the peer and its NetBird IP stable across
+   restarts. Rotate it by creating a new key and re-running step 1.
 
 2. Allow the NetBird range only, on the app ports you expose. Edit
    `/etc/nftables-americano.nft` on the host (the port list is at the top of the
@@ -116,6 +118,29 @@ The NetBird `Default` policy already lets every peer talk to every peer, so no
 access policy change is needed. The nftables table is the gate: it accepts
 `100.64.0.0/10` on the listed ports and drops everyone else, so the port stays
 closed on the public IP.
+
+### Fixed NetBird URL for an app (example: `agregar.nb.mocha.thoughtless.eu`)
+
+Agregarr is reachable at `https://agregar.nb.mocha.thoughtless.eu/` from any
+NetBird peer. Three pieces make that work:
+
+Agregarr's old public router (`agregarr.americano.thoughtless.eu`) is removed:
+the app is only reachable via NetBird now.
+
+1. A DNS record `agregar.nb.mocha.thoughtless.eu` (type A) in the NetBird zone
+   `nb.mocha.thoughtless.eu`, pointing to Americano's NetBird IP. Peers do not
+   use NetBird DNS today (no nameserver is assigned), so this record only helps
+   if nameservers get enabled later.
+2. A second traefik router on the app container (see the `agregarr-nb` labels
+   in `/etc/containers/systemd/agregarr.container`): `Host(`agregar.nb.mocha.thoughtless.eu`)`
+   on the `secure` entrypoint, TLS via the `letsencrypt` resolver (DNS-01
+   Cloudflare, no `httpChallenge` in `traefik.yaml` anymore).
+3. In `mocha/apps/netbird-jump/manifests/Corefile`, a dedicated server block for
+   `agregar.nb.mocha.thoughtless.eu` pointing at the NetBird IP. This is the
+   resolution path actually used by the jump SOCKS proxy and the Mac.
+
+If the Americano peer ever re-registers with a new NetBird IP, update the IP in
+all three places.
 
 ## Good to know
 
