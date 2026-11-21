@@ -47,7 +47,7 @@ spec:
         - name: replication-exporter
           image: python:3.13-alpine
           ports:
-            - name: replication-metrics
+            - name: repl-metrics
               containerPort: 9135
               protocol: TCP
           env:
@@ -61,7 +61,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /metrics
-              port: replication-metrics
+              port: repl-metrics
           volumeMounts:
             - name: host-root
               mountPath: /host
