@@ -51,8 +51,8 @@ spec:
               value: /certs
             - name: NB_PROXY_LOG_LEVEL
               value: info
-            - name: NB_LOG_LEVEL
-              value: debug
+            - name: NB_USE_NETSTACK_MODE
+              value: "true"
             - name: NB_PROXY_HEALTH_ADDRESS
               value: 127.0.0.1:8080
             - name: NB_PROXY_DEBUG_ENDPOINT
