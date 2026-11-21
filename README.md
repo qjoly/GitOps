@@ -77,6 +77,46 @@ components = ["nginx", "sonarr", "radarr", "overseerr", "prowlarr"]
 
    Preview without applying: same command with `plan` instead of `update`.
 
+## Expose an app over NetBird
+
+The `netbird` component runs the NetBird client on the host (host network mode).
+It joins `netbird.mocha.thoughtless.eu` and gets an IP in `100.64.0.0/10`. Other
+peers reach this host at that IP, for example `http://100.92.x.x:7171`.
+
+One-time setup on the host (the key is never committed):
+
+1. Store the setup key in a podman secret, from Vault on `mocha-corium`:
+
+   ```
+   mise run vault:kv get -field=americano_setup_key kv/netbird \
+     | ssh root@test.americano.thoughtless.eu "podman secret create netbird-americano -"
+   ```
+
+   The key is the reusable ephemeral key `americano` in the NetBird dashboard
+   (auto-group `americano`). Rotate it by creating a new key and re-running step 1.
+
+2. Allow the NetBird range only, on the app ports you expose. Edit
+   `/etc/nftables-americano.nft` on the host (the port list is at the top of the
+   file), then apply it:
+
+   ```
+   ssh root@test.americano.thoughtless.eu "nft -f /etc/nftables-americano.nft && systemctl enable --now nftables-americano"
+   ```
+
+3. Publish the app port on all interfaces instead of loopback, for example in
+   `/etc/containers/systemd/agregarr.container`:
+
+   ```
+   PublishPort=0.0.0.0:7171:7171
+   ```
+
+   then `systemctl daemon-reload && systemctl restart agregarr`.
+
+The NetBird `Default` policy already lets every peer talk to every peer, so no
+access policy change is needed. The nftables table is the gate: it accepts
+`100.64.0.0/10` on the listed ports and drops everyone else, so the port stays
+closed on the public IP.
+
 ## Good to know
 
 - Materia installs each component into its own directory
