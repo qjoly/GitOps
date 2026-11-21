@@ -85,8 +85,39 @@ def load_icons():
     return index
 
 
+# Ingress names that no prefix of matches a dashboard-icons entry. Checked
+# before the prefix heuristic, keyed by the exact Ingress name.
+ICON_ALIASES = {
+    "angos": "oauth2",
+    "annotator": "commento",
+    "atcr-hold": "cup",
+    "batlehub": "pufferpanel",
+    "blueweave": "waves",
+    "dex": "oauth2-proxy",
+    "factorio-map": "f4map",
+    "flexget": "jdownloader",
+    "homepage": "heimdall",
+    "homepage-nb": "startpage",
+    "languagetool": "libretranslate",
+    "mac": "apple",
+    "maintenant": "statuspage",
+    "proxyauthk8s-ingress": "oauth2-proxy",
+    "proxyauthk8s-proxyauthk8s-gateway": "oauth2-proxy",
+    "rmfakecloud": "pcloud",
+    "slimfaas": "azure-functions",
+    "spindle": "woodpecker-ci",
+    "tang": "keyoxide",
+    "thoughtless-did": "pocket-id",
+    "tranquil-pds": "bluesky",
+    "understand-passkey": "passbolt",
+    "whoami": "waves",
+}
+
+
 def resolve_icon(name, index):
     """Match argocd -> argo-cd, atuin-web -> atuin, and give up quietly."""
+    if name in ICON_ALIASES:
+        return ICON_ALIASES[name]
     parts = name.split("-")
     for cut in range(len(parts), 0, -1):
         candidate = "-".join(parts[:cut])
