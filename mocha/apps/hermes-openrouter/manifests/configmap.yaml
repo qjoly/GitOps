@@ -6,13 +6,11 @@ metadata:
 data:
   config.yaml: |
     model:
-      default: "openai/gpt-oss-20b"
-      provider: "openrouter"
-      base_url: "https://openrouter.ai/api/v1"
+      default: "mistral-large-latest"
+      provider: "mistral"
+      base_url: "https://api.mistral.ai/v1"
 
     fallback_providers:
-      - provider: openrouter
-        model: "mistralai/mistral-nemo"
       - provider: custom
         model: "gpt-oss:20b"
         base_url: "http://ollama.ollama.svc.cluster.local:11434/v1"
