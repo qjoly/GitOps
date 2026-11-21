@@ -57,8 +57,10 @@ spec:
             # registers a new peer (new NetBird IP, new DNS record to update).
             - name: NB_STATE_DIR
               value: /var/lib/netbird
+            # Bind all interfaces so the kubelet readiness probe (pod IP)
+            # can reach /healthz; the Service only exposes it in-cluster.
             - name: NB_PROXY_HEALTH_ADDRESS
-              value: 127.0.0.1:8080
+              value: 0.0.0.0:8080
             - name: NB_PROXY_DEBUG_ENDPOINT
               value: "true"
             - name: NB_PROXY_DEBUG_ENDPOINT_ADDRESS
