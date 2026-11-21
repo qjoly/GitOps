@@ -53,6 +53,10 @@ spec:
               value: info
             - name: NB_PROXY_HEALTH_ADDRESS
               value: 127.0.0.1:8080
+            - name: NB_PROXY_DEBUG_ENDPOINT
+              value: "true"
+            - name: NB_PROXY_DEBUG_ENDPOINT_ADDRESS
+              value: 127.0.0.1:8444
           ports:
             - name: proxy
               containerPort: 8443
