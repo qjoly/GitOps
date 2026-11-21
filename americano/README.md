@@ -119,25 +119,33 @@ access policy change is needed. The nftables table is the gate: it accepts
 `100.64.0.0/10` on the listed ports and drops everyone else, so the port stays
 closed on the public IP.
 
-### Fixed NetBird URL for an app (example: `agregar.nb.mocha.thoughtless.eu`)
+### Fixed NetBird URLs for apps on Americano
 
-Agregarr is reachable at `https://agregar.nb.mocha.thoughtless.eu/` from any
-NetBird peer. Three pieces make that work:
+These apps answer on `https://<name>.nb.mocha.thoughtless.eu` from any NetBird
+peer, without authentik (the public `*.americano.thoughtless.eu` routers keep
+their authentik middleware):
 
-Agregarr's old public router (`agregarr.americano.thoughtless.eu`) is removed:
-the app is only reachable via NetBird now.
+| App | NetBird URL | Public router |
+| --- | --- | --- |
+| agregarr | https://agregar.nb.mocha.thoughtless.eu | removed, NetBird only |
+| sonarr | https://sonarr.nb.mocha.thoughtless.eu | kept, with authentik |
+| radarr | https://radarr.nb.mocha.thoughtless.eu | kept, with authentik |
 
-1. A DNS record `agregar.nb.mocha.thoughtless.eu` (type A) in the NetBird zone
+Three pieces make that work:
+
+1. A DNS record `<name>.nb.mocha.thoughtless.eu` (type A) in the NetBird zone
    `nb.mocha.thoughtless.eu`, pointing to Americano's NetBird IP. Peers do not
    use NetBird DNS today (no nameserver is assigned), so this record only helps
    if nameservers get enabled later.
-2. A second traefik router on the app container (see the `agregarr-nb` labels
-   in `/etc/containers/systemd/agregarr.container`): `Host(`agregar.nb.mocha.thoughtless.eu`)`
-   on the `secure` entrypoint, TLS via the `letsencrypt` resolver (DNS-01
-   Cloudflare, no `httpChallenge` in `traefik.yaml` anymore).
+2. A `*-nb` traefik router on the app container (see the `sonarr-nb` /
+   `radarr-nb` labels in `components/`, or `agregarr-nb` in
+   `/etc/containers/systemd/agregarr.container` for the manual quadlet):
+   `Host(`<name>.nb.mocha.thoughtless.eu`)` on the `secure` entrypoint, TLS via
+   the `letsencrypt` resolver (DNS-01 Cloudflare, no `httpChallenge` in
+   `traefik.yaml` anymore). No `middlewares` label, so no authentik.
 3. In `mocha/apps/netbird-jump/manifests/Corefile`, a dedicated server block for
-   `agregar.nb.mocha.thoughtless.eu` pointing at the NetBird IP. This is the
-   resolution path actually used by the jump SOCKS proxy and the Mac.
+   the americano names pointing at the NetBird IP. This is the resolution path
+   actually used by the jump SOCKS proxy and the Mac.
 
 If the Americano peer ever re-registers with a new NetBird IP, update the IP in
 all three places.
