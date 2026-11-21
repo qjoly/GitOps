@@ -62,6 +62,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/slimfaas-clickhouse.json
+  - name: grafana-dashboard-netbird-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/netbird-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
