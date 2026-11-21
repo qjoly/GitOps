@@ -177,12 +177,67 @@ while true; do
 done
 '''
 
+# Provision this Mac as a NetBird peer with a reusable setup key, instead of the
+# SSO desktop client: no authentik login at all, and the peer survives sleep and
+# reboot. The key is the reusable NON-ephemeral key "matcha" (auto-group
+# "users"), created once through the management API with the kv/netbird
+# operator_api_key PAT and stored as kv/netbird mac_setup_key. Never commit the
+# key itself. One-time on the Mac (sudo): mise install && mise run nb:peer
+# Then delete the old SSO peer ("Matcha.local") in the NetBird dashboard.
+[tasks."nb:peer"]
+description = "Join this Mac to NetBird via the kv/netbird mac_setup_key setup key: LaunchDaemon + wake/no-sleep (sudo, one-time)"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+export KUBECONFIG="${KUBECONFIG:-$MISE_PROJECT_ROOT/mocha/kubeconfig}"
+export VAULT_CONTEXT="${VAULT_CONTEXT:-mocha-corium}"
+command -v netbird >/dev/null || { echo "netbird CLI not found: brew install netbirdio/tap/netbird" >&2; exit 1; }
+KEY="$(mise run -q vault:kv get -field=mac_setup_key kv/netbird)"
+[ -n "$KEY" ] || { echo "mac_setup_key missing in kv/netbird" >&2; exit 1; }
+# The key lives in a root-only file, never in the plist or in git.
+printf '%s' "$KEY" | sudo tee /etc/netbird-matcha.key >/dev/null
+sudo chmod 600 /etc/netbird-matcha.key
+# The loop covers both CLI behaviors: "up" blocking as the daemon, or exiting
+# after handing over to the app daemon. "up" is idempotent when already up.
+sudo tee /usr/local/bin/netbird-matcha-up >/dev/null <<'WRAPPER'
+#!/bin/sh
+while true; do
+  netbird up --management-url https://netbird.mocha.thoughtless.eu --setup-key "$(cat /etc/netbird-matcha.key)" || true
+  sleep 15
+done
+WRAPPER
+sudo chmod 700 /usr/local/bin/netbird-matcha-up
+sudo tee /Library/LaunchDaemons/eu.thoughtless.netbird-matcha.plist >/dev/null <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>eu.thoughtless.netbird-matcha</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/netbird-matcha-up</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+</dict>
+</plist>
+PLIST
+sudo launchctl bootout system/eu.thoughtless.netbird-matcha 2>/dev/null || true
+sudo launchctl bootstrap system /Library/LaunchDaemons/eu.thoughtless.netbird-matcha.plist
+# A Mac Mini used as a relay must not sleep, or the peer shows as disconnected.
+sudo pmset -a womp 1
+sudo pmset -a sleep 0 disksleep 0
+echo "peer starting, check with: sudo netbird status"
+'''
+
 [tasks."nb:teardown"]
-description = "Undo nb:setup (sudo)"
+description = "Undo the macOS NetBird setup: nb:setup + nb:peer (sudo)"
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 sudo launchctl bootout system/eu.thoughtless.nb-mocha 2>/dev/null || true
+sudo launchctl bootout system/eu.thoughtless.netbird-matcha 2>/dev/null || true
 sudo pfctl -a com.apple/nb.mocha -F all 2>/dev/null || true
-sudo rm -f /Library/LaunchDaemons/eu.thoughtless.nb-mocha.plist /etc/pf.anchors/nb.mocha /etc/resolver/nb.mocha.thoughtless.eu
+sudo rm -f /Library/LaunchDaemons/eu.thoughtless.nb-mocha.plist /Library/LaunchDaemons/eu.thoughtless.netbird-matcha.plist
+sudo rm -f /etc/pf.anchors/nb.mocha /etc/resolver/nb.mocha.thoughtless.eu /usr/local/bin/netbird-matcha-up /etc/netbird-matcha.key
 '''

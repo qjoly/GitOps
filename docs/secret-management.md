@@ -44,6 +44,10 @@ mise run vault:kv put kv/foo user=admin password="$(openssl rand -hex 24)"
 mise run vault:kv patch kv/foo password=-      # value read from stdin
 ```
 
+Warning: on this OpenBao, `kv put` **replaces the whole data** of the path (a
+second `put kv/foo b=2` leaves only `b`). To add or change one key of a path
+that already holds others (`kv/netbird`, …), use `kv patch`, which merges.
+
 `vault:kv` passes its arguments straight to `vault kv`, so any subcommand works
 (`metadata delete`, `-format=json`, …). Only Vault's output goes to stdout,
 which makes it safe to pipe into `jq`.

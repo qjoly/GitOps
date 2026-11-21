@@ -21,7 +21,7 @@ wildcard cert — so `mac.nb.mocha.thoughtless.eu` needs **no DNS record**.
 - The `mac_relay_auth` secret in Vault, shared between the pod and the Mac:
 
   ```bash
-  mise run vault:kv put kv/netbird mac_relay_auth="mac:$(openssl rand -hex 24)"
+  mise run vault:kv patch kv/netbird mac_relay_auth="mac:$(openssl rand -hex 24)"
   ```
 
 - `kubectl` with the kubelogin plugin and the authentik `Admins` group
