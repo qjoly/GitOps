@@ -2,23 +2,23 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: hermes-webui
+  name: hermes-openrouter-webui
   annotations:
     cert-manager.io/cluster-issuer: cloudflare
 spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - hermes.mocha.thoughtless.eu
-      secretName: hermes-webui-tls
+        - hermes-openrouter.mocha.thoughtless.eu
+      secretName: hermes-openrouter-webui-tls
   rules:
-    - host: hermes.mocha.thoughtless.eu
+    - host: hermes-openrouter.mocha.thoughtless.eu
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: hermes-webui
+                name: hermes-openrouter-webui
                 port:
                   number: 8787

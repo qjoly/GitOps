@@ -60,44 +60,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /opt/data
-        - name: webui
-          image: ghcr.io/nesquena/hermes-webui:0.52.731
-          ports:
-            - name: http
-              containerPort: 8787
-          env:
-            - name: HERMES_WEBUI_HOST
-              value: 0.0.0.0
-            - name: HERMES_WEBUI_PORT
-              value: "8787"
-            - name: HERMES_WEBUI_STATE_DIR
-              value: /home/hermeswebui/.hermes/webui
-            # Match the uid/gid that owns hermes-data (the agent image's hermes user)
-            - name: WANTED_UID
-              value: "10000"
-            - name: WANTED_GID
-              value: "10000"
-            - name: HERMES_WEBUI_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: hermes
-                  key: webui_password
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: "2"
-              memory: 4Gi
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: http
-          volumeMounts:
-            - name: data
-              mountPath: /home/hermeswebui/.hermes
-            - name: data
-              mountPath: /workspace
       volumes:
         - name: data
           persistentVolumeClaim:
