@@ -8,9 +8,17 @@
   "ignorePaths": [
     "archives/**",
     "common/argocd/**",
+    "common/cilium/**",
     "mocha/apps/trmnl-server/**"
   ],
   "packageRules": [
+    {
+      "description": "atcr.io is a private registry and Renovate has no credentials for it (token request fails, lookups return no-result). Images there are bumped by hand. Add a read-only pull token in the Mend portal hostRules to track them instead",
+      "matchPackageNames": [
+        "/^atcr\\.io\\//"
+      ],
+      "enabled": false
+    },
     {
       "description": "Immich Postgres: block major bumps, PG major upgrade needs a manual dump/restore (vector extensions)",
       "matchPackageNames": [
