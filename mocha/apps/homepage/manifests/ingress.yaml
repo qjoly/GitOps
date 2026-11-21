@@ -41,3 +41,26 @@ spec:
                 name: homepage
                 port:
                   number: 3000
+---
+# NetBird-only access, no authentik: the NetBird network is the gate.
+# home.nb.mocha.thoughtless.eu resolves for every peer via the NetBird zone
+# wildcard (*.nb CNAME to traefik-internal) and the jump CoreDNS template, and
+# traefik-internal serves the *.nb wildcard cert by default, so no tls section.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homepage-nb
+  namespace: homepage
+spec:
+  ingressClassName: traefik-internal
+  rules:
+    - host: home.nb.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homepage
+                port:
+                  number: 3000
