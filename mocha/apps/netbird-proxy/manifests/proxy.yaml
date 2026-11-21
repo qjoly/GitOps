@@ -28,12 +28,6 @@ spec:
         app: netbird-proxy
     spec:
       automountServiceAccountToken: false
-      # hostNetwork: the embedded WireGuard peer of the proxy has
-      # block_lan_access=true, so pod/LAN ICE candidates are unusable and the
-      # relay URL is misparsed by 0.83.x. On the host network its candidate is
-      # the public IP 5.196.80.72, which every peer can reach.
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: netbird-proxy
           image: netbirdio/reverse-proxy:0.83.2
