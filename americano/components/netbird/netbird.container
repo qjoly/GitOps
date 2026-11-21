@@ -13,8 +13,10 @@ Image=docker.io/netbirdio/netbird:latest
 ContainerName=netbird
 HostName=Americano
 Network=host
-# WireGuard + TUN need NET_ADMIN; the daemon also asks for SYS_ADMIN/SYS_RESOURCE.
+# WireGuard + TUN need NET_ADMIN; the daemon also creates a raw socket
+# (NET_RAW) and asks for SYS_ADMIN/SYS_RESOURCE.
 AddCapability=NET_ADMIN
+AddCapability=NET_RAW
 AddCapability=SYS_ADMIN
 AddCapability=SYS_RESOURCE
 Volume=/data/apps/netbird:/etc/netbird
