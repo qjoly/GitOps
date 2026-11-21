@@ -19,7 +19,10 @@ AddCapability=NET_ADMIN
 AddCapability=NET_RAW
 AddCapability=SYS_ADMIN
 AddCapability=SYS_RESOURCE
-Volume=/data/apps/netbird:/etc/netbird
+# State must persist, otherwise every restart re-registers a new peer with a
+# new NetBird IP. The daemon keeps its profile in /var/lib/netbird.
+Volume=/data/apps/netbird/etc:/etc/netbird
+Volume=/data/apps/netbird/state:/var/lib/netbird
 Environment=NB_MANAGEMENT_URL=https://netbird.mocha.thoughtless.eu
 # The setup key lives in the podman secret "netbird-americano", created once on
 # the host from kv/netbird americano_setup_key. Never commit the key itself.
