@@ -112,11 +112,6 @@ spec:
               value: "10000"
             - name: WANTED_GID
               value: "10000"
-            - name: HERMES_WEBUI_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: hermes-openrouter
-                  key: webui_password
           resources:
             requests:
               cpu: 100m

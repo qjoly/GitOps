@@ -1,18 +1,18 @@
 ---
+# NetBird-only access, no password: the NetBird network is the gate.
+# hermes-openrouter.nb.mocha.thoughtless.eu resolves for every peer via the
+# NetBird zone wildcard (*.nb CNAME to traefik-internal) and the jump CoreDNS
+# template, and traefik-internal serves the *.nb wildcard cert by default,
+# so no tls section. external-dns only watches the traefik class, so this
+# host never lands in public DNS.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: hermes-openrouter-webui
-  annotations:
-    cert-manager.io/cluster-issuer: cloudflare
 spec:
-  ingressClassName: traefik
-  tls:
-    - hosts:
-        - hermes-openrouter.mocha.thoughtless.eu
-      secretName: hermes-openrouter-webui-tls
+  ingressClassName: traefik-internal
   rules:
-    - host: hermes-openrouter.mocha.thoughtless.eu
+    - host: hermes-openrouter.nb.mocha.thoughtless.eu
       http:
         paths:
           - path: /
