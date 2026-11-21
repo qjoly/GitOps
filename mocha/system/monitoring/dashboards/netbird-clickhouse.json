@@ -71,7 +71,7 @@
   "panels": [
     {
       "type": "stat",
-      "title": "Relay : peers actifs",
+      "title": "Relay: active peers",
       "id": 1,
       "gridPos": {
         "h": 4,
@@ -129,7 +129,7 @@
     },
     {
       "type": "stat",
-      "title": "Signal : peers actifs",
+      "title": "Signal: active peers",
       "id": 2,
       "gridPos": {
         "h": 4,
@@ -187,7 +187,7 @@
     },
     {
       "type": "stat",
-      "title": "Peers éphémères en attente",
+      "title": "Ephemeral peers pending",
       "id": 3,
       "gridPos": {
         "h": 4,
@@ -253,7 +253,7 @@
     },
     {
       "type": "stat",
-      "title": "Streams gRPC connectés (ratio)",
+      "title": "Connected gRPC streams (ratio)",
       "id": 4,
       "gridPos": {
         "h": 4,
@@ -311,7 +311,7 @@
     },
     {
       "type": "stat",
-      "title": "Logins gRPC (req/s)",
+      "title": "gRPC logins (req/s)",
       "id": 5,
       "gridPos": {
         "h": 4,
@@ -369,7 +369,7 @@
     },
     {
       "type": "stat",
-      "title": "Sync gRPC (req/s)",
+      "title": "gRPC syncs (req/s)",
       "id": 6,
       "gridPos": {
         "h": 4,
@@ -427,7 +427,7 @@
     },
     {
       "type": "stat",
-      "title": "Requêtes HTTP mgmt (req/s)",
+      "title": "Management HTTP requests (req/s)",
       "id": 7,
       "gridPos": {
         "h": 4,
@@ -485,7 +485,7 @@
     },
     {
       "type": "stat",
-      "title": "Signal : messages relayés (msg/s)",
+      "title": "Signal: messages forwarded (msg/s)",
       "id": 8,
       "gridPos": {
         "h": 4,
@@ -543,7 +543,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Connexions / déconnexions de peers (op/s)",
+      "title": "Peer connects / disconnects (ops/s)",
       "id": 9,
       "gridPos": {
         "h": 8,
@@ -596,7 +596,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Relay : trafic émis / reçu (o/s)",
+      "title": "Relay: traffic sent / received (B/s)",
       "id": 10,
       "gridPos": {
         "h": 8,
@@ -660,7 +660,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Durée login gRPC p95 (ms)",
+      "title": "gRPC login duration p95 (ms)",
       "id": 11,
       "gridPos": {
         "h": 8,
@@ -713,7 +713,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Durée sync gRPC p95 (ms)",
+      "title": "gRPC sync duration p95 (ms)",
       "id": 12,
       "gridPos": {
         "h": 8,
@@ -766,7 +766,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Réponses HTTP mgmt par code (resp/s)",
+      "title": "Management HTTP responses by code (resp/s)",
       "id": 13,
       "gridPos": {
         "h": 8,
@@ -819,7 +819,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Signal : enregistrements vs désinscriptions (op/s)",
+      "title": "Signal: registrations vs deregistrations (ops/s)",
       "id": 14,
       "gridPos": {
         "h": 8,
@@ -883,7 +883,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Relay : peers actifs / inactifs / total",
+      "title": "Relay: active / idle / total peers",
       "id": 15,
       "gridPos": {
         "h": 8,
@@ -958,7 +958,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Go goroutines par composant",
+      "title": "Go goroutines per component",
       "id": 16,
       "gridPos": {
         "h": 8,
@@ -1011,7 +1011,7 @@
     },
     {
       "type": "timeseries",
-      "title": "File update-channel (p95)",
+      "title": "Update channel queue length (p95)",
       "id": 17,
       "gridPos": {
         "h": 8,
@@ -1064,7 +1064,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Durée transaction store p95 (ms)",
+      "title": "Store transaction duration p95 (ms)",
       "id": 18,
       "gridPos": {
         "h": 8,
