@@ -1,13 +1,20 @@
 # Every private hostname is served by traefik-internal (ClusterIP pinned in mocha/system/traefik-internal).
-nb.mocha.thoughtless.eu:53 {
+# Americano's NetBird IP: agregarr is served by Americano's own traefik on
+# https://agregar.nb.mocha.thoughtless.eu (not via traefik-internal). A dedicated
+# server block because the template plugin below runs before hosts.
+# Update the IP if the Americano peer re-registers.
+agregar.nb.mocha.thoughtless.eu:53 {
     bind 127.0.0.1
     hosts {
-        # Americano's NetBird IP: agregarr is served by Americano's own traefik
-        # on https://agregar.nb.mocha.thoughtless.eu (not via traefik-internal).
-        # Update this if the Americano peer re-registers with a new IP.
         100.92.156.232 agregar.nb.mocha.thoughtless.eu
-        fallthrough
     }
+    template IN AAAA {
+        rcode NOERROR
+    }
+}
+
+nb.mocha.thoughtless.eu:53 {
+    bind 127.0.0.1
     template IN A {
         answer "{{ .Name }} 60 IN A 10.96.208.53"
     }
