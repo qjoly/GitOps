@@ -328,6 +328,46 @@ spec:
                       disabled: false
                       legend: '{{name}}'
               links: []
+          replication-age:
+            kind: Panel
+            spec:
+              display:
+                name: Replication age (TrueNAS)
+                description: Age of the newest snapshot per replicated dataset. TrueNAS pushes one snapshot per day, so this stays under 24h; the alert fires past 36h.
+              plugin:
+                kind: signoz/TimeSeriesPanel
+                spec:
+                  visualization:
+                    timePreference: global_time
+                    fillSpans: false
+                  formatting:
+                    unit: s
+                  chartAppearance:
+                    lineInterpolation: spline
+                    showPoints: false
+                    lineStyle: solid
+                    fillMode: none
+                    spanGaps:
+                      fillOnlyBelow: false
+                      fillLessThan: ''
+                  axes:
+                    isLogScale: false
+                  legend:
+                    position: bottom
+                    mode: list
+                  thresholds: []
+              queries:
+              - kind: time_series
+                spec:
+                  name: A
+                  plugin:
+                    kind: signoz/PromQLQuery
+                    spec:
+                      name: A
+                      query: zfs_replication_snapshot_age_seconds{k8s_cluster_name="doppio"}
+                      disabled: false
+                      legend: '{{dataset}}'
+              links: []
           memory-usage:
             kind: Panel
             spec:
@@ -609,3 +649,9 @@ spec:
               height: 4
               content:
                 $ref: '#/spec/panels/network-io'
+            - x: 0
+              y: 21
+              width: 12
+              height: 4
+              content:
+                $ref: '#/spec/panels/replication-age'

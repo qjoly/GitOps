@@ -7,3 +7,4 @@ resources:
   - oom-rbac.yaml
   - ingress-rbac.yaml
   - zfs-exporter.yaml
+  - zfs-replication-exporter.yaml

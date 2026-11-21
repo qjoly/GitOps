@@ -1,0 +1,80 @@
+# Sidecar script for the zfs-exporter DaemonSet. It lists the snapshots of the
+# TrueNAS-replicated datasets and exposes the creation time of the newest one
+# per dataset, so SigNoz can alert when a replication stops arriving. The
+# k8s-infra agent scrapes it on ${K8S_HOST_IP}:9135 (job zfs-replication).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zfs-replication-exporter
+  namespace: signoz-k8s-infra
+data:
+  server.py: |
+    import os
+    import subprocess
+    import time
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    POOL = os.environ.get("ZFS_POOL", "datapool")
+    HOST_ROOT = os.environ.get("HOST_ROOT", "/host")
+    PORT = int(os.environ.get("PORT", "9135"))
+
+    def collect():
+        proc = subprocess.run(
+            ["chroot", HOST_ROOT, "/usr/bin/zfs", "list", "-Hp", "-t", "snapshot",
+             "-o", "name,creation", "-s", "creation", "-r", POOL],
+            capture_output=True, text=True, timeout=30,
+        )
+        if proc.returncode != 0:
+            return None
+        newest = {}
+        for line in proc.stdout.splitlines():
+            name, _, creation = line.rpartition("\t")
+            dataset = name.split("@", 1)[0]
+            # Only top-level datasets of the pool: those are the ones TrueNAS
+            # replicates (datapool/Administratif, ...). PVC snapshots live two
+            # levels down and are excluded.
+            if dataset.count("/") != 1:
+                continue
+            newest[dataset] = max(newest.get(dataset, 0), int(creation))
+        now = time.time()
+        lines = [
+            "# HELP zfs_replication_scrape_success Whether the last zfs snapshot listing succeeded.",
+            "# TYPE zfs_replication_scrape_success gauge",
+            "zfs_replication_scrape_success 1",
+            "# HELP zfs_replication_last_snapshot_timestamp_seconds Creation time (unix seconds) of the newest snapshot per replicated dataset.",
+            "# TYPE zfs_replication_last_snapshot_timestamp_seconds gauge",
+        ]
+        for dataset in sorted(newest):
+            lines.append(
+                'zfs_replication_last_snapshot_timestamp_seconds{dataset="%s"} %d'
+                % (dataset, newest[dataset])
+            )
+        lines += [
+            "# HELP zfs_replication_snapshot_age_seconds Age in seconds of the newest snapshot per replicated dataset.",
+            "# TYPE zfs_replication_snapshot_age_seconds gauge",
+        ]
+        for dataset in sorted(newest):
+            lines.append(
+                'zfs_replication_snapshot_age_seconds{dataset="%s"} %d'
+                % (dataset, int(now - newest[dataset]))
+            )
+        return "\n".join(lines) + "\n"
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            body = collect()
+            if body is None:
+                body = (
+                    "# HELP zfs_replication_scrape_success Whether the last zfs snapshot listing succeeded.\n"
+                    "# TYPE zfs_replication_scrape_success gauge\n"
+                    "zfs_replication_scrape_success 0\n"
+                )
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; version=0.0.4")
+            self.end_headers()
+            self.wfile.write(body.encode())
+
+        def log_message(self, *args):
+            pass
+
+    HTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
