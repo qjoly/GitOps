@@ -1,0 +1,15 @@
+# Wildcard certificate for the reverse proxy apex (*.px.mocha.thoughtless.eu),
+# issued over Cloudflare DNS-01: no public inbound port is needed. Served
+# statically by the NetBird proxy (NB_PROXY_CERTIFICATE_DIRECTORY), which
+# hot-reloads the files when cert-manager renews the secret.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-px
+spec:
+  secretName: wildcard-px-tls
+  dnsNames:
+    - "*.px.mocha.thoughtless.eu"
+  issuerRef:
+    name: cloudflare
+    kind: ClusterIssuer

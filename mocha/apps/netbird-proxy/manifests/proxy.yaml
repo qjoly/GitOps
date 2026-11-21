@@ -1,0 +1,118 @@
+# Bring Your Own Proxy (BYOP) instance of the NetBird reverse proxy, private
+# flavor: NB_PROXY_PRIVATE=true advertises the Private capability, services
+# published on px.mocha.thoughtless.eu are NetBird-Only and reached over the
+# WireGuard tunnel, so no public inbound port and no Traefik passthrough are
+# needed. TLS is served from the wildcard certificate (wildcard-px-tls) instead
+# of ACME, for the same reason.
+#
+# The image embeds a WireGuard peer (it registers as a peer of the account), so
+# the pod needs the same privileges as the routing peers of netbird-operator.
+# The peer state is on a PVC: a restart keeps the peer (and its NetBird IP,
+# which the DNS nameserver for the px zone points at).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-proxy
+  labels:
+    app: netbird-proxy
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: netbird-proxy
+  template:
+    metadata:
+      labels:
+        app: netbird-proxy
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: netbird-proxy
+          image: netbirdio/reverse-proxy:0.83.1
+          env:
+            - name: NB_PROXY_DOMAIN
+              value: px.mocha.thoughtless.eu
+            - name: NB_PROXY_MANAGEMENT_ADDRESS
+              value: https://netbird.mocha.thoughtless.eu:443
+            - name: NB_PROXY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-proxy
+                  key: proxyToken
+            - name: NB_PROXY_ADDRESS
+              value: ":8443"
+            - name: NB_PROXY_PRIVATE
+              value: "true"
+            - name: NB_PROXY_ACME_CERTIFICATES
+              value: "false"
+            - name: NB_PROXY_CERTIFICATE_DIRECTORY
+              value: /certs
+            - name: NB_PROXY_LOG_LEVEL
+              value: info
+            - name: NB_PROXY_HEALTH_ADDRESS
+              value: 127.0.0.1:8080
+          ports:
+            - name: proxy
+              containerPort: 8443
+              protocol: TCP
+            - name: health
+              containerPort: 8080
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          securityContext:
+            privileged: true
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+            - name: state
+              mountPath: /var/lib/netbird
+      volumes:
+        - name: certs
+          secret:
+            secretName: wildcard-px-tls
+        - name: state
+          persistentVolumeClaim:
+            claimName: netbird-proxy-state
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: netbird-proxy-state
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: openebs-lvmpv
+  resources:
+    requests:
+      storage: 256Mi
+---
+# Health/metrics only: the data plane arrives on the pod's NetBird IP, not
+# through a ClusterIP.
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-proxy
+  labels:
+    app: netbird-proxy
+spec:
+  selector:
+    app: netbird-proxy
+  ports:
+    - name: health
+      port: 8080
+      targetPort: health
+      protocol: TCP
