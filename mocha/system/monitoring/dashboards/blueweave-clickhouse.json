@@ -57,7 +57,7 @@
       "gridPos": {
         "x": 0,
         "y": 0,
-        "w": 4,
+        "w": 5,
         "h": 4
       },
       "targets": [
@@ -102,9 +102,9 @@
         "uid": "signoz-clickhouse"
       },
       "gridPos": {
-        "x": 4,
+        "x": 5,
         "y": 0,
-        "w": 4,
+        "w": 5,
         "h": 4
       },
       "targets": [
@@ -149,7 +149,7 @@
         "uid": "signoz-clickhouse"
       },
       "gridPos": {
-        "x": 8,
+        "x": 10,
         "y": 0,
         "w": 4,
         "h": 4
@@ -196,9 +196,9 @@
         "uid": "signoz-clickhouse"
       },
       "gridPos": {
-        "x": 12,
+        "x": 14,
         "y": 0,
-        "w": 4,
+        "w": 5,
         "h": 4
       },
       "targets": [
@@ -243,9 +243,9 @@
         "uid": "signoz-clickhouse"
       },
       "gridPos": {
-        "x": 16,
+        "x": 19,
         "y": 0,
-        "w": 4,
+        "w": 5,
         "h": 4
       },
       "targets": [
