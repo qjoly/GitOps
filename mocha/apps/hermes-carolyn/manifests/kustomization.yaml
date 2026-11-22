@@ -18,6 +18,7 @@ resources:
   - skill-i-have-adhd.configmap.yaml
   - skill-i-have-adhd-gemini.configmap.yaml
   - serviceaccount.yaml
+  - clusterrole.yaml
   - pvc.yaml
   - deployment.yaml
   - service.yaml
