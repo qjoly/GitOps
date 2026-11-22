@@ -42,7 +42,7 @@ its target, so its repair is re-applied on every pod start.
 | `seed-config` | `/opt/data/config.yaml` | **never overwrites** (`test -f … \|\| cp`) |
 | `seed-calendar-creds` | the calendar MCP credential file in an `emptyDir` | overwrites, mode 600 |
 | `seed-agent-src` | the agent source into an `emptyDir` shared with `webui` | copies from the image, then repairs two image defects |
-| `install-sbx` | `sbx`, `kubectl`, `jq`, `arr.sh`, SSH material, and the skills | overwrites |
+| `install-sbx` | `sbx`, `kubectl`, `jq`, `arr.sh`, SSH material, the skills, and the `mistral-image` plugin | overwrites |
 
 The seed-versus-overwrite split matters: a committed change to `config.yaml` or
 `SOUL.md` does **not** reach a running pod, because the file already exists on

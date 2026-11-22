@@ -1,0 +1,168 @@
+---
+apiVersion: v1
+data:
+  __init__.py: |
+    """Mistral image backend. Mistral serves no ``/v1/images/generations``: images come from the
+    built-in ``image_generation`` tool (Black Forest Labs FLUX) that a chat model calls inside the
+    Conversations API. One stateless conversation per image (``store: false``); the image is read from
+    the tool execution's result URL, or from a ``tool_file`` chunk downloaded through ``/v1/files``.
+
+    Model (the chat model that drives the tool): ``MISTRAL_IMAGE_MODEL`` -> ``image_gen.mistral.model``
+    -> :data:`DEFAULT_MODEL`. Key: env named by ``image_gen.mistral.key_env`` -> ``MISTRAL_API_KEY``."""
+
+    from __future__ import annotations
+
+    import base64
+    import json
+    import logging
+    from typing import Any, Optional
+
+    import requests
+
+    from agent.image_gen_provider import (
+        DEFAULT_ASPECT_RATIO, resolve_aspect_ratio, save_b64_image, save_url_image, success_response)
+    from agent.secret_scope import get_secret
+    from plugins.image_gen._common import (
+        StaticImageGenProvider, error_factory, load_image_gen_config, prompt_required_error,
+        resolve_static_model)
+
+    logger = logging.getLogger(__name__)
+
+    PROVIDER = "mistral"
+    BASE_URL = "https://api.mistral.ai/v1"
+    DEFAULT_MODEL = "mistral-medium-latest"
+    _TIMEOUT = 120
+
+    _MODELS: dict[str, dict[str, Any]] = {
+        DEFAULT_MODEL: {
+            "display": "FLUX via Mistral (mistral-medium)",
+            "speed": "~10s",
+            "strengths": "Mistral's built-in image_generation tool",
+        },
+    }
+
+    _ASPECT_HINTS = {"square": "square (1:1)", "landscape": "landscape (16:9)", "portrait": "portrait (9:16)"}
+
+    _INSTRUCTIONS = (
+        "You are an image generation backend. Call the image_generation tool exactly once, passing the "
+        "user's description as the prompt with as little rewording as possible, and honour the requested "
+        "aspect ratio. Never ask a question, never answer in prose instead of generating."
+    )
+
+
+    def _api_key() -> str:
+        key_env = str(load_image_gen_config(PROVIDER).get("key_env") or "").strip()
+        return (get_secret(key_env) if key_env else None) or get_secret("MISTRAL_API_KEY") or ""
+
+
+    def _resolve_model() -> tuple[str, dict[str, Any]]:
+        return resolve_static_model(
+            _MODELS, DEFAULT_MODEL, env_var="MISTRAL_IMAGE_MODEL", config_key=PROVIDER,
+            include_top_level=False, passthrough=True)
+
+
+    def _find_image(outputs: list[Any]) -> tuple[Optional[str], Optional[str]]:
+        """``(url, file_id)`` of the first image in the conversation outputs."""
+        for entry in outputs:
+            if not isinstance(entry, dict):
+                continue
+            if entry.get("type") == "tool.execution" and entry.get("name") == "image_generation":
+                result = (entry.get("info") or {}).get("result")
+                try:
+                    parsed = json.loads(result) if isinstance(result, str) else result
+                except ValueError:
+                    parsed = None
+                if isinstance(parsed, dict) and parsed.get("url"):
+                    return str(parsed["url"]), None
+            content = entry.get("content")
+            if isinstance(content, list):
+                for chunk in content:
+                    if isinstance(chunk, dict) and chunk.get("type") == "tool_file" and chunk.get("file_id"):
+                        return None, str(chunk["file_id"])
+        return None, None
+
+
+    class MistralImageGenProvider(StaticImageGenProvider):
+        """Text-to-image through Mistral's ``image_generation`` connector."""
+
+        provider_id = PROVIDER
+        label = "Mistral"
+        models = _MODELS
+        default_model_id = DEFAULT_MODEL
+        setup = dict(
+            name="Mistral", badge="paid", tag="FLUX through Mistral's image_generation tool",
+            key="MISTRAL_API_KEY", prompt="Mistral API key", url="https://console.mistral.ai/api-keys")
+
+        def is_available(self) -> bool:
+            return bool(_api_key())
+
+        def capabilities(self) -> dict[str, Any]:
+            return {"modalities": ["text"], "max_reference_images": 0}
+
+        def generate(
+            self, prompt: str, aspect_ratio: str = DEFAULT_ASPECT_RATIO, *,
+            image_url: Optional[str] = None, reference_image_urls: Optional[list[str]] = None,
+            **kwargs: Any,
+        ) -> dict[str, Any]:
+            prompt = (prompt or "").strip()
+            aspect = resolve_aspect_ratio(aspect_ratio)
+            if not prompt:
+                return prompt_required_error(PROVIDER, aspect)
+            api_key = _api_key()
+            if not api_key:
+                return error_factory(PROVIDER, aspect)("MISTRAL_API_KEY not set", "auth_required")
+
+            model_id, _meta = _resolve_model()
+            fail = error_factory(PROVIDER, aspect, model=model_id, prompt=prompt)
+            headers = {"Authorization": f"Bearer {api_key}"}
+            payload = {
+                "model": model_id,
+                "instructions": _INSTRUCTIONS,
+                "tools": [{"type": "image_generation"}],
+                "inputs": f"{prompt}\n\nAspect ratio: {_ASPECT_HINTS.get(aspect, aspect)}.",
+                "store": False,
+            }
+            try:
+                resp = requests.post(f"{BASE_URL}/conversations", headers=headers, json=payload, timeout=_TIMEOUT)
+                resp.raise_for_status()
+                outputs = resp.json().get("outputs") or []
+            except requests.HTTPError as exc:
+                body = exc.response.text[:500] if exc.response is not None else ""
+                logger.error("Mistral image generation failed: %s %s", exc, body)
+                return fail(f"Mistral image generation failed: {exc} {body}".strip(), "api_error")
+            except Exception as exc:
+                logger.debug("Mistral image generation failed", exc_info=True)
+                return fail(f"Mistral image generation failed: {exc}", "api_error")
+
+            url, file_id = _find_image(outputs)
+            try:
+                if url:
+                    image_ref = str(save_url_image(url, prefix="mistral"))
+                elif file_id:
+                    file_resp = requests.get(f"{BASE_URL}/files/{file_id}/content", headers=headers, timeout=_TIMEOUT)
+                    file_resp.raise_for_status()
+                    image_ref = str(save_b64_image(
+                        base64.b64encode(file_resp.content).decode("ascii"), prefix="mistral", extension="png"))
+                else:
+                    return fail("Mistral did not call the image_generation tool", "empty_response")
+            except Exception as exc:
+                return fail(f"Failed to save Mistral image: {exc}", "io_error")
+
+            return success_response(
+                image=image_ref, model=model_id, prompt=prompt, aspect_ratio=aspect, provider=PROVIDER,
+                modality="text")
+
+
+    def register(ctx: Any) -> None:
+        ctx.register_image_gen_provider(MistralImageGenProvider())
+  plugin.yaml: |
+    name: mistral-image
+    version: 1.0.0
+    description: "Mistral image generation backend (FLUX through Mistral's image_generation tool, Conversations API)."
+    author: qjoly
+    kind: backend
+    requires_env:
+      - MISTRAL_API_KEY
+kind: ConfigMap
+metadata:
+  name: hermes-carolyn-plugin-mistral-image

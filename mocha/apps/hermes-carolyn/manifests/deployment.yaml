@@ -135,6 +135,12 @@ spec:
               cp /src-adhd/openai.yaml /opt/data/skills/i-have-adhd/agents/openai.yaml
               cp /src-adhd-gemini/gemini.toml /opt/data/skills/i-have-adhd/agents/gemini.toml
               chown -R 10000:10000 /opt/data/skills
+              # Image backend plugin: Mistral has no images endpoint, so this
+              # drives its image_generation tool. Replaced on every start, like
+              # the skills; selected by image_gen.provider in config.yaml.
+              mkdir -p /opt/data/plugins/mistral-image
+              cp /src-plugin-mistral-image/__init__.py /src-plugin-mistral-image/plugin.yaml /opt/data/plugins/mistral-image/
+              chown -R 10000:10000 /opt/data/plugins/mistral-image
           volumeMounts:
             - name: sbx-tools
               mountPath: /opt/sbx
@@ -161,6 +167,9 @@ spec:
               readOnly: true
             - name: skill-adhd-gemini
               mountPath: /src-adhd-gemini
+              readOnly: true
+            - name: plugin-mistral-image
+              mountPath: /src-plugin-mistral-image
               readOnly: true
             - name: arr-secret
               mountPath: /arr-secret
@@ -678,6 +687,9 @@ spec:
         - name: skill-adhd-gemini
           configMap:
             name: hermes-carolyn-skill-i-have-adhd-gemini
+        - name: plugin-mistral-image
+          configMap:
+            name: hermes-carolyn-plugin-mistral-image
         - name: arr-secret
           secret:
             secretName: hermes-carolyn
