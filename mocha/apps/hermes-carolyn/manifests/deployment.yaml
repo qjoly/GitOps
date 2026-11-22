@@ -155,6 +155,13 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: github_token
+            # key_env for the default model in config.yaml; without it webui
+            # sessions fall back to ollama with a 401 from Mistral
+            - name: MISTRAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: mistral_api_key
             # No password by design: access is gated by NetBird (traefik-internal
             # only), so allow onboarding/terminal from non-local origins.
             - name: HERMES_WEBUI_ONBOARDING_OPEN
