@@ -368,9 +368,32 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: mistral_api_key
-            # No password by design: access is gated by NetBird (traefik-internal
-            # only), so allow onboarding/terminal from non-local origins.
-            - name: HERMES_WEBUI_ONBOARDING_OPEN
+            # Native OIDC login against authentik (application hermes-carolyn).
+            # Only the hermes-carolyn-users group gets in: authentik denies
+            # everyone else at the application binding, and the webui checks
+            # the groups claim again. Enabling OIDC turns auth on, so
+            # HERMES_WEBUI_ONBOARDING_OPEN is no longer needed.
+            - name: HERMES_WEBUI_OIDC_ISSUER
+              value: https://authentik.mocha.thoughtless.eu/application/o/hermes-carolyn/
+            - name: HERMES_WEBUI_OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: webui_oidc_client_id
+            - name: HERMES_WEBUI_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: webui_oidc_client_secret
+            # Behind traefik-internal the request base URL is plain http
+            - name: HERMES_WEBUI_OIDC_REDIRECT_URI
+              value: https://hermes-carolyn.nb.mocha.thoughtless.eu/api/auth/oidc/callback
+            - name: HERMES_WEBUI_OIDC_ALLOW_CLAIM
+              value: groups
+            - name: HERMES_WEBUI_OIDC_ALLOW_VALUES
+              value: hermes-carolyn-users
+            # TLS ends at traefik-internal; the browser only ever sees https
+            - name: HERMES_WEBUI_SECURE
               value: "1"
             # Match the uid/gid that owns hermes-carolyn-data (the agent image's hermes user)
             - name: WANTED_UID
