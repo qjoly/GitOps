@@ -1,0 +1,26 @@
+---
+# The clipper carries one shared token with no scopes, so the network is the
+# only place to bound who may drive it. Cilium vocabulary, like the rest of the
+# namespace policies: allow the Hermes agent pod in, on the API port only.
+#
+# The `fromEndpoints` selector matters: a plain default-deny would also cut the
+# new pod from everything, including its own probes, which run from the host.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: joplin-api
+spec:
+  endpointSelector:
+    matchLabels:
+      k8s:io.kubernetes.pod.namespace: joplin
+      app: joplin
+  ingress:
+    # Only the Hermes agent pod talks to the Data API / MCP endpoint.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: hermes-carolyn
+            app.kubernetes.io/name: hermes-carolyn
+      toPorts:
+        - ports:
+            - port: "41184"
+              protocol: TCP

@@ -71,6 +71,22 @@ data:
         url: "http://127.0.0.1:8084/mcp"
         trust: untrusted
         connect_timeout: 30
+      # Joplin (mocha/apps/joplin): the terminal client's built-in MCP server,
+      # served by the Web Clipper. Read tools only — `create_note` and
+      # `update_note` are off in Joplin's own settings, and writes go through
+      # cron jobs using the Data API, which pick the notebook in code.
+      joplin:
+        url: "http://joplin.joplin.svc.cluster.local:41184/mcp"
+        trust: untrusted
+        connect_timeout: 30
+        headers:
+          Authorization: "Bearer ${JOPLIN_API_TOKEN}"
+        tools:
+          prompts: false
+          resources: false
+          exclude:
+            - delete_note
+            - create_notebook
 
     # Triage is the inbox (nothing runs there, no auto-decompose); moving a
     # task to Ready dispatches it, unassigned ones to the default profile.

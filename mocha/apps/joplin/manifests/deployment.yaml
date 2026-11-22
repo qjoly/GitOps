@@ -1,0 +1,200 @@
+---
+# Joplin terminal client running headless in the cluster, so Hermes can read
+# and write notes while the user's desktop is off.
+#
+# Two constraints shape this manifest, both verified against joplin 3.7.1:
+#
+#  1. The Web Clipper (Data API) hard-codes its bind to 127.0.0.1
+#     (packages/lib/ClipperServer.ts: `server_.listen(port, '127.0.0.1')`), so
+#     nothing outside the process namespace can reach it. A socat SIDECAR in
+#     the same pod publishes the loopback port onto the pod IP — containers in
+#     one pod share the network namespace, so no DNS or Service is involved.
+#  2. `api.token` is not honoured from a bundled config file; it is set through
+#     the CLI so it lands in settings.json. Once set, every request must carry
+#     it (`Missing "token" parameter`).
+#
+# This pod is a second client of the user's own sync target, not a copy of the
+# desktop profile: it keeps its own database on its own volume and pulls notes
+# over sync.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: joplin
+  labels:
+    app: joplin
+spec:
+  replicas: 1
+  # Recreate, never RollingUpdate: one Joplin profile must not be opened by two
+  # pods at once.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: joplin
+  template:
+    metadata:
+      labels:
+        app: joplin
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: socat
+          image: alpine/socat:1.8.0.0
+          # Publishes the loopback-only clipper on the pod IP. `fork` keeps one
+          # connection from blocking the rest.
+          args:
+            - TCP-LISTEN:41184,fork,reuseaddr
+            - TCP:127.0.0.1:41184
+          ports:
+            # The Service targets this name: socat is what listens on the pod IP.
+            - name: clipper
+              containerPort: 41184
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+        - name: joplin
+          # Node 22 is required: the client's undici dependency throws
+          # `webidl.util.markAsUncloneable is not a function` on Node 20.
+          image: node:22-bookworm-slim
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -eu
+              if ! command -v joplin >/dev/null 2>&1; then
+                npm install --loglevel=error -g joplin
+              fi
+              # `joplin config` rewrites the single settings.json, so re-running
+              # it on every start is idempotent.
+              joplin config api.port 41184 >/dev/null
+              joplin config api.token "$JOPLIN_API_TOKEN" >/dev/null
+              joplin config sync.target "$JOPLIN_SYNC_TARGET" >/dev/null
+              case "$JOPLIN_SYNC_TARGET" in
+                6)
+                  joplin config sync.6.path "$JOPLIN_SYNC_WEBDAV_URL" >/dev/null
+                  joplin config sync.6.username "$JOPLIN_SYNC_USERNAME" >/dev/null
+                  joplin config sync.6.password "$JOPLIN_SYNC_PASSWORD" >/dev/null
+                  ;;
+                2)
+                  joplin config sync.2.path "$JOPLIN_SYNC_LOCAL_PATH" >/dev/null
+                  ;;
+              esac
+              # In server mode the client does not sync on its own, so pull on
+              # start and then on a timer. A failing sync must not kill the API.
+              joplin sync || echo "initial sync failed, continuing"
+              ( while true; do
+                  sleep "${SYNC_INTERVAL:-900}"
+                  joplin sync >/dev/null 2>&1 || true
+                done ) &
+              exec joplin server start
+          env:
+            - name: JOPLIN_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: joplin-api
+                  key: api_token
+            # 6 = WebDAV. Point at the user's existing sync target; the three
+            # REPLACE-ME values are the only things this app needs filled in.
+            - name: JOPLIN_SYNC_TARGET
+              value: "6"
+            - name: JOPLIN_SYNC_WEBDAV_URL
+              value: "https://REPLACE-ME/remote.php/dav/files/REPLACE-ME/Joplin"
+            - name: JOPLIN_SYNC_USERNAME
+              value: "REPLACE-ME"
+            - name: JOPLIN_SYNC_PASSWORD
+              value: "REPLACE-ME"
+            # Used only when JOPLIN_SYNC_TARGET is 2 (local filesystem).
+            - name: JOPLIN_SYNC_LOCAL_PATH
+              value: /data/sync
+            - name: SYNC_INTERVAL
+              value: "900"
+            # npm needs a writable cache and the Joplin profile must be on the
+            # volume so the database survives a restart.
+            - name: HOME
+              value: /data
+            - name: npm_config_cache
+              value: /data/.npm
+          securityContext:
+            # Runs as root on purpose: `npm install -g joplin` needs to write
+            # /usr/local/lib/node_modules, which is root-owned in this image, and
+            # adding a custom prefix only moves the problem. Everything else is
+            # locked down, and nothing privileged is requested.
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          # No `ports:` entry: the clipper binds 127.0.0.1 only, and socat in
+          # this pod is the sole listener on the pod IP.
+          readinessProbe:
+            # Unauthenticated endpoint answering the literal `JoplinClipperServer`
+            # once the clipper is up; first boot spends time on npm + sync.
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - 'curl -fsS -m 5 http://127.0.0.1:41184/ping | grep -q JoplinClipperServer'
+            initialDelaySeconds: 45
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 8
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - 'curl -fsS -m 5 http://127.0.0.1:41184/ping | grep -q JoplinClipperServer'
+            initialDelaySeconds: 300
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 50m
+              memory: 192Mi
+            limits:
+              memory: 768Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: joplin-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: joplin
+spec:
+  selector:
+    app: joplin
+  ports:
+    - name: api
+      port: 41184
+      targetPort: clipper
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: joplin-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: openebs-lvmpv
+  resources:
+    requests:
+      storage: 2Gi

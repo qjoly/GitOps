@@ -267,6 +267,14 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: hass_token
+            # Expanded as ${JOPLIN_API_TOKEN} in the joplin MCP server headers,
+            # and read straight from the env by cron jobs that call the Joplin
+            # Data API to write notes.
+            - name: JOPLIN_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: joplin_api_token
             - name: HERMES_API_TIMEOUT
               value: "1800"
             # Dashboard-gate credentials for the gateway's Webapp listener
