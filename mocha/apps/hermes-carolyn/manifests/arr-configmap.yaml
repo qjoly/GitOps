@@ -14,7 +14,7 @@ data:
       UserKnownHostsFile /opt/ssh/known_hosts
       BatchMode yes
       ConnectTimeout 15
-      ProxyCommand /opt/sbx/nc -X 5 -x 127.0.0.1:1080 %h %p
+      ProxyCommand /opt/sbx/socksconnect.py 127.0.0.1 1080 %h %p
   SKILL.md: |
     ---
     name: arr
@@ -62,6 +62,37 @@ data:
     - Do not edit anything under /data/media; let Sonarr/Radarr move files.
     - Deluge removals: check the save path first, never --with-data on library paths,
       ask the user before deleting. Keep torrents under the ratio target on private trackers.
+  socksconnect.py: |
+    #!/usr/bin/env python3
+    # Minimal SOCKS5 CONNECT relay: socksconnect.py <socks_host> <socks_port> <host> <port>
+    import os, socket, sys, threading
+    sh, sp, th, tp = sys.argv[1], int(sys.argv[2]), sys.argv[3], int(sys.argv[4])
+    s = socket.create_connection((sh, sp), timeout=20)
+    s.sendall(b"\x05\x01\x00")
+    assert s.recv(2) == b"\x05\x00"
+    h = th.encode()
+    s.sendall(b"\x05\x01\x00\x03" + bytes([len(h)]) + h + int(tp).to_bytes(2, "big"))
+    rep = s.recv(10)
+    assert rep[1] == 0, rep
+    def up():
+        try:
+            while True:
+                d = os.read(0, 65536)
+                if not d: break
+                s.sendall(d)
+        except OSError:
+            pass
+        finally:
+            try: s.shutdown(socket.SHUT_WR)
+            except OSError: pass
+    threading.Thread(target=up, daemon=True).start()
+    try:
+        while True:
+            d = s.recv(65536)
+            if not d: break
+            os.write(1, d)
+    except OSError:
+        pass
   arr.sh: |
     #!/usr/bin/env bash
     # arr.sh - drive Sonarr / Radarr / Prowlarr on the remote box over SSH.
