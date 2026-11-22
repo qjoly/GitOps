@@ -1,0 +1,13 @@
+# ArgoCD reads this directory directly (mocha/apps/sandboxes/app.yaml points
+# source.path here), so it needs an object list of its own to stay readable by
+# kubectl kustomize as well. Keep it in sync with the files next to it.
+#
+# No `namespace:` field on purpose: dev.yaml and rbac.yaml already set their own
+# namespace, and defaulting it here would silently rewrite the RoleBinding's
+# subjects[].namespace (hermes-carolyn, where the sbx service account lives).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - rbac.yaml
+  - dev.yaml
