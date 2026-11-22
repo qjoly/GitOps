@@ -48,10 +48,16 @@ spec:
           command:
             - sh
             - -c
-            - cp /usr/bin/kubectl /opt/sbx/kubectl && cp /src/sbx /opt/sbx/sbx && cp /src/kubeconfig /opt/sbx/kubeconfig && chmod +x /opt/sbx/sbx /opt/sbx/kubectl
-            # Load the sbx skill into hermes' skill dir (a ConfigMap mount would be
-            # read-only and break the webui container's startup chown)
-            - mkdir -p /opt/data/skills/sbx && cp /src/SKILL.md /opt/data/skills/sbx/SKILL.md && chown -R 10000:10000 /opt/data/skills/sbx
+            - |
+              cp /usr/bin/kubectl /opt/sbx/kubectl
+              cp /src/sbx /opt/sbx/sbx
+              cp /src/kubeconfig /opt/sbx/kubeconfig
+              chmod +x /opt/sbx/sbx /opt/sbx/kubectl
+              # Load the sbx skill into hermes' skill dir (a ConfigMap mount would be
+              # read-only and break the webui container's startup chown)
+              mkdir -p /opt/data/skills/sbx
+              cp /src/SKILL.md /opt/data/skills/sbx/SKILL.md
+              chown -R 10000:10000 /opt/data/skills/sbx
           volumeMounts:
             - name: sbx-tools
               mountPath: /opt/sbx
