@@ -44,7 +44,7 @@ spec:
               mountPath: /agent-src
         # sbx CLI + kubectl + in-cluster kubeconfig, shared with the agent containers
         - name: install-sbx
-          image: docker.io/rancher/kubectl:v1.36.1
+          image: docker.io/rancher/kubectl:v1.36.2
           command:
             - sh
             - -c
