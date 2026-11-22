@@ -27,10 +27,7 @@ sequenceDiagram
   internet egress and nothing inside the cluster. The pod gets no service account token.
 - **Storage**: no live mount. The checkout is copied in and changes come back as a patch, so builds
   run on the sandbox disk at full speed and nothing lives only in the cluster.
-- **Credentials**: no token is injected into the sandbox, and none should be: mise resolves versions
-  through mise-versions.jdx.dev instead of the GitHub API, so `mise install` does not need a GitHub
-  token. Anything that needs GitHub happens locally on the applied patch. In hermes-carolyn,
-  "locally" is the unetassedecafe bot: it pushes to its fork and opens PRs, and cannot write to main.
+- **Credentials**: none in the sandbox. Anything that needs GitHub happens locally on the applied patch.
 
 ## Install
 

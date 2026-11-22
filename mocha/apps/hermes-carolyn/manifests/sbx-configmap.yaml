@@ -108,7 +108,7 @@ data:
     
     The local checkout stays the source of truth. A sandbox gets a copy, works on it, and hands back a patch. git commits, pushes and `gh` (PR, review, issues) only ever run locally, after the patch is applied.
     
-    Never pass a token, kubeconfig or any secret into a sandbox: it has none on purpose. That includes `GH_TOKEN`/`GITHUB_TOKEN` "to fix mise": mise resolves versions through mise-versions.jdx.dev, not the GitHub API, so `mise install` does not need a GitHub token. If it fails, the cause is elsewhere (network, a typo in `mise.toml`): debug that, do not inject a token.
+    Never pass a token, kubeconfig or any secret into a sandbox: it has none on purpose.
 
     ## Flow
     
