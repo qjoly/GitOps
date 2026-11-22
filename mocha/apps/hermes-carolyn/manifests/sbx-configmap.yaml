@@ -126,6 +126,19 @@ data:
     - Run long builds in the background instead of blocking on them.
     - Read the patch before applying it: it is the only thing that crosses back.
     
+    ## Publishing the result
+    
+    git and `gh` here act as the `unetassedecafe` bot (`GH_TOKEN` and a git credential helper in the environment). The bot has no write access to the upstream repo and must never push to `main`: push a branch to its fork and open a PR.
+    
+    ```bash
+    git switch -c <branch> && git commit -am "<English message>"
+    gh repo fork qjoly/<repo> --remote=false 2>/dev/null || true   # once per repo
+    git push https://github.com/unetassedecafe/<repo>.git HEAD:<branch>
+    gh pr create --repo qjoly/<repo> --head unetassedecafe:<branch> --base main --fill
+    ```
+    
+    Never write the token into a remote URL or a `.git/config`: `sbx push` copies `.git` into the sandbox.
+    
     ## Parallel work
     
     One sandbox per task, each `up` is independent. To keep patches from colliding, give each task its own local `git worktree` and branch, push from it, and apply its patch there.
