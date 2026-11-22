@@ -23,7 +23,9 @@ spec:
           command:
             - sh
             - -c
-            - test -f /opt/data/config.yaml || cp /config/config.yaml /opt/data/config.yaml
+            # Seed only: an existing config.yaml / SOUL.md on the PVC (user's
+            # edits, memories aside) wins over what GitOps ships.
+            - test -f /opt/data/config.yaml || cp /config/config.yaml /opt/data/config.yaml; test -f /opt/data/SOUL.md || cp /config/SOUL.md /opt/data/SOUL.md
           volumeMounts:
             - name: data
               mountPath: /opt/data
