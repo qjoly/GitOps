@@ -34,8 +34,13 @@ spec:
           env:
             - name: NB_PROXY_DOMAIN
               value: px.mocha.thoughtless.eu
+            # Internal address: avoids Traefik's websecure readTimeout (300s),
+            # which kills the long-lived management/signal gRPC streams every
+            # 5 minutes and prevents the embedded client's ICE from settling.
             - name: NB_PROXY_MANAGEMENT_ADDRESS
-              value: https://netbird.mocha.thoughtless.eu:443
+              value: http://netbird-management.netbird.svc.cluster.local:80
+            - name: NB_PROXY_ALLOW_INSECURE
+              value: "true"
             - name: NB_PROXY_TOKEN
               valueFrom:
                 secretKeyRef:
