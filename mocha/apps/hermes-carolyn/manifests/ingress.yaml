@@ -1,5 +1,5 @@
 ---
-# NetBird-only access, no password: the NetBird network is the gate.
+# NetBird-only access, plus the webui's own password login.
 # hermes-carolyn.nb.mocha.thoughtless.eu resolves for every peer via the
 # NetBird zone wildcard (*.nb CNAME to traefik-internal) and the jump CoreDNS
 # template, and traefik-internal serves the *.nb wildcard cert by default,
