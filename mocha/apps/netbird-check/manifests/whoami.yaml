@@ -74,18 +74,6 @@ spec:
                 name: whoami
                 port:
                   name: http
-    # Same page through the NetBird reverse proxy (check.px.mocha.thoughtless.eu):
-    # TLS is terminated by the proxy, so no tls section is needed here.
-    - host: check.px.mocha.thoughtless.eu
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: whoami
-                port:
-                  name: http
 
 ---
 # Wildcard cert for the *.px zone (issued over Cloudflare DNS-01).
