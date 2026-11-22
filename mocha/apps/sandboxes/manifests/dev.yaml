@@ -15,13 +15,13 @@ spec:
       terminationGracePeriodSeconds: 2
       containers:
         - name: dev
-          image: buildpack-deps:trixie
+          image: ghcr.io/qjoly/sandbox-dev:2026.11.12
           workingDir: /work
           command:
             - sh
             - -c
-            # mise installs whatever toolchain the pushed repo declares; a failed download must not kill the sandbox.
-            - curl -fsSL https://mise.run | sh || true; touch /tmp/ready; exec sleep infinity
+            # The image ships mise, gh and kubectl; mise installs whatever toolchain the pushed repo declares at run time.
+            - touch /tmp/ready; exec sleep infinity
           env:
             - name: PATH
               value: /root/.local/share/mise/shims:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
