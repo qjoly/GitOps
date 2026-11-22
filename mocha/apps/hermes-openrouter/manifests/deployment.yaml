@@ -107,6 +107,10 @@ spec:
               value: "8787"
             - name: HERMES_WEBUI_STATE_DIR
               value: /home/hermeswebui/.hermes/webui
+            # No password by design: access is gated by NetBird (traefik-internal
+            # only), so allow onboarding/terminal from non-local origins.
+            - name: HERMES_WEBUI_ONBOARDING_OPEN
+              value: "1"
             # Match the uid/gid that owns hermes-openrouter-data (the agent image's hermes user)
             - name: WANTED_UID
               value: "10000"
