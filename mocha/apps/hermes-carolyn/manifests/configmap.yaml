@@ -44,6 +44,12 @@ data:
         headers:
           Authorization: "Bearer ${GITHUB_TOKEN}"
 
+    # Triage is the inbox (nothing runs there, no auto-decompose); moving a
+    # task to Ready dispatches it, unassigned ones to the default profile.
+    kanban:
+      default_assignee: "default"
+      auto_decompose: false
+
     browser:
       cdp_url: "http://127.0.0.1:9222"
 

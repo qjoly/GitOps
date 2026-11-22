@@ -177,6 +177,11 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /opt/data
+            # Same path as in the webui container: kanban projects created
+            # from the webui record /workspace/<repo>, and the dispatcher that
+            # spawns their workers runs here.
+            - name: data
+              mountPath: /workspace
             - name: sbx-tools
               mountPath: /opt/sbx
             - name: ssh-state
