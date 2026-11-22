@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-carolyn-skill-i-have-adhd-token-fix
+data:
+  note: "placeholder"
