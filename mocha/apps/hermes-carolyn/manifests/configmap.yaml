@@ -48,6 +48,19 @@ data:
         url: "http://127.0.0.1:8083/mcp"
         trust: untrusted
         connect_timeout: 60
+      # Home Assistant's built-in MCP server; only entities exposed to Assist
+      # are reachable. Goes through Cloudflare, which lets httpx's UA through.
+      homeassistant:
+        url: "https://home.thoughtless.eu/api/mcp"
+        trust: untrusted
+        connect_timeout: 30
+        headers:
+          Authorization: "Bearer ${HASS_TOKEN}"
+      # Grafana (mocha), read-only, grafana-mcp sidecar
+      grafana:
+        url: "http://127.0.0.1:8084/mcp"
+        trust: untrusted
+        connect_timeout: 30
 
     # Triage is the inbox (nothing runs there, no auto-decompose); moving a
     # task to Ready dispatches it, unassigned ones to the default profile.

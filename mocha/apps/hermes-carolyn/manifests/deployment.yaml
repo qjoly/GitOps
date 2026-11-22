@@ -130,6 +130,12 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: github_token
+            # Expanded as ${HASS_TOKEN} in the homeassistant MCP server headers
+            - name: HASS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: hass_token
             - name: HERMES_API_TIMEOUT
               value: "1800"
             - name: DISCORD_BOT_TOKEN
@@ -339,6 +345,36 @@ spec:
           volumeMounts:
             - name: calendar-creds
               mountPath: /app/store_creds
+        # Grafana (mocha), read-only: Viewer service account plus --disable-write.
+        # Plain HTTP without auth, bound to 127.0.0.1.
+        - name: grafana-mcp
+          image: docker.io/grafana/mcp-grafana:2.3.0
+          args:
+            - -t
+            - streamable-http
+            - --address
+            - 127.0.0.1:8084
+            - --disable-write
+            - --enabled-tools
+            - search,datasource,loki,alerting,dashboard,folder,navigation,annotations,sql
+          env:
+            - name: GRAFANA_URL
+              value: http://grafana.monitoring.svc.cluster.local
+            - name: GRAFANA_SERVICE_ACCOUNT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: grafana_token
+          ports:
+            - name: grafana-mcp
+              containerPort: 8084
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
         - name: webui
           image: ghcr.io/nesquena/hermes-webui:0.52.734
           ports:
@@ -361,6 +397,12 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: github_token
+            # Expanded as ${HASS_TOKEN} in the homeassistant MCP server headers
+            - name: HASS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: hass_token
             # key_env for the default model in config.yaml; without it webui
             # sessions fall back to ollama with a 401 from Mistral
             - name: MISTRAL_API_KEY
