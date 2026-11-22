@@ -12,6 +12,16 @@ data:
       base_url: "https://api.mistral.ai/v1"
       key_env: "MISTRAL_API_KEY"
 
+    # Image generation (image_generate tool, bot avatars) through the
+    # mistral-image plugin, which the install-sbx init container drops in
+    # $HERMES_HOME/plugins. User plugins load only when listed in plugins.enabled.
+    image_gen:
+      provider: "mistral"
+
+    plugins:
+      enabled:
+        - mistral-image
+
     platforms:
       discord:
         enabled: true
