@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: hermes-openrouter-webui
+  name: hermes-carolyn-webui
 spec:
   selector:
-    app.kubernetes.io/name: hermes-openrouter
+    app.kubernetes.io/name: hermes-carolyn
   ports:
     - name: http
       port: 8787

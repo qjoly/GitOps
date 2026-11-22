@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: hermes-openrouter-config
+  name: hermes-carolyn-config
 data:
   config.yaml: |
     model:
@@ -44,6 +44,10 @@ data:
             - list_mailboxes
             - list_accounts
             - get_email_stats
+      github:
+        url: "http://127.0.0.1:8082/mcp"
+        trust: untrusted
+        connect_timeout: 30
 
     database:
       journal_mode: "wal"

@@ -2,20 +2,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hermes-openrouter
+  name: hermes-carolyn
   labels:
-    app.kubernetes.io/name: hermes-openrouter
+    app.kubernetes.io/name: hermes-carolyn
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app.kubernetes.io/name: hermes-openrouter
+      app.kubernetes.io/name: hermes-carolyn
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: hermes-openrouter
+        app.kubernetes.io/name: hermes-carolyn
     spec:
       initContainers:
         - name: seed-config
@@ -42,7 +42,7 @@ spec:
             - name: agent-src
               mountPath: /agent-src
       containers:
-        - name: hermes-openrouter
+        - name: hermes-carolyn
           image: docker.io/nousresearch/hermes-agent:v0.23.3
           args:
             - gateway
@@ -51,19 +51,19 @@ spec:
             - name: MISTRAL_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: hermes-openrouter
+                  name: hermes-carolyn
                   key: mistral_api_key
             - name: HERMES_API_TIMEOUT
               value: "1800"
             - name: DISCORD_BOT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: hermes-openrouter
+                  name: hermes-carolyn
                   key: bot_token
             - name: DISCORD_ALLOWED_USERS
               valueFrom:
                 secretKeyRef:
-                  name: hermes-openrouter
+                  name: hermes-carolyn
                   key: allowed_users
           resources:
             requests:
@@ -91,7 +91,7 @@ spec:
             - name: MCP_EMAIL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: hermes-openrouter
+                  name: hermes-carolyn
                   key: mail_password
           resources:
             requests:
@@ -105,6 +105,28 @@ spec:
               mountPath: /home/node/.cache/email-mcp
             - name: mcp-state
               mountPath: /home/node/.local/state/email-mcp
+        - name: github-mcp
+          image: ghcr.io/github/github-mcp-server:v2.2.0
+          args:
+            - http
+          env:
+            - name: GITHUB_PERSONAL_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: github_token
+            - name: GITHUB_TOOLSETS
+              value: "repos,issues,pull_requests,search"
+          ports:
+            - name: mcp
+              containerPort: 8082
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
         - name: webui
           image: ghcr.io/nesquena/hermes-webui:0.52.731
           ports:
@@ -125,7 +147,7 @@ spec:
             # only), so allow onboarding/terminal from non-local origins.
             - name: HERMES_WEBUI_ONBOARDING_OPEN
               value: "1"
-            # Match the uid/gid that owns hermes-openrouter-data (the agent image's hermes user)
+            # Match the uid/gid that owns hermes-carolyn-data (the agent image's hermes user)
             - name: WANTED_UID
               value: "10000"
             - name: WANTED_GID
@@ -152,12 +174,12 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: hermes-openrouter-data
+            claimName: hermes-carolyn-data
         - name: agent-src
           emptyDir: {}
         - name: config
           configMap:
-            name: hermes-openrouter-config
+            name: hermes-carolyn-config
         - name: mcp-cache
           emptyDir: {}
         - name: mcp-state

@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: hermes-openrouter
+  name: hermes-carolyn
   namespace: argocd
 spec:
   project: default
@@ -14,8 +14,8 @@ spec:
       - CreateNamespace=true
   destination:
     server: https://kubernetes.default.svc
-    namespace: hermes-openrouter
+    namespace: hermes-carolyn
   source:
     repoURL: https://github.com/qjoly/gitops.git
     targetRevision: HEAD
-    path: mocha/apps/hermes-openrouter/manifests
+    path: mocha/apps/hermes-carolyn/manifests
