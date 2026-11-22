@@ -16,13 +16,12 @@ nothing talks to a Service except Traefik.
 
 | Container | Role | Reached by |
 |---|---|---|
-| `hermes-carolyn` | the agent: gateway, Discord platform, kanban dispatcher | nothing inbound |
+| `hermes-carolyn` | the agent: gateway, Discord platform, kanban dispatcher, and its Bot Desktop screen + headed Chromium | nothing inbound |
 | `webui` | browser UI (`hermes-webui`) | Traefik on 8787 |
 | `github-mcp` | GitHub API tools for the agent | agent on 8082 |
 | `email-mcp` | reads the mailboxes, read-only | agent on 8080 |
 | `calendar-mcp` | Google Calendar, read/write | agent on 8083 |
 | `grafana-mcp` | Grafana on mocha, read-only (`--disable-write`) | agent on 8084 |
-| `browser` | headless Chromium exposing CDP | agent on 9222 |
 | `netbird` | WireGuard peer in netstack mode | agent through a SOCKS5 on 1080 |
 
 The agent only ever reaches the MCP servers over loopback. `github-mcp` and
@@ -34,7 +33,7 @@ traffic is open on purpose, the agent needs the internet.
 
 ## Init containers: what gets seeded where
 
-Four init containers run before anything else. Each one is the single writer of
+Five init containers run before anything else. Each one is the single writer of
 its target, so its repair is re-applied on every pod start.
 
 | Container | Writes | Semantics |
@@ -42,6 +41,7 @@ its target, so its repair is re-applied on every pod start.
 | `seed-config` | `/opt/data/config.yaml` | **never overwrites** (`test -f … \|\| cp`) |
 | `seed-calendar-creds` | the calendar MCP credential file in an `emptyDir` | overwrites, mode 600 |
 | `seed-agent-src` | the agent source into an `emptyDir` shared with `webui` | copies from the image, then repairs two image defects |
+| `install-cua-driver` | the pinned `cua-driver` (computer_use) under `/opt/data/tools` | no-op when present, repairs after a bump; not fatal |
 | `install-sbx` | `sbx`, `kubectl`, `jq`, `arr.sh`, SSH material, the skills, and the `mistral-image` plugin | overwrites |
 
 The seed-versus-overwrite split matters: a committed change to `config.yaml` or
@@ -153,28 +153,36 @@ mention required.
 
 ## The Bot Desktop screen
 
-The Hermes Desktop "Screen" pane gives the agent its own Xfce desktop (TigerVNC
-`Xvnc` on a Unix socket under `/opt/data/bot-desktop/`), which `computer_use`
-drives and a human can take over. It needs system packages that the upstream
-image does not ship, and its "Install on host" button cannot add them: the
-gateway runs as the unprivileged `hermes` user and there is no `sudo`.
+The agent has its own Xfce desktop (TigerVNC `Xvnc` on a Unix socket under
+`/opt/data/bot-desktop/`). Its `computer_use` tool and its browser act on it,
+and the Hermes Desktop "Screen" pane shows it live and lets a human take over
+for logins, 2FA or CAPTCHAs.
 
-So `hermes-carolyn` and `seed-agent-src` run
-`ghcr.io/qjoly/hermes-agent-desktop`, the upstream image plus those packages,
-built from
-[`image/Dockerfile`](https://github.com/qjoly/GitOps/blob/main/mocha/apps/hermes-carolyn/image/Dockerfile)
-by the `hermes-agent-desktop-image` workflow and tagged like its base.
+| Piece | Where it comes from |
+|---|---|
+| Xvnc, Xfce, Chromium | the upstream `-desktop` image (`nousresearch/hermes-agent:<version>-desktop`). The plain image lacks them, and the pane's "Install on host" button cannot add them: the gateway runs as `hermes` without `sudo` |
+| `cua-driver` (computer_use) | installed by Hermes PM into `/opt/data/tools` by the `install-cua-driver` init container |
+| headed browser | `browser.headed: true`, no `cdp_url`. While the screen is up the agent and the desktop's browser share one persistent profile, `/opt/data/bot-desktop/browser-profile` |
+| screen on demand | `bot_desktop.auto_start: true`; it stops after 30 idle minutes |
+| no prompt per click | every `cua:<action>:<mode>` key in `command_allowlist`. Hermes still hard-blocks dangerous typed shell patterns and destructive key combos |
 
-Renovate keeps it up to date. It looks the version up on the base
-(`nousresearch/hermes-agent`), not on ghcr, and bumps the `FROM` line and both
-`image:` lines in a single PR (`renovate/hermes-carolyn-agent-image`). The
-workflow builds the new tag on that PR, so the image exists before ArgoCD syncs
-the merge: wait for the build check before merging. Both containers must stay
-on the same tag, since the webui runs the agent source copied by
-`seed-agent-src`. On a bump, also check that the package list in the
-Dockerfile still matches `PACKAGES["apt"]` in `tools/bot_desktop/runtime.py`.
+Things that look broken and are not:
 
-From a shell in the pod: `hermes computer-use screen status|start|stop`.
+- `hermes computer-use doctor` reports **degraded**: AT-SPI is off. Hermes'
+  launcher disables it on purpose (`NO_AT_BRIDGE=1`), so the agent works from
+  screenshots and X11 input, and only `delivery_mode: foreground` lands.
+- `capture` with `mode: vision` needs a model that reads images. The main
+  model does, so `auxiliary.vision` stays on `auto`.
+
+Renovate bumps the `-desktop` tag like any image: its docker versioning keeps
+the suffix. Keep `seed-agent-src`, `install-cua-driver` and `hermes-carolyn` on
+the same tag, since the webui runs the agent source `seed-agent-src` copies.
+
+These keys live in the seeded `config.yaml`, which never overwrites the file
+on the PVC: on an existing volume, apply them with `hermes config set`.
+
+From a shell in the pod: `hermes computer-use screen status|start|stop`,
+`hermes computer-use status`.
 
 ## Changing it
 

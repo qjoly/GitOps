@@ -78,8 +78,51 @@ data:
       default_assignee: "default"
       auto_decompose: false
 
+    # The agent's browser is a headed Chromium on the Bot Desktop screen, so a
+    # human can watch it from Hermes Desktop and take over (logins, 2FA,
+    # CAPTCHAs). While the screen is up it uses one persistent profile,
+    # $HERMES_HOME/bot-desktop/browser-profile, so logins survive restarts.
+    # No cdp_url: that would pin it to a remote Chromium instead.
     browser:
-      cdp_url: "http://127.0.0.1:9222"
+      headed: true
+
+    # Start the screen the first time computer_use or the headed browser
+    # needs it; it stops after bot_desktop.idle_stop_minutes (30) unused.
+    bot_desktop:
+      auto_start: true
+
+    # computer_use actions pre-approved, so the agent drives its desktop
+    # without a prompt on each click; capture needs no approval. Hermes still
+    # hard-blocks dangerous typed shell patterns and destructive key combos.
+    # Without AT-SPI only foreground delivery works on this X11 screen, hence
+    # both delivery modes.
+    command_allowlist:
+      - cua:click:background
+      - cua:click:foreground
+      - cua:double_click:background
+      - cua:double_click:foreground
+      - cua:right_click:background
+      - cua:right_click:foreground
+      - cua:middle_click:background
+      - cua:middle_click:foreground
+      - cua:drag:background
+      - cua:drag:foreground
+      - cua:scroll:background
+      - cua:scroll:foreground
+      - cua:type:background
+      - cua:type:foreground
+      - cua:key:background
+      - cua:key:foreground
+      - cua:set_value:background
+      - cua:set_value:foreground
+      - cua:wait:background
+      - cua:wait:foreground
+      - cua:list_apps:background
+      - cua:list_apps:foreground
+      - cua:list_windows:background
+      - cua:list_windows:foreground
+      - cua:focus_app:background
+      - cua:focus_app:foreground
 
     # The gateway's Webapp listener (the browser-hosted Desktop: Bots tab,
     # sessions, routines) and the JSON-RPC/WS backend a dev machine's Desktop

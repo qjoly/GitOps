@@ -55,24 +55,6 @@
       ],
       "allowedVersions": "/^v?\\d+\\.\\d+\\.\\d+$/",
       "groupName": "corium"
-    },
-    {
-      "description": "hermes-agent-desktop is built here and tagged like its nousresearch/hermes-agent base: the generic image regex must not bump it on its own, it is tracked through its base (see the hermes-carolyn custom manager)",
-      "matchPackageNames": [
-        "ghcr.io/qjoly/hermes-agent-desktop"
-      ],
-      "enabled": false
-    },
-    {
-      "description": "hermes-carolyn: the Dockerfile FROM and the Deployment move in one PR. The hermes-agent-desktop-image workflow builds the new tag on that PR, so the image exists before ArgoCD syncs the merge",
-      "matchPackageNames": [
-        "docker.io/nousresearch/hermes-agent",
-        "nousresearch/hermes-agent"
-      ],
-      "matchFileNames": [
-        "mocha/apps/hermes-carolyn/**"
-      ],
-      "groupName": "hermes-carolyn agent image"
     }
   ],
   "argocd": {
@@ -103,18 +85,6 @@
         "chart: [^/\\s]+/(?<depName>\\S+)\\s+version: (?<currentValue>\\S+)\\s+namespace: \\S+\\s+repository:\\s+name: \\S+\\s+url: (?<registryUrl>\\S+)"
       ],
       "datasourceTemplate": "helm"
-    },
-    {
-      "customType": "regex",
-      "description": "hermes-carolyn runs ghcr.io/qjoly/hermes-agent-desktop, whose tag is its nousresearch/hermes-agent base tag: look the version up on the base",
-      "managerFilePatterns": [
-        "/^mocha/apps/hermes-carolyn/manifests/deployment\\.yaml$/"
-      ],
-      "matchStrings": [
-        "image: ghcr\\.io/qjoly/hermes-agent-desktop:(?<currentValue>\\S+)"
-      ],
-      "depNameTemplate": "docker.io/nousresearch/hermes-agent",
-      "datasourceTemplate": "docker"
     }
   ]
 }
