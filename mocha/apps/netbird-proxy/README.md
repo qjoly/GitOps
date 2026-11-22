@@ -28,6 +28,14 @@ inbound port needed), and no Traefik passthrough is required.
   groups `users`, `americano`, router group.
 - Record `*.px.mocha.thoughtless.eu` A → the proxy peer's NetBird IP.
 
+## Current routing (2026-11-22)
+
+`*.px.mocha.thoughtless.eu` currently resolves to traefik-internal
+(10.96.208.53), exactly like `*.nb`: the px zone's wildcard record points there
+and apps publish a `*.px` Ingress of class `traefik-internal` with their own
+`*.px` wildcard cert (see `../netbird-check`). The reverse proxy service above
+stays configured but is NOT in the data path yet.
+
 ## Known caveats (0.83.x)
 
 - The embedded peer has no persistent state (`state_path_set: false`), so a
@@ -38,10 +46,11 @@ inbound port needed), and no Traefik passthrough is required.
   dialer of the embedded client, so relay fallback is unavailable for it.
 - The embedded proxy peer is not listed in `/api/peers` and cannot be added to
   a group, and the ACL policy that the docs say is auto-generated for
-  NetBird-Only services does not appear: inbound data packets to the proxy
-  peer are currently dropped by the firewall (WG handshakes succeed, TCP does
-  not). Until a management version generates that policy, the `*.nb` +
-  traefik-internal path remains the working way to reach private services.
+  NetBird-Only services does not appear: WG handshakes to the proxy peer
+  succeed and its packets arrive, but it never answers (TCP times out), so
+  inbound data is dropped inside the beta embedded client. Until that is
+  fixed upstream, private services go through `*.nb` / `*.px` +
+  traefik-internal instead (see "Current routing" above).
 
 ## Add a service
 
