@@ -5,6 +5,7 @@ namespace: hermes-carolyn
 resources:
   - externalsecret.yaml
   - configmap.yaml
+  - email-mcp-configmap.yaml
   - sbx-configmap.yaml
   - arr-configmap.yaml
   - serviceaccount.yaml

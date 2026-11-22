@@ -196,20 +196,19 @@ spec:
           image: ghcr.io/codefuturist/email-mcp:0.6.0
           args:
             - http
+          # Accounts and read-only mode live in config.toml (mounted below);
+          # its passwords are env: references to these.
           env:
-            - name: MCP_EMAIL_ADDRESS
-              value: catchall@une-pause-cafe.fr
-            - name: MCP_EMAIL_IMAP_HOST
-              value: mail.infomaniak.com
-            - name: MCP_EMAIL_SMTP_HOST
-              value: mail.infomaniak.com
-            - name: MCP_EMAIL_READ_ONLY
-              value: "true"
-            - name: MCP_EMAIL_PASSWORD
+            - name: MAIL_PASSWORD_CATCHALL
               valueFrom:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: mail_password
+            - name: MAIL_PASSWORD_QUENTINJ
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: mail_password_quentinj
           resources:
             requests:
               cpu: 50m
@@ -222,6 +221,9 @@ spec:
               mountPath: /home/node/.cache/email-mcp
             - name: mcp-state
               mountPath: /home/node/.local/state/email-mcp
+            - name: email-mcp-config
+              mountPath: /home/node/.config/email-mcp
+              readOnly: true
         - name: browser
           # Headless Chromium exposing CDP; hermes connects via browser.cdp_url
           image: docker.io/chromedp/headless-shell:160.0.8171.0
@@ -376,6 +378,9 @@ spec:
         - name: config
           configMap:
             name: hermes-carolyn-config
+        - name: email-mcp-config
+          configMap:
+            name: hermes-carolyn-email-mcp
         - name: mcp-cache
           emptyDir: {}
         - name: mcp-state
