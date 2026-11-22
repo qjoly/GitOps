@@ -74,7 +74,11 @@ spec:
               #    cp314 ABI tag). Under 3.12 pydantic_core fails to load with
               #    "undefined symbol: PyDict_GetItemRef", so the dashboard dies
               #    before serving. Point it at the bundled 3.14 interpreter.
-              ln -sfn /agent-src/tools/python-3.14.9+20261021-linux-x64/bin/python3.14 \
+              # The target must stay RELATIVE: agent-src is an emptyDir mounted at
+              # /agent-src here but at $HERMES_HOME/hermes-agent in the webui and
+              # agent containers, so an absolute target resolves only during this
+              # init container and is dangling for every consumer afterwards.
+              ln -sfn ../../tools/python-3.14.9+20261021-linux-x64/bin/python3.14 \
                 /agent-src/.venv/bin/python
               # 2. install-stamp.json bakes pmRuntime as /opt/hermes/pm-runtime,
               #    the path in the agent image. The copy lives at /agent-src, so
