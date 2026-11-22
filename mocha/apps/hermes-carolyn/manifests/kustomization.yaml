@@ -13,5 +13,7 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - service.yaml
+  - gateway-service.yaml
   - ingress.yaml
+  - gateway-ingress.yaml
   - ciliumnetworkpolicy.yaml

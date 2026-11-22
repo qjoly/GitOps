@@ -35,3 +35,14 @@ spec:
         - ports:
             - port: "8787"
               protocol: TCP
+    # Gateway Webapp listener, served to NetBird peers by the
+    # hermes-carolyn-gateway Ingress. Added with that Ingress: default-deny
+    # would otherwise drop every request and traefik would answer 503.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik-internal
+            app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "9120"
+              protocol: TCP

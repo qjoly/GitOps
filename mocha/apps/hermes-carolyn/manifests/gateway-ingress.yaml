@@ -1,0 +1,48 @@
+---
+# NetBird-only access to the Hermes gateway, same pattern as the webui Ingress:
+# hermes-carolyn-gw.nb.mocha.thoughtless.eu resolves for every peer through the
+# NetBird zone wildcard (*.nb CNAME to traefik-internal) and the jump CoreDNS
+# template, and traefik-internal serves the *.nb wildcard certificate, so no
+# tls section. external-dns only watches the traefik class, so this host never
+# lands in public DNS — the gateway is never exposed to the internet.
+#
+# The gateway's Webapp listener binds 0.0.0.0 inside the pod, which turns
+# dashboard auth ON; Hermes refuses to start it without a provider. The seeded
+# config.yaml enables the bundled `basic` provider (credentials from Vault via
+# env) and declares this host as webapp.public_url — the Host/Origin trust
+# declaration the gate needs behind a proxy.
+#
+# No stripPrefix and no rewrite: the Webapp, its JSON-RPC API and the native
+# session WebSocket (/api/ws) all live at the root. Traefik's Kubernetes
+# provider enables response buffering by default and holds every WS frame until
+# the response completes, so the router disables it (that IS the WS fix).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hermes-carolyn-gateway
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "hermes-carolyn-gateway-no-buffer@kubernetescrd"
+spec:
+  ingressClassName: traefik-internal
+  rules:
+    - host: hermes-carolyn-gw.nb.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hermes-carolyn-gateway
+                port:
+                  number: 9120
+---
+# No response buffering for the gateway's long-lived WebSocket sessions.
+# maxRequestBodyBytes: 0 keeps the request body limit at traefik's default;
+# only the response buffering is turned off here.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: hermes-carolyn-gateway-no-buffer
+spec:
+  buffering:
+    maxRequestBodyBytes: 0
