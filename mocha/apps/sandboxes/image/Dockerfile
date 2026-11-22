@@ -40,8 +40,11 @@ RUN curl -fsSL -o /usr/local/bin/kubectl \
 # the pin lives in one place. The release tarball is used rather than
 # https://mise.run: no installer script to trust, and nothing can drift to
 # "latest".
-COPY mise.toml /etc/mise/mise.toml
-RUN MISE_VERSION="${MISE_VERSION:-$(sed -n 's/^mise = "\(.*\)"$/\1/p' /etc/mise/mise.toml)}" \
+# It must NOT land in /etc/mise: that is mise's *system* config dir, which mise
+# merges at run time with the repo's own mise.toml, so a `mise = "..."` tool
+# there breaks every `mise install` with "mise not found in mise tool registry".
+COPY mise.toml /usr/local/share/sandbox-image/mise.toml
+RUN MISE_VERSION="${MISE_VERSION:-$(sed -n 's/^mise = "\(.*\)"$/\1/p' /usr/local/share/sandbox-image/mise.toml)}" \
   && test -n "$MISE_VERSION" \
   && mkdir -p /tmp/mise-extract \
   && curl -fsSL -o /tmp/mise.tgz \

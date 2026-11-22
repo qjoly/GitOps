@@ -24,7 +24,9 @@ spec:
             - touch /tmp/ready; exec sleep infinity
           env:
             - name: PATH
-              value: /root/.local/share/mise/shims:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              # The image sets MISE_DATA_DIR=/usr/local/share/mise, so that is where
+              # mise writes its shims; /root is an emptyDir mounted over the image's.
+              value: /usr/local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
             - name: MISE_YES
               value: "1"
             - name: MISE_TRUSTED_CONFIG_PATHS
