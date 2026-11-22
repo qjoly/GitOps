@@ -6,7 +6,8 @@ metadata:
 data:
   config.yaml: |
     model:
-      default: "mistral-large-latest"
+      # Served by Mistral's API under this exact ID
+      default: "deepseek-v4-1-flash-1017"
       provider: "custom"
       base_url: "https://api.mistral.ai/v1"
       key_env: "MISTRAL_API_KEY"
