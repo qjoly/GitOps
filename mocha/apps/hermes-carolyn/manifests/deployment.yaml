@@ -44,11 +44,11 @@ spec:
               mountPath: /agent-src
         # sbx CLI + kubectl + in-cluster kubeconfig, shared with the agent containers
         - name: install-sbx
-          image: docker.io/rancher/kubectl:v1.36.1
+          image: docker.io/alpine/k8s:1.36.2
           command:
             - sh
             - -c
-            - cp /bin/kubectl /opt/sbx/kubectl && cp /src/sbx /opt/sbx/sbx && cp /src/kubeconfig /opt/sbx/kubeconfig && chmod +x /opt/sbx/sbx /opt/sbx/kubectl
+            - cp /usr/bin/kubectl /opt/sbx/kubectl && cp /src/sbx /opt/sbx/sbx && cp /src/kubeconfig /opt/sbx/kubeconfig && chmod +x /opt/sbx/sbx /opt/sbx/kubectl
           volumeMounts:
             - name: sbx-tools
               mountPath: /opt/sbx
