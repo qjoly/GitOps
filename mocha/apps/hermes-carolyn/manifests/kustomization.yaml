@@ -6,6 +6,7 @@ resources:
   - externalsecret.yaml
   - configmap.yaml
   - sbx-configmap.yaml
+  - arr-configmap.yaml
   - serviceaccount.yaml
   - pvc.yaml
   - deployment.yaml

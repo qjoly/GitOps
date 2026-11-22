@@ -1,0 +1,1188 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-carolyn-arr
+data:
+  ssh_config: |
+    Host americano arr test.americano.thoughtless.eu
+      HostName 100.92.156.232
+      User root
+      IdentityFile /opt/ssh/id_ed25519
+      IdentitiesOnly yes
+      StrictHostKeyChecking accept-new
+      UserKnownHostsFile /opt/ssh/known_hosts
+      BatchMode yes
+      ConnectTimeout 15
+  SKILL.md: |
+    ---
+    name: arr
+    description: Control the Sonarr/Radarr/Prowlarr/Deluge stack on the Americano media server, reached over NetBird (SSH to 100.92.156.232 as root via the pod's netbird sidecar). Use when the user asks to add or find a TV show or film, list the library, search indexers, fill missing episodes, check or fix the download queue, manage Deluge torrents (ratio, dead torrents), rescan, or debug indexer health.
+    ---
+    
+    # arr stack on Americano (over NetBird)
+    
+    The media server is a NetBird peer (100.92.156.232). The pod reaches it through
+    the `netbird` sidecar; SSH goes through the wrapper in /opt/sbx. One script does
+    everything: `arr.sh` (on PATH, lives in /opt/arr). API keys come from the
+    environment (SONARR_API_KEY, RADARR_API_KEY, PROWLARR_API_KEY, DELUGE_PASSWORD);
+    never print them.
+    
+    Start every session with state: `arr.sh status` prints versions, queue size and
+    health warnings for Sonarr, Radarr, Prowlarr.
+    
+    ## Commands
+    
+        arr.sh series [query] / arr.sh movies [query]   # library
+        arr.sh show <seriesId> / arr.sh movie <movieId> # seasons, per-season files
+        arr.sh lookup tv|movie <term>                   # tvdb/tmdb id candidates
+        arr.sh add tv <tvdbId> [--profile N] [--root PATH] [--monitor ...] [--search] [--dry-run]
+        arr.sh add movie <tmdbId> [--profile N] [--root PATH] [--search] [--dry-run]
+        arr.sh search tv|movie <term> [--limit N]       # Prowlarr, all indexers, by seeders
+        arr.sh missing tv|movie [--limit N]
+        arr.sh queue [tv|movie] [--limit N]
+        arr.sh calendar [--days N] / arr.sh history tv|movie [--limit N]
+        arr.sh grab tv --series ID [--season S] [--episode E] / grab movie --id ID
+        arr.sh refresh|rescan|volume tv|movie ID
+        arr.sh import tv|movie <folder> --series|--movie ID [--apply] [--move] [--map REGEX=SxxEyy]
+        arr.sh deluge status|trackers|list|dead|low|remove|pause|resume|set|reannounce|purge
+        arr.sh raw <app> <METHOD> <path> [json]         # escape hatch, path under the API root
+    
+    Sonarr is not published on the server host; the script runs its API calls inside
+    the sonarr container with `podman exec` over SSH. Radarr/Prowlarr APIs are called
+    on the server's localhost. The web UIs sit behind Traefik+Authentik: never call
+    them over HTTPS.
+    
+    ## Rules
+    
+    - Never delete media, series, films or files without an explicit user instruction.
+      `DELETE /series/<id>?deleteFiles=true` removes files on disk.
+    - `add` changes the library: use --dry-run when the user only asks what would happen.
+    - Do not edit anything under /data/media; let Sonarr/Radarr move files.
+    - Deluge removals: check the save path first, never --with-data on library paths,
+      ask the user before deleting. Keep torrents under the ratio target on private trackers.
+  arr.sh: |
+    #!/usr/bin/env bash
+    # arr.sh - drive Sonarr / Radarr / Prowlarr on the remote box over SSH.
+    # The three web UIs sit behind Traefik + Authentik, so the script talks to the
+    # API from the server itself. Sonarr is not published on the host, so its calls
+    # run inside the container with `podman exec`.
+    set -euo pipefail
+    
+    HOST="${ARR_HOST:-root@test.americano.thoughtless.eu}"
+    SONARR_API_KEY="${SONARR_API_KEY:-}"
+    RADARR_API_KEY="${RADARR_API_KEY:-}"
+    PROWLARR_API_KEY="${PROWLARR_API_KEY:-}"
+    DELUGE_PASSWORD="${DELUGE_PASSWORD:-}"
+    DELUGE_TMP="${DELUGE_TMP:-/media/tmp}"
+    MEDIA_ROOT="${MEDIA_ROOT:-/data/media}"
+    
+    SONARR_ROOT="${SONARR_ROOT:-/media/Series}"
+    RADARR_ROOT="${RADARR_ROOT:-/media/Films}"
+    DEFAULT_PROFILE="${DEFAULT_PROFILE:-1}"
+    
+    die() { printf 'error: %s\n' "$*" >&2; exit 1; }
+    need() { command -v "$1" >/dev/null 2>&1 || die "missing local command: $1"; }
+    need jq
+    
+    # --- remote API -------------------------------------------------------------
+    
+    ssh_run() { ssh -o BatchMode=yes -o ConnectTimeout=15 "$HOST" "$1"; }
+    
+    # api <app> <METHOD> <path> [json-body]
+    api() {
+      local app=$1 method=$2 path=$3 body=${4-}
+      local port key base
+      case "$app" in
+        sonarr)   port=8989; key=$SONARR_API_KEY;   base=/api/v3 ;;
+        radarr)   port=7878; key=$RADARR_API_KEY;   base=/api/v3 ;;
+        prowlarr) port=9696; key=$PROWLARR_API_KEY; base=/api/v1 ;;
+        *) die "unknown app: $app (sonarr|radarr|prowlarr)" ;;
+      esac
+      local url="http://127.0.0.1:${port}${base}${path}"
+      local cmd="curl -sS --max-time 60 -H 'X-Api-Key: ${key}' -X ${method}"
+      if [ -n "$body" ]; then
+        cmd="$cmd -H 'Content-Type: application/json' --data-binary @-"
+      fi
+      cmd="$cmd '${url}'"
+      # sonarr has no published host port
+      [ "$app" = sonarr ] && cmd="podman exec -i sonarr $cmd"
+      local out
+      if [ -n "$body" ]; then
+        out=$(printf '%s' "$body" | ssh_run "$cmd")
+      else
+        out=$(ssh_run "$cmd")
+      fi
+      printf '%s' "$out"
+    }
+    
+    # api_q <app> <path> <curl --get data-urlencode pairs...>
+    api_q() {
+      local app=$1 path=$2; shift 2
+      local port key base
+      case "$app" in
+        sonarr)   port=8989; key=$SONARR_API_KEY;   base=/api/v3 ;;
+        radarr)   port=7878; key=$RADARR_API_KEY;   base=/api/v3 ;;
+        prowlarr) port=9696; key=$PROWLARR_API_KEY; base=/api/v1 ;;
+        *) die "unknown app: $app" ;;
+      esac
+      local args="" a b
+      while [ $# -gt 0 ]; do
+        a=$1; b=$2; shift 2
+        args="$args --data-urlencode '${a}=${b}'"
+      done
+      local cmd="curl -sS --max-time 90 -G -H 'X-Api-Key: ${key}' ${args} 'http://127.0.0.1:${port}${base}${path}'"
+      [ "$app" = sonarr ] && cmd="podman exec -i sonarr $cmd"
+      ssh_run "$cmd"
+    }
+    
+    # --- formatting helpers -----------------------------------------------------
+    
+    iso_date() { date -u -v"$1" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "$1" +%Y-%m-%dT%H:%M:%SZ; }
+    
+    usage() {
+      cat <<'EOF'
+    arr.sh - Sonarr / Radarr / Prowlarr / Deluge remote control
+    
+      status                          health + queue summary for all three apps
+      series [query]                  list Sonarr series (id, title, episodes, size)
+      movies [query]                  list Radarr movies (id, title, year, size)
+      show <seriesId>                 seasons of one series
+      movie <movieId>                 detail of one movie
+    
+      lookup tv <term>                Sonarr lookup (use "tvdb:<id>" for ids)
+      lookup movie <term>             Radarr lookup (use "tmdb:<id>" for ids)
+      add tv <tvdbId> [opts]          add series   [--profile N] [--root PATH]
+                                      [--monitor all|first|future|none] [--search]
+                                      [--dry-run]
+      add movie <tmdbId> [opts]       add movie    [--profile N] [--root PATH] [--search]
+                                      [--dry-run]
+    
+      search tv|movie <term> [--limit N]   Prowlarr search across indexers
+      missing tv|movie [--limit N]         wanted/missing items
+      queue [tv|movie] [--limit N]         download queue
+      calendar [--days N]                  upcoming Sonarr episodes
+      history tv|movie [--limit N]         import/grab history
+    
+      grab tv --series ID [--season S] [--episode E]   force a search [--dry-run]
+      grab movie --id ID                               force a search [--dry-run]
+      refresh tv|movie ID             refresh metadata
+      rescan tv|movie ID              rescan disk for files
+      volume tv|movie ID              set monitored=true on a season or movie
+    
+      import tv <folder> --series ID [--apply] [--move] [--map REGEX=SxxEyy]
+      import movie <folder> --movie ID [--apply] [--move] [--map ...]
+      deluge status                   daemon speeds, totals, disk
+      deluge list [--sort ratio|size|up|leech] [--limit N] [--state seeding]
+      deluge trackers                 ratio per tracker
+      deluge dead [--ratio 2] [--idle 168] [--limit N]   removal candidates
+      deluge low [--ratio 1] [--limit N]                 torrents that still need seed
+      deluge remove <hash|--dead> [--with-data] [--apply] [--force]
+      deluge pause|resume <hash|--all>
+      deluge set <key=value>...        live config change, JSON values
+      deluge reannounce <hash|--top N|--all>
+      deluge purge [--apply]           delete /media/tmp entries no torrent uses
+    
+      raw <app> <METHOD> <path> [json]    escape hatch, path is under /api/v3 or /api/v1
+    EOF
+    }
+    
+    # --- subcommands ------------------------------------------------------------
+    
+    cmd_status() {
+      local app label port
+      printf 'app\tversion\tqueue\thealth\n'
+      for app in sonarr radarr prowlarr; do
+        local st q h ver
+        st=$(api "$app" GET /system/status)
+        if [ "$app" = prowlarr ]; then q="-"; else q=$(api "$app" GET '/queue?pageSize=200' | jq -r '.totalRecords // 0'); fi
+        h=$(api "$app" GET /health | jq -r '[.[] | "\(.type): \(.message)"] | join(" | ") // ""')
+        ver=$(printf '%s' "$st" | jq -r '.version // "?"')
+        printf '%s\t%s\t%s\t%s\n' "$app" "$ver" "$q" "${h:-ok}"
+      done
+    }
+    
+    cmd_series() {
+      local q=${1-}
+      api sonarr GET /series | jq -r --arg q "$q" '
+        [ .[] | select($q == "" or (.title | ascii_downcase | contains($q | ascii_downcase))) ]
+        | sort_by(.title)
+        | ("id\ttitle\tyear\tmon\tseasons\tepisodes\tsize\tpath"),
+          (.[] | [ (.id|tostring), .title, (.year|tostring), (if .monitored then "y" else "-" end),
+             ((.statistics.seasonCount // 0)|tostring),
+             ("\(.statistics.episodeFileCount // 0)/\(.statistics.totalEpisodeCount // 0)"),
+             ((.statistics.sizeOnDisk // 0) / 1073741824 | floor | tostring + "GB"),
+             (.path // "") ] | @tsv)'
+    }
+    
+    cmd_movies() {
+      local q=${1-}
+      api radarr GET /movie | jq -r --arg q "$q" '
+        [ .[] | select($q == "" or (.title | ascii_downcase | contains($q | ascii_downcase))) ]
+        | sort_by(.sortTitle)
+        | ("id\ttitle\tyear\tfile\tmon\tstatus\tsize"),
+          (.[] | [ (.id|tostring), .title, (.year|tostring),
+             (if .hasFile then "y" else "-" end), (if .monitored then "y" else "-" end),
+             (.status // ""),
+             ((.sizeOnDisk // 0) / 1073741824 | floor | tostring + "GB") ] | @tsv)'
+    }
+    
+    cmd_show() {
+      local id=$1
+      api sonarr GET "/series/$id" | jq -r '
+        "\(.title)  (id \(.id), \(.year), profile \(.qualityProfileId), \(.path))",
+        "monitored: \(.monitored)  seasons: \(.statistics.seasonCount)  episodes: \(.statistics.episodeFileCount)/\(.statistics.totalEpisodeCount)",
+        ( .seasons[] | "  S\(.seasonNumber|tostring|if length==1 then "0"+. else . end)  monitored=\(if .monitored then "y" else "-" end)  stats=\(.statistics.episodeFileCount // 0)/\(.statistics.totalEpisodeCount // 0)" )'
+    }
+    
+    cmd_movie() {
+      local id=$1
+      api radarr GET "/movie/$id" | jq -r '
+        "\(.title) (\(.year))  id \(.id)",
+        "hasFile: \(.hasFile)  monitored: \(.monitored)  status: \(.status)  profile: \(.qualityProfileId)",
+        "size: \((.sizeOnDisk / 1073741824) | floor)GB",
+        "path: \(.path // "-")"'
+    }
+    
+    cmd_lookup() {
+      local kind=$1 term=$2
+      case "$kind" in
+        tv)
+          api_q sonarr /series/lookup term "$term" | jq -r '
+            ("tvdbId\ttitle\tyear\tseasons\tnetwork"),
+            (.[] | [ (.tvdbId|tostring), .title, (.year|tostring),
+               ((.statistics.seasonCount // (.seasons|length))|tostring),
+               (.network // "") ] | @tsv)' | head -40 ;;
+        movie)
+          api_q radarr /movie/lookup term "$term" | jq -r '
+            ("tmdbId\ttitle\tyear\truntime\tstudio"),
+            (.[] | [ ((.tmdbId // 0)|tostring), .title, (.year|tostring),
+               (.runtime|tostring), (.studio // "") ] | @tsv)' | head -40 ;;
+        *) die "lookup tv|movie" ;;
+      esac
+    }
+    
+    cmd_add() {
+      local kind=$1 id=$2; shift 2
+      local profile=$DEFAULT_PROFILE root="" monitor=all search=false dry=false
+      case "$kind" in
+        tv) root=$SONARR_ROOT ;;
+        movie) root=$RADARR_ROOT ;;
+        *) die "add tv|movie <id>" ;;
+      esac
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --profile) profile=$2; shift 2 ;;
+          --root) root=$2; shift 2 ;;
+          --monitor) monitor=$2; shift 2 ;;
+          --search) search=true; shift ;;
+          --dry-run) dry=true; shift ;;
+          *) die "unknown option: $1" ;;
+        esac
+      done
+      local body
+      if [ "$kind" = tv ]; then
+        body=$(api_q sonarr /series/lookup term "tvdb:${id}" | jq --argjson pid "$profile" --arg root "$root" \
+          --arg mon "$monitor" --argjson search "$search" '
+          .[0] | if . == null then error("no match for tvdb id") else . end
+          | .qualityProfileId = $pid
+          | .rootFolderPath = $root
+          | .monitored = true
+          | .seasonFolder = true
+          | .addOptions = { monitor: $mon, searchForMissingEpisodes: $search, searchForCutoffUnmetEpisodes: false }
+          | if $mon == "first" and (.seasons | length) > 0 then .seasons |= (map(.monitored = false) | .[0].monitored = true) else . end')
+        if printf '%s' "$body" | jq -e '(.id // 0) > 0' >/dev/null; then
+          printf '%s' "$body" | jq -r '"already in library: \(.title) (id \(.id))"'; return
+        fi
+        if $dry; then printf '%s' "$body" | jq .; else api sonarr POST /series "$body" | jq -r '"added: \(.title) (id \(.id))"'; fi
+      else
+        body=$(api_q radarr /movie/lookup term "tmdb:${id}" | jq --argjson pid "$profile" --arg root "$root" --argjson search "$search" '
+          .[0] | if . == null then error("no match for tmdb id") else . end
+          | .qualityProfileId = $pid
+          | .rootFolderPath = $root
+          | .monitored = true
+          | .minimumAvailability = "released"
+          | .addOptions = { searchForMovie: $search }')
+        if printf '%s' "$body" | jq -e '(.id // 0) > 0' >/dev/null; then
+          printf '%s' "$body" | jq -r '"already in library: \(.title) (id \(.id))"'; return
+        fi
+        if $dry; then printf '%s' "$body" | jq .; else api radarr POST /movie "$body" | jq -r '"added: \(.title) (id \(.id))"'; fi
+      fi
+    }
+    
+    cmd_search() {
+      local kind=$1 term=$2; shift 2
+      local limit=25
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --limit) limit=$2; shift 2 ;;
+          *) die "unknown option: $1" ;;
+        esac
+      done
+      local type=search
+      [ "$kind" = tv ] && type=tvsearch
+      [ "$kind" = movie ] && type=moviesearch
+      api_q prowlarr /search query "$term" type "$type" limit "$limit" | jq -r '
+        sort_by(-(.seeders // 0))
+        | ("seed\tsize\tage\ttitle\tindexer"),
+          (.[] | [ ((.seeders // 0)|tostring),
+             ((.size / 1073741824 * 10 | floor) / 10 | tostring + "GB"),
+             ((.age // 0)|tostring),
+             (.title // ""),
+             (.indexer // "") ] | @tsv)' | head -n $((limit + 1))
+    }
+    
+    cmd_missing() {
+      local kind=$1; shift
+      local limit=25
+      while [ $# -gt 0 ]; do case "$1" in --limit) limit=$2; shift 2 ;; *) die "unknown option: $1" ;; esac; done
+      if [ "$kind" = tv ]; then
+        api sonarr GET "/wanted/missing?pageSize=${limit}&includeSeries=true" | jq -r '
+          "total: \(.totalRecords)",
+          ("epId\tseries\ts\te\tairdate\ttitle"),
+          (.records[] | [ (.id|tostring), .series.title,
+            ("S\(.seasonNumber|tostring|if length==1 then "0"+. else . end)"),
+            ("E\(.episodeNumber|tostring|if length==1 then "0"+. else . end)"),
+            (.airDate // ""), .title ] | @tsv)' | head -n $((limit + 2))
+      else
+        api radarr GET "/wanted/missing?pageSize=${limit}&includeSeries=false" | jq -r '
+          "total: \(.totalRecords)",
+          ("id\ttitle\tyear\tdigital\ttheatrical"),
+          (.records[] | [ (.id|tostring), .title, (.year|tostring),
+            (.digitalRelease // ""), (.physicalRelease // "") ] | @tsv)' | head -n $((limit + 2))
+      fi
+    }
+    
+    cmd_queue() {
+      local kind=all limit=25
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --limit) limit=$2; shift 2 ;;
+          tv|all) kind=tv; shift ;;
+          movie) kind=movie; shift ;;
+          *) die "unknown option: $1" ;;
+        esac
+      done
+      local app=sonarr
+      [ "$kind" = movie ] && app=radarr
+      api "$app" GET "/queue?pageSize=${limit}&includeUnknownMovieItems=true&includeUnknownSeriesItems=true" | jq -r '
+        "total: \(.totalRecords)",
+        ("id\titem\tstate\tprogress\tsizeleft\ttimeleft"),
+        (.records[] | [ (.id|tostring),
+          ((.title // "") ),
+          ("\(.status // "")/\((.trackedDownloadState // ""))"),
+          (((.size // 0) - (.sizeleft // 0)) as $done | if (.size // 0) > 0 then "\((($done / .size) * 100) | floor)%" else "-" end),
+          (((.sizeleft // 0) / 1048576 | floor) | tostring + "MB"),
+          (.timeleft // "-") ] | @tsv)' | head -n $((limit + 2))
+    }
+    
+    cmd_calendar() {
+      local days=7
+      while [ $# -gt 0 ]; do case "$1" in --days) days=$2; shift 2 ;; *) die "unknown option: $1" ;; esac; done
+      local start end
+      start=$(iso_date -0d)
+      end=$(iso_date "+${days}d")
+      api_q sonarr /calendar start "$start" end "$end" includeSeries true | jq -r '
+        sort_by(.airDateUtc)
+        | ("airdate\tseries\tepisode\thasfile"),
+          (.[] | [ (.airDate // ""),
+            .series.title,
+            ("S\(.seasonNumber|tostring|if length==1 then "0"+. else . end)E\(.episodeNumber|tostring|if length==1 then "0"+. else . end) \(.title // "")"),
+            (if .hasFile then "y" else "-" end) ] | @tsv)' | head -n 60
+    }
+    
+    cmd_history() {
+      local kind=$1; shift
+      local limit=20
+      while [ $# -gt 0 ]; do case "$1" in --limit) limit=$2; shift 2 ;; *) die "unknown option: $1" ;; esac; done
+      local app=sonarr
+      [ "$kind" = movie ] && app=radarr
+      api "$app" GET "/history?pageSize=${limit}&sortKey=date&sortDirection=descending" | jq -r '
+        ("date\tevent\ttitle\tquality"),
+        (.records[] | [ ((.date // "") | split("T")[0]),
+          (.eventType // ""),
+          (.sourceTitle // .series.title // .movie.title // ""),
+          (.quality.quality.name // "-") ] | @tsv)' | head -n $((limit + 1))
+    }
+    
+    cmd_grab() {
+      local kind=$1; shift
+      local id season="" episode="" dry=false
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --series) id=$2; shift 2 ;;
+          --id) id=$2; shift 2 ;;
+          --season) season=$2; shift 2 ;;
+          --episode) episode=$2; shift 2 ;;
+          --dry-run) dry=true; shift ;;
+          *) die "unknown option: $1" ;;
+        esac
+      done
+      [ -n "${id-}" ] || die "grab needs --series ID (tv) or --id ID (movie)"
+      local body
+      if [ "$kind" = tv ]; then
+        if [ -n "$episode" ]; then
+          [ -n "$season" ] || die "--episode needs --season"
+          local ids
+          ids=$(api sonarr GET "/episode?seriesId=${id}&seasonNumber=${season}" | jq -c --argjson e "$episode" '[.[] | select(.episodeNumber == $e) | .id]')
+          body=$(jq -cn --argjson ids "$ids" '{name:"EpisodeSearch", episodeIds:$ids}')
+        elif [ -n "$season" ]; then
+          body=$(jq -cn --argjson s "$id" --argjson n "$season" '{name:"SeasonSearch", seriesId:$s, seasonNumber:$n}')
+        else
+          body=$(jq -cn --argjson s "$id" '{name:"SeriesSearch", seriesId:$s}')
+        fi
+      else
+        body=$(jq -cn --argjson i "$id" '{name:"MoviesSearch", movieIds:[$i]}')
+      fi
+      if $dry; then printf '%s' "$body" | jq .; return; fi
+      api "$([ "$kind" = tv ] && echo sonarr || echo radarr)" POST /command "$body" \
+        | jq -r '"command \(.name) queued (id \(.id), status \(.status))"'
+    }
+    
+    cmd_refresh() {
+      local kind=$1 id=$2 body
+      if [ "$kind" = tv ]; then
+        body=$(jq -cn --argjson i "$id" '{name:"RefreshSeries", seriesId:$i}')
+        api sonarr POST /command "$body" | jq -r '"queued \(.name) id \(.id)"'
+      else
+        body=$(jq -cn --argjson i "$id" '{name:"RefreshMovie", movieIds:[$i]}')
+        api radarr POST /command "$body" | jq -r '"queued \(.name) id \(.id)"'
+      fi
+    }
+    
+    cmd_rescan() {
+      local kind=$1 id=$2 body
+      if [ "$kind" = tv ]; then
+        body=$(jq -cn --argjson i "$id" '{name:"RescanSeries", seriesId:$i}')
+        api sonarr POST /command "$body" | jq -r '"queued \(.name) id \(.id)"'
+      else
+        body=$(jq -cn --argjson i "$id" '{name:"RescanMovie", movieIds:[$i]}')
+        api radarr POST /command "$body" | jq -r '"queued \(.name) id \(.id)"'
+      fi
+    }
+    
+    cmd_import() {
+      local kind=$1 folder=$2; shift 2
+      # copy keeps the Deluge data seeding (with copyUsingHardlinks=true it is a hardlink, not a duplicate)
+      local sid="" mid="" apply=false mode=copy maps=()
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --series) sid=$2; shift 2 ;;
+          --movie) mid=$2; shift 2 ;;
+          --apply) apply=true; shift ;;
+          --move) mode=move; shift ;;
+          --map) maps+=(--map "$2"); shift 2 ;;
+          *) die "unknown option: $1" ;;
+        esac
+      done
+      [ -n "$folder" ] || die "import needs a folder name under /media/tmp or a full container path"
+      local app=sonarr id=$sid
+      [ "$kind" = movie ] && { app=radarr; id=$mid; }
+      [ -n "$id" ] || die "import needs --series ID or --movie ID"
+    
+      local tmp payload
+      tmp=$(mktemp -d)
+      trap 'rm -rf "$tmp"' RETURN
+      api_q "$app" /manualimport filterExistingFiles false folder "$folder" > "$tmp/listing.json"
+      [ "$(jq 'length' < "$tmp/listing.json")" -gt 0 ] || die "no file in $folder"
+      if [ "$kind" = tv ]; then
+        api sonarr GET "/episode?seriesId=$id" > "$tmp/episodes.json"
+        api sonarr GET '/queue?pageSize=500' > "$tmp/queue.json"
+      else
+        api radarr GET '/queue?pageSize=500' > "$tmp/queue.json"
+      fi
+    
+      payload=$(python3 "$(dirname "$0")/plan_import.py" --kind "$kind" --id "$id" --dir "$tmp" \
+        --mode "$mode" "${maps[@]+"${maps[@]}"}") || true
+      if [ -z "$payload" ]; then
+        cat "$tmp/listing.json" | jq -r '.[].path' | sed 's|.*/||' >&2 || true
+        die "nothing matched, check --series/--movie and the file names"
+      fi
+      if ! $apply; then
+        printf 'dry run, add --apply to import\n'
+        return
+      fi
+      api "$app" POST /command "$payload" | jq -r '"queued \(.name) (id \(.id), status \(.status))"'
+    }
+    
+    
+    # --- deluge -----------------------------------------------------------------
+    
+    deluge_rpc() {
+      local cmd="podman exec -i -e DELUGE_PASSWORD=${DELUGE_PASSWORD} deluge python3 -"
+      local a
+      for a in "$@"; do cmd="$cmd $(printf '%q' "$a")"; done
+      if ! ssh_run "$cmd" < "$(dirname "$0")/deluge_rpc.py"; then
+        die "deluge rpc failed"
+      fi
+    }
+    
+    deluge_torrents() { deluge_rpc torrents | jq -c '. // {}'; }
+    
+    gb() { awk -v b="$1" 'BEGIN { printf "%.1fG", b / 1073741824 }'; }
+    
+    cmd_deluge() {
+      local sub=${1-}; shift || true
+      case "$sub" in
+        status|list|trackers|dead|low|remove|pause|resume|set|reannounce|purge) ;;
+        *) die "deluge needs one of: status list trackers dead low remove pause resume" ;;
+      esac
+    
+      case "$sub" in
+        status)
+          local st free
+          st=$(deluge_rpc status)
+          printf '%s' "$st" | jq -r '
+            "torrents: \(.count)  seeding: \(.seeding)",
+            "ratio: \((.ratio * 100 | floor) / 100)  up \(.uploaded / 1073741824 | floor) GiB  down \(.downloaded / 1073741824 | floor) GiB  data \(.size / 1073741824 | floor) GiB",
+            "speed: up \(.session.upload_rate / 1048576 * 10 | floor / 10) MB/s  down \(.session.download_rate / 1048576 * 10 | floor / 10) MB/s  dht \(.session.dht_nodes)"'
+          free=$(ssh_run "df -h /data | tail -1 | awk '{print \$3\" used / \"\$4\" free\"}'")
+          printf 'disk: %s\n' "$free"
+          ;;
+    
+        list)
+          local sort=ratio limit=20 state=""
+          while [ $# -gt 0 ]; do
+            case "$1" in
+              --sort) sort=$2; shift 2 ;;
+              --limit) limit=$2; shift 2 ;;
+              --state) state=$2; shift 2 ;;
+              *) die "unknown option: $1" ;;
+            esac
+          done
+          deluge_torrents | jq -r --arg sort "$sort" --argjson limit "$limit" --arg state "$state" '
+            to_entries | map(.value + {hash: .key})
+            | map(select($state == "" or ((.state | ascii_downcase) | contains($state | ascii_downcase))))
+            | (if $sort == "size" then sort_by(-.total_size)
+               elif $sort == "up" then sort_by(-.total_uploaded)
+               elif $sort == "leech" then sort_by(-([0, (.total_peers - .total_seeds)] | max))
+               else sort_by(.ratio) end)
+            | "hash\tratio\tsize\tuploaded\tseeds/peers\tstate\ttracker\tname",
+              (.[:$limit][] | [ (.hash[0:8]),
+                (if .ratio < 0 then "inf" else ((.ratio * 100 | floor) / 100 | tostring) end),
+                ((.total_size / 1073741824 * 10 | floor) / 10 | tostring + "G"),
+                ((.total_uploaded / 1073741824 * 10 | floor) / 10 | tostring + "G"),
+                "\(.total_seeds)/\(.total_peers)",
+                .state, .tracker_host, .name ] | @tsv)'
+          ;;
+    
+        trackers)
+          deluge_torrents | jq -r '
+            to_entries | map(.value)
+            | group_by(.tracker_host)
+            | map({ t: (.[0].tracker_host // "?"), n: length,
+                    up: (map(.total_uploaded) | add // 0),
+                    down: (map(.total_done) | add // 0),
+                    leech: (map([0, (.total_peers - .total_seeds)] | max) | add // 0) })
+            | map(. + { ratio: (if .down > 0 then .up / .down else 0 end) })
+            | sort_by(.ratio)
+            | "tracker\ttorrents\tratio\tdownloaded\tuploaded\tleechers",
+              (.[] | [ .t, (.n | tostring), (if .ratio < 0 then "inf" else ((.ratio * 100 | floor) / 100 | tostring) end),
+                       ((.down / 1073741824 | floor) | tostring + "G"),
+                       ((.up / 1073741824 | floor) | tostring + "G"),
+                       (.leech | tostring) ] | @tsv)'
+          ;;
+    
+        dead)
+          local target=2 idle=168 limit=25
+          while [ $# -gt 0 ]; do
+            case "$1" in
+              --ratio) target=$2; shift 2 ;;
+              --idle) idle=$2; shift 2 ;;
+              --limit) limit=$2; shift 2 ;;
+              *) die "unknown option: $1" ;;
+            esac
+          done
+          deluge_torrents | jq -r --argjson target "$target" --argjson idle "$idle" --argjson limit "$limit" '
+            to_entries | map(.value + {hash: .key})
+            | map(select(.ratio >= $target
+                         and .progress >= 100
+                         and ([0, (.total_peers - .total_seeds)] | max) <= 0
+                         and .time_since_transfer >= ($idle * 3600)))
+            | sort_by(-.total_size)
+            | "candidates: \(length)  size: \((map(.total_size) | add // 0) / 1073741824 | floor)G  ratio >= \($target), 0 leecher, idle >= \($idle)h",
+              "hash\tratio\tsize\tidle_days\ttracker\tname",
+              (.[:$limit][] | [ (.hash[0:8]), (if .ratio < 0 then "inf" else ((.ratio * 100 | floor) / 100 | tostring) end),
+                ((.total_size / 1073741824 * 10 | floor) / 10 | tostring + "G"),
+                ((.time_since_transfer / 86400) | floor | tostring),
+                .tracker_host, .name ] | @tsv)'
+          ;;
+    
+        low)
+          local target=1 limit=25
+          while [ $# -gt 0 ]; do
+            case "$1" in
+              --ratio) target=$2; shift 2 ;;
+              --limit) limit=$2; shift 2 ;;
+              *) die "unknown option: $1" ;;
+            esac
+          done
+          deluge_torrents | jq -r --argjson target "$target" --argjson limit "$limit" '
+            to_entries | map(.value + {hash: .key})
+            | map(select(.ratio < $target))
+            | sort_by(-([0, (.total_peers - .total_seeds)] | max))
+            | "below ratio \($target): \(length) torrents",
+              "hash\tratio\tsize\tleechers\ttracker\tname",
+              (.[:$limit][] | [ (.hash[0:8]), (if .ratio < 0 then "inf" else ((.ratio * 100 | floor) / 100 | tostring) end),
+                ((.total_size / 1073741824 * 10 | floor) / 10 | tostring + "G"),
+                (([0, (.total_peers - .total_seeds)] | max) | tostring),
+                .tracker_host, .name ] | @tsv)'
+          ;;
+    
+        remove)
+          local apply=false data="" hashes=() target=2 idle=168 force=false
+          while [ $# -gt 0 ]; do
+            case "$1" in
+              --apply) apply=true; shift ;;
+              --with-data) data="--with-data"; shift ;;
+              --force) force=true; shift ;;
+              --dead) hashes=("__dead__"); shift ;;
+              --ratio) target=$2; shift 2 ;;
+              --idle) idle=$2; shift 2 ;;
+              --*) die "unknown option: $1" ;;
+              *) hashes+=("$1"); shift ;;
+            esac
+          done
+          [ ${#hashes[@]} -gt 0 ] || die "deluge remove needs a hash, or --dead"
+          local full=()
+          if [ "${hashes[0]}" = "__dead__" ]; then
+            while read -r h; do full+=("$h"); done < <(deluge_torrents | jq -r \
+              --argjson target "$target" --argjson idle "$idle" '
+              to_entries[] | select(.value.ratio >= $target
+                                    and .value.progress >= 100
+                                    and ([0, (.value.total_peers - .value.total_seeds)] | max) <= 0
+                                    and .value.time_since_transfer >= ($idle * 3600)) | .key')
+          else
+            local all t h
+            all=$(deluge_torrents)
+            for h in "${hashes[@]}"; do
+              t=$(printf '%s' "$all" | jq -r --arg h "$h" 'to_entries[] | select(.key | startswith($h)) | .key' | head -1)
+              [ -n "$t" ] || die "no torrent starts with $h"
+              full+=("$t")
+            done
+          fi
+          [ ${#full[@]} -gt 0 ] || { printf 'nothing to remove\n'; return; }
+          local all outside
+          all=$(deluge_torrents)
+          printf 'to remove: %s torrents\n' "${#full[@]}"
+          for h in "${full[@]}"; do
+            printf '%s' "$all" | jq -r --arg h "$h" '.[$h] | "  \(if .ratio < 0 then "inf" else (.ratio | floor * 100 / 100) end)  \((.total_size / 1073741824 * 10 | floor) / 10)G  \(.save_path)  \(.name)"'
+          done
+          outside=$(for h in "${full[@]}"; do
+            printf '%s' "$all" | jq -r --arg h "$h" --arg tmp "$DELUGE_TMP" '.[$h].save_path | select(startswith($tmp) | not)'
+          done | sort -u)
+          if [ -n "$data" ] && [ -n "$outside" ] && ! $force; then
+            printf 'refusing --with-data, these save paths are outside %s and may hold library files:\n' "$DELUGE_TMP" >&2
+            printf '%s\n' "$outside" >&2
+            die "rerun without --with-data to keep the files, or add --force"
+          fi
+          if ! $apply; then
+            printf 'dry run, add --apply to remove\n'
+            return
+          fi
+          deluge_rpc remove "${full[@]}" $data | jq -r '"removed \(.removed | length) torrents (data deleted: \(.with_data))"'
+          ;;
+    
+        purge)
+          local apply=false arg=""
+          while [ $# -gt 0 ]; do
+            case "$1" in
+              --apply) apply=true; arg="--apply"; shift ;;
+              *) die "unknown option: $1" ;;
+            esac
+          done
+          ssh_run "cat > /tmp/arr_purge.py" < "$(dirname "$0")/purge_orphans.py"
+          deluge_torrents | jq -r '.[].name' | ssh_run "cat > /tmp/arr_names.txt"
+          ssh_run "ARR_MEDIA_ROOT='${MEDIA_ROOT}' python3 /tmp/arr_purge.py /tmp/arr_names.txt ${arg}" | tail -25
+          ;;
+    
+        reannounce)
+          local hashes=() h t all full=()
+          while [ $# -gt 0 ]; do
+            case "$1" in
+              --all) while read -r h; do hashes+=("$h"); done < <(deluge_torrents | jq -r 'keys[]'); shift ;;
+              --top) local n=$2; shift 2
+                     while read -r h; do hashes+=("$h"); done < <(deluge_torrents | jq -r --argjson n "$n" '
+                       to_entries | map(.value + {hash: .key})
+                       | sort_by(-([0, (.total_peers - .total_seeds)] | max)) | .[:$n][].hash') ;;
+              *) hashes+=("$1"); shift ;;
+            esac
+          done
+          [ ${#hashes[@]} -gt 0 ] || die "deluge reannounce needs hashes, --all or --top N"
+          all=$(deluge_torrents)
+          for h in "${hashes[@]}"; do
+            t=$(printf '%s' "$all" | jq -r --arg h "$h" 'to_entries[] | select(.key | startswith($h)) | .key' | head -1)
+            [ -n "$t" ] || die "no torrent starts with $h"
+            full+=("$t")
+          done
+          deluge_rpc reannounce "${full[@]}" | jq -r 'if .error then "error: \(.error)" else "reannounced \(.ok) torrents\(if (.errors | length) > 0 then "  errors: \(.errors | join("; "))" else "" end)" end'
+          ;;
+    
+        set)
+          [ $# -gt 0 ] || die "deluge set needs key=value pairs, for example random_port=false"
+          deluge_rpc set "$@" | jq -r 'if .error then "error: \(.error)" else (.set | to_entries | map("\(.key)=\(.value)") | join("  ")) end'
+          ;;
+    
+        pause|resume)
+          local hashes=() h t all full=()
+          while [ $# -gt 0 ]; do
+            case "$1" in
+              --all) while read -r h; do hashes+=("$h"); done < <(deluge_torrents | jq -r 'keys[]'); shift ;;
+              *) hashes+=("$1"); shift ;;
+            esac
+          done
+          [ ${#hashes[@]} -gt 0 ] || die "deluge $sub needs hashes or --all"
+          all=$(deluge_torrents)
+          for h in "${hashes[@]}"; do
+            t=$(printf '%s' "$all" | jq -r --arg h "$h" 'to_entries[] | select(.key | startswith($h)) | .key' | head -1)
+            [ -n "$t" ] || die "no torrent starts with $h"
+            full+=("$t")
+          done
+          deluge_rpc "$sub" "${full[@]}" | jq -r 'if .error then "error: \(.error)" else "ok: \(.ok) torrents\(if (.errors | length) > 0 then "  errors: \(.errors | join("; "))" else "" end)" end'
+          ;;
+      esac
+    }
+    
+    cmd_volume() {
+      local kind=$1 id=$2
+      if [ "$kind" = tv ]; then
+        local body
+        body=$(api sonarr GET "/series/$id" | jq -c '.monitored = true | .seasons |= map(.monitored = true)')
+        api sonarr PUT "/series/$id" "$body" | jq -r '"series \(.id) monitored, all seasons monitored"'
+      else
+        local body
+        body=$(api radarr GET "/movie/$id" | jq -c '.monitored = true')
+        api radarr PUT "/movie/$id" "$body" | jq -r '"movie \(.id) monitored"'
+      fi
+    }
+    
+    cmd_raw() {
+      local app=$1 method=$2 path=$3 body=${4-}
+      api "$app" "$method" "$path" "$body" | jq . 2>/dev/null || api "$app" "$method" "$path" "$body"
+    }
+    
+    # --- dispatch ---------------------------------------------------------------
+    
+    [ $# -gt 0 ] || { usage; exit 1; }
+    cmd=$1; shift
+    case "$cmd" in
+      status) cmd_status "$@" ;;
+      series) cmd_series "$@" ;;
+      movies) cmd_movies "$@" ;;
+      show) cmd_show "$@" ;;
+      movie) cmd_movie "$@" ;;
+      lookup) cmd_lookup "$@" ;;
+      add) cmd_add "$@" ;;
+      search) cmd_search "$@" ;;
+      missing) cmd_missing "$@" ;;
+      queue) cmd_queue "$@" ;;
+      calendar) cmd_calendar "$@" ;;
+      history) cmd_history "$@" ;;
+      grab) cmd_grab "$@" ;;
+      refresh) cmd_refresh "$@" ;;
+      rescan) cmd_rescan "$@" ;;
+      volume) cmd_volume "$@" ;;
+      import) cmd_import "$@" ;;
+      deluge) cmd_deluge "$@" ;;
+      raw) cmd_raw "$@" ;;
+      -h|--help|help) usage ;;
+      *) die "unknown command: $cmd (try --help)" ;;
+    esac
+  deluge_rpc.py: |
+    #!/usr/bin/env python3
+    """Talk to the Deluge daemon and print JSON.
+    
+    Runs inside the deluge container: pi pipes this file to `podman exec -i deluge python3 -`.
+    
+    Usage:
+      deluge_rpc.py torrents
+      deluge_rpc.py status
+      deluge_rpc.py pause <hash>...
+      deluge_rpc.py resume <hash>...
+      deluge_rpc.py remove <hash>... [--with-data]
+    """
+    import json
+    import sys
+    
+    from twisted.internet import reactor
+    from deluge.ui.client import client
+    
+    HOST = "127.0.0.1"
+    PORT = 58846
+    
+    KEYS = [
+        "name",
+        "ratio",
+        "total_uploaded",
+        "total_done",
+        "total_size",
+        "upload_payload_rate",
+        "download_payload_rate",
+        "num_seeds",
+        "num_peers",
+        "total_seeds",
+        "total_peers",
+        "distributed_copies",
+        "max_upload_speed",
+        "max_download_speed",
+        "stop_at_ratio",
+        "stop_ratio",
+        "time_added",
+        "state",
+        "tracker_host",
+        "seeding_time",
+        "time_since_transfer",
+        "is_finished",
+        "progress",
+        "label",
+        "save_path",
+    ]
+    
+    SESSION_KEYS = [
+        "upload_rate",
+        "download_rate",
+        "payload_upload_rate",
+        "payload_download_rate",
+        "dht_nodes",
+    ]
+    
+    
+    def emit(payload):
+        print(json.dumps(payload, default=str))
+    
+    
+    def finish(result):
+        emit(result)
+        stopped = client.disconnect()
+        stopped.addBoth(lambda _: reactor.stop())
+        return result
+    
+    
+    def fail(error):
+        emit({"error": getattr(error, "getErrorMessage", lambda: str(error))()})
+        try:
+            client.disconnect()
+        except Exception:
+            pass
+        reactor.stop()
+    
+    
+    def run_torrents():
+        return client.core.get_torrents_status({}, KEYS)
+    
+    
+    def run_status():
+        def with_session(session):
+            def with_torrents(torrents):
+                size = sum(t.get("total_size") or 0 for t in torrents.values())
+                done = sum(t.get("total_done") or 0 for t in torrents.values())
+                up = sum(t.get("total_uploaded") or 0 for t in torrents.values())
+                seeding = sum(1 for t in torrents.values() if t.get("state") == "Seeding")
+                return {
+                    "session": session,
+                    "count": len(torrents),
+                    "seeding": seeding,
+                    "size": size,
+                    "downloaded": done,
+                    "uploaded": up,
+                    "ratio": (up / done) if done else 0,
+                }
+            return client.core.get_torrents_status({}, ["total_size", "total_done", "total_uploaded", "state"]).addCallback(with_torrents)
+        return client.core.get_session_status(SESSION_KEYS).addCallback(with_session)
+    
+    
+    def run_bulk(method, hashes):
+        from twisted.internet import defer
+        defs = [getattr(client.core, method)(h) for h in hashes]
+        def check(results):
+            errors = [str(r[1]).split(":")[0][:60] for r in results if not r[0]]
+            return {"ok": len(results) - len(errors), "errors": sorted(set(errors))[:3]}
+        return defer.DeferredList(defs, consumeErrors=True).addCallback(check)
+    
+    
+    def run_remove(hashes, with_data):
+        from twisted.internet import defer
+        defs = [client.core.remove_torrent(h, with_data) for h in hashes]
+        def check(results):
+            errors = [str(r[1]).split(":")[0][:60] for r in results if not r[0]]
+            return {"removed": len(results) - len(errors), "errors": sorted(set(errors))[:3], "with_data": with_data}
+        return defer.DeferredList(defs, consumeErrors=True).addCallback(check)
+    
+    
+    def main(argv):
+        if len(argv) < 2:
+            emit({"error": "usage: deluge_rpc.py torrents|status|pause|resume|remove ..."})
+            return 2
+        cmd, rest = argv[1], argv[2:]
+        with_data = "--with-data" in rest
+        targets = [a for a in rest if not a.startswith("--")]
+    
+        if cmd == "torrents":
+            action = run_torrents
+        elif cmd == "status":
+            action = run_status
+        elif cmd == "set":
+            if not targets:
+                emit({"error": "set needs key=value pairs"})
+                return 2
+            values = {}
+            for item in targets:
+                key, _, raw = item.partition("=")
+                try:
+                    values[key] = json.loads(raw)
+                except Exception:
+                    values[key] = raw
+            action = lambda: client.core.set_config(values).addCallback(lambda _: {"set": values})
+        elif cmd == "reannounce":
+            if not targets:
+                emit({"error": "no torrent hash"})
+                return 2
+            action = lambda: client.core.force_reannounce(targets).addCallback(lambda _: {"ok": len(targets)})
+        elif cmd in ("pause", "resume"):
+            if not targets:
+                emit({"error": "no torrent hash"})
+                return 2
+            action = lambda: run_bulk(cmd + "_torrent", targets)
+        elif cmd == "remove":
+            if not targets:
+                emit({"error": "no torrent hash"})
+                return 2
+            action = lambda: run_remove(targets, with_data)
+        else:
+            emit({"error": f"unknown command: {cmd}"})
+            return 2
+    
+        user = "pi"
+        password = __import__("os").environ.get("DELUGE_PASSWORD", "")
+        connecting = client.connect(HOST, PORT, user, password)
+        connecting.addCallback(lambda _: action())
+        connecting.addCallbacks(finish, fail)
+        reactor.run()
+        return 0
+    
+    
+    if __name__ == "__main__":
+        sys.exit(main(sys.argv))
+  plan_import.py: |
+    #!/usr/bin/env python3
+    """Build a Sonarr/Radarr ManualImport payload from a manual-import listing.
+    
+    Reads three JSON files from --dir:
+      listing.json   output of GET /manualimport?folder=...
+      episodes.json  output of GET /episode?seriesId=...   (tv only)
+    and writes the files payload to stdout. The mapping table goes to stderr.
+    
+    Exit codes: 0 ok, 1 nothing matched, 2 usage error.
+    """
+    import argparse
+    import json
+    import os
+    import re
+    import sys
+    
+    MEDIA = (".mkv", ".mp4", ".avi", ".m4v", ".ts")
+    WITH_SEASON = re.compile(r"[Ss](\d{1,2})[Ee](\d{1,3})")
+    EPISODE_ONLY = re.compile(r"[Ee](\d{1,3})(?![0-9.])")
+    
+    
+    def load(path):
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    
+    
+    def main():
+        ap = argparse.ArgumentParser()
+        ap.add_argument("--kind", choices=["tv", "movie"], required=True)
+        ap.add_argument("--id", type=int, required=True)
+        ap.add_argument("--dir", required=True)
+        ap.add_argument("--mode", default="move", choices=["move", "copy"])
+        ap.add_argument("--map", action="append", default=[], metavar="REGEX=SxxEyy",
+                        help="force one file to a season and episode, e.g. 'E06\\.5=S00E04'")
+        args = ap.parse_args()
+    
+        listing_path = os.path.join(args.dir, "listing.json")
+        if not os.path.exists(listing_path):
+            print("missing listing.json", file=sys.stderr)
+            return 2
+        listing = load(listing_path)
+    
+        episodes = {}
+        if args.kind == "tv":
+            eps_path = os.path.join(args.dir, "episodes.json")
+            if not os.path.exists(eps_path):
+                print("missing episodes.json", file=sys.stderr)
+                return 2
+            for ep in load(eps_path):
+                episodes[(ep["seasonNumber"], ep["episodeNumber"])] = ep["id"]
+    
+        queue = {}
+        folders = {}
+        q_path = os.path.join(args.dir, "queue.json")
+        if os.path.exists(q_path):
+            for rec in load(q_path).get("records", []):
+                out = (rec.get("outputPath") or "").rstrip("/")
+                dl = rec.get("downloadId")
+                if not (out and dl):
+                    continue
+                if out.lower().endswith(MEDIA):
+                    queue[out] = dl
+                else:
+                    folders[out] = dl
+    
+        def download_id(path):
+            if path in queue:
+                return queue[path]
+            for folder, dl in folders.items():
+                if path.startswith(folder + "/"):
+                    return dl
+            return None
+    
+        forced = []
+        for item in args.map:
+            pattern, _, target = item.partition("=")
+            match = re.fullmatch(r"[Ss](\d{1,2})[Ee](\d{1,3})", target.strip())
+            if not pattern or not match:
+                print(f"bad --map value: {item}", file=sys.stderr)
+                return 2
+            forced.append((re.compile(pattern), int(match.group(1)), int(match.group(2))))
+    
+        rows, skipped = [], []
+        for entry in listing:
+            path = entry.get("path") or ""
+            name = os.path.basename(path)
+            if not path.lower().endswith(MEDIA):
+                skipped.append((name, "not a media file"))
+                continue
+            if args.kind == "tv":
+                override = next(((season, episode) for regex, season, episode in forced
+                                 if regex.search(name)), None)
+                if override:
+                    season, episode = override
+                else:
+                    match = WITH_SEASON.search(name)
+                    if match:
+                        season, episode = int(match.group(1)), int(match.group(2))
+                    else:
+                        match = EPISODE_ONLY.search(name)
+                        if not match:
+                            skipped.append((name, "no episode number"))
+                            continue
+                        season, episode = 1, int(match.group(1))
+                episode_id = episodes.get((season, episode))
+                if episode_id is None:
+                    skipped.append((name, f"S{season:02d}E{episode:02d} not in Sonarr"))
+                    continue
+                rows.append({
+                    "path": path,
+                    "name": name,
+                    "season": season,
+                    "episode": episode,
+                    "episodeId": episode_id,
+                    "quality": entry.get("quality"),
+                    "languages": entry.get("languages"),
+                    "releaseGroup": entry.get("releaseGroup"),
+                    "downloadId": download_id(path) or entry.get("downloadId"),
+                })
+            else:
+                rows.append({
+                    "path": path,
+                    "name": name,
+                    "season": 0,
+                    "episode": 0,
+                    "episodeId": args.id,
+                    "quality": entry.get("quality"),
+                    "languages": entry.get("languages"),
+                    "releaseGroup": entry.get("releaseGroup"),
+                    "downloadId": download_id(path) or entry.get("downloadId"),
+                })
+    
+        rows.sort(key=lambda r: (r["season"], r["episode"], r["name"]))
+        for row in rows:
+            print(f"S{row['season']:02d}E{row['episode']:02d}\t{row['name']}", file=sys.stderr)
+        for name, why in skipped:
+            print(f"skipped: {name} ({why})", file=sys.stderr)
+        print(f"matched: {len(rows)}  skipped: {len(skipped)}", file=sys.stderr)
+    
+        files = []
+        for row in rows:
+            item = {
+                "path": row["path"],
+                "quality": row["quality"],
+                "languages": row["languages"],
+                "releaseGroup": row["releaseGroup"],
+                "downloadId": row["downloadId"],
+            }
+            if args.kind == "tv":
+                item["seriesId"] = args.id
+                item["episodeIds"] = [row["episodeId"]]
+            else:
+                item["movieId"] = args.id
+            files.append(item)
+    
+        print(json.dumps({"name": "ManualImport", "files": files, "importMode": args.mode}))
+        return 0 if rows else 1
+    
+    
+    if __name__ == "__main__":
+        sys.exit(main())
+  purge_orphans.py: |
+    """Delete /media/tmp entries that no Deluge torrent references.
+    
+    Runs on the server: arr.sh pipes the active torrent names to a file, then calls
+    this script. A file keeps its blocks when a hardlink to the library still
+    exists, so the reclaimable figure counts only the unique inodes.
+    
+    Usage: purge_orphans.py <names-file> [--apply]
+    """
+    import os
+    import shutil
+    import sys
+    
+    names = set(line.rstrip('\n') for line in open(sys.argv[1]))
+    ROOT = os.environ.get('ARR_MEDIA_ROOT', '/data/media')
+    TMP = os.path.join(ROOT, 'tmp')
+    LIBRARIES = tuple(os.path.join(ROOT, d) for d in ('Series', 'Films', 'Anime'))
+    apply = '--apply' in sys.argv
+    
+    lib = set()
+    for base in LIBRARIES:
+        for root, _d, files in os.walk(base):
+            for f in files:
+                try:
+                    lib.add(os.lstat(os.path.join(root, f)).st_ino)
+                except OSError:
+                    pass
+    
+    free = shared = 0
+    count = 0
+    for entry in sorted(os.listdir(TMP)):
+        if entry in names:
+            continue
+        p = os.path.join(TMP, entry)
+        size = unique = 0
+        if os.path.isdir(p) and not os.path.islink(p):
+            for root, _d, files in os.walk(p):
+                for f in files:
+                    fp = os.path.join(root, f)
+                    try:
+                        st = os.lstat(fp)
+                    except OSError:
+                        continue
+                    size += st.st_size
+                    if st.st_ino not in lib:
+                        unique += st.st_size
+        else:
+            st = os.lstat(p)
+            size = unique = st.st_size
+        count += 1
+        free += unique
+        shared += size - unique
+        print(f"{unique / 2**30:8.1f}G unique  {entry}")
+        if apply:
+            if os.path.isdir(p) and not os.path.islink(p):
+                shutil.rmtree(p)
+            else:
+                os.remove(p)
+    
+    print(f"entries: {count}  reclaimable: {free / 2**30:.1f}G  shared with library: {shared / 2**30:.1f}G")
+    print("applied" if apply else "dry run")

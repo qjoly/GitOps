@@ -53,17 +53,38 @@ spec:
               cp /src/sbx /opt/sbx/sbx
               cp /src/kubeconfig /opt/sbx/kubeconfig
               chmod +x /opt/sbx/sbx /opt/sbx/kubectl
-              # Load the sbx skill into hermes' skill dir (a ConfigMap mount would be
+              apk add --no-cache jq >/dev/null 2>&1 || true
+              if command -v jq >/dev/null 2>&1; then cp "$(command -v jq)" /opt/sbx/jq; fi
+              # arr stack: scripts + ssh material for the Americano media server
+              mkdir -p /opt/arr /opt/ssh
+              cp /src-arr/arr.sh /opt/arr/arr.sh
+              cp /src-arr/deluge_rpc.py /src-arr/plan_import.py /src-arr/purge_orphans.py /opt/arr/
+              chmod +x /opt/arr/arr.sh
+              cp /arr-secret/arr_ssh_key /opt/ssh/id_ed25519
+              cp /src-arr/ssh_config /opt/ssh/config
+              chmod 600 /opt/ssh/id_ed25519
+              printf '#!/bin/sh\nexec /usr/bin/ssh -F /opt/ssh/config "$@"\n' > /opt/sbx/ssh
+              chmod +x /opt/sbx/ssh
+              # Load the skills into hermes' skill dir (a ConfigMap mount would be
               # read-only and break the webui container's startup chown)
-              mkdir -p /opt/data/skills/sbx
+              mkdir -p /opt/data/skills/sbx /opt/data/skills/arr
               cp /src/SKILL.md /opt/data/skills/sbx/SKILL.md
-              chown -R 10000:10000 /opt/data/skills/sbx
+              cp /src-arr/SKILL.md /opt/data/skills/arr/SKILL.md
+              chown -R 10000:10000 /opt/data/skills
           volumeMounts:
             - name: sbx-tools
               mountPath: /opt/sbx
             - name: sbx-config
               mountPath: /src
               readOnly: true
+            - name: arr-config
+              mountPath: /src-arr
+              readOnly: true
+            - name: arr-secret
+              mountPath: /arr-secret
+              readOnly: true
+            - name: ssh-state
+              mountPath: /opt/ssh
             - name: data
               mountPath: /opt/data
       containers:
@@ -97,9 +118,30 @@ spec:
                   name: hermes-carolyn
                   key: allowed_users
             - name: PATH
-              value: /opt/sbx:/opt/hermes/bin:/opt/hermes/.venv/bin:/opt/data/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              value: /opt/sbx:/opt/arr:/opt/hermes/bin:/opt/hermes/.venv/bin:/opt/data/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
             - name: SBX_KUBECONFIG
               value: /opt/sbx/kubeconfig
+            # arr.sh reads the *arr API keys from these
+            - name: SONARR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: sonarr_api_key
+            - name: RADARR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: radarr_api_key
+            - name: PROWLARR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: prowlarr_api_key
+            - name: DELUGE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: deluge_password
           resources:
             requests:
               cpu: 200m
@@ -112,6 +154,39 @@ spec:
               mountPath: /opt/data
             - name: sbx-tools
               mountPath: /opt/sbx
+            - name: ssh-state
+              mountPath: /opt/ssh
+        - name: netbird
+          # NetBird peer inside the pod (netstack mode, proven on k8s like the
+          # jump peer) so the pod can reach Americano (100.92.156.232) and the
+          # other peers over the WireGuard tunnel.
+          image: netbirdio/netbird:0.83.1
+          env:
+            - name: NB_SETUP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: netbird_setup_key
+            - name: NB_MANAGEMENT_URL
+              value: https://netbird.mocha.thoughtless.eu:443
+            - name: NB_HOSTNAME
+              value: hermes-carolyn
+            - name: NB_USE_NETSTACK_MODE
+              value: "true"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: netbird-state
+              mountPath: /var/lib/netbird
         - name: email-mcp
           image: ghcr.io/codefuturist/email-mcp:0.6.0
           args:
@@ -225,9 +300,30 @@ spec:
             - name: WANTED_GID
               value: "10000"
             - name: PATH
-              value: /opt/sbx:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
+              value: /opt/sbx:/opt/arr:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
             - name: SBX_KUBECONFIG
               value: /opt/sbx/kubeconfig
+            # arr.sh reads the *arr API keys from these
+            - name: SONARR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: sonarr_api_key
+            - name: RADARR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: radarr_api_key
+            - name: PROWLARR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: prowlarr_api_key
+            - name: DELUGE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: deluge_password
           resources:
             requests:
               cpu: 100m
@@ -249,6 +345,8 @@ spec:
               mountPath: /workspace
             - name: sbx-tools
               mountPath: /opt/sbx
+            - name: ssh-state
+              mountPath: /opt/ssh
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -257,9 +355,19 @@ spec:
           emptyDir: {}
         - name: sbx-tools
           emptyDir: {}
+        - name: ssh-state
+          emptyDir: {}
+        - name: netbird-state
+          emptyDir: {}
         - name: sbx-config
           configMap:
             name: hermes-carolyn-sbx
+        - name: arr-config
+          configMap:
+            name: hermes-carolyn-arr
+        - name: arr-secret
+          secret:
+            secretName: hermes-carolyn
         - name: config
           configMap:
             name: hermes-carolyn-config
