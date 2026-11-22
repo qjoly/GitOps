@@ -6,6 +6,7 @@ resources:
   - externalsecret.yaml
   - configmap.yaml
   - email-mcp-externalsecret.yaml
+  - calendar-mcp-externalsecret.yaml
   - sbx-configmap.yaml
   - arr-configmap.yaml
   - serviceaccount.yaml

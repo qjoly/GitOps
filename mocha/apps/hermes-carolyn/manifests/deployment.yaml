@@ -30,6 +30,30 @@ spec:
               mountPath: /opt/data
             - name: config
               mountPath: /config
+        # workspace-mcp reads <email>.json from its credentials dir and writes
+        # refreshed tokens back, so the Secret is copied to a writable emptyDir
+        # (as the image's `app` user, uid 1000, so the 0600 file stays readable).
+        - name: seed-calendar-creds
+          image: busybox:1.38
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+            - install -m 600 /seed/credentials.json "/store/${USER_GOOGLE_EMAIL}.json"
+          env:
+            - name: USER_GOOGLE_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn-calendar-mcp
+                  key: user_google_email
+          volumeMounts:
+            - name: calendar-seed
+              mountPath: /seed
+              readOnly: true
+            - name: calendar-creds
+              mountPath: /store
         # Share the agent source with the webui container: the webui discovers
         # the agent at $HERMES_HOME/hermes-agent (same layout as the upstream
         # two-container compose).
@@ -269,6 +293,47 @@ spec:
             limits:
               cpu: 500m
               memory: 256Mi
+        # Google Calendar (read/write) for the agent. Single-user mode picks the
+        # credential seeded by seed-calendar-creds; plain HTTP without MCP-level
+        # auth, so it stays bound to 127.0.0.1 (the image's default in that mode).
+        - name: calendar-mcp
+          image: ghcr.io/taylorwilsdon/google_workspace_mcp:2.6.0
+          # The image's entrypoint is `sh -c`
+          args:
+            - exec /app/.venv/bin/python main.py --transport streamable-http --single-user --tools calendar
+          env:
+            - name: WORKSPACE_MCP_PORT
+              value: "8083"
+            - name: WORKSPACE_MCP_CREDENTIALS_DIR
+              value: /app/store_creds
+            - name: USER_GOOGLE_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn-calendar-mcp
+                  key: user_google_email
+            - name: GOOGLE_OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn-calendar-mcp
+                  key: google_oauth_client_id
+            - name: GOOGLE_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn-calendar-mcp
+                  key: google_oauth_client_secret
+          ports:
+            - name: calendar-mcp
+              containerPort: 8083
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: calendar-creds
+              mountPath: /app/store_creds
         - name: webui
           image: ghcr.io/nesquena/hermes-webui:0.52.734
           ports:
@@ -382,6 +447,14 @@ spec:
         - name: email-mcp-config
           secret:
             secretName: hermes-carolyn-email-mcp
+        - name: calendar-seed
+          secret:
+            secretName: hermes-carolyn-calendar-mcp
+            items:
+              - key: credentials.json
+                path: credentials.json
+        - name: calendar-creds
+          emptyDir: {}
         - name: mcp-cache
           emptyDir: {}
         - name: mcp-state
