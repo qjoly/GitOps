@@ -29,6 +29,18 @@ spec:
               mountPath: /opt/data
             - name: config
               mountPath: /config
+        # Share the agent source with the webui container: the webui discovers
+        # the agent at $HERMES_HOME/hermes-agent (same layout as the upstream
+        # two-container compose).
+        - name: seed-agent-src
+          image: docker.io/nousresearch/hermes-agent:v0.23.3
+          command:
+            - sh
+            - -c
+            - cp -a /opt/hermes/. /agent-src/
+          volumeMounts:
+            - name: agent-src
+              mountPath: /agent-src
       containers:
         - name: hermes-openrouter
           image: docker.io/nousresearch/hermes-agent:v0.23.3
@@ -107,6 +119,8 @@ spec:
               value: "8787"
             - name: HERMES_WEBUI_STATE_DIR
               value: /home/hermeswebui/.hermes/webui
+            - name: HERMES_WEBUI_AGENT_DIR
+              value: /home/hermeswebui/.hermes/hermes-agent
             # No password by design: access is gated by NetBird (traefik-internal
             # only), so allow onboarding/terminal from non-local origins.
             - name: HERMES_WEBUI_ONBOARDING_OPEN
@@ -130,12 +144,17 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /home/hermeswebui/.hermes
+            - name: agent-src
+              mountPath: /home/hermeswebui/.hermes/hermes-agent
+              readOnly: true
             - name: data
               mountPath: /workspace
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: hermes-openrouter-data
+        - name: agent-src
+          emptyDir: {}
         - name: config
           configMap:
             name: hermes-openrouter-config
