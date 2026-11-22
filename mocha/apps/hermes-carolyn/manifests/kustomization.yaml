@@ -10,6 +10,7 @@ resources:
   - sbx-configmap.yaml
   - arr-configmap.yaml
   - serviceaccount.yaml
+  - clusterrole.yaml
   - pvc.yaml
   - deployment.yaml
   - service.yaml
