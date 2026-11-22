@@ -57,8 +57,10 @@ spec:
         # Share the agent source with the webui container: the webui discovers
         # the agent at $HERMES_HOME/hermes-agent (same layout as the upstream
         # two-container compose).
+        # Same image as the hermes-carolyn container, so the webui and the
+        # gateway always run the same agent version.
         - name: seed-agent-src
-          image: docker.io/nousresearch/hermes-agent:v0.23.3
+          image: ghcr.io/qjoly/hermes-agent-desktop:v0.23.3
           command:
             - sh
             - -c
@@ -180,7 +182,9 @@ spec:
               mountPath: /opt/data
       containers:
         - name: hermes-carolyn
-          image: docker.io/nousresearch/hermes-agent:v0.23.3
+          # Upstream image plus TigerVNC and the Xfce core for the Bot Desktop
+          # screen; built from ../image/Dockerfile, tagged like its base.
+          image: ghcr.io/qjoly/hermes-agent-desktop:v0.23.3
           args:
             - gateway
             - run

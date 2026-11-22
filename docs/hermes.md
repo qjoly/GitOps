@@ -151,6 +151,31 @@ neither is reachable from the public internet:
 Discord is a platform, not a surface: the agent answers there and auto-threads,
 mention required.
 
+## The Bot Desktop screen
+
+The Hermes Desktop "Screen" pane gives the agent its own Xfce desktop (TigerVNC
+`Xvnc` on a Unix socket under `/opt/data/bot-desktop/`), which `computer_use`
+drives and a human can take over. It needs system packages that the upstream
+image does not ship, and its "Install on host" button cannot add them: the
+gateway runs as the unprivileged `hermes` user and there is no `sudo`.
+
+So `hermes-carolyn` and `seed-agent-src` run
+`ghcr.io/qjoly/hermes-agent-desktop`, the upstream image plus those packages,
+built from
+[`image/Dockerfile`](https://github.com/qjoly/GitOps/blob/main/mocha/apps/hermes-carolyn/image/Dockerfile)
+by the `hermes-agent-desktop-image` workflow and tagged like its base.
+
+Renovate keeps it up to date. It looks the version up on the base
+(`nousresearch/hermes-agent`), not on ghcr, and bumps the `FROM` line and both
+`image:` lines in a single PR (`renovate/hermes-carolyn-agent-image`). The
+workflow builds the new tag on that PR, so the image exists before ArgoCD syncs
+the merge: wait for the build check before merging. Both containers must stay
+on the same tag, since the webui runs the agent source copied by
+`seed-agent-src`. On a bump, also check that the package list in the
+Dockerfile still matches `PACKAGES["apt"]` in `tools/bot_desktop/runtime.py`.
+
+From a shell in the pod: `hermes computer-use screen status|start|stop`.
+
 ## Changing it
 
 1. Edit the manifests in `mocha/apps/hermes-carolyn/manifests/`, never the pod.
