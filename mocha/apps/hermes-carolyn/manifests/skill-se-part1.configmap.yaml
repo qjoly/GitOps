@@ -1,0 +1,123 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-carolyn-skill-se-part1
+data:
+  SKILL.md.part1: |
+    ---
+    name: simple-english
+    description: "Rewrite text to ASD-STE100 Simplified Technical English."
+    version: 1.2.0
+    author: AminBlg (https://github.com/AminBlg/SimpleEnglish), ported by Hermes Agent
+    license: MIT
+    platforms: [linux, macos, windows]
+    metadata:
+      hermes:
+        tags: [writing, documentation, ste, asd-ste100, technical-writing, editing, anti-ai-slop]
+        category: creative
+        homepage: https://github.com/AminBlg/SimpleEnglish
+        related_skills: [humanizer]
+      standard: ASD-STE100 Issue 9 (2025-01-15)
+    ---
+
+    # Simple English: Write Like an Aerospace Manual
+
+    Write technical text with the rules of ASD-STE100 Simplified Technical English. STE is the controlled language that aerospace and defense manufacturers use for maintenance documentation. The rules exist so that a tired reader who is not a native English speaker cannot misread an instruction. They remove the usual signs of AI-generated text as a side effect: long sentences, synonym rotation, hedges, filler, and decorative clauses.
+
+    Write for that tired reader. Each sentence must survive one read.
+
+    ## How to use it in Hermes
+
+    The text usually arrives one of three ways:
+
+    1. **Inline.** The user pastes the text into the message. Rewrite it in place and reply with the result.
+    2. **File.** The user points at a file (README, runbook, docs page). Use `read_file` to load it, then `patch` for targeted section rewrites or `write_file` for a full rewrite. Never touch code blocks, identifiers, or quoted errors (see Untouchables).
+    3. **Check mode.** The user asks you to audit text for STE compliance instead of rewriting it. Report each violation as rule number + offending text + compliant rewrite, using `references/checklist.md`.
+
+    This skill differs from `humanizer`: humanizer restores natural human voice; simple-english enforces a controlled language for technical instructions. For docs, runbooks, and error messages use this skill. For blog posts, essays, and personal writing use humanizer. Do not apply both to the same text.
+
+    ## Your Task
+
+    When asked to write or rewrite technical text:
+
+    1. **Select the mode** (pragmatic or strict, below).
+    2. **Classify each passage** as procedural or descriptive. Every other rule depends on this.
+    3. **Correct your vocabulary before drafting.** In strict mode, use `make sure that` for the check/verify/confirm/ensure concept — the dictionary rejects all four as verbs. In pragmatic mode, pick one and keep it. Pick ONE noun for config/settings (all are valid technical nouns — pick one and keep it). Use no other word for these concepts in the whole document.
+    4. **Apply the rules** from the catalog below.
+    5. **Do the self-check** before you deliver. This step is not optional.
+    6. **Never touch code**, identifiers, commands, or quoted errors (see Untouchables).
+
+    When asked to CHECK text instead of writing it, report each violation as: rule number, the offending text, a compliant rewrite. Cite only rule numbers that exist in this file. Do not cite rule numbers from memory: the numbering is unintuitive and models invent it (tested — an agent without this file cited "Rule 3.1: short sentences"; the real Rule 3.1 is about verb forms).
+
+    ## Two Modes
+
+    | Mode | When | What you apply |
+    |---|---|---|
+    | **Pragmatic** (default) | Docs, READMEs, error messages — the user wants clear text | All structural rules. Domain words stay ("idempotent", "webhook"). |
+    | **Strict** | The user names STE, ASD-STE100, or compliance | Structural rules + full vocabulary discipline, and tell the user that full compliance needs the official dictionary (free at asd-ste100.org). |
+
+    ## Step 1: Classify the Text
+
+    | | Procedural (instructions) | Descriptive (explanations) |
+    |---|---|---|
+    | Purpose | Tell the reader what to do | Explain what a thing is or does |
+    | Verb form | Imperative: "Install the pump." | Simple present/past/future |
+    | Sentence limit | **20 words** (Rule 5.1) | **25 words** (Rule 6.3) |
+    | Unit rule | One instruction per sentence (5.2) | One topic per paragraph (6.5), max six sentences per paragraph (6.6) |
+
+    Do not mix the two in one passage. A "Getting started" section is procedural. An "Architecture" section is descriptive. A note inside a procedure is descriptive (25-word limit, no imperative).
+
+    ## THE RULE CATALOG
+
+    53 rules in 9 sections, paraphrased from ASD-STE100 Issue 9 with software examples. The official wording is in the free standard at asd-ste100.org.
+
+    ### Section 1 — Words (Rules 1.1-1.14)
+
+    | Rule | Instruction |
+    |---|---|
+    | 1.1 | Use only approved words, technical nouns, or technical verbs. |
+    | 1.2 | Use an approved word only as its listed part of speech. |
+    | 1.3 | Use an approved word only with its approved meaning. |
+    | 1.4 | Use only the approved forms of verbs and adjectives. |
+    | 1.5 | You can use domain words as technical nouns ("webhook", "commit", "endpoint"). |
+    | 1.6 | Use an unapproved word only when it is a technical noun or part of one. |
+    | 1.7 | Do not use technical nouns as verbs. |
+    | 1.8 | Use the technical nouns of your project or industry. |
+    | 1.9 | When you pick a technical noun, pick a short and clear one. |
+    | 1.10 | No regional, slang, or jargon words as technical nouns. |
+    | 1.11 | One item, one name. Do not call it "config" here and "settings" there. |
+    | 1.12 | You can use domain verbs as technical verbs ("deploy", "compile", "merge"). |
+    | 1.13 | Do not use technical verbs as nouns. |
+    | 1.14 | Use American English spelling. |
+
+    In pragmatic mode, rules 1.5, 1.8, and 1.12 do the heavy lifting: your domain vocabulary is legal. The ones agents break are 1.7, 1.11, and 1.13.
+
+    **Before:** You can webhook the event, then do a deploy.
+    **After:** Send the event to the webhook. Then deploy the service.
+
+    ### Section 2 — Multi-word nouns (Rules 2.1-2.2)
+
+    | Rule | Instruction |
+    |---|---|
+    | 2.1 | Write multi-word nouns of three words or fewer. |
+    | 2.2 | When a technical noun needs more than three words, write it in full once, then give a short form or hyphenate the units. |
+
+    Break long noun chains with prepositions (of, on, in, for):
+
+    **Before:** the connection pool timeout configuration value
+    **After:** the timeout value for the connection pool
+
+    ### Section 3 — Verbs (Rules 3.1-3.7)
+
+    | Rule | Instruction |
+    |---|---|
+    | 3.1 | Use only the verb forms that the dictionary gives. |
+    | 3.2 | Use only: infinitive, imperative, simple present, simple past, simple future, past participle as adjective. |
+    | 3.3 | Use the past participle only as an adjective ("the cached response"). |
+    | 3.4 | No auxiliary verbs for complex constructions. No present perfect, no "is to be installed". |
+    | 3.5 | Use an "-ing" form only as a technical noun or inside one ("logging", "the mounting bracket") — never as a verb. |
+    | 3.6 | Active voice. In descriptive text, passive is legal only when the agent is unknown. |
+    | 3.7 | Describe an action with a verb, not a noun ("compress the file", not "perform compression of the file"). |
+
+    **Approved modals: can, will, must. Banned: should, would, may, might, could (Rule 3.2).**
