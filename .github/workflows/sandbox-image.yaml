@@ -4,11 +4,20 @@ on:
     inputs:
       version:
         description: Tag to publish, normally the mise version in mocha/apps/sandboxes/image/mise.toml
-        required: true
+        required: false
       set_latest:
         description: Also move latest to this build
         type: boolean
         default: true
+  # main rebuilds for real: the template pins the image by tag, so a merged fix
+  # that nobody dispatched by hand would never be published and ArgoCD would keep
+  # handing out the old build. A workflow_dispatch input cannot default from a
+  # file, so the tag is computed below from the same pin the Dockerfile reads.
+  push:
+    branches: [main]
+    paths:
+      - mocha/apps/sandboxes/image/**
+      - .github/workflows/sandbox-image.yaml
 permissions:
   contents: read
   packages: write
@@ -26,6 +35,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # One tag, computed the same way for both triggers: an explicit input wins,
+      # otherwise whatever mise.toml pins. A tagged release therefore always
+      # carries the same name, and main catching up to it retags the same tag
+      # with the fixed build (tags are mutable, digests are what get pinned).
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          version="${{ inputs.version }}"
+          if [ -z "$version" ]; then
+            version="$(sed -n 's/^mise = "\(.*\)"$/\1/p' mocha/apps/sandboxes/image/mise.toml)"
+          fi
+          test -n "$version" || { echo "::error::no version input and no mise pin to derive one"; exit 1; }
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      # A push runs from main, and its latest is the published one: no boolean to
+      # consult, so latest moves every time the image directory changes.
+      - name: Resolve set_latest
+        id: set_latest
+        run: |
+          set -euo pipefail
+          latest="${{ github.event_name == 'push' && 'true' || inputs.set_latest }}"
+          echo "value=${latest:-false}" >> "$GITHUB_OUTPUT"
+
       - uses: docker/build-push-action@v7
         with:
           context: mocha/apps/sandboxes/image
@@ -33,11 +66,11 @@ jobs:
           # the Dockerfile installs are amd64-shaped.
           platforms: linux/amd64
           push: true
-          # latest is optional so that re-running an old version to repair it
-          # does not drag latest backwards.
+          # latest is optional on a manual run so that re-running an old version
+          # to repair it does not drag latest backwards.
           tags: |
-            ghcr.io/qjoly/sandbox-dev:${{ inputs.version }}
-            ${{ inputs.set_latest && 'ghcr.io/qjoly/sandbox-dev:latest' || '' }}
+            ghcr.io/qjoly/sandbox-dev:${{ steps.version.outputs.value }}
+            ${{ steps.set_latest.outputs.value == 'true' && 'ghcr.io/qjoly/sandbox-dev:latest' || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -46,18 +79,19 @@ jobs:
       - name: Report digests
         run: |
           set -euo pipefail
+          version="${{ steps.version.outputs.value }}"
           digest="$(docker buildx imagetools inspect \
-            "ghcr.io/qjoly/sandbox-dev:${{ inputs.version }}" --format '{{json .Manifest}}' \
+            "ghcr.io/qjoly/sandbox-dev:${version}" --format '{{json .Manifest}}' \
             | jq -r '.digest')"
-          echo "### sandbox-dev:${{ inputs.version }} -> \`${digest}\`" >> "$GITHUB_STEP_SUMMARY"
-          if [ "${{ inputs.set_latest }}" = "true" ]; then
+          echo "### sandbox-dev:${version} -> \`${digest}\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.set_latest.outputs.value }}" = "true" ]; then
             latest="$(docker buildx imagetools inspect \
               ghcr.io/qjoly/sandbox-dev:latest --format '{{json .Manifest}}' | jq -r '.digest')"
             echo "### sandbox-dev:latest -> \`${latest}\`" >> "$GITHUB_STEP_SUMMARY"
             # Both tags are built from one push, so a mismatch means a stale
             # latest tag from an interleaved run, which must be seen, not assumed.
             test "$digest" = "$latest" || {
-              echo "::error::latest ($latest) does not match ${{ inputs.version }} ($digest)"
+              echo "::error::latest ($latest) does not match ${version} ($digest)"
               exit 1
             }
           fi
