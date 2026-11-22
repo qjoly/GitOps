@@ -56,8 +56,6 @@ spec:
               value: /certs
             - name: NB_PROXY_LOG_LEVEL
               value: info
-            - name: NB_USE_NETSTACK_MODE
-              value: "true"
             # Persist the embedded peer identity: without it every restart
             # registers a new peer (new NetBird IP, new DNS record to update).
             - name: NB_STATE_DIR
