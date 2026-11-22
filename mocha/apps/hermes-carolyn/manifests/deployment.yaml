@@ -44,7 +44,7 @@ spec:
               mountPath: /agent-src
         # sbx CLI + kubectl + in-cluster kubeconfig, shared with the agent containers
         - name: install-sbx
-          image: docker.io/alpine/k8s:1.36.2
+          image: docker.io/alpine/k8s:1.37.2
           command:
             - sh
             - -c
