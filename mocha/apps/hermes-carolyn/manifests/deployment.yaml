@@ -114,6 +114,9 @@ spec:
         - name: browser
           # Headless Chromium exposing CDP; hermes connects via browser.cdp_url
           image: docker.io/chromedp/headless-shell:160.0.8171.0
+          # Bypass the image's run.sh (it forces port 9223 behind a socat on 9222)
+          command:
+            - /headless-shell/headless-shell
           args:
             - --remote-debugging-address=0.0.0.0
             - --remote-debugging-port=9222
