@@ -6,3 +6,4 @@ resources:
   - relay-stun.yaml
   - ingressroute.yaml
   - metrics-service.yaml
+  - peers-sync.yaml

@@ -1,0 +1,132 @@
+# Sync the NetBird peer list into ClickHouse (netbird.peers) every minute, so
+# the Grafana "Netbird" dashboard can show a peers table. The management
+# /metrics endpoint has no per-peer gauge, hence this API poll.
+# The table has a TTL, so old snapshots disappear on their own.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: netbird-peers-sync
+  labels:
+    app: netbird-peers-sync
+data:
+  sync.py: |
+    import base64
+    import json
+    import os
+    import urllib.request
+    import urllib.parse
+
+    NB_API = "https://netbird.mocha.thoughtless.eu/api/peers"
+    CH_URL = "http://signoz-clickhouse.signoz.svc.cluster.local:8123/"
+    ch_auth = "Basic " + base64.b64encode(
+        ("admin:" + os.environ["CLICKHOUSE_PASSWORD"]).encode()).decode()
+
+    def ch(query, data=None):
+        req = urllib.request.Request(
+            CH_URL, data=data.encode() if data is not None else None,
+            headers={"Authorization": ch_auth},
+            method="POST")
+        if data is None:
+            req.full_url = CH_URL + "?query=" + urllib.parse.quote(query)
+        else:
+            req.full_url = CH_URL + "?query=" + urllib.parse.quote(query)
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return r.read()
+
+    ch("CREATE DATABASE IF NOT EXISTS netbird")
+    ch("""CREATE TABLE IF NOT EXISTS netbird.peers (
+        id String, name String, ip String, ipv6 String, connected UInt8,
+        os String, version String, hostname String, dns_label String,
+        user_id String, groups String, last_seen DateTime,
+        ts DateTime DEFAULT now()
+    ) ENGINE = MergeTree ORDER BY (id, ts) TTL ts + INTERVAL 6 HOUR""")
+
+    req = urllib.request.Request(NB_API, headers={
+        "Authorization": "Token " + os.environ["OPERATOR_API_KEY"]})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        peers = json.load(r)
+
+    def iso_to_dt(s):
+        # 2026-11-21T22:00:00.123Z -> 2026-11-21 22:00:00 (UTC)
+        return s.replace("T", " ").split(".")[0].rstrip("Z")
+
+    rows = []
+    for p in peers:
+        rows.append({
+            "id": p.get("id", ""),
+            "name": p.get("name", ""),
+            "ip": p.get("ip", ""),
+            "ipv6": p.get("ipv6", ""),
+            "connected": 1 if p.get("connected") else 0,
+            "os": p.get("os", ""),
+            "version": p.get("version", ""),
+            "hostname": p.get("hostname", ""),
+            "dns_label": p.get("dns_label", ""),
+            "user_id": p.get("user_id", ""),
+            "groups": ",".join(g.get("name", "") for g in p.get("groups") or []),
+            "last_seen": iso_to_dt(p["last_seen"]) if p.get("last_seen") else "1970-01-01 00:00:00",
+        })
+    ndjson = "\n".join(json.dumps(r) for r in rows)
+    ch("INSERT INTO netbird.peers FORMAT JSONEachRow", ndjson)
+    print(f"synced {len(rows)} peers")
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: netbird-peers-sync
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: netbird-peers-sync
+    creationPolicy: Owner
+  data:
+    - secretKey: OPERATOR_API_KEY
+      remoteRef:
+        key: netbird
+        property: operator_api_key
+    - secretKey: CLICKHOUSE_PASSWORD
+      remoteRef:
+        key: signoz-clickhouse
+        property: password
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: netbird-peers-sync
+  labels:
+    app: netbird-peers-sync
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          containers:
+            - name: sync
+              image: python:3.13-alpine
+              command: ["python", "/script/sync.py"]
+              envFrom:
+                - secretRef:
+                    name: netbird-peers-sync
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: netbird-peers-sync
