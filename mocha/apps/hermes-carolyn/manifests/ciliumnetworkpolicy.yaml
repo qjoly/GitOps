@@ -1,0 +1,37 @@
+---
+# hermes holds mail, calendar, GitHub and arr credentials: default-deny ingress
+# on every pod of the namespace, and only let in what has a reason to come in.
+#
+# Observed with Hubble before writing this: the only inbound flows are
+# traefik-internal and the kubelet readiness probe, both to the webui on 8787.
+# Besides the webui, github-mcp (8082) and NetBird's WireGuard socket
+# (UDP 51820) listen on all interfaces; nothing outside the pod needs them.
+# NetBird keeps working through its outbound connections (relays, hole
+# punching replies are conntrack'd); what NetBird peers can reach over the
+# tunnel is governed by NetBird ACLs, not by this policy.
+#
+# kubectl exec / port-forward enter the pod netns and are not affected.
+# No egress section: egress is left open.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: hermes-carolyn-ingress
+spec:
+  endpointSelector: {}
+  ingress:
+    # Webui, served to NetBird peers by the hermes-carolyn.nb Ingress
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik-internal
+            app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "8787"
+              protocol: TCP
+    # Kubelet readiness probe on the webui
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "8787"
+              protocol: TCP
