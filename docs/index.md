@@ -41,3 +41,9 @@ Here are just a few of the technologies and applications I use :
 - [OpenBao](https://openbao.org/) (through bank-vaults) as the secret store, one per cluster.
 - [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet (**`turing`**).
 - restic CronJobs to back up databases and OpenBao to S3 (**`mocha`**).
+
+## Guides
+
+- [**Sandboxes**](sandboxes.md) : disposable gVisor pods on `mocha` for builds and untrusted code.
+- [**Hermes**](hermes.md) : the Hermes agent pod — containers, seeding, credentials, GitHub identities.
+- [**Secret management**](secret-management.md) : Vault, the `mise run vault:*` tasks, ExternalSecrets.
