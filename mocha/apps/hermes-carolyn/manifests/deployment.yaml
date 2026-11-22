@@ -62,7 +62,29 @@ spec:
           command:
             - sh
             - -c
-            - cp -a /opt/hermes/. /agent-src/
+            - |
+              cp -a /opt/hermes/. /agent-src/
+              # The image ships two defects that break both the dashboard and
+              # `hermes plugins install|update`; repair them on the copy because
+              # this container is the only writer of agent-src.
+              #
+              # 1. .venv/bin/python points at /usr/local/bin/python3. The webui
+              #    image is Debian trixie, whose python3 is 3.12, while the venv
+              #    is built for 3.14.9 (pyvenv.cfg, and every wheel is a
+              #    cp314 ABI tag). Under 3.12 pydantic_core fails to load with
+              #    "undefined symbol: PyDict_GetItemRef", so the dashboard dies
+              #    before serving. Point it at the bundled 3.14 interpreter.
+              ln -sfn /agent-src/tools/python-3.14.9+20261021-linux-x64/bin/python3.14 \
+                /agent-src/.venv/bin/python
+              # 2. install-stamp.json bakes pmRuntime as /opt/hermes/pm-runtime,
+              #    the path in the agent image. The copy lives at /agent-src, so
+              #    PM refuses to run ("packaged PM runtime is missing or
+              #    invalid") and every plugin install/update aborts. Rewrite it
+              #    to the relocated runtime.
+              # Use the bundled interpreter: the base image does not guarantee a
+              # python3 on PATH, and this is the one the venv targets anyway.
+              /agent-src/tools/python-3.14.9+20261021-linux-x64/bin/python3.14 -c \
+                'import json, pathlib; p = pathlib.Path("/agent-src/install-stamp.json"); s = json.loads(p.read_text()); s["pmRuntime"] = "/agent-src/pm-runtime"; p.write_text(json.dumps(s) + "\n")'
           volumeMounts:
             - name: agent-src
               mountPath: /agent-src
@@ -141,6 +163,25 @@ spec:
                   key: hass_token
             - name: HERMES_API_TIMEOUT
               value: "1800"
+            # Dashboard-gate credentials for the gateway's Webapp listener
+            # (webapp.enabled in the seeded config.yaml): the bundled `basic`
+            # provider is the sign-in the gate requires on the 0.0.0.0 bind.
+            # Env wins over config.yaml, so the password and the signing secret
+            # only ever exist in Vault -> this Secret -> the process env.
+            - name: HERMES_DASHBOARD_BASIC_AUTH_USERNAME
+              value: carolyn
+            - name: HERMES_DASHBOARD_BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: dashboard_password
+            # Stable HMAC signing key: without it every restart silently ends
+            # every open session (and a rolling update signs everyone out).
+            - name: HERMES_DASHBOARD_BASIC_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: dashboard_secret
             - name: DISCORD_BOT_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -183,6 +224,12 @@ spec:
             limits:
               cpu: "2"
               memory: 4Gi
+          # Declared so the hermes-carolyn-gateway Service can target it by name;
+          # the actual listen address/host comes from webapp.{host,port} in the
+          # seeded config.yaml (it has to be 0.0.0.0 there for traefik).
+          ports:
+            - name: webapp
+              containerPort: 9120
           volumeMounts:
             - name: data
               mountPath: /opt/data
