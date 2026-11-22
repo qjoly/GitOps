@@ -95,6 +95,19 @@ spec:
               mkdir -p /opt/data/skills/sbx /opt/data/skills/arr
               cp /src/SKILL.md /opt/data/skills/sbx/SKILL.md
               cp /src-arr/SKILL.md /opt/data/skills/arr/SKILL.md
+              # Versioned skills: simple-english and i-have-adhd. These files are
+              # replaced on every start (unlike config.yaml), so a fix committed
+              # here wins over a stale copy on the volume. simple-english's
+              # SKILL.md is split across numbered ConfigMaps because a single
+              # object that size is unwieldy; the parts are concatenated.
+              mkdir -p /opt/data/skills/simple-english/references
+              cat /src-se1/SKILL.md.part1 /src-se2/SKILL.md.part2 /src-se3/SKILL.md.part3 > /opt/data/skills/simple-english/SKILL.md
+              cp /src-refs/use-cases.md /opt/data/skills/simple-english/references/use-cases.md
+              cp /src-refs/checklist.md /opt/data/skills/simple-english/references/checklist.md
+              mkdir -p /opt/data/skills/i-have-adhd/agents
+              cp /src-adhd/SKILL.md /opt/data/skills/i-have-adhd/SKILL.md
+              cp /src-adhd/openai.yaml /opt/data/skills/i-have-adhd/agents/openai.yaml
+              cp /src-adhd-gemini/gemini.toml /opt/data/skills/i-have-adhd/agents/gemini.toml
               chown -R 10000:10000 /opt/data/skills
           volumeMounts:
             - name: sbx-tools
@@ -104,6 +117,24 @@ spec:
               readOnly: true
             - name: arr-config
               mountPath: /src-arr
+              readOnly: true
+            - name: skill-se1
+              mountPath: /src-se1
+              readOnly: true
+            - name: skill-se2
+              mountPath: /src-se2
+              readOnly: true
+            - name: skill-se3
+              mountPath: /src-se3
+              readOnly: true
+            - name: skill-refs
+              mountPath: /src-refs
+              readOnly: true
+            - name: skill-adhd
+              mountPath: /src-adhd
+              readOnly: true
+            - name: skill-adhd-gemini
+              mountPath: /src-adhd-gemini
               readOnly: true
             - name: arr-secret
               mountPath: /arr-secret
@@ -499,6 +530,24 @@ spec:
         - name: arr-config
           configMap:
             name: hermes-carolyn-arr
+        - name: skill-se1
+          configMap:
+            name: hermes-carolyn-skill-se-part1
+        - name: skill-se2
+          configMap:
+            name: hermes-carolyn-skill-se-part2
+        - name: skill-se3
+          configMap:
+            name: hermes-carolyn-skill-se-part3
+        - name: skill-refs
+          configMap:
+            name: hermes-carolyn-skill-simple-english-refs
+        - name: skill-adhd
+          configMap:
+            name: hermes-carolyn-skill-i-have-adhd
+        - name: skill-adhd-gemini
+          configMap:
+            name: hermes-carolyn-skill-i-have-adhd-gemini
         - name: arr-secret
           secret:
             secretName: hermes-carolyn
