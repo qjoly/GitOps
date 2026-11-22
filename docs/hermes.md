@@ -163,11 +163,16 @@ So `hermes-carolyn` and `seed-agent-src` run
 `ghcr.io/qjoly/hermes-agent-desktop`, the upstream image plus those packages,
 built from
 [`image/Dockerfile`](https://github.com/qjoly/GitOps/blob/main/mocha/apps/hermes-carolyn/image/Dockerfile)
-by the `hermes-agent-desktop-image` workflow and tagged like its base. Bumping
-Hermes is two steps: bump the `FROM` line (the workflow builds the new tag on
-the PR), then the two `image:` lines in the Deployment. Keep both containers
+by the `hermes-agent-desktop-image` workflow and tagged like its base.
+
+Renovate keeps it up to date. It looks the version up on the base
+(`nousresearch/hermes-agent`), not on ghcr, and bumps the `FROM` line and both
+`image:` lines in a single PR (`renovate/hermes-carolyn-agent-image`). The
+workflow builds the new tag on that PR, so the image exists before ArgoCD syncs
+the merge: wait for the build check before merging. Both containers must stay
 on the same tag, since the webui runs the agent source copied by
-`seed-agent-src`.
+`seed-agent-src`. On a bump, also check that the package list in the
+Dockerfile still matches `PACKAGES["apt"]` in `tools/bot_desktop/runtime.py`.
 
 From a shell in the pod: `hermes computer-use screen status|start|stop`.
 
