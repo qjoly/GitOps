@@ -108,8 +108,8 @@ data:
     
     The local checkout stays the source of truth. A sandbox gets a copy, works on it, and hands back a patch. git commits, pushes and `gh` (PR, review, issues) only ever run locally, after the patch is applied.
     
-    Never pass a token, kubeconfig or any secret into a sandbox: it has none on purpose.
-    
+    Never pass a token, kubeconfig or any secret into a sandbox: it has none on purpose. That includes `GH_TOKEN`/`GITHUB_TOKEN` "to fix mise": mise resolves versions through mise-versions.jdx.dev, not the GitHub API, so `mise install` does not need a GitHub token. If it fails, the cause is elsewhere (network, a typo in `mise.toml`): debug that, do not inject a token.
+
     ## Flow
     
     ```bash
@@ -125,7 +125,20 @@ data:
     - `exec` runs argv as-is in `/work`: wrap pipes, `&&` and globs in `bash -c '…'`. Stdin is forwarded, so `sbx exec "$n" -- bash -c 'cat > x' < x` works.
     - Run long builds in the background instead of blocking on them.
     - Read the patch before applying it: it is the only thing that crosses back.
-    
+
+    ## Publishing the result
+
+    git and `gh` here act as the `unetassedecafe` bot (`GH_TOKEN` and a git credential helper in the environment). The bot has no write access to the upstream repo and must never push to `main`: push a branch to its fork and open a PR.
+
+    ```bash
+    git switch -c <branch> && git commit -am "<English message>"
+    gh repo fork qjoly/<repo> --remote=false 2>/dev/null || true   # once per repo
+    git push https://github.com/unetassedecafe/<repo>.git HEAD:<branch>
+    gh pr create --repo qjoly/<repo> --head unetassedecafe:<branch> --base main --fill
+    ```
+
+    Never write the token into a remote URL or a `.git/config`: `sbx push` copies `.git` into the sandbox.
+
     ## Parallel work
     
     One sandbox per task, each `up` is independent. To keep patches from colliding, give each task its own local `git worktree` and branch, push from it, and apply its patch there.

@@ -146,12 +146,45 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: mistral_api_key
-            # Expanded as ${GITHUB_TOKEN} in the github MCP server headers
+            # Expanded as ${GITHUB_TOKEN} in the github MCP server headers. The
+            # github-mcp sidecar needs it: in `http` mode github-mcp-server
+            # ignores GITHUB_PERSONAL_ACCESS_TOKEN and authenticates every
+            # request with the client's Authorization header (401 without it).
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: github_token
+            # git and gh run by the agent (sbx flow: apply the patch, commit,
+            # push, open the PR) act as the unetassedecafe bot. It has no write
+            # access to qjoly repos: it pushes to its own fork and opens PRs.
+            # GH_TOKEN takes precedence over GITHUB_TOKEN in gh.
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: github_bot_token
+            # git config through env, so no token is ever written to a
+            # .git/config (sbx push copies .git into the sandbox). The empty
+            # helper drops any helper configured on the PVC.
+            - name: GIT_CONFIG_COUNT
+              value: "4"
+            - name: GIT_CONFIG_KEY_0
+              value: credential.https://github.com.helper
+            - name: GIT_CONFIG_VALUE_0
+              value: ""
+            - name: GIT_CONFIG_KEY_1
+              value: credential.https://github.com.helper
+            - name: GIT_CONFIG_VALUE_1
+              value: '!f() { test "$1" = get && echo username=unetassedecafe && echo "password=$GH_TOKEN"; }; f'
+            - name: GIT_CONFIG_KEY_2
+              value: user.name
+            - name: GIT_CONFIG_VALUE_2
+              value: unetassedecafe
+            - name: GIT_CONFIG_KEY_3
+              value: user.email
+            - name: GIT_CONFIG_VALUE_3
+              value: 176228475+unetassedecafe@users.noreply.github.com
             # Expanded as ${HA_MCP_TOKEN} in the homeassistant MCP server headers.
             # Not HASS_TOKEN: hermes treats that one as "enable the native Home
             # Assistant integration" and installs its plugin (messaging platform
@@ -441,12 +474,45 @@ spec:
               value: /home/hermeswebui/.hermes/webui
             - name: HERMES_WEBUI_AGENT_DIR
               value: /home/hermeswebui/.hermes/hermes-agent
-            # Expanded as ${GITHUB_TOKEN} in the github MCP server headers
+            # Expanded as ${GITHUB_TOKEN} in the github MCP server headers. The
+            # github-mcp sidecar needs it: in `http` mode github-mcp-server
+            # ignores GITHUB_PERSONAL_ACCESS_TOKEN and authenticates every
+            # request with the client's Authorization header (401 without it).
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: github_token
+            # git and gh run by the agent (sbx flow: apply the patch, commit,
+            # push, open the PR) act as the unetassedecafe bot. It has no write
+            # access to qjoly repos: it pushes to its own fork and opens PRs.
+            # GH_TOKEN takes precedence over GITHUB_TOKEN in gh.
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: github_bot_token
+            # git config through env, so no token is ever written to a
+            # .git/config (sbx push copies .git into the sandbox). The empty
+            # helper drops any helper configured on the PVC.
+            - name: GIT_CONFIG_COUNT
+              value: "4"
+            - name: GIT_CONFIG_KEY_0
+              value: credential.https://github.com.helper
+            - name: GIT_CONFIG_VALUE_0
+              value: ""
+            - name: GIT_CONFIG_KEY_1
+              value: credential.https://github.com.helper
+            - name: GIT_CONFIG_VALUE_1
+              value: '!f() { test "$1" = get && echo username=unetassedecafe && echo "password=$GH_TOKEN"; }; f'
+            - name: GIT_CONFIG_KEY_2
+              value: user.name
+            - name: GIT_CONFIG_VALUE_2
+              value: unetassedecafe
+            - name: GIT_CONFIG_KEY_3
+              value: user.email
+            - name: GIT_CONFIG_VALUE_3
+              value: 176228475+unetassedecafe@users.noreply.github.com
             # Expanded as ${HA_MCP_TOKEN} in the homeassistant MCP server headers.
             # Not HASS_TOKEN: hermes treats that one as "enable the native Home
             # Assistant integration" and installs its plugin (messaging platform
