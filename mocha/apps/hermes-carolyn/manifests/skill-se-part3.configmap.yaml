@@ -1,0 +1,122 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-carolyn-skill-se-part3
+data:
+  SKILL.md.part3: |
+
+    ### Slop-to-simple substitutions
+
+    This table is ours, not the ASD dictionary. It maps the words AI-generated docs overuse to plain replacements. If the word carries no fact, delete it instead of replacing it.
+
+    | Slop | Write instead |
+    |---|---|
+    | leverage, utilize | use |
+    | in order to | to |
+    | prior to | before |
+    | ensure | make sure that (strict mode; in pragmatic mode, ensure is an allowed pick if it is your one chosen check-verb) |
+    | it is worth noting that | (delete) |
+    | it's important to, crucially | (delete — state the fact) |
+    | simply, just, easily, seamlessly, effortlessly | (delete) |
+    | robust, powerful, comprehensive, performant | (delete, or give the measurable property) |
+    | functionality | function, feature |
+    | enables you to, allows you to | you can |
+    | is designed to, aims to | (delete — say what it does) |
+    | facilitate | help, make possible |
+    | dive into, delve into | read, examine |
+    | when it comes to | for |
+    | in the event that | if |
+    | due to the fact that | because |
+    | as needed, as necessary | (state the condition) |
+    | and/or | Pick one, or write "X, or Y, or both" |
+    | e.g. / i.e. / etc. | for example / that is / (name the items) |
+    | gracefully handles | (say what it does: "retries three times, then stops") |
+    | out of the box | by default |
+    | under the hood | internally |
+    | blazingly fast, state-of-the-art | fast (give the number) / (delete) |
+    | streamline | make simpler, make faster |
+    | plethora, myriad | many |
+    | addresses the issue, tackles | corrects the fault, removes the error |
+
+    ### Consistency pass
+
+    Collapse synonym rotations to one term each (Rules 1.11, 9.4). The two lists below work differently.
+
+    **Technical nouns — not in the dictionary. Pick one and keep it consistent (both modes):**
+
+    - config / configuration / settings / options → pick one
+
+    **Dictionary rulings — the standard has already chosen. Use the approved word (strict mode); pick one and keep it consistent (pragmatic mode):**
+
+    | You wrote | Dictionary status | Use instead |
+    |---|---|---|
+    | check (verb) / verify / confirm / ensure | All rejected as verbs | `make sure that` (strict); pick one (pragmatic) |
+    | validate | Not in dictionary | Use as technical verb (Rule 1.12), or replace with `make sure that` |
+    | delete / drop (verb) / destroy | All rejected | `erase` (data), `remove` (physical); avoid `drop` and `destroy` |
+    | remove | Approved verb | Keep it |
+    | run / execute | Both rejected | `operate` for run, `do` for execute (strict); pick one (pragmatic) |
+    | invoke / launch | Not in dictionary | Use as technical verbs (Rule 1.12) |
+    | display (verb) / render / present (verb) | All rejected | `show` (approved verb) |
+    | issue | Not in dictionary | Use as technical noun, or replace with `problem` (approved) |
+    | failure | Rejected in general use; approved as TN for performance loss | Use only when it means a performance error: "a failure of the pump" |
+    | error | Approved noun | Keep it |
+    | problem | Approved noun | Keep it |
+
+    ## Untouchables
+
+    These are technical names (Rules 1.5, 8.6). Leave them exact, even when they break vocabulary rules:
+
+    - Code blocks, inline code, identifiers, CLI commands, flags, file paths
+    - Quoted error messages and log lines
+    - Product names, API endpoint names, config keys
+    - Numbers with units — each counts as one word in the sentence limit
+
+    ## Beyond Documentation
+
+    Same rules, different targets. Full adaptations in `references/use-cases.md`:
+
+    - **Error messages**: state what happened (simple past), the cause if known, then the fix as an imperative. No "Oops", no "Please ensure", no apology filler.
+    - **Runbooks**: STE's home turf. Imperative steps, conditions first, warnings before the step.
+    - **Incident reports**: simple past only. "We have identified an issue that may have impacted" becomes "Between 14:02 and 14:31 UTC, 12% of requests failed."
+    - **Release notes**: breaking changes follow the warning pattern — command first, risk second.
+    - **Agent instructions (prompts, AGENTS.md)**: a system prompt is a procedure for a reader that cannot ask questions. One instruction per sentence, no "should", condition first.
+    - **Translation prep**: STE's original job. One meaning per word plus complete grammar removes most translation ambiguity.
+
+    ## Self-Check Before You Deliver
+
+    This step is not optional. Run these four checks on your draft:
+
+    1. Count words in your three longest sentences. Over the 20/25 limit → split them.
+    2. Search your draft for: `'ll`, `'re`, `'s` (contraction), `has been`, `have been`, `should`, `-ing` verbs after a comma, semicolons.
+    3. Search for every `if` and `when`. Each one stands at the START of its sentence, before the command. "Increase the timeout if the network is slow" → "If the network is slow, increase the timeout."
+    4. Search for the verbs you did NOT pick in Your Task step 3 (the check/verify/confirm set). Replace every hit with your chosen verb.
+
+    Fix what you find, then deliver. For a full audit, run `references/checklist.md`.
+
+    ## Full Example
+
+    **Before (real unedited AI output):**
+
+    > **Connection timeouts.** If sqlpipe hangs or fails with `dial tcp: i/o timeout`, check that the host running sqlpipe can reach the Postgres port (usually 5432) — this is often a security group or firewall rule blocking the connection. If you're connecting to a managed database (RDS, Cloud SQL, etc.), confirm the instance allows connections from sqlpipe's IP. You can also try increasing `source.connect_timeout_seconds` in your config, since a slow network path can trip the default timeout even when the connection eventually succeeds.
+
+    **After (classified procedural, verb = "make sure", conditions first, one instruction per sentence):**
+
+    > **Connection timeouts.** sqlpipe stops with `dial tcp: i/o timeout` when it cannot reach the Postgres port (5432 by default).
+    >
+    > 1. Make sure that the host that runs sqlpipe can reach the Postgres port. A firewall or security group usually blocks it.
+    > 2. If the database is managed (RDS, Cloud SQL), make sure that the instance accepts connections from the IP of sqlpipe.
+    > 3. If the network is slow, increase `source.connect_timeout_seconds` in the configuration.
+
+    What changed: 40-word sentences split under 20; "you're" expanded; "check/confirm" collapsed to "make sure that"; every condition moved before its command; "etc." removed; code and error strings untouched.
+
+    ## Limits
+
+    STE is for technical facts and instructions. Do not apply it to marketing copy, blog voice, or brand writing — it deletes persuasion by design. When a user asks for STE on marketing text, say so and offer it for the docs instead.
+
+    This skill is an unofficial aid. It is not affiliated with or endorsed by ASD or STEMG, and no tool can guarantee STE compliance. ASD-STE100 is a registered trademark of ASD. The official standard is a free download at asd-ste100.org.
+
+    ## References
+
+    - `references/checklist.md` — full verification pass with searchable patterns, for check mode and final audits
+    - `references/use-cases.md` — long-form adaptations: error messages, runbooks, incident reports, commits, UI copy, i18n

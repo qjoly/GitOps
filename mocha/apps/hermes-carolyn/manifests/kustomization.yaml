@@ -9,6 +9,14 @@ resources:
   - calendar-mcp-externalsecret.yaml
   - sbx-configmap.yaml
   - arr-configmap.yaml
+  - skill-sbx.configmap.yaml
+  - skill-arr.configmap.yaml
+  - skill-se-part1.configmap.yaml
+  - skill-se-part2.configmap.yaml
+  - skill-se-part3.configmap.yaml
+  - skill-simple-english-refs.configmap.yaml
+  - skill-i-have-adhd.configmap.yaml
+  - skill-i-have-adhd-gemini.configmap.yaml
   - serviceaccount.yaml
   - pvc.yaml
   - deployment.yaml
