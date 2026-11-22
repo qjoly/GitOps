@@ -43,5 +43,8 @@ data:
         headers:
           Authorization: "Bearer ${GITHUB_TOKEN}"
 
+    browser:
+      cdp_url: "http://127.0.0.1:9222"
+
     database:
       journal_mode: "wal"
