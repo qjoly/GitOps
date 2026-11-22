@@ -19,6 +19,44 @@ spec:
     spec:
       serviceAccountName: sbx
       initContainers:
+        # The webui mounts the `data` volume at two paths: /opt/data, because
+        # HERMES_HOME must read exactly like the gateway's (it publishes that
+        # path in `served_profiles`, and hermes_cli.gateway_runtime compares
+        # the two with Path.resolve()), and /home/hermeswebui/.hermes, because
+        # the webui image prepares and runs the agent from $HOME/.hermes
+        # regardless of HERMES_HOME. Both are the same volume, and that is the
+        # whole fix for the `profile_mismatch` outage that made every kanban
+        # dispatch die: if they ever stop being the same volume, the webui runs
+        # on a home nobody serves and dispatch breaks silently.
+        #
+        # So assert it instead of trusting it. Same device and inode means the
+        # same directory, whatever the paths are called and whatever a stray
+        # emptyDir or a reordered mount would claim. Refusing to start is
+        # deliberate: a pod that cannot dispatch should not report Ready.
+        - name: check-webui-home
+          image: busybox:1.38
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              # -L: resolve before comparing, so a symlinked path cannot
+              # masquerade as its own directory and slip past the check.
+              a=$(stat -L -c '%d:%i' /probe/opt-data)
+              b=$(stat -L -c '%d:%i' /probe/image-home)
+              if [ "$a" != "$b" ]; then
+                echo "webui home is not the hermes-carolyn data volume:" >&2
+                echo "  HERMES_HOME path /opt/data           -> $a" >&2
+                echo "  image home /home/hermeswebui/.hermes -> $b" >&2
+                echo "HERMES_HOME must name the volume the gateway serves, or every" >&2
+                echo "kanban worker spawned from here dies with profile_mismatch." >&2
+                exit 1
+              fi
+          volumeMounts:
+            - name: data
+              mountPath: /probe/opt-data
+            - name: data
+              mountPath: /probe/image-home
         - name: seed-config
           image: busybox:1.38
           command:

@@ -34,11 +34,13 @@ traffic is open on purpose, the agent needs the internet.
 
 ## Init containers: what gets seeded where
 
-Four init containers run before anything else. Each one is the single writer of
-its target, so its repair is re-applied on every pod start.
+Five init containers run before anything else. Four of them seed or repair a
+target, each the single writer of it, so the repair is re-applied on every pod
+start. The fifth only checks.
 
 | Container | Writes | Semantics |
 |---|---|---|
+| `check-webui-home` | nothing | **fails the pod** unless `webui`'s two home paths are one volume |
 | `seed-config` | `/opt/data/config.yaml` | **never overwrites** (`test -f … \|\| cp`) |
 | `seed-calendar-creds` | the calendar MCP credential file in an `emptyDir` | overwrites, mode 600 |
 | `seed-agent-src` | the agent source into an `emptyDir` shared with `webui` | copies from the image, then repairs two image defects |
@@ -58,15 +60,31 @@ lines without a replacement.
 
 ## Storage
 
-One PVC, `hermes-carolyn-data`, mounted at **two paths**:
+One PVC, `hermes-carolyn-data`, mounted at several paths:
 
-- `/opt/data` in `hermes-carolyn` — this is `HERMES_HOME`;
+- `/opt/data` in `hermes-carolyn` — this is `HERMES_HOME`, and the path the
+  gateway publishes in its `served_profiles`;
 - `/workspace` in both `hermes-carolyn` and `webui`;
-- `/home/hermeswebui/.hermes` in `webui`.
+- `/opt/data` in `webui` — its `HERMES_HOME`;
+- `/home/hermeswebui/.hermes` in `webui` — where the image runs the agent from.
 
 `/workspace` and `HERMES_HOME` are the same volume, which is why a repo cloned
 by the agent shows up at `/workspace/<repo>` in the webui. Anything written
 outside `/opt/data` and `/workspace` — an `emptyDir` — is gone on restart.
+
+**Every `HERMES_HOME` in this pod must be `/opt/data`.** A kanban worker
+spawned from `webui` identifies itself to the gateway with its own home, and
+`hermes_cli.gateway_runtime` matches it against the paths the gateway serves by
+resolving both and comparing them. Two spellings of one volume resolve to two
+different profiles, so the first message the worker sends is refused with
+`Gateway inaccessible: profile_mismatch`, the worker dies, and the task sits in
+`running` with no process behind it. That is what made every dispatch fail
+until `webui` moved to `/opt/data`.
+
+The `check-webui-home` init container holds that invariant: it compares the
+device and inode of `webui`'s two home paths and fails the pod if they are not
+the same directory. Keep it — it turns a silent dispatch outage into a pod that
+never becomes Ready.
 
 ## Credentials
 
@@ -150,6 +168,34 @@ neither is reachable from the public internet:
 
 Discord is a platform, not a surface: the agent answers there and auto-threads,
 mention required.
+
+## Kanban
+
+The board lives on the PVC (`/opt/data/kanban.db`), and the dispatcher runs in
+the gateway. Two board settings are **pod-local state, not GitOps**: a rebuilt
+pod or a brand-new board starts without them, and dispatch fails with a message
+that does not mention them.
+
+- **`default_workdir`.** A board has none until someone sets it, and a
+  `worktree` task then fails to spawn with *"has workspace_kind=worktree but no
+  workspace_path"*. Set it once per board:
+
+  ```bash
+  hermes kanban boards set-default-workdir default /workspace/gitops
+  ```
+
+- **Ghost runs.** When a worker dies, the task can stay in `running` with no
+  process behind it, which silently blocks the next dispatch. Release the claim
+  before retrying:
+
+  ```bash
+  hermes kanban reclaim <task-id>
+  ```
+
+Neither is a manifest problem, so neither is fixed by a sync; know them before
+concluding that dispatch itself is broken. A genuine dispatch outage says
+`Gateway inaccessible: profile_mismatch` in the worker's last output, and its
+cause is the `HERMES_HOME` rule under [Storage](#storage).
 
 ## Changing it
 
