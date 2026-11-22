@@ -53,13 +53,14 @@ spec:
               cp /src/sbx /opt/sbx/sbx
               cp /src/kubeconfig /opt/sbx/kubeconfig
               chmod +x /opt/sbx/sbx /opt/sbx/kubectl
-              apk add --no-cache jq >/dev/null 2>&1 || true
+              apk add --no-cache jq netcat-openbsd >/dev/null 2>&1 || true
               if command -v jq >/dev/null 2>&1; then cp "$(command -v jq)" /opt/sbx/jq; fi
+              if command -v nc >/dev/null 2>&1; then cp "$(command -v nc)" /opt/sbx/nc; fi
               # arr stack: scripts + ssh material for the Americano media server
-              mkdir -p /opt/arr /opt/ssh
-              cp /src-arr/arr.sh /opt/arr/arr.sh
-              cp /src-arr/deluge_rpc.py /src-arr/plan_import.py /src-arr/purge_orphans.py /opt/arr/
-              chmod +x /opt/arr/arr.sh
+              cp /src-arr/arr.sh /opt/sbx/arr.sh
+              cp /src-arr/deluge_rpc.py /src-arr/plan_import.py /src-arr/purge_orphans.py /opt/sbx/
+              chmod +x /opt/sbx/arr.sh
+              mkdir -p /opt/ssh
               cp /arr-secret/arr_ssh_key /opt/ssh/id_ed25519
               cp /src-arr/ssh_config /opt/ssh/config
               chmod 600 /opt/ssh/id_ed25519
@@ -118,7 +119,7 @@ spec:
                   name: hermes-carolyn
                   key: allowed_users
             - name: PATH
-              value: /opt/sbx:/opt/arr:/opt/hermes/bin:/opt/hermes/.venv/bin:/opt/data/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              value: /opt/sbx:/opt/hermes/bin:/opt/hermes/.venv/bin:/opt/data/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
             - name: SBX_KUBECONFIG
               value: /opt/sbx/kubeconfig
             # arr.sh reads the *arr API keys from these
@@ -173,6 +174,10 @@ spec:
               value: hermes-carolyn
             - name: NB_USE_NETSTACK_MODE
               value: "true"
+            # netstack mode exposes the tunnel as a SOCKS5 proxy on the pod's
+            # loopback; the other containers reach Americano through it
+            - name: NB_SOCKS5_LISTENER_PORT
+              value: "1080"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -300,7 +305,7 @@ spec:
             - name: WANTED_GID
               value: "10000"
             - name: PATH
-              value: /opt/sbx:/opt/arr:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
+              value: /opt/sbx:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
             - name: SBX_KUBECONFIG
               value: /opt/sbx/kubeconfig
             # arr.sh reads the *arr API keys from these

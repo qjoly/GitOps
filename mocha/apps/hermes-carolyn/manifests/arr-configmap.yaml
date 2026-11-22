@@ -14,6 +14,7 @@ data:
       UserKnownHostsFile /opt/ssh/known_hosts
       BatchMode yes
       ConnectTimeout 15
+      ProxyCommand /opt/sbx/nc -X 5 -x 127.0.0.1:1080 %h %p
   SKILL.md: |
     ---
     name: arr
