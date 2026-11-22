@@ -1114,6 +1114,213 @@
           "rawSql": "SELECT time, service, round(quant,6) AS value FROM (SELECT time, service, arraySort(x -> x.1, groupArray((le_f, c))) AS pairs, arrayMap(x -> x.1, pairs) AS les, arrayMap(x -> x.2, pairs) AS cum, cum[length(cum)] AS total, 0.95 * total AS rnk, arrayFirstIndex(y -> y >= rnk, cum) AS idx, multiIf(total=0,0, idx<=1,les[1], idx>=length(les),les[length(les)-1], les[idx-1] + (les[idx]-les[idx-1])*(rnk-cum[idx-1])/(cum[idx]-cum[idx-1])) AS quant FROM (SELECT time, service, le_f, sum(r) AS c FROM (SELECT time, fp, service, le_f, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp, le_f ORDER BY time), 0) AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'service') AS service, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, if(JSONExtractString(t.labels,'le')='+Inf', 1e18, toFloat64OrZero(JSONExtractString(t.labels,'le'))) AS le_f, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='management_store_transaction_duration_ms_milliseconds.bucket' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='management_store_transaction_duration_ms_milliseconds.bucket' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, service, cluster, le_f) WHERE cluster IN (${cluster:singlequote})) GROUP BY time, service, le_f) GROUP BY time, service) WHERE total > 0 ORDER BY time"
         }
       ]
+    },
+    {
+      "type": "stat",
+      "title": "Peers online",
+      "id": 19,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 48
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT countIf(c = 1) AS value FROM (SELECT argMax(connected, ts) AS c FROM netbird.peers GROUP BY id)"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Peers total",
+      "id": 20,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 48
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT count() AS value FROM (SELECT id FROM netbird.peers GROUP BY id)"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Peers (from the NetBird API, synced every minute)",
+      "id": 21,
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 52
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "online": {
+                        "text": "online",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "offline": {
+                        "text": "offline",
+                        "color": "red",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "last_seen"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              },
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "groups"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 220
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "status",
+            "desc": false
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT argMax(name, ts) AS name, argMax(ip, ts) AS ip, if(argMax(connected, ts) = 1, 'online', 'offline') AS status, argMax(os, ts) AS os, argMax(version, ts) AS version, argMax(hostname, ts) AS hostname, argMax(groups, ts) AS groups, argMax(last_seen, ts) AS last_seen FROM netbird.peers GROUP BY id ORDER BY status, name"
+        }
+      ]
     }
   ]
 }
