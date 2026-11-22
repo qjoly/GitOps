@@ -1,0 +1,151 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-carolyn-sbx
+data:
+  kubeconfig: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: in-cluster
+        cluster:
+          server: https://kubernetes.default.svc
+          certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    contexts:
+      - name: mocha
+        context:
+          cluster: in-cluster
+          user: sa
+    current-context: mocha
+    users:
+      - name: sa
+        user:
+          tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+  sbx: |
+    #!/usr/bin/env bash
+    # Disposable gVisor sandboxes on mocha. The local checkout stays the source of truth:
+    # code is copied in, changes come back as a git patch, and git/gh only ever run locally.
+    set -euo pipefail
+    
+    here=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+    k() { kubectl --kubeconfig "${SBX_KUBECONFIG:-$here/../../kubeconfig}" --context "${SBX_CONTEXT:-mocha}" -n "${SBX_NAMESPACE:-sandboxes}" "$@"; }
+    pod() { k get sandboxclaim "$1" -o jsonpath='{.status.sandbox.name}'; }
+    
+    usage() {
+      cat >&2 <<'EOF'
+    usage: sbx <command>
+      up [name]             claim a sandbox, print its name (expires after $SBX_TTL seconds, default 4h)
+      push <name> [dir]     replace /work with the git checkout at dir (tracked + untracked, minus ignored)
+      exec <name> -- cmd…   run cmd in /work
+      diff <name>           print changes made in /work since the push; apply with: sbx diff x | git apply
+      down <name>           delete the sandbox
+      ls                    list sandboxes
+    Build artifacts are gitignored and stay out of diff: fetch them with kubectl cp.
+    EOF
+      exit 2
+    }
+    
+    cmd=${1:-}; shift || true
+    case $cmd in
+      up)
+        exp=$(( $(date +%s) + ${SBX_TTL:-14400} ))
+        exp=$(date -u -d "@$exp" +%FT%TZ 2>/dev/null || date -u -r "$exp" +%FT%TZ)
+        meta="generateName: sbx-"; [[ -n ${1:-} ]] && meta="name: $1"
+        name=$(k create -o jsonpath='{.metadata.name}' -f - <<EOF
+    apiVersion: extensions.agents.x-k8s.io/v1beta1
+    kind: SandboxClaim
+    metadata:
+      $meta
+    spec:
+      warmPoolRef: { name: dev }
+      lifecycle: { shutdownPolicy: Delete, shutdownTime: "$exp" }
+    EOF
+    )
+        k wait "sandboxclaim/$name" --for=condition=Ready --timeout=5m >/dev/null
+        echo "$name"
+        ;;
+      push)
+        [[ $# -ge 1 ]] || usage
+        cd "${2:-.}"
+        # ls-files still lists tracked files deleted from the working tree, tar would choke on them.
+        { git ls-files -z -co --exclude-standard; printf '.git\0'; } |
+          while IFS= read -r -d '' f; do [[ -e $f || -L $f ]] && printf '%s\0' "$f"; done |
+          COPYFILE_DISABLE=1 tar --null -T - -czf - |
+          k exec -i "$(pod "$1")" -- bash -ec '
+            find /work -mindepth 1 -delete
+            tar xzf - -C /work --no-same-owner --warning=no-unknown-keyword
+            cd /work
+            # Snapshot what was pushed, local uncommitted edits included, so diff only shows sandbox work.
+            git add -A
+            git -c user.name=sbx -c user.email=sbx@localhost commit -qm "sbx base" --allow-empty --no-verify
+            git tag -f sbx-base >/dev/null'
+        ;;
+      exec)
+        [[ $# -ge 1 ]] || usage
+        name=$1; shift; [[ ${1:-} == -- ]] && shift
+        [[ $# -ge 1 ]] || usage
+        k exec -i "$(pod "$name")" -- "$@"
+        ;;
+      diff)
+        [[ $# -eq 1 ]] || usage
+        k exec "$(pod "$1")" -- bash -ec 'cd /work && git add -A && git diff --cached --binary sbx-base'
+        ;;
+      down)
+        [[ $# -eq 1 ]] || usage
+        k delete sandboxclaim "$1" --wait=false
+        ;;
+      ls) k get sandboxclaims ;;
+      *) usage ;;
+    esac
+  SKILL.md: |
+    ---
+    name: sbx
+    description: Use when a build, test suite, script or web research should run outside this machine - untrusted code, heavy builds, toolchains not installed locally, or several tasks to run in parallel. Drives disposable gVisor sandboxes on the mocha cluster with the `sbx` CLI; code is pushed from the local checkout and changes come back as a git patch.
+    ---
+    
+    # Sandboxes on mocha (`sbx`)
+    
+    The local checkout stays the source of truth. A sandbox gets a copy, works on it, and hands back a patch. git commits, pushes and `gh` (PR, review, issues) only ever run locally, after the patch is applied.
+    
+    Never pass a token, kubeconfig or any secret into a sandbox: it has none on purpose.
+    
+    ## Flow
+    
+    ```bash
+    n=$(sbx up)                       # prints the sandbox name
+    sbx push "$n" .                   # replaces /work with the checkout (gitignored files stay local)
+    sbx exec "$n" -- bash -c 'mise install && make test'
+    sbx diff "$n" > /tmp/$n.patch     # everything changed in /work since the push
+    git apply /tmp/$n.patch
+    sbx down "$n"
+    ```
+    
+    - Always `sbx down` when done, even after a failure. Forgotten sandboxes die after 4 h (`SBX_TTL=<seconds> sbx up` to change it).
+    - `exec` runs argv as-is in `/work`: wrap pipes, `&&` and globs in `bash -c '…'`. Stdin is forwarded, so `sbx exec "$n" -- bash -c 'cat > x' < x` works.
+    - Run long builds in the background instead of blocking on them.
+    - Read the patch before applying it: it is the only thing that crosses back.
+    
+    ## Parallel work
+    
+    One sandbox per task, each `up` is independent. To keep patches from colliding, give each task its own local `git worktree` and branch, push from it, and apply its patch there.
+    
+    ## Inside the sandbox
+    
+    - Debian trixie with build-essential, git, curl, python3, running as root: `apt-get install` works.
+    - `mise install` reads the repo's `mise.toml`; `mise use -g node@22` for anything else.
+    - Internet is open, the cluster network is not reachable. Research is just `curl` from `exec`.
+    - Up to 4 CPU, 8 GiB RAM, 30 GiB disk. Write only under `/work`, `/root` or `/tmp`: the rest of the filesystem lives in RAM.
+    
+    ## Build artifacts
+    
+    They are usually gitignored, so `diff` leaves them out. Stream them back with tar:
+    
+    ```bash
+    sbx exec "$n" -- tar czf - -C /work dist | tar xzf -
+    ```
+    
+    ## When something fails
+    
+    - `sbx up` hangs or errors: `sbx ls`, then check the mocha OIDC login (`kubectl --kubeconfig ~/code/perso/GitOps/mocha/kubeconfig --context mocha get ns` may need a browser).
+    - `git apply` refuses the patch: the local checkout moved since the push. Try `git apply --3way`, or push again and redo the work.
