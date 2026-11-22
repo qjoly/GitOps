@@ -63,6 +63,7 @@ spec:
               cp /arr-secret/arr_ssh_key /opt/ssh/id_ed25519
               cp /src-arr/ssh_config /opt/ssh/config
               chmod 600 /opt/ssh/id_ed25519
+              chown 10000:10000 /opt/ssh/id_ed25519 /opt/ssh/config
               printf '#!/bin/sh\nexec /usr/bin/ssh -F /opt/ssh/config "$@"\n' > /opt/sbx/ssh
               chmod +x /opt/sbx/ssh
               # Load the skills into hermes' skill dir (a ConfigMap mount would be
