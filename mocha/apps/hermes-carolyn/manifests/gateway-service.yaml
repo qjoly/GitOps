@@ -1,0 +1,17 @@
+---
+# Hermes gateway's Webapp listener (config.yaml `webapp:`, port 9120): the
+# browser-hosted Desktop — Bots tab, sessions, routines — and the JSON-RPC/WS
+# backend a dev machine's Hermes Desktop can connect to as a remote gateway.
+# Separate Service and host from the webui: different process, different auth
+# (dashboard basic auth), and the webui keeps its own host and cookie scope.
+apiVersion: v1
+kind: Service
+metadata:
+  name: hermes-carolyn-gateway
+spec:
+  selector:
+    app.kubernetes.io/name: hermes-carolyn
+  ports:
+    - name: http
+      port: 9120
+      targetPort: webapp
