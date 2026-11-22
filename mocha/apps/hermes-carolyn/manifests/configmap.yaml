@@ -11,14 +11,6 @@ data:
       base_url: "https://api.mistral.ai/v1"
       key_env: "MISTRAL_API_KEY"
 
-    fallback_providers:
-      - provider: custom
-        model: "gpt-oss:20b"
-        base_url: "http://ollama.ollama.svc.cluster.local:11434/v1"
-
-    fallback:
-      min_switch_reset_seconds: 0
-
     platforms:
       discord:
         enabled: true
