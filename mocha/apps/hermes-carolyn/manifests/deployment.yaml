@@ -53,6 +53,12 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: mistral_api_key
+            # Expanded as ${GITHUB_TOKEN} in the github MCP server headers
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: github_token
             - name: HERMES_API_TIMEOUT
               value: "1800"
             - name: DISCORD_BOT_TOKEN
@@ -143,6 +149,12 @@ spec:
               value: /home/hermeswebui/.hermes/webui
             - name: HERMES_WEBUI_AGENT_DIR
               value: /home/hermeswebui/.hermes/hermes-agent
+            # Expanded as ${GITHUB_TOKEN} in the github MCP server headers
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: github_token
             # No password by design: access is gated by NetBird (traefik-internal
             # only), so allow onboarding/terminal from non-local origins.
             - name: HERMES_WEBUI_ONBOARDING_OPEN

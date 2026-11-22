@@ -48,6 +48,8 @@ data:
         url: "http://127.0.0.1:8082/mcp"
         trust: untrusted
         connect_timeout: 30
+        headers:
+          Authorization: "Bearer ${GITHUB_TOKEN}"
 
     database:
       journal_mode: "wal"
