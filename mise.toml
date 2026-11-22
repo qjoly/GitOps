@@ -102,8 +102,15 @@ set -euo pipefail
 if ! sudo -n true 2>/dev/null; then
   read -rs -p "sudo password: " SUDO_PW
   echo >&2
-  printf '%s\n' "$SUDO_PW" | command sudo -S -v 2>/dev/null || { echo "sudo: wrong password" >&2; exit 1; }
-  sudo() { printf '%s\n' "$SUDO_PW" | command sudo -S "$@" 2>/dev/null; }
+  # Feed the password through an askpass helper, NOT through stdin: sudo -S
+  # would eat the pipes and heredocs used below ("... | sudo tee file").
+  askpass="$(mktemp)"
+  trap 'rm -f "$askpass"' EXIT
+  esc=$(printf '%s' "$SUDO_PW" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\\$/g' -e 's/`/\\`/g')
+  { echo '#!/bin/sh'; printf 'printf "%%s\\n" "%s"\n' "$esc"; } > "$askpass"
+  chmod 700 "$askpass"
+  SUDO_ASKPASS="$askpass" command sudo -A -v 2>/dev/null || { echo "sudo: wrong password" >&2; exit 1; }
+  sudo() { SUDO_ASKPASS="$askpass" command sudo -A "$@"; }
 fi
 sudo mkdir -p /etc/resolver
 printf 'nameserver 127.0.0.1\nport 53535\n' | sudo tee /etc/resolver/nb.mocha.thoughtless.eu >/dev/null
@@ -214,8 +221,15 @@ set -euo pipefail
 if ! sudo -n true 2>/dev/null; then
   read -rs -p "sudo password: " SUDO_PW
   echo >&2
-  printf '%s\n' "$SUDO_PW" | command sudo -S -v 2>/dev/null || { echo "sudo: wrong password" >&2; exit 1; }
-  sudo() { printf '%s\n' "$SUDO_PW" | command sudo -S "$@" 2>/dev/null; }
+  # Feed the password through an askpass helper, NOT through stdin: sudo -S
+  # would eat the pipes and heredocs used below ("... | sudo tee file").
+  askpass="$(mktemp)"
+  trap 'rm -f "$askpass"' EXIT
+  esc=$(printf '%s' "$SUDO_PW" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\\$/g' -e 's/`/\\`/g')
+  { echo '#!/bin/sh'; printf 'printf "%%s\\n" "%s"\n' "$esc"; } > "$askpass"
+  chmod 700 "$askpass"
+  SUDO_ASKPASS="$askpass" command sudo -A -v 2>/dev/null || { echo "sudo: wrong password" >&2; exit 1; }
+  sudo() { SUDO_ASKPASS="$askpass" command sudo -A "$@"; }
 fi
 export KUBECONFIG="${KUBECONFIG:-$MISE_PROJECT_ROOT/mocha/kubeconfig}"
 export VAULT_CONTEXT="${VAULT_CONTEXT:-mocha-corium}"
@@ -269,8 +283,15 @@ set -euo pipefail
 if ! sudo -n true 2>/dev/null; then
   read -rs -p "sudo password: " SUDO_PW
   echo >&2
-  printf '%s\n' "$SUDO_PW" | command sudo -S -v 2>/dev/null || { echo "sudo: wrong password" >&2; exit 1; }
-  sudo() { printf '%s\n' "$SUDO_PW" | command sudo -S "$@" 2>/dev/null; }
+  # Feed the password through an askpass helper, NOT through stdin: sudo -S
+  # would eat the pipes and heredocs used below ("... | sudo tee file").
+  askpass="$(mktemp)"
+  trap 'rm -f "$askpass"' EXIT
+  esc=$(printf '%s' "$SUDO_PW" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\\$/g' -e 's/`/\\`/g')
+  { echo '#!/bin/sh'; printf 'printf "%%s\\n" "%s"\n' "$esc"; } > "$askpass"
+  chmod 700 "$askpass"
+  SUDO_ASKPASS="$askpass" command sudo -A -v 2>/dev/null || { echo "sudo: wrong password" >&2; exit 1; }
+  sudo() { SUDO_ASKPASS="$askpass" command sudo -A "$@"; }
 fi
 sudo launchctl bootout system/eu.thoughtless.nb-mocha 2>/dev/null || true
 sudo launchctl bootout system/eu.thoughtless.netbird-matcha 2>/dev/null || true
