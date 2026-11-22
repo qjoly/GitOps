@@ -29,6 +29,14 @@ sequenceDiagram
   run on the sandbox disk at full speed and nothing lives only in the cluster.
 - **Credentials**: none in the sandbox. Anything that needs GitHub happens locally on the applied patch.
 
+  This works because `mise install` does not call the GitHub API: the `github` backend resolves
+  releases through `mise-versions.jdx.dev`, which spends a pooled token upstream. Check it with
+  `mise token github`, which reports `(none)` on a healthy sandbox. Only a `mise-versions` outage
+  falls back to anonymous `api.github.com` calls. Do not fix that by injecting a token — the
+  template refuses injected env vars for this reason.
+
+See [Hermes](hermes.md) for the pod that drives these sandboxes and publishes the result.
+
 ## Install
 
 ```bash
