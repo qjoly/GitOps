@@ -86,3 +86,42 @@ spec:
                 name: whoami
                 port:
                   name: http
+
+---
+# Wildcard cert for the *.px zone (issued over Cloudflare DNS-01).
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-px
+spec:
+  secretName: wildcard-px-tls
+  dnsNames:
+    - "*.px.mocha.thoughtless.eu"
+  issuerRef:
+    name: cloudflare
+    kind: ClusterIssuer
+---
+# Same page as check.nb, but on the *.px zone. Until the NetBird reverse
+# proxy data path works in k8s (see netbird-proxy/README.md), *.px resolves
+# to traefik-internal like *.nb, so this Ingress carries the px cert itself.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: whoami-px
+spec:
+  ingressClassName: traefik-internal
+  tls:
+    - hosts:
+        - check.px.mocha.thoughtless.eu
+      secretName: wildcard-px-tls
+  rules:
+    - host: check.px.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  name: http
