@@ -196,7 +196,8 @@ spec:
           image: ghcr.io/codefuturist/email-mcp:0.6.0
           args:
             - http
-          # Accounts and read-only mode live in config.toml (mounted below);
+          # Accounts and read-only mode live in config.toml (rendered by the
+          # hermes-carolyn-email-mcp ExternalSecret, mounted below);
           # its passwords are env: references to these.
           env:
             - name: MAIL_PASSWORD_CATCHALL
@@ -379,8 +380,8 @@ spec:
           configMap:
             name: hermes-carolyn-config
         - name: email-mcp-config
-          configMap:
-            name: hermes-carolyn-email-mcp
+          secret:
+            secretName: hermes-carolyn-email-mcp
         - name: mcp-cache
           emptyDir: {}
         - name: mcp-state
