@@ -499,8 +499,14 @@ spec:
             - name: http
               containerPort: 8787
           env:
+            # The gateway (hermes-carolyn container) runs with HERMES_HOME=/opt/data,
+            # the image default, and publishes that path in gateway.lock. A worker
+            # spawned from this container compares the profile home it resolves
+            # with the one the gateway advertises and refuses with
+            # "profile_mismatch" when they differ. Both mount points below are the
+            # same `data` volume, so point HERMES_HOME at the gateway's spelling.
             - name: HERMES_HOME
-              value: /home/hermeswebui/.hermes
+              value: /opt/data
             - name: HERMES_WEBUI_HOST
               value: 0.0.0.0
             - name: HERMES_WEBUI_PORT
@@ -618,6 +624,13 @@ spec:
               path: /health
               port: http
           volumeMounts:
+            # Two paths for the same `data` volume, deliberately: HERMES_HOME must
+            # match what the gateway advertises (see the env block above), while the
+            # webui image and its existing PVC layout keep using the hermeswebui
+            # home. Moving the variable without this mount would leave the container
+            # with an empty HERMES_HOME.
+            - name: data
+              mountPath: /opt/data
             - name: data
               mountPath: /home/hermeswebui/.hermes
             - name: agent-src
