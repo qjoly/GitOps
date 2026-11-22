@@ -65,6 +65,8 @@ spec:
               value: "true"
             - name: NB_PROXY_DEBUG_ENDPOINT_ADDRESS
               value: 127.0.0.1:8444
+            - name: NB_PROXY_DEBUG_LOGS
+              value: "true"
           ports:
             - name: proxy
               containerPort: 8443
