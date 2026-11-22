@@ -130,8 +130,11 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: github_token
-            # Expanded as ${HASS_TOKEN} in the homeassistant MCP server headers
-            - name: HASS_TOKEN
+            # Expanded as ${HA_MCP_TOKEN} in the homeassistant MCP server headers.
+            # Not HASS_TOKEN: hermes treats that one as "enable the native Home
+            # Assistant integration" and installs its plugin (messaging platform
+            # + ha_* tools), which we don't want next to the MCP server.
+            - name: HA_MCP_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: hermes-carolyn
@@ -397,8 +400,11 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: github_token
-            # Expanded as ${HASS_TOKEN} in the homeassistant MCP server headers
-            - name: HASS_TOKEN
+            # Expanded as ${HA_MCP_TOKEN} in the homeassistant MCP server headers.
+            # Not HASS_TOKEN: hermes treats that one as "enable the native Home
+            # Assistant integration" and installs its plugin (messaging platform
+            # + ha_* tools), which we don't want next to the MCP server.
+            - name: HA_MCP_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: hermes-carolyn
