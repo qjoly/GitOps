@@ -1,0 +1,63 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-carolyn-skill-arr
+data:
+  SKILL.md: |
+    ---
+    name: arr
+    description: Control the Sonarr/Radarr/Prowlarr/Deluge stack on the Americano media server, reached over NetBird (SSH to 100.92.156.232 as root via the pod's netbird sidecar). Use when the user asks to add or find a TV show or film, list the library, search indexers, fill missing episodes, check or fix the download queue, manage Deluge torrents (ratio, dead torrents), rescan, or debug indexer health.
+    ---
+
+    # arr stack on Americano (over NetBird)
+
+    The media server is a NetBird peer (100.92.156.232). The pod reaches it through
+    the `netbird` sidecar; SSH goes through the wrapper in /opt/sbx. One script does
+    everything: `arr.sh` (on PATH, lives in /opt/arr). API keys come from the
+    environment (SONARR_API_KEY, RADARR_API_KEY, PROWLARR_API_KEY, DELUGE_PASSWORD);
+    never print them.
+
+    Start every session with state: `arr.sh status` prints versions, queue size and
+    health warnings for Sonarr, Radarr, Prowlarr.
+
+    ## Commands
+
+        arr.sh series [query] / arr.sh movies [query]   # library
+        arr.sh show <seriesId> / arr.sh movie <movieId> # seasons, per-season files
+        arr.sh lookup tv|movie <term>                   # tvdb/tmdb id candidates
+        arr.sh add tv <tvdbId> [--profile N] [--root PATH] [--monitor ...] [--search] [--dry-run]
+        arr.sh add movie <tmdbId> [--profile N] [--root PATH] [--search] [--dry-run]
+        arr.sh search tv|movie <term> [--limit N]       # Prowlarr, all indexers, by seeders
+        arr.sh missing tv|movie [--limit N]
+        arr.sh queue [tv|movie] [--limit N]
+        arr.sh calendar [--days N] / arr.sh history tv|movie [--limit N]
+        arr.sh grab tv --series ID [--season S] [--episode E] / grab movie --id ID
+        arr.sh refresh|rescan|volume tv|movie ID
+        arr.sh import tv|movie <folder> --series|--movie ID [--apply] [--move] [--map REGEX=SxxEyy]
+        arr.sh deluge status|trackers|list|dead|low|remove|pause|resume|set|reannounce|purge
+        arr.sh raw <app> <METHOD> <path> [json]         # escape hatch, path under the API root
+
+    Sonarr is not published on the server host; the script runs its API calls inside
+    the sonarr container with `podman exec` over SSH. Radarr/Prowlarr APIs are called
+    on the server's localhost. The web UIs sit behind Traefik+Authentik: never call
+    them over HTTPS.
+
+    ## Rules
+
+    - Never delete media, series, films or files without an explicit user instruction.
+      `DELETE /series/<id>?deleteFiles=true` removes files on disk.
+    - `add` changes the library: use --dry-run when the user only asks what would happen.
+    - Do not edit anything under /data/media; let Sonarr/Radarr move files.
+    - Deluge removals: check the save path first, never --with-data on library paths,
+      ask the user before deleting. Keep torrents under the ratio target on private trackers.
+
+    ## Key restrictions (server-side)
+
+    The hermes SSH key on Americano is a forced command (/usr/local/bin/hermes-arr)
+    with from="100.64.0.0/10",restrict: it can only run *arr API calls on the
+    server's localhost (8989/7878/9696, sonarr via podman exec -i sonarr curl),
+    the deluge RPC (podman exec ... deluge python3 -), podman ps and df -h /data.
+    No shell, no file access, no forwarding, and only from the NetBird network.
+    Anything else (including deluge purge, which writes scripts to /tmp) is denied;
+    use the admin key from a workstation for that.
