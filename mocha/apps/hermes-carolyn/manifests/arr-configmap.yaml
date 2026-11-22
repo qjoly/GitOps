@@ -62,6 +62,16 @@ data:
     - Do not edit anything under /data/media; let Sonarr/Radarr move files.
     - Deluge removals: check the save path first, never --with-data on library paths,
       ask the user before deleting. Keep torrents under the ratio target on private trackers.
+
+    ## Key restrictions (server-side)
+
+    The hermes SSH key on Americano is a forced command (/usr/local/bin/hermes-arr)
+    with from="100.64.0.0/10",restrict: it can only run *arr API calls on the
+    server's localhost (8989/7878/9696, sonarr via podman exec -i sonarr curl),
+    the deluge RPC (podman exec ... deluge python3 -), podman ps and df -h /data.
+    No shell, no file access, no forwarding, and only from the NetBird network.
+    Anything else (including deluge purge, which writes scripts to /tmp) is denied;
+    use the admin key from a workstation for that.
   socksconnect.py: |
     #!/usr/bin/env python3
     # Minimal SOCKS5 CONNECT relay: socksconnect.py <socks_host> <socks_port> <host> <port>
