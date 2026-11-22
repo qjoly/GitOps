@@ -49,12 +49,17 @@ spec:
             - sh
             - -c
             - cp /usr/bin/kubectl /opt/sbx/kubectl && cp /src/sbx /opt/sbx/sbx && cp /src/kubeconfig /opt/sbx/kubeconfig && chmod +x /opt/sbx/sbx /opt/sbx/kubectl
+            # Load the sbx skill into hermes' skill dir (a ConfigMap mount would be
+            # read-only and break the webui container's startup chown)
+            - mkdir -p /opt/data/skills/sbx && cp /src/SKILL.md /opt/data/skills/sbx/SKILL.md && chown -R 10000:10000 /opt/data/skills/sbx
           volumeMounts:
             - name: sbx-tools
               mountPath: /opt/sbx
             - name: sbx-config
               mountPath: /src
               readOnly: true
+            - name: data
+              mountPath: /opt/data
       containers:
         - name: hermes-carolyn
           image: docker.io/nousresearch/hermes-agent:v0.23.3
@@ -101,8 +106,6 @@ spec:
               mountPath: /opt/data
             - name: sbx-tools
               mountPath: /opt/sbx
-            - name: sbx-skill
-              mountPath: /opt/data/skills/sbx
         - name: email-mcp
           image: ghcr.io/codefuturist/email-mcp:0.6.0
           args:
@@ -240,8 +243,6 @@ spec:
               mountPath: /workspace
             - name: sbx-tools
               mountPath: /opt/sbx
-            - name: sbx-skill
-              mountPath: /home/hermeswebui/.hermes/skills/sbx
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -253,12 +254,6 @@ spec:
         - name: sbx-config
           configMap:
             name: hermes-carolyn-sbx
-        - name: sbx-skill
-          configMap:
-            name: hermes-carolyn-sbx
-            items:
-              - key: SKILL.md
-                path: SKILL.md
         - name: config
           configMap:
             name: hermes-carolyn-config
