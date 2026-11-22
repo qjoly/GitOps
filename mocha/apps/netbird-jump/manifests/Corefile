@@ -22,6 +22,18 @@ nb.mocha.thoughtless.eu:53 {
         rcode NOERROR
     }
 }
+
+# Same for the *.px zone (see mocha/apps/netbird-proxy): it also resolves to
+# traefik-internal, so the SNI proxy reaches it over the mesh.
+px.mocha.thoughtless.eu:53 {
+    bind 127.0.0.1
+    template IN A {
+        answer "{{ .Name }} 60 IN A 10.96.208.53"
+    }
+    template IN AAAA {
+        rcode NOERROR
+    }
+}
 .:53 {
     bind 127.0.0.1
     forward . 10.96.0.10

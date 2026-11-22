@@ -87,10 +87,10 @@ octodoctor -e -c "$CTX" --fail-on none --limit 200
 echo "report: $(ls -td "$OUT"/argocd-manifests-export-*/ | head -1)octodoctor-output/index.html"
 '''
 
-# *.nb.mocha.thoughtless.eu on macOS without the NetBird client: /etc/resolver
-# sends the zone to a local CoreDNS that answers 127.0.0.1, pf maps
-# 127.0.0.1:443/80 to a port-forward of the netbird-jump SNI sidecar, which
-# goes through NetBird. Only that zone is affected.
+# *.nb and *.px .mocha.thoughtless.eu on macOS without the NetBird client:
+# /etc/resolver sends those zones to a local CoreDNS that answers 127.0.0.1,
+# pf maps 127.0.0.1:443/80 to a port-forward of the netbird-jump SNI sidecar,
+# which goes through NetBird. Only those zones are affected.
 [tasks."nb:setup"]
 description = "One-time macOS setup (sudo): /etc/resolver entry and pf redirect 443/80 -> 8443"
 run = '''
@@ -98,6 +98,7 @@ run = '''
 set -euo pipefail
 sudo mkdir -p /etc/resolver
 printf 'nameserver 127.0.0.1\nport 53535\n' | sudo tee /etc/resolver/nb.mocha.thoughtless.eu >/dev/null
+printf 'nameserver 127.0.0.1\nport 53535\n' | sudo tee /etc/resolver/px.mocha.thoughtless.eu >/dev/null
 echo 'rdr pass on lo0 inet proto tcp from any to 127.0.0.1 port { 80, 443 } -> 127.0.0.1 port 8443' \
   | sudo tee /etc/pf.anchors/nb.mocha >/dev/null
 # The default pf.conf evaluates com.apple/*, so the anchor needs no pf.conf edit.
@@ -131,6 +132,15 @@ export KUBECONFIG="${KUBECONFIG:-$MISE_PROJECT_ROOT/mocha/kubeconfig}"
 corefile="$(mktemp)"
 cat >"$corefile" <<'COREFILE'
 nb.mocha.thoughtless.eu:53535 {
+    bind 127.0.0.1
+    template IN A {
+        answer "{% raw %}{{ .Name }}{% endraw %} 60 IN A 127.0.0.1"
+    }
+    template IN AAAA {
+        rcode NOERROR
+    }
+}
+px.mocha.thoughtless.eu:53535 {
     bind 127.0.0.1
     template IN A {
         answer "{% raw %}{{ .Name }}{% endraw %} 60 IN A 127.0.0.1"
@@ -239,5 +249,5 @@ sudo launchctl bootout system/eu.thoughtless.nb-mocha 2>/dev/null || true
 sudo launchctl bootout system/eu.thoughtless.netbird-matcha 2>/dev/null || true
 sudo pfctl -a com.apple/nb.mocha -F all 2>/dev/null || true
 sudo rm -f /Library/LaunchDaemons/eu.thoughtless.nb-mocha.plist /Library/LaunchDaemons/eu.thoughtless.netbird-matcha.plist
-sudo rm -f /etc/pf.anchors/nb.mocha /etc/resolver/nb.mocha.thoughtless.eu /usr/local/bin/netbird-matcha-up /etc/netbird-matcha.key
+sudo rm -f /etc/pf.anchors/nb.mocha /etc/resolver/nb.mocha.thoughtless.eu /etc/resolver/px.mocha.thoughtless.eu /usr/local/bin/netbird-matcha-up /etc/netbird-matcha.key
 '''
