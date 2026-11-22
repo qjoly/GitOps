@@ -13,15 +13,13 @@
 # declaration the gate needs behind a proxy.
 #
 # No stripPrefix and no rewrite: the Webapp, its JSON-RPC API and the native
-# session WebSocket (/api/ws) all live at the root. Traefik's Kubernetes
-# provider enables response buffering by default and holds every WS frame until
-# the response completes, so the router disables it (that IS the WS fix).
+# session WebSocket (/api/ws) all live at the root. Traefik streams responses
+# and proxies WebSocket upgrades out of the box, so no middleware: a
+# `buffering` Middleware would turn buffering ON, not off.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: hermes-carolyn-gateway
-  annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "hermes-carolyn-gateway-no-buffer@kubernetescrd"
 spec:
   ingressClassName: traefik-internal
   rules:
@@ -35,14 +33,3 @@ spec:
                 name: hermes-carolyn-gateway
                 port:
                   number: 9120
----
-# No response buffering for the gateway's long-lived WebSocket sessions.
-# maxRequestBodyBytes: 0 keeps the request body limit at traefik's default;
-# only the response buffering is turned off here.
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: hermes-carolyn-gateway-no-buffer
-spec:
-  buffering:
-    maxRequestBodyBytes: 0
