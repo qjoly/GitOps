@@ -96,6 +96,15 @@ description = "One-time macOS setup (sudo): /etc/resolver entry and pf redirect 
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
+# Ask for the sudo password once and reuse it: this Mac does not cache sudo
+# credentials across the piped subshells below, so a bare "sudo" would prompt
+# for every single call.
+if ! sudo -n true 2>/dev/null; then
+  read -rs -p "sudo password: " SUDO_PW
+  echo >&2
+  printf '%s\n' "$SUDO_PW" | command sudo -S -v 2>/dev/null || { echo "sudo: wrong password" >&2; exit 1; }
+  sudo() { printf '%s\n' "$SUDO_PW" | command sudo -S "$@" 2>/dev/null; }
+fi
 sudo mkdir -p /etc/resolver
 printf 'nameserver 127.0.0.1\nport 53535\n' | sudo tee /etc/resolver/nb.mocha.thoughtless.eu >/dev/null
 printf 'nameserver 127.0.0.1\nport 53535\n' | sudo tee /etc/resolver/px.mocha.thoughtless.eu >/dev/null
@@ -199,6 +208,15 @@ description = "Join this Mac to NetBird via the kv/netbird mac_setup_key setup k
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
+# Ask for the sudo password once and reuse it: this Mac does not cache sudo
+# credentials across the piped subshells below, so a bare "sudo" would prompt
+# for every single call.
+if ! sudo -n true 2>/dev/null; then
+  read -rs -p "sudo password: " SUDO_PW
+  echo >&2
+  printf '%s\n' "$SUDO_PW" | command sudo -S -v 2>/dev/null || { echo "sudo: wrong password" >&2; exit 1; }
+  sudo() { printf '%s\n' "$SUDO_PW" | command sudo -S "$@" 2>/dev/null; }
+fi
 export KUBECONFIG="${KUBECONFIG:-$MISE_PROJECT_ROOT/mocha/kubeconfig}"
 export VAULT_CONTEXT="${VAULT_CONTEXT:-mocha-corium}"
 command -v netbird >/dev/null || { echo "netbird CLI not found: brew install netbirdio/tap/netbird" >&2; exit 1; }
@@ -245,6 +263,15 @@ description = "Undo the macOS NetBird setup: nb:setup + nb:peer (sudo)"
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
+# Ask for the sudo password once and reuse it: this Mac does not cache sudo
+# credentials across the piped subshells below, so a bare "sudo" would prompt
+# for every single call.
+if ! sudo -n true 2>/dev/null; then
+  read -rs -p "sudo password: " SUDO_PW
+  echo >&2
+  printf '%s\n' "$SUDO_PW" | command sudo -S -v 2>/dev/null || { echo "sudo: wrong password" >&2; exit 1; }
+  sudo() { printf '%s\n' "$SUDO_PW" | command sudo -S "$@" 2>/dev/null; }
+fi
 sudo launchctl bootout system/eu.thoughtless.nb-mocha 2>/dev/null || true
 sudo launchctl bootout system/eu.thoughtless.netbird-matcha 2>/dev/null || true
 sudo pfctl -a com.apple/nb.mocha -F all 2>/dev/null || true
