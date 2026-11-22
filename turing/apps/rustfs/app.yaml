@@ -34,6 +34,14 @@ spec:
             scanner:
               speed: slow
 
+        # NFS stalls can block /health for tens of seconds; don't kill the pod for it
+        livenessProbe:
+          timeoutSeconds: 10
+          failureThreshold: 6
+        readinessProbe:
+          timeoutSeconds: 10
+          failureThreshold: 6
+
         podSecurityContext:
           runAsUser: 10001
           runAsGroup: 10001
