@@ -47,7 +47,7 @@ spec:
             channels:
             - discord
         alertOnAbsent: true
-        absentFor: 10m
+        absentFor: 10
       evaluation:
         kind: rolling
         spec:
