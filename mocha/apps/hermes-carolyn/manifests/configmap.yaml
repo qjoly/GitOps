@@ -12,6 +12,27 @@ data:
       base_url: "https://api.mistral.ai/v1"
       key_env: "MISTRAL_API_KEY"
 
+    # Backup lane for rate limits and stale-model cutoffs. Same host and key as
+    # the primary, so it survives a 429 on deepseek without a second credential.
+    # Deliberately NOT the local Ollama: cold start measured at 40s.
+    fallback_providers:
+      - provider: custom
+        model: mistral-small-latest
+        base_url: https://api.mistral.ai/v1
+        key_env: MISTRAL_API_KEY
+
+    # Side-task routing. Both defaults ("auto") would run these on the main
+    # model at 2x the price; the review in particular replays the whole
+    # conversation. Naming a different model also switches the review fork to
+    # a compact digest instead of a full snapshot replay.
+    auxiliary:
+      title_generation:
+        model: ministral-3b-2512
+      background_review:
+        provider: custom
+        model: mistral-small-latest
+        base_url: https://api.mistral.ai/v1
+
     # Image generation (image_generate tool, bot avatars) through the
     # mistral-image plugin, which the install-sbx init container drops in
     # $HERMES_HOME/plugins. User plugins load only when listed in plugins.enabled.
