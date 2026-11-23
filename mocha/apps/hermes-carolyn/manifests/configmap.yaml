@@ -225,3 +225,18 @@ data:
       gateway_health_export:
         enabled: true
         export_interval_seconds: 60
+      # Pinned so service.instance.id survives a restart. This is the id the
+      # exporter mints and persists when the key is absent, and the seed
+      # rewrites this file on every start: without it here, each rollout
+      # silently becomes a new instance in SigNoz and the per-instance history
+      # breaks. Opaque UUID, no account identity.
+      install_id: 4ca0ab40-2f79-4d2b-bc8b-d362bff9207a
+
+    # Consent answer for shared metrics, written by the CLI when the offer is
+    # answered. offer_version is what marks the answer as already given; drop
+    # it and the running surface offers the prompt again on the next start.
+    telemetry:
+      shared_metrics:
+        enabled: false
+        send: false
+        offer_version: 2
