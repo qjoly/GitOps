@@ -103,21 +103,32 @@ spec:
                 done ) &
               exec joplin server start
           env:
+            # Every credential comes from `joplin-credentials` (ExternalSecret).
+            # No URL, username or password is written in this file: the sync
+            # target is the user's own, and its address alone is sensitive.
             - name: JOPLIN_API_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: joplin-api
+                  name: joplin-credentials
                   key: api_token
-            # 6 = WebDAV. Point at the user's existing sync target; the three
-            # REPLACE-ME values are the only things this app needs filled in.
+            - name: JOPLIN_SYNC_WEBDAV_URL
+              valueFrom:
+                secretKeyRef:
+                  name: joplin-credentials
+                  key: sync_url
+            - name: JOPLIN_SYNC_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: joplin-credentials
+                  key: sync_username
+            - name: JOPLIN_SYNC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: joplin-credentials
+                  key: sync_password
+            # 6 = WebDAV, the target the credentials above point at.
             - name: JOPLIN_SYNC_TARGET
               value: "6"
-            - name: JOPLIN_SYNC_WEBDAV_URL
-              value: "https://REPLACE-ME/remote.php/dav/files/REPLACE-ME/Joplin"
-            - name: JOPLIN_SYNC_USERNAME
-              value: "REPLACE-ME"
-            - name: JOPLIN_SYNC_PASSWORD
-              value: "REPLACE-ME"
             # Used only when JOPLIN_SYNC_TARGET is 2 (local filesystem).
             - name: JOPLIN_SYNC_LOCAL_PATH
               value: /data/sync

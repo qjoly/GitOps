@@ -8,7 +8,7 @@
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: joplin-api
+  name: joplin
 spec:
   endpointSelector:
     matchLabels:
