@@ -1,0 +1,328 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-carolyn-cron
+data:
+  # Declarative cron fleet. cron-sync.py reconciles cron/jobs.json against
+  # this spec on every pod start: jobs are matched by NAME (Hermes mints a
+  # random id), so an existing job keeps its id, its output history and its
+  # execution rows. Jobs created at runtime are kept, not pruned.
+  #
+  # This file is committed, so it holds no mail address, no Discord id and no
+  # chat name. Those are written as ${VAR} and resolved at apply time from the
+  # Secret-backed env vars the pod already has; an unresolved reference aborts
+  # the reconcile instead of writing a placeholder.
+  #
+  # One-shots are deliberately absent: they are transient reminders, not
+  # configuration.
+  spec.json: |
+    {
+      "jobs": [
+        {
+          "name": "News Open Source hebdo - Discord",
+          "prompt": "Tu prépares la rubrique news Open Source / Tech de l'émission du lundi soir. Deux livrables dans la même réponse : le message Discord (court) puis le diaporama du live.\n\nPÉRIMÈTRE, par ordre de priorité :\n1. DRAMA & LICENSING : changements de licence, forks, projets qui s'arrêtent, CLA, rug-pulls, controverse, gouvernance de fondation.\n2. CLOUD / INFRA / KUBERNETES : CNCF, releases majeures (Postgres, nginx, distros, runtimes), décisions cloud (AWS/Azure/GCP/OVH), sécurité critique d'infra.\n3. OPEN SOURCE + IA : modèles à poids ouverts vs fermés, politiques IA des projets, mainteneurs face aux patchs IA.\n4. Le reste seulement si vraiment marquant.\n\nSOURCES À EXTRAIRE (pas de simples snippets) : approachableopensource.com/news/ (éditions de la semaine), linuxiac.com + son weekly wrap-up, lwn.net, theregister.com, opensource.googleblog.com, news.ycombinator.com, huggingface.co/models?sort=trending. Si une page bloque, change de source. N'invente jamais un fait ni une URL.\n\nChoisis 4 à 5 sujets, chacun daté de la semaine écoulée.\n\n=== LIVRABLE 1 : LE MESSAGE DISCORD ===\nContrainte dure : MOINS DE 1900 CARACTÈRES au total. Compte avant de rendre.\n- ligne 1 : **📰 News Open Source — semaine du <JJ/MM>**\n- 3 à 5 blocs de 3 lignes : titre en gras avec emoji ; UNE phrase (fait + pourquoi c'est intéressant) ; le lien markdown seul sur sa ligne.\n- ligne finale : **En 3 mots :** + 3 à 5 mots.\nInterdits : tableau, titre #, préambule, politesse, conclusion récapitulative. Ton direct de chronique radio, français.\n\n=== LIVRABLE 2 : LE DIAPORAMA ===\nÉtape A. Écris /opt/data/cache/scratch/news-stories.json au format exact :\n{\"semaine\":\"16/11\",\"stories\":[{\"kicker\":\"licensing\",\"titre\":\"...\",\"puce1\":\"...\",\"puce2\":\"...\",\"url\":\"https://...\",\"source\":\"redict.io\",\"repo\":\"https://github.com/...\",\"meme\":{\"id\":\"drake\",\"text\":[\"haut\",\"bas\"],\"legende\":\"...\"},\"image\":{\"url\":\"https://...\",\"legende\":\"...\"}}],\"en_3_mots\":[\"Redict\"]}\n- kicker : 1-2 mots minuscules (licensing, infrastructure, cloud, base de données, open source + IA).\n- titre : max 90 caractères, sans point final.\n- puce1/puce2 : une phrase chacun, max 160 caractères, avec chiffres/dates.\n- url : le lien source exact consulté. Ne l'invente jamais.\n- repo : SEULEMENT si un dépôt GitHub/GitLab précis est au cœur du sujet, et seulement si tu as vérifié qu'il existe en visitant la page. Sinon omets le champ.\n- MÉDIA : chaque sujet reçoit soit un meme, soit une image, soit aucun des deux (le build tombe proprement en pleine largeur sans média, ce n'est pas une erreur).\n  • meme : assert de la blague, 2 lignes de 1 à 4 mots MAXIMUM chacune, en français, format ids autorisés : drake, fine, doge, stonks, kombucha, both, money, db, facepalm, sk, afraid, panik, tp, iwd. Ajoute une legende d'une phrase. Utilise-le pour les sujets à fort potentiel comique (licence qui se referme, projet qui meurt, décision absurde).\n  • image : l'URL directe d'une image pertinente si tu en as une fiable (illustration officielle, capture, schéma publié). Ne mets JAMAIS d'URL inventée ni un moteur de recherche : si tu n'as pas de vraie URL d'image, mets un meme ou rien.\n- 4 ou 5 stories maximum.\n\nÉtape B. Génère le deck :\npython3 /opt/data/scripts/build-news-deck.py /opt/data/cache/scratch/news-stories.json /opt/data/artifacts/news-open-source/news-open-source-<AAAA-MM-JJ du lundi>.html\nLes images sont téléchargées et inlinées en base64 : le .html reste un fichier unique, ouvrable hors ligne, liens cliquables. Un média qui échoue est ignoré avec un avertissement, ce n'est pas bloquant. S'il y a une erreur de script, corrige le JSON et relance.\n\nÉtape C. Vérifie avec ls -la que le fichier existe et dépasse 8000 octets.\n\n=== RÉPONSE FINALE ===\nDans cet ordre, sans rien d'autre :\n1. le texte du message Discord (commence par **📰 News Open Source — semaine du ...),\n2. une ligne vide,\n3. la ligne MEDIA:/opt/data/artifacts/news-open-source/news-open-source-<date>.html seule (c'est ce qui attache le fichier au message Discord).\nPas d'explication, pas de « j'ai généré », pas de résumé du process.",
+          "schedule": "every monday 18:00",
+          "timezone": "Europe/Paris",
+          "deliver": "discord:${CRON_CHANNEL_NEWS}",
+          "enabled_toolsets": [
+            "web",
+            "browser",
+            "terminal",
+            "files"
+          ],
+          "no_agent": false,
+          "wrap_response": false,
+          "catch_up": false,
+          "enabled": true
+        },
+        {
+          "name": "GC sandbox mocha (>7j)",
+          "prompt": "Script-only job: runs sbx_gc.sh, which deletes sbx SandboxClaims on the mocha cluster older than 7 days whose pod is no longer Running and whose TTL has expired. Silent when there is nothing stale; prints a report when it reclaimed sandboxes.",
+          "schedule": "every day at 4am",
+          "deliver": "origin",
+          "script": "sbx_gc.sh",
+          "no_agent": true,
+          "enabled": true
+        },
+        {
+          "name": "Veille serveurs 64 Go - Discord",
+          "prompt": "Veille hebdomadaire des offres serveurs et mini-PC 64 Go pour un lab XCP-ng. Le script interroge encheres-domaine.gouv.fr et lowendtalk.com via un Chromium pilote en CDP, filtre selon les seuils (dedie 64 Go EU <= 80 EUR par mois, lot d'encheres <= 600 EUR) et n'envoie un message Discord que si une offre qualifie. Sortie vide = aucune notification.",
+          "schedule": "every monday 9am",
+          "timezone": "Europe/Paris",
+          "deliver": "local",
+          "enabled_toolsets": [
+            "terminal"
+          ],
+          "script": "veille-servers-64go.py",
+          "no_agent": true,
+          "enabled": true
+        },
+        {
+          "name": "Achats catchall → agenda",
+          "prompt": "Tâche récurrente : surveiller la boîte ${MAIL_ADDRESS_CATCHALL} (compte email MCP « catchall ») et ajouter les NOUVEAUX achats/colis dans Google Calendar (compte ${GOOGLE_CALENDAR_EMAIL}, agenda primaire « ${GOOGLE_CALENDAR_EMAIL} », fuseau Europe/Paris).\n\n1. Lecture, sur TOUS les dossiers qui peuvent contenir des achats — pas seulement INBOX. Lister d'abord les dossiers (list_mailboxes) puis interroger au minimum : INBOX, SocialNetworks, Promotions, Quittances. Dans chacun, liste les 30 derniers mails et recherche par mots-clés (« commande », « colis », « expédition », « livraison », « suivi », « shipped », « order », « vinted », « leboncoin »), en ne retenant que les résultats des 45 derniers jours. Ignorer Github, Paperless, Spam, Trash (volumineux et hors sujet).\n   Important : les notifications Vinted et leboncoin arrivent souvent dans le dossier SocialNetworks, pas en INBOX — ne jamais les chercher uniquement en INBOX.\n\n2. Ce qui compte comme achat : confirmation/récapitulatif de commande, mail d'expédition, mail de suivi transporteur, avis de passage, colis prêt en point relais, mise à jour « commande en cours d'acheminement » avec date de livraison. Ignore les publicités, newsletters, codes promo, relances d'avis type « how did it go? ».\n\n3. Anti-doublon, étape OBLIGATOIRE avant toute création : interroge Google Calendar sur les 90 derniers jours et les 90 prochains avec, pour chaque candidat, une recherche par mot-clé (nom de boutique + nom d'article). Crée l'événement UNIQUEMENT s'il n'en existe pas déjà un pour ce mail/colis. Ne modifie ni ne duplique jamais un événement existant. Si un événement du même achat existe mais que son statut a changé (ex. colis expédié alors que seul le mail de commande était enregistré), tu peux au plus le mettre à jour via action=update — jamais en créer un second.\n\n4. Événements à créer :\n   - Achat : événement daté du jour et de l'heure du mail de commande (convertir en Europe/Paris), durée 6 min, titre « 🛒 Commande <boutique> — <article> (<prix>) », visibilité private, transparency transparent. Description : numéro de commande, article, prix, adresse de livraison, transporteur.\n   - Livraison/retrait : événement en journée entière à la date de livraison annoncée dans le mail (prendre la fin de la fourchette si le mail en donne une, ex. « 25 nov. - 26 nov. » → 26 nov.). Si le mail ne donne qu'un délai (« 3 à 5 jours ouvrés »), caler sur la date d'expédition + 5 jours ouvrés. Titre « 📦 <Retrait colis|Livraison> — <article> », rappel popup 1440 min avant, transparency transparent, visibility private. Description : transporteur, numéro de suivi et lien de suivi cliquable s'il existe, adresse du point relais ou de livraison.\n\n5. Ne fais jamais d'action destructive : pas de suppression, pas de déplacement d'événements existants. Si un doute subsiste sur un doublon, ne crée rien et signale-le.\n\n6. Après chaque création, relis l'événement depuis l'API (get_events) pour confirmer qu'il existe bien.\n\nRéponse finale (elle est livrée à l'utilisateur) : un résumé très court et actionnable en français, une ligne par nouvel événement avec sa date et son lien Google Calendar. S'il n'y a rien de neuf, réponds uniquement « Aucun nouvel achat à ajouter. » — pas de pavé, pas de récapitulatif des mails parcourus. N'invente jamais de justification sur les habitudes de l'utilisateur : si tu hésites, dis simplement ce que tu hésites à faire.",
+          "schedule": "every day at 9am",
+          "timezone": "Europe/Paris",
+          "deliver": "origin",
+          "enabled_toolsets": [
+            "email",
+            "calendar"
+          ],
+          "no_agent": false,
+          "attach_to_session": true,
+          "enabled": true
+        },
+        {
+          "name": "Briefing actualités France & Nantes",
+          "prompt": "Tu es un assistant qui prépare un briefing d'actualités chaque matin. Ta mission :\n\n1. Recherche les principales actualités du jour en France (politique, économie, société, faits marquants) via des recherches web sur des sources d'information françaises fiables (Le Monde, France Info, AFP, Les Échos, etc.).\n2. Recherche en plus les actualités spécifiques à Nantes et à la région Pays de la Loire / Loire-Atlantique (actualités locales, événements, décisions municipales).\n3. Rédige un briefing clair et concis en français, structuré ainsi :\n   - 🇫🇷 **France** : 4-6 brèves avec titres et 1-2 lignes de contexte chacune\n   - 📍 **Nantes & alentours** : 3-5 brèves locales\n   - Une courte ligne de conclusion si pertinent\n4. Cite tes sources (nom du média + lien) pour chaque information importante.\n5. Si une recherche échoue, dis-le brièvement plutôt que d'inventer.\n\nLe briefing doit être factuel, neutre, et adapté à une lecture rapide le matin.",
+          "schedule": "every day at 8am",
+          "timezone": "Europe/Paris",
+          "deliver": "discord:${CRON_CHANNEL_BRIEFING}",
+          "no_agent": false,
+          "wrap_response": false,
+          "attach_to_session": true,
+          "enabled": true,
+          "_profile": "veille"
+        }
+      ]
+    }
+  # Reconciles the spec above against cron/jobs.json. Identity is the job
+  # name; the scheduler-owned state fields (last_run_at, next_run_at,
+  # failure_streak, repeat.completed, fire_claim, paused_at, ...) are
+  # never written, so a restart cannot reset a job's run history.
+  cron-sync.py: |
+    #!/usr/bin/env python3
+    """Reconcile cron/jobs.json against the spec shipped in the GitOps ConfigMap.
+
+    The seed rewrites config.yaml on every start but nothing touches cron state, so
+    the jobs file lives only on the PVC and is lost with the volume. This script is
+    the durable copy: it runs from an initContainer, compares the spec against what
+    is on disk, and creates, updates or removes jobs to match.
+
+    Identity is the job NAME, because Hermes mints a random id at creation. The id
+    of an existing job is preserved so its output history and execution rows stay
+    attached. A job present on disk but absent from the spec is removed only when
+    --prune is passed; the default leaves it alone, so a job created at runtime is
+    never destroyed by a restart.
+
+    State fields (last_run_at, failure_streak, next_run_at, repeat.completed,
+    last_dispatch, fire_claim, paused_at, ...) belong to the scheduler and are
+    never written here.
+    """
+
+    from __future__ import annotations
+
+    import argparse
+    import json
+    import os
+    import re
+    import sys
+    from pathlib import Path
+
+    # Fields the spec owns: everything a human decides about a job.
+    MANAGED = (
+        "name", "prompt", "schedule", "timezone", "deliver", "origin", "enabled",
+        "enabled_toolsets", "skills", "script", "no_agent", "model", "provider",
+        "workdir", "wrap_response", "catch_up", "monitor_script", "monitor_url",
+        "context_from", "interpreter", "grace_minutes", "reasoning_effort",
+        "failure_deliver", "paused", "attach_to_session",
+    )
+    # Never copied from the spec onto an existing job: the scheduler owns these.
+    RUNTIME_ONLY = frozenset({
+        "id", "created_at", "last_run_at", "last_status", "last_error", "last_failure",
+        "last_dispatch", "failure_streak", "next_run_at", "state", "fire_claim",
+        "paused_at", "paused_reason", "canonical_completions", "repeat",
+        "last_delivery_error", "last_delivery_unverified", "monitor_state",
+        "preflight_alerted", "schedule_display",
+    })
+
+
+    def spec_schedule(value) -> str:
+        """The value to hand to create_job/update_job when applying the spec."""
+        if isinstance(value, dict):
+            return value.get("expr") or value.get("display") or ""
+        return str(value or "").strip()
+
+
+    # The spec is committed to git, so it carries no mail address, no Discord id and
+    # no chat name. Values that identify the user are written as ${VAR} and resolved
+    # from the environment the pod already has (Secret-backed env vars); a reference
+    # that does not resolve is a hard error, never an empty string silently applied.
+    _REF = re.compile(r"\$\{([A-Z_][A-Z0-9_]*)\}")
+
+
+    def expand(value, *, where: str):
+        """Resolve every ${VAR} in a string from os.environ; raise on a missing one."""
+        if not isinstance(value, str):
+            return value
+
+        def sub(m):
+            name = m.group(1)
+            got = os.environ.get(name, "")
+            if not got:
+                raise SystemExit(
+                    "cron-sync: %s references ${%s} but it is not set in the "
+                    "environment; refusing to write a job with a placeholder" % (where, name))
+            return got
+
+        return _REF.sub(sub, value)
+
+
+    def norm_schedule(value):
+        """Canonical cron/interval expression, whichever shape we are handed.
+
+        The spec keeps the human form ("every monday 18:00") because that is what a
+        reviewer reads in git; the store keeps the parsed dict. Both go through
+        parse_schedule so the comparison is on the meaning, not the spelling.
+        """
+        if isinstance(value, dict) and value.get("expr"):
+            return "cron:" + value["expr"]
+        raw = str(value or "").strip()
+        if not raw:
+            return ""
+        try:
+            from cron.jobs import parse_schedule
+
+            parsed = parse_schedule(raw)
+            if parsed.get("kind") == "cron":
+                return "cron:" + parsed["expr"]
+            if parsed.get("kind") == "interval":
+                return f"interval:{parsed['minutes']}"
+            return f"{parsed.get('kind')}:{parsed.get('run_at') or raw}"
+        except Exception:
+            return raw
+
+
+    def sync_profile(home: Path, jobs_spec: list[dict], *, prune: bool, dry_run: bool) -> dict:
+        """Create/update/remove jobs for one profile's cron store."""
+        from cron.jobs import create_job, load_jobs, remove_job, update_job, use_cron_store
+
+        created = updated = removed = unchanged = 0
+        with use_cron_store(home):
+            existing = {j.get("name"): j for j in load_jobs()}
+
+            for want in jobs_spec:
+                name = want.get("name")
+                if not name:
+                    continue
+                fields = {k: v for k, v in want.items() if k in MANAGED and k not in RUNTIME_ONLY}
+                for ref_key in ("deliver", "failure_deliver", "prompt"):
+                    if ref_key in fields:
+                        fields[ref_key] = expand(fields[ref_key], where=f"{name}.{ref_key}")
+
+                cur = existing.get(name)
+                if cur is None:
+                    print(f"cron-sync[{home.name}]: + create {name!r}")
+                    if not dry_run:
+                        create_job(
+                            prompt=fields.get("prompt"),
+                            schedule=spec_schedule(fields.get("schedule")),
+                            name=name, deliver=fields.get("deliver"),
+                            origin=fields.get("origin") or None, skills=fields.get("skills"),
+                            model=fields.get("model"), provider=fields.get("provider"),
+                            script=fields.get("script"),
+                            enabled_toolsets=fields.get("enabled_toolsets"),
+                            workdir=fields.get("workdir"),
+                            no_agent=bool(fields.get("no_agent")),
+                            attach_to_session=fields.get("attach_to_session"),
+                            monitor_script=fields.get("monitor_script"),
+                            monitor_url=fields.get("monitor_url"),
+                            reasoning_effort=fields.get("reasoning_effort"),
+                            failure_deliver=fields.get("failure_deliver"),
+                            catch_up=fields.get("catch_up"),
+                            timezone=fields.get("timezone"),
+                            grace_minutes=fields.get("grace_minutes"),
+                            wrap_response=fields.get("wrap_response"),
+                            paused=bool(fields.get("paused", False)),
+                        )
+                    created += 1
+                    continue
+
+                drift = {}
+                for key, want_val in fields.items():
+                    have_val = cur.get(key)
+                    if key == "schedule":
+                        if norm_schedule(want_val) != norm_schedule(have_val):
+                            # Send the spec's own spelling, not the comparison form.
+                            drift[key] = spec_schedule(want_val)
+                    elif isinstance(want_val, list) and isinstance(have_val, list):
+                        if set(map(str, want_val)) != set(map(str, have_val)):
+                            drift[key] = want_val
+                    elif want_val != have_val:
+                        drift[key] = want_val
+                if drift:
+                    print(f"cron-sync[{home.name}]: ~ update {name!r}: {sorted(drift)}")
+                    if not dry_run:
+                        update_job(cur["id"], drift)
+                    updated += 1
+                else:
+                    unchanged += 1
+
+            wanted = {w.get("name") for w in jobs_spec}
+            for name, job in existing.items():
+                if name in wanted:
+                    continue
+                if prune:
+                    print(f"cron-sync[{home.name}]: - remove {name!r} (not in spec)")
+                    if not dry_run:
+                        remove_job(job["id"])
+                    removed += 1
+                else:
+                    print(f"cron-sync[{home.name}]: keeping {name!r} (not in spec, --prune not given)")
+
+        return {"created": created, "updated": updated, "removed": removed, "unchanged": unchanged}
+
+
+    def main() -> int:
+        ap = argparse.ArgumentParser(description="Reconcile cron jobs with the shipped spec.")
+        ap.add_argument("--spec", required=True, help="path to spec.json")
+        ap.add_argument("--home", default="/opt/data", help="HERMES_HOME of the install")
+        ap.add_argument("--agent-root", default=None,
+                        help="the hermes-agent tree to import (default: <home>/hermes-agent)")
+        ap.add_argument("--prune", action="store_true",
+                        help="delete jobs on disk that the spec does not list")
+        ap.add_argument("--dry-run", action="store_true")
+        args = ap.parse_args()
+
+        agent_root = Path(args.agent_root) if args.agent_root else Path(args.home) / "hermes-agent"
+        if not (agent_root / "cron" / "jobs.py").is_file():
+            print(f"cron-sync: no hermes-agent tree at {agent_root}; leaving jobs untouched")
+            return 0
+        sys.path.insert(0, str(agent_root))
+
+        spec_path = Path(args.spec)
+        if not spec_path.is_file():
+            print(f"cron-sync: no spec at {spec_path}; leaving jobs untouched")
+            return 0
+
+        spec = json.loads(spec_path.read_text()).get("jobs") or []
+        home = Path(args.home)
+        totals = {"created": 0, "updated": 0, "removed": 0, "unchanged": 0}
+
+        # Jobs are grouped by _profile: null -> the install's own store,
+        # "veille" -> profiles/veille/cron.
+        by_profile: dict[str, list] = {}
+        for job in spec:
+            prof = job.get("_profile") or ""
+            by_profile.setdefault(prof, []).append(job)
+
+        for prof, jobs in by_profile.items():
+            target = home / "profiles" / prof if prof else home
+            if not (target / "cron").is_dir() and not args.dry_run:
+                print(f"cron-sync: profile {prof!r} has no cron dir at {target}; skipping")
+                continue
+            try:
+                counts = sync_profile(target, jobs, prune=args.prune, dry_run=args.dry_run)
+            except Exception as exc:  # one profile's bad store must not block the others
+                print(f"cron-sync[{prof or 'default'}]: FAILED: {type(exc).__name__}: {exc}")
+                continue
+            for k, v in counts.items():
+                totals[k] += v
+
+        print("cron-sync: {created} created, {updated} updated, {removed} removed, "
+              "{unchanged} unchanged".format(**totals))
+        return 0
+
+
+    if __name__ == "__main__":
+        raise SystemExit(main())
