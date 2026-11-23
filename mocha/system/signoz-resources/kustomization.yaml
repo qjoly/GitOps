@@ -17,6 +17,12 @@ resources:
   - rules/cert-manager-certificate-not-ready.yaml
   - rules/clickhouse-s3-cold-storage-write-errors.yaml
   - rules/externalsecret-not-ready.yaml
+  - rules/hermes-cron-jobs-overdue.yaml
+  - rules/hermes-cron-scheduler-stalled.yaml
+  - rules/hermes-cron-store-not-writable.yaml
+  - rules/hermes-gateway-down.yaml
+  - rules/hermes-platform-degraded.yaml
+  - rules/hermes-platform-down.yaml
   - rules/kubernetes-container-oomkilled.yaml
   - rules/kubernetes-container-restarting.yaml
   - rules/kubernetes-node-disk-pressure.yaml

@@ -1,0 +1,58 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: hermes-platform-down
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: 'Hermes messaging platform down'
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: 'hermes.platform.up stayed below 1 for 5m: the platform is in a non-running state, so messages on it go unanswered.'
+      labels:
+        severity: warning
+      annotations:
+        summary: 'A Hermes messaging platform is down'
+        description: 'hermes.platform.up stayed below 1 for 5m: the platform is in a non-running state, so messages on it go unanswered.'
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: hermes.platform.up
+                timeAggregation: latest
+                spaceAggregation: min
+              groupBy:
+              - name: k8s.cluster.name
+              - name: hermes.platform
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: warning
+            op: below
+            matchType: at_least_once
+            target: 1
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 5m
+          frequency: 1m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

@@ -172,3 +172,16 @@ data:
 
     database:
       journal_mode: "wal"
+
+    # Gateway service health over OTLP, to SigNoz (mocha/system/signoz). Only a
+    # content-free snapshot of counters and states leaves the pod; the
+    # collector stamps k8s.cluster.name, which is what the SigNoz dashboard and
+    # rules filter on. health_export needs otlp itself enabled or it stays off.
+    monitoring:
+      export:
+        otlp:
+          enabled: true
+          endpoint: "http://signoz-otel-collector.signoz.svc.cluster.local:4318"
+      gateway_health_export:
+        enabled: true
+        export_interval_seconds: 60

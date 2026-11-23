@@ -1,0 +1,57 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: hermes-cron-jobs-overdue
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: 'Hermes cron jobs overdue'
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: 'hermes.cron.jobs.overdue stayed above 0 for 15m: at least one enabled job has missed its slot and keeps missing it.'
+      labels:
+        severity: warning
+      annotations:
+        summary: 'Hermes cron jobs are past their next run'
+        description: 'hermes.cron.jobs.overdue stayed above 0 for 15m: at least one enabled job has missed its slot and keeps missing it.'
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: hermes.cron.jobs.overdue
+                timeAggregation: latest
+                spaceAggregation: max
+              groupBy:
+              - name: k8s.cluster.name
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: warning
+            op: above
+            matchType: all_the_times
+            target: 0
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 15m
+          frequency: 5m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

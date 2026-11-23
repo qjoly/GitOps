@@ -1,0 +1,59 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: hermes-gateway-down
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: 'Hermes gateway down'
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: 'hermes.gateway.up stayed below 1 for 5m: the gateway is not reporting state=running, so no session, cron job or platform message is served.'
+      labels:
+        severity: critical
+      annotations:
+        summary: 'Hermes gateway is down'
+        description: 'hermes.gateway.up stayed below 1 for 5m: the gateway is not reporting state=running, so no session, cron job or platform message is served.'
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: hermes.gateway.up
+                timeAggregation: latest
+                spaceAggregation: min
+              groupBy:
+              - name: k8s.cluster.name
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: below
+            matchType: all_the_times
+            target: 1
+            channels:
+            - discord
+        alertOnAbsent: true
+        absentFor: 10m
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 5m
+          frequency: 1m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false
