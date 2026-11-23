@@ -267,6 +267,15 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: hass_token
+            # Expanded as ${HATCHDOOR_MCP_TOKEN} in the hatchdoor MCP server
+            # headers. A secretKeyRef cannot cross namespaces, so the value is
+            # mirrored into hermes-carolyn's own Secret from the same Vault key
+            # the hatchdoor app reads: one source, two copies.
+            - name: HATCHDOOR_MCP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: hatchdoor_mcp_token
             - name: HERMES_API_TIMEOUT
               value: "1800"
             # Dashboard-gate credentials for the gateway's Webapp listener

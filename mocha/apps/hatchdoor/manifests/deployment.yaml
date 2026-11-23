@@ -1,0 +1,217 @@
+---
+# Hatchdoor: a Markdown vault served both as a web UI for the user and as an
+# MCP endpoint for agents. Three uses ride on the same folder: shared memory,
+# documentation, and dated session notes.
+#
+# Shape taken from the upstream Docker setup, with two deliberate differences:
+#
+#  1. The vault lives on its own volume and is NOT the user's personal Obsidian
+#     vault. Hatchdoor moves deleted notes to `.hatchdoor-trash` and can make
+#     git commits on its own; pointing it at a vault someone else maintains
+#     would put those notes at the mercy of an agent.
+#  2. The image is distroless and runs as nonroot (65532), so every mounted
+#     path must be writable by that uid. The initContainer handles the volumes
+#     that OpenEBS hands over as root.
+#
+# Two tokens, both from Vault, never in git:
+#   HATCHDOOR_WEB_BEARER_TOKEN — the browser. A non-loopback bind refuses to
+#     start without it.
+#   HATCHDOOR_MCP_BEARER_TOKEN — the agents. /mcp bypasses the web auth layer,
+#     so it needs its own credential.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hatchdoor
+  labels:
+    app: hatchdoor
+spec:
+  replicas: 1
+  # The cache and the vault are RWO on a single node anyway, and a rolling
+  # update would briefly run two servers over one vault.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hatchdoor
+  # Git turns in flight get a longer grace than Docker's 10 s default before
+  # SIGKILL; see the upstream compose file.
+  template:
+    metadata:
+      labels:
+        app: hatchdoor
+    spec:
+      terminationGracePeriodSeconds: 180
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # The image is distroless: it has no shell, so permissions are fixed
+        # here rather than in a startup script. `chown` on an already-correct
+        # volume is cheap, and OpenEBS sometimes mounts it as root.
+        - name: fix-permissions
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              for d in /data/vault /data/cache /data/state /models; do
+                mkdir -p "$d"
+                chown 65532:65532 "$d"
+                chmod u+rwx "$d"
+              done
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN, DAC_OVERRIDE, FOWNER]
+          volumeMounts:
+            - name: vault
+              mountPath: /data/vault
+            - name: cache
+              mountPath: /data/cache
+            - name: state
+              mountPath: /data/state
+            - name: models
+              mountPath: /models
+      containers:
+        - name: hatchdoor
+          image: battermanz/hatchdoor:2.10.0
+          env:
+            # Non-loopback bind; Hatchdoor refuses to start without the token.
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "42824"
+            - name: HATCHDOOR_WEB_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hatchdoor-credentials
+                  key: web_token
+            - name: HATCHDOOR_MCP_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hatchdoor-credentials
+                  key: mcp_token
+            # Everything the user should be able to change lives in the app's
+            # own Settings, not in this file. These are the Docker deployment
+            # contract values, verified against the upstream compose file.
+            - name: VAULT_PATH
+              value: /data/vault
+            - name: HATCHDOOR_CACHE_DB
+              value: /data/cache/hatchdoor-cache.sqlite3
+            - name: HATCHDOOR_VAULT_REGISTRY_PATH
+              value: /data/state/vaults.json
+            # Saved queries' today()/now() follow this zone; UTC when unset.
+            - name: TZ
+              value: Europe/Paris
+          ports:
+            - name: http
+              containerPort: 42824
+          volumeMounts:
+            - name: vault
+              mountPath: /data/vault
+            - name: cache
+              mountPath: /data/cache
+            - name: state
+              mountPath: /data/state
+            - name: models
+              mountPath: /models
+          startupProbe:
+            # The image is distroless (no shell, no curl), so probes run the
+            # binary's own healthcheck, which also pings SQLite. First boot
+            # downloads the embedding model before the vault is usable, hence
+            # the generous startup window.
+            exec:
+              command: ["/app/hatchdoor", "--healthcheck"]
+            periodSeconds: 10
+            failureThreshold: 90
+          readinessProbe:
+            exec:
+              command: ["/app/hatchdoor", "--healthcheck"]
+            periodSeconds: 15
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["/app/hatchdoor", "--healthcheck"]
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 4
+          resources:
+            # The embedding model is the memory hog on first boot; steady state
+            # is much lower.
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 3Gi
+      volumes:
+        - name: vault
+          persistentVolumeClaim:
+            claimName: hatchdoor-vault
+        - name: cache
+          persistentVolumeClaim:
+            claimName: hatchdoor-cache
+        - name: state
+          persistentVolumeClaim:
+            claimName: hatchdoor-state
+        # Model weights are re-downloadable, so they get a smaller volume and
+        # are the one thing worth dropping if storage is tight.
+        - name: models
+          emptyDir:
+            sizeLimit: 4Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hatchdoor
+spec:
+  selector:
+    app: hatchdoor
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hatchdoor-vault
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: openebs-lvmpv
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hatchdoor-cache
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: openebs-lvmpv
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hatchdoor-state
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: openebs-lvmpv
+  resources:
+    requests:
+      storage: 1Gi

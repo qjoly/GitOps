@@ -71,6 +71,19 @@ data:
         url: "http://127.0.0.1:8084/mcp"
         trust: untrusted
         connect_timeout: 30
+      # Hatchdoor (mocha/apps/hatchdoor): the Markdown vault as a tool surface.
+      # Read-only on the Hatchdoor side until "Let assistants change notes" is
+      # turned on there; this entry adds no write capability of its own.
+      # Streamable HTTP, so every agent on this pod shares one server.
+      hatchdoor:
+        url: "http://hatchdoor.hatchdoor.svc.cluster.local/mcp"
+        trust: untrusted
+        connect_timeout: 30
+        headers:
+          Authorization: "Bearer ${HATCHDOOR_MCP_TOKEN}"
+        tools:
+          prompts: false
+          resources: false
 
     # Triage is the inbox (nothing runs there, no auto-decompose); moving a
     # task to Ready dispatches it, unassigned ones to the default profile.
