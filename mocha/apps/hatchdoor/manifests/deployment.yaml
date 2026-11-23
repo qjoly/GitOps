@@ -100,6 +100,15 @@ spec:
                 secretKeyRef:
                   name: hatchdoor-credentials
                   key: mcp_token
+            # MCP is off by default and the instance answers NO MCP call while
+            # it is off -- not a 401, a 404. The token above is useless without
+            # this switch.
+            - name: HATCHDOOR_MCP_ENABLED
+              value: "true"
+            # Writes stay off: the agent reads until it is turned on in
+            # Settings, where the user can also scope it per vault.
+            - name: HATCHDOOR_MCP_WRITE_ENABLED
+              value: "false"
             # Everything the user should be able to change lives in the app's
             # own Settings, not in this file. These are the Docker deployment
             # contract values, verified against the upstream compose file.
