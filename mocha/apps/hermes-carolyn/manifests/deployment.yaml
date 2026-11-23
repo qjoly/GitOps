@@ -175,6 +175,26 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /opt/data
+        # Desktop plugins for the webui app. Always overwritten: unlike config.yaml
+        # there is no runtime state to preserve, and a hand-edited copy on the PVC
+        # would otherwise win over the repo forever.
+        - name: seed-desktop-plugins
+          image: busybox:1.38
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /opt/data/desktop-plugins/github-pane
+              cp /src/desktop-plugins/github-pane.js /opt/data/desktop-plugins/github-pane/plugin.js
+              printf '{"package":"github-pane"}\n' > /opt/data/desktop-plugins/github-pane/.hermes-package.json
+              chmod -R a+rX /opt/data/desktop-plugins
+              chown -R 10000:10000 /opt/data/desktop-plugins
+          volumeMounts:
+            - name: desktop-plugins
+              mountPath: /src
+              readOnly: true
+            - name: data
+              mountPath: /opt/data
         # sbx CLI + kubectl + in-cluster kubeconfig, shared with the agent containers
         - name: install-sbx
           image: docker.io/alpine/k8s:1.36.2
@@ -786,6 +806,9 @@ spec:
         - name: config
           configMap:
             name: hermes-carolyn-config
+        - name: desktop-plugins
+          configMap:
+            name: hermes-carolyn-desktop-plugins
         - name: email-mcp-config
           secret:
             secretName: hermes-carolyn-email-mcp
