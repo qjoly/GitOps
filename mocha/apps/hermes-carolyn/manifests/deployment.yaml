@@ -24,7 +24,15 @@ spec:
           command:
             - sh
             - -c
-            - test -f /opt/data/config.yaml || cp /config/config.yaml /opt/data/config.yaml
+            # Unconditional, not "seed once". With `test -f || cp` a change to
+            # config.yaml in git never reached an existing PVC: the deploy went
+            # green, the pod kept the old file, and the new MCP server silently
+            # did not exist. Git is the source of truth for this file, exactly
+            # like the skills this pod rewrites on every start.
+            - |
+              set -eu
+              cp /opt/data/config.yaml /opt/data/config.yaml.prev 2>/dev/null || true
+              cp /config/config.yaml /opt/data/config.yaml
           volumeMounts:
             - name: data
               mountPath: /opt/data
