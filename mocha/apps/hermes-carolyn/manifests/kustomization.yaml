@@ -19,7 +19,7 @@ resources:
   - skill-i-have-adhd-gemini.configmap.yaml
   - plugin-mistral-image.configmap.yaml
   - serviceaccount.yaml
-  - clusterrole.yaml
+  - clusterrolebinding.yaml
   - pvc.yaml
   - deployment.yaml
   - service.yaml

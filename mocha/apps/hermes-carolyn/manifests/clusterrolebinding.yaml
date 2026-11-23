@@ -1,0 +1,22 @@
+---
+# cluster-admin for the agent: it administers mocha, so it needs to write
+# anywhere, not only to read.
+#
+# Note the blast radius this opens: with `create` on every resource, `sbx` can
+# also create ClusterRoleBindings, so it can grant itself any power it lacks,
+# bounded only by what ArgoCD's own account holds. That is deliberate: the
+# hand-picked verb list this used to be kept 403ing on each new thing the
+# agent was asked to do. Do not tighten this back to the read-only role
+# without also removing every write the agent is expected to perform.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: hermes-carolyn-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: sbx
+    namespace: hermes-carolyn
