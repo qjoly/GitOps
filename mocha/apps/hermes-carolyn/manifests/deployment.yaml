@@ -102,6 +102,57 @@ spec:
           volumeMounts:
             - name: agent-src
               mountPath: /agent-src
+        # Cron fleet reconciliation. The seed rewrites config.yaml but nothing
+        # ever touches cron state, so jobs.json lived only on the PVC and was
+        # lost with the volume; this makes the fleet durable. Runs after
+        # seed-agent-src because it imports cron.jobs from the copied tree, and
+        # before the gateway starts so the ticker sees the final set.
+        # Never fatal: a broken reconcile must not stop the agent from booting.
+        - name: sync-cron
+          image: docker.io/nousresearch/hermes-agent:v0.23.3-desktop
+          securityContext:
+            runAsUser: 10000
+            runAsGroup: 10000
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              /agent-src/.venv/bin/python /cron-spec/cron-sync.py \
+                --spec /cron-spec/spec.json \
+                --home /opt/data \
+                --agent-root /agent-src \
+                || echo "cron-sync failed; the existing jobs.json is untouched"
+          volumeMounts:
+            - name: data
+              mountPath: /opt/data
+            - name: agent-src
+              mountPath: /agent-src
+            - name: cron-spec
+              mountPath: /cron-spec
+          env:
+            # The committed spec carries ${CRON_CHANNEL_*} and ${MAIL_ADDRESS_*}
+            # references instead of the real values; these are what they resolve to.
+            - name: CRON_CHANNEL_NEWS
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: cron_channel_news
+            - name: CRON_CHANNEL_BRIEFING
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: cron_channel_briefing
+            - name: MAIL_ADDRESS_CATCHALL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn-email-mcp
+                  key: mail_address_catchall
+            - name: GOOGLE_CALENDAR_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn-calendar-mcp
+                  key: user_google_email
         # cua-driver, the driver behind the computer_use toolset. Hermes PM
         # installs the version it pins into $HERMES_HOME/tools, on the PVC, so
         # this is a few seconds' no-op once it is there and a repair after a
@@ -705,6 +756,9 @@ spec:
         - name: arr-config
           configMap:
             name: hermes-carolyn-arr
+        - name: cron-spec
+          configMap:
+            name: hermes-carolyn-cron
         - name: skill-se1
           configMap:
             name: hermes-carolyn-skill-se-part1
