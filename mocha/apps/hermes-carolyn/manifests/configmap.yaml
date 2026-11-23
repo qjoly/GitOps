@@ -177,11 +177,15 @@ data:
     # content-free snapshot of counters and states leaves the pod; the
     # collector stamps k8s.cluster.name, which is what the SigNoz dashboard and
     # rules filter on. health_export needs otlp itself enabled or it stays off.
+    #
+    # The endpoint carries the /v1/metrics signal path on purpose: Hermes only
+    # rewrites a path that already ends in /v1/traces or /v1/metrics, so a bare
+    # host:port is POSTed as-is and the collector answers 404 on every batch.
     monitoring:
       export:
         otlp:
           enabled: true
-          endpoint: "http://signoz-otel-collector.signoz.svc.cluster.local:4318"
+          endpoint: "http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/metrics"
       gateway_health_export:
         enabled: true
         export_interval_seconds: 60
