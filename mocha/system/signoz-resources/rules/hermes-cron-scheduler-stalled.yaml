@@ -1,0 +1,57 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: hermes-cron-scheduler-stalled
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: 'Hermes cron scheduler stalled'
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: 'hermes.cron.scheduler.heartbeat_age_seconds rose above 300s: the ticker thread is stuck or dead, so no scheduled job fires.'
+      labels:
+        severity: critical
+      annotations:
+        summary: 'The Hermes cron ticker stopped beating'
+        description: 'hermes.cron.scheduler.heartbeat_age_seconds rose above 300s: the ticker thread is stuck or dead, so no scheduled job fires.'
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: hermes.cron.scheduler.heartbeat_age_seconds
+                timeAggregation: latest
+                spaceAggregation: max
+              groupBy:
+              - name: k8s.cluster.name
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: above
+            matchType: at_least_once
+            target: 300
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 5m
+          frequency: 1m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

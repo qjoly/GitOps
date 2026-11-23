@@ -1,0 +1,1014 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 0,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "name": "GitOps merges",
+        "target": {
+          "limit": 100,
+          "matchAny": true,
+          "tags": [
+            "gitops"
+          ],
+          "type": "tags"
+        },
+        "type": "tags"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "version": 1,
+  "title": "Hermes (SigNoz / ClickHouse)",
+  "uid": "hermes-signoz-clickhouse",
+  "tags": [
+    "hermes",
+    "agent",
+    "signoz",
+    "clickhouse"
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "refresh": "1m",
+  "templating": {
+    "list": [
+      {
+        "name": "cluster",
+        "label": "Cluster",
+        "type": "query",
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": "All",
+          "value": "$__all",
+          "selected": true
+        },
+        "options": [],
+        "refresh": 1,
+        "sort": 1,
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "signoz-clickhouse"
+        },
+        "query": {
+          "refId": "A",
+          "queryType": "table",
+          "rawSql": "SELECT DISTINCT JSONExtractString(labels,'k8s.cluster.name') FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.up' AND JSONExtractString(labels,'k8s.cluster.name')!='' ORDER BY 1"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Gateway up",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.up' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.up' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "description": "1 while the gateway process reports state=running.",
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Active agents",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.active_agents' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.active_agents' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "description": "Foreground turns plus in-flight cron and API runs.",
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Background work",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.background_work' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.background_work' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "description": "Backgrounded delegate_task subagents, terminal processes and kanban workers, counted per task.",
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Restart requested",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.restart_requested' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.restart_requested' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "description": "1 when the gateway has been asked to restart and has not yet done so.",
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Platforms down",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.platform.degraded' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.platform.degraded' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "description": "Discord/Telegram-style platforms in a fatal state, summed over every platform.",
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Cron jobs overdue",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.jobs.overdue' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.jobs.overdue' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "description": "Enabled cron jobs past their next scheduled run.",
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Gateway state",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, g AS \"hermes.gateway.state\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'hermes.gateway.state') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.state' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.state' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "The reported gateway state as a one-hot series, plus busy and drainable flags.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Agents and background work",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.active_agents' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.active_agents' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Active agents over time; spikes are concurrent turns or cron fan-out.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Platform state",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, g AS \"hermes.platform\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'hermes.platform') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.platform.up' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.platform.up' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "1 while each messaging platform is in a running state.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Cron scheduler heartbeat age",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.scheduler.heartbeat_age_seconds' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.scheduler.heartbeat_age_seconds' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Seconds since the cron ticker last beat; a line that stops moving means the scheduler is stuck.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Cron jobs enabled / running",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.jobs.running' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.jobs.running' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Enabled jobs are fixed unless the schedule changes; running counts concurrent executions.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Cron catch-up and skipped runs",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.store.skipped_runs' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.store.skipped_runs' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Runs the store refused to record plus catch-up occurrences: non-zero means the ticker fell behind.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "HTTP requests/s by route",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 20
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, g AS \"http.route\", sum(r) AS value FROM (SELECT time, fp, g, cluster, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp, g ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'http.route') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='http.server.request.duration.count' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='http.server.request.duration.count' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster)) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Server requests per second on the pod's listeners, split by route, from OBI eBPF instrumentation.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "HTTP requests/s by status",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 20
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, g AS \"http.response.status_code\", sum(r) AS value FROM (SELECT time, fp, g, cluster, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp, g ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'http.response.status_code') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='http.server.request.duration.count' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='http.server.request.duration.count' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster)) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Errors show up here first: a 5xx that keeps climbing is the Webapp or an MCP sidecar failing.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "HTTP p95 latency by container",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 20
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, g AS \"k8s.container.name\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.container.name') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='http.server.request.duration.max' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='http.server.request.duration.max' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Worst observed request duration per scrape window, per container.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "CPU usage by container",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, g AS \"k8s.container.name\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.container.name') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='container.cpu.usage' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='container.cpu.usage' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Cores burned per container: the agent and webui carry the turns, the browser the page loads.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Memory working set by container",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "signoz-clickhouse"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "signoz-clickhouse"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 0,
+          "rawSql": "SELECT time, g AS \"k8s.container.name\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.container.name') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='container.memory.working_set' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='container.memory.working_set' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Resident memory per container; the 4Gi limit is per container, not per pod.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ]
+}

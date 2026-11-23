@@ -66,6 +66,10 @@ configMapGenerator:
     namespace: monitoring
     files:
       - dashboards/netbird-clickhouse.json
+  - name: grafana-dashboard-hermes-clickhouse
+    namespace: monitoring
+    files:
+      - dashboards/hermes-clickhouse.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:

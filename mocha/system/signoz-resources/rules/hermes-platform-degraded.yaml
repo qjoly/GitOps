@@ -1,0 +1,58 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: hermes-platform-degraded
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: 'Hermes messaging platform degraded'
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: 'hermes.platform.degraded is 1: the platform entered a fatal state (credentials rejected, transport broken) that only a human can clear.'
+      labels:
+        severity: critical
+      annotations:
+        summary: 'A Hermes messaging platform reports a fatal error'
+        description: 'hermes.platform.degraded is 1: the platform entered a fatal state (credentials rejected, transport broken) that only a human can clear.'
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: hermes.platform.degraded
+                timeAggregation: latest
+                spaceAggregation: max
+              groupBy:
+              - name: k8s.cluster.name
+              - name: hermes.platform
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: above
+            matchType: at_least_once
+            target: 0
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 5m
+          frequency: 1m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false

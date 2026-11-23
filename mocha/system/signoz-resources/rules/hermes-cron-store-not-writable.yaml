@@ -1,0 +1,57 @@
+apiVersion: resources.signoz.io/v1alpha1
+kind: Rule
+metadata:
+  name: hermes-cron-store-not-writable
+  namespace: signoz
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  providerConfigRef:
+    name: mocha
+  objectTemplate:
+    spec:
+      schemaVersion: v2alpha1
+      alert: 'Hermes cron store not writable'
+      alertType: METRIC_BASED_ALERT
+      ruleType: threshold_rule
+      description: 'hermes.cron.store.writable dropped below 1: job state cannot be recorded, so runs are skipped and schedules drift silently.'
+      labels:
+        severity: critical
+      annotations:
+        summary: 'The Hermes cron store refuses writes'
+        description: 'hermes.cron.store.writable dropped below 1: job state cannot be recorded, so runs are skipped and schedules drift silently.'
+      condition:
+        compositeQuery:
+          queryType: builder
+          panelType: graph
+          queries:
+          - type: builder_query
+            spec:
+              name: A
+              signal: metrics
+              disabled: false
+              aggregations:
+              - metricName: hermes.cron.store.writable
+                timeAggregation: latest
+                spaceAggregation: min
+              groupBy:
+              - name: k8s.cluster.name
+        selectedQueryName: A
+        thresholds:
+          kind: basic
+          spec:
+          - name: critical
+            op: below
+            matchType: at_least_once
+            target: 1
+            channels:
+            - discord
+      evaluation:
+        kind: rolling
+        spec:
+          evalWindow: 10m
+          frequency: 5m
+      notificationSettings:
+        usePolicy: false
+        renotify:
+          enabled: false
