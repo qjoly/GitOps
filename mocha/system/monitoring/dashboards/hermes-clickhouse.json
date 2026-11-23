@@ -44,7 +44,7 @@
     "list": [
       {
         "name": "cluster",
-        "label": "Cluster",
+        "label": "Gateway",
         "type": "query",
         "multi": true,
         "includeAll": true,
@@ -63,7 +63,7 @@
         "query": {
           "refId": "A",
           "queryType": "table",
-          "rawSql": "SELECT DISTINCT JSONExtractString(labels,'k8s.cluster.name') FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.up' AND JSONExtractString(labels,'k8s.cluster.name')!='' ORDER BY 1"
+          "rawSql": "SELECT DISTINCT JSONExtractString(labels,'service.name') FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name LIKE 'hermes.%' AND JSONExtractString(labels,'service.name')!='' ORDER BY 1"
         }
       }
     ]
@@ -93,7 +93,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.up' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.up' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'service.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.up' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.up' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -157,7 +157,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.active_agents' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.active_agents' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'service.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.active_agents' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.active_agents' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -205,7 +205,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.background_work' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.background_work' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'service.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.background_work' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.background_work' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -253,7 +253,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.restart_requested' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.restart_requested' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'service.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.restart_requested' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.restart_requested' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -317,7 +317,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.platform.degraded' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.platform.degraded' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'service.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.platform.degraded' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.platform.degraded' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -381,7 +381,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.jobs.overdue' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.jobs.overdue' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'service.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.jobs.overdue' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.jobs.overdue' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -445,7 +445,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, g AS \"hermes.gateway.state\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'hermes.gateway.state') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.state' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.state' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+          "rawSql": "SELECT time, g AS \"hermes.gateway.state\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'hermes.gateway.state') AS g, JSONExtractString(t.labels,'service.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.state' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.state' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -498,7 +498,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.active_agents' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.active_agents' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'service.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.gateway.active_agents' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.gateway.active_agents' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -551,7 +551,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, g AS \"hermes.platform\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'hermes.platform') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.platform.up' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.platform.up' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+          "rawSql": "SELECT time, g AS \"hermes.platform\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'hermes.platform') AS g, JSONExtractString(t.labels,'service.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.platform.up' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.platform.up' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -604,7 +604,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.scheduler.heartbeat_age_seconds' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.scheduler.heartbeat_age_seconds' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'service.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.scheduler.heartbeat_age_seconds' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.scheduler.heartbeat_age_seconds' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -658,7 +658,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.jobs.running' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.jobs.running' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'service.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.jobs.running' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.jobs.running' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -711,7 +711,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.store.skipped_runs' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.store.skipped_runs' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
+          "rawSql": "SELECT time, '' AS series, max(v) AS value FROM (SELECT time, fp, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'service.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='hermes.cron.store.skipped_runs' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='hermes.cron.store.skipped_runs' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, cluster) GROUP BY time, fp, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, series ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -764,7 +764,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, g AS \"http.route\", sum(r) AS value FROM (SELECT time, fp, g, cluster, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp, g ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'http.route') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='http.server.request.duration.count' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='http.server.request.duration.count' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster)) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+          "rawSql": "SELECT time, g AS \"http.route\", sum(r) AS value FROM (SELECT time, fp, g, cluster, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp, g ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'http.route') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='http.server.request.duration.count' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='http.server.request.duration.count' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster)) WHERE cluster IN ('mocha') GROUP BY time, g ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -818,7 +818,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, g AS \"http.response.status_code\", sum(r) AS value FROM (SELECT time, fp, g, cluster, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp, g ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'http.response.status_code') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='http.server.request.duration.count' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='http.server.request.duration.count' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster)) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+          "rawSql": "SELECT time, g AS \"http.response.status_code\", sum(r) AS value FROM (SELECT time, fp, g, cluster, greatest(v - lagInFrame(v,1,v) OVER (PARTITION BY fp, g ORDER BY time), 0) / $__interval_s AS r FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'http.response.status_code') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='http.server.request.duration.count' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='http.server.request.duration.count' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster)) WHERE cluster IN ('mocha') GROUP BY time, g ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -872,7 +872,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, g AS \"k8s.container.name\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.container.name') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='http.server.request.duration.max' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='http.server.request.duration.max' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+          "rawSql": "SELECT time, g AS \"k8s.container.name\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.container.name') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, max(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='http.server.request.duration.max' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='http.server.request.duration.max' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN ('mocha') GROUP BY time, g ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -926,7 +926,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, g AS \"k8s.container.name\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.container.name') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='container.cpu.usage' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='container.cpu.usage' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+          "rawSql": "SELECT time, g AS \"k8s.container.name\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.container.name') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='container.cpu.usage' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='container.cpu.usage' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN ('mocha') GROUP BY time, g ORDER BY time"
         }
       ],
       "fieldConfig": {
@@ -980,7 +980,7 @@
           "editorType": "sql",
           "queryType": "timeseries",
           "format": 0,
-          "rawSql": "SELECT time, g AS \"k8s.container.name\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.container.name') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='container.memory.working_set' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='container.memory.working_set' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN (${cluster:singlequote}) GROUP BY time, g ORDER BY time"
+          "rawSql": "SELECT time, g AS \"k8s.container.name\", max(v) AS value FROM (SELECT time, fp, g, cluster, anyLast(v) AS v FROM (SELECT toStartOfInterval(toDateTime(s.unix_milli/1000), INTERVAL $__interval_s SECOND) AS time, s.fingerprint AS fp, JSONExtractString(t.labels,'k8s.container.name') AS g, JSONExtractString(t.labels,'k8s.cluster.name') AS cluster, anyLast(s.value) AS v FROM signoz_metrics.distributed_samples_v4 s INNER JOIN (SELECT fingerprint, any(labels) AS labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='container.memory.working_set' GROUP BY fingerprint) t ON s.fingerprint=t.fingerprint WHERE s.metric_name='container.memory.working_set' AND JSONExtractString(labels,'k8s.namespace.name')='hermes-carolyn' AND $__timeFilter(toDateTime(s.unix_milli/1000)) GROUP BY time, fp, g, cluster) GROUP BY time, fp, g, cluster) WHERE cluster IN ('mocha') GROUP BY time, g ORDER BY time"
         }
       ],
       "fieldConfig": {
