@@ -35,7 +35,7 @@ spec:
                 timeAggregation: latest
                 spaceAggregation: max
               groupBy:
-              - name: k8s.cluster.name
+              - name: service.name
               - name: hermes.platform
         selectedQueryName: A
         thresholds:
