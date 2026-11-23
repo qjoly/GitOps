@@ -74,11 +74,19 @@ data:
         connect_timeout: 30
         headers:
           Authorization: "Bearer ${GITHUB_TOKEN}"
-      # Google Calendar (read/write), calendar-mcp sidecar
+      # Google Calendar (read/write), calendar-mcp sidecar.
+      # trust: full because the buy-tracking cron writes events unattended; an
+      # untrusted server gates every write behind an approval prompt that no one
+      # is present to answer, so the job silently stops creating events.
+      # The exclusion keeps event deletion off the surface entirely.
       calendar:
         url: "http://127.0.0.1:8083/mcp"
-        trust: untrusted
+        trust: full
         connect_timeout: 60
+        tools:
+          exclude:
+            - manage_calendar
+            - delete_calendar
       # Home Assistant's built-in MCP server; only entities exposed to Assist
       # are reachable. Goes through Cloudflare, which lets httpx's UA through.
       homeassistant:
@@ -157,6 +165,13 @@ data:
       - cua:list_windows:foreground
       - cua:focus_app:background
       - cua:focus_app:foreground
+      # Pre-granted trust-gate answers for MCP write tools. Without these the
+      # trust prompt fires in an unattended run, and approvals.cron_mode: deny
+      # turns that into a silent failure instead of an approval.
+      - mcp:calendar/manage_event
+      - mcp:hatchdoor/create_note
+      - mcp:hatchdoor/delete_note
+      - mcp:hatchdoor/edit_note
 
     # The gateway's Webapp listener (the browser-hosted Desktop: Bots tab,
     # sessions, routines) and the JSON-RPC/WS backend a dev machine's Desktop
