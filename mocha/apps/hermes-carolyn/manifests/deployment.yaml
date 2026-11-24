@@ -737,6 +737,11 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: youtube_client_secret
+            - name: YT_REFRESH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: youtube_refresh_token
           resources:
             requests:
               cpu: 100m
