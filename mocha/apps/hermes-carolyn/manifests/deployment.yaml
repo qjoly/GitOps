@@ -724,6 +724,19 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: deluge_password
+            # YouTube upload (highlights pipeline). The refresh token is added to
+            # the same Secret only after the OAuth consent, so it is not wired
+            # here yet: a missing key would block the pod at start.
+            - name: YT_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: youtube_client_id
+            - name: YT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: youtube_client_secret
           resources:
             requests:
               cpu: 100m
