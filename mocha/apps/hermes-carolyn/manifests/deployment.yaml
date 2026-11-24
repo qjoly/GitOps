@@ -244,6 +244,17 @@ spec:
               mkdir -p /opt/data/plugins/mistral-image
               cp /src-plugin-mistral-image/__init__.py /src-plugin-mistral-image/plugin.yaml /opt/data/plugins/mistral-image/
               chown -R 10000:10000 /opt/data/plugins/mistral-image
+              # kube-sandbox terminal backend plugin (unetassedecafe/kube-sandbox@b34eb93),
+              # seeded from the hermes-carolyn-plugin-kube-sandbox ConfigMap. Replaced on
+              # every start; selected by terminal.backend in config.yaml.
+              mkdir -p /opt/data/plugins/kube-sandbox/kubesandbox
+              cp /src-plugin-kube-sandbox/plugin-init.py /opt/data/plugins/kube-sandbox/__init__.py
+              cp /src-plugin-kube-sandbox/plugin.yaml /opt/data/plugins/kube-sandbox/plugin.yaml
+              cp /src-plugin-kube-sandbox/ks-init.py /opt/data/plugins/kube-sandbox/kubesandbox/__init__.py
+              cp /src-plugin-kube-sandbox/ks-protocol.py /opt/data/plugins/kube-sandbox/kubesandbox/protocol.py
+              cp /src-plugin-kube-sandbox/ks-sandbox.py /opt/data/plugins/kube-sandbox/kubesandbox/sandbox.py
+              cp /src-plugin-kube-sandbox/ks-ssh-relay.py /opt/data/plugins/kube-sandbox/kubesandbox/ssh_relay.py
+              chown -R 10000:10000 /opt/data/plugins/kube-sandbox
           volumeMounts:
             - name: sbx-tools
               mountPath: /opt/sbx
@@ -273,6 +284,9 @@ spec:
               readOnly: true
             - name: plugin-mistral-image
               mountPath: /src-plugin-mistral-image
+              readOnly: true
+            - name: plugin-kube-sandbox
+              mountPath: /src-plugin-kube-sandbox
               readOnly: true
             - name: arr-secret
               mountPath: /arr-secret
@@ -818,6 +832,9 @@ spec:
         - name: plugin-mistral-image
           configMap:
             name: hermes-carolyn-plugin-mistral-image
+        - name: plugin-kube-sandbox
+          configMap:
+            name: hermes-carolyn-plugin-kube-sandbox
         - name: arr-secret
           secret:
             secretName: hermes-carolyn
