@@ -1,0 +1,1210 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-carolyn-plugin-kube-sandbox
+data:
+  # kube-sandbox terminal backend plugin, pinned to unetassedecafe/kube-sandbox@b34eb93.
+  # The install-sbx init container copies these into $HERMES_HOME/plugins/kube-sandbox
+  # on every start, same pattern as plugin-mistral-image.
+  plugin-init.py: |
+    """Hermes terminal backend plugin: run every command in a kube micro-VM (gVisor sandbox pod).
+
+    The provider is what ``terminal.backend: kube-sandbox`` resolves to. Dispatch is structural, not a
+    prompt rule: the terminal tool, ``execute_code`` and the file tools all build their environment
+    through ``create_environment``, so nothing the model writes can run on the Hermes host.
+    """
+
+    from __future__ import annotations
+
+    import logging
+    import os
+    import sys
+    import re
+    import shlex
+    import shutil
+    import subprocess
+    import threading
+    import time
+    import uuid
+
+    from agent.terminal_env_provider import TerminalEnvironmentProvider
+    from tools.environments.base import BaseEnvironment
+    from tools.environments.base_output import _ThreadedProcessHandle
+
+    log = logging.getLogger(__name__)
+
+    NAME = "kube-sandbox"
+    DEFAULT_HOME = "/root"
+
+
+    def _cfg(*keys, default=None):
+        """Read ``terminal.*`` from the live config without caching it: settings change between turns."""
+        try:
+            from hermes_cli.config import cfg_get, load_config_readonly
+
+            override = os.environ.get("HERMES_TERMINAL_" + "_".join(k.upper() for k in keys))
+            if override:
+                return override
+            return cfg_get(load_config_readonly(), "terminal", *keys, default=default)
+        except Exception:
+            return default
+
+
+    def _kubesandbox_pkg():
+        # The loader imports this file as hermes_plugins.<slug> with __path__ = plugin dir.
+        # Try the relative import first (works when the loader sets __path__), then fall back
+        # to loading the sibling package by file path for loaders that only set __package__.
+        try:
+            from . import kubesandbox  # type: ignore[no-redef]
+            return kubesandbox
+        except ImportError:
+            import importlib.util
+            pkg_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kubesandbox")
+            spec = importlib.util.spec_from_file_location(
+                "kube_sandbox_kubesandbox", os.path.join(pkg_dir, "__init__.py"),
+                submodule_search_locations=[pkg_dir])
+            mod = importlib.util.module_from_spec(spec)
+            mod.__path__ = [pkg_dir]
+            sys.modules["kube_sandbox_kubesandbox"] = mod
+            spec.loader.exec_module(mod)
+            return mod
+
+
+    def _sandbox_client(timeout: float = 30.0):
+        kubesandbox = _kubesandbox_pkg()
+        resolve_kubeconfig = kubesandbox.resolve_kubeconfig
+        SandboxClient = kubesandbox.SandboxClient
+
+        kubeconfig = _cfg("kubeconfig") or _cfg("kube_sandbox_kubeconfig") or os.environ.get("KUBECONFIG")
+        context = _cfg("kube_sandbox_context") or None
+        client = resolve_kubeconfig(kubeconfig, context) if kubeconfig else _in_cluster_client()
+        return SandboxClient(
+            client,
+            namespace=_cfg("kube_sandbox_namespace", default="sandboxes") or "sandboxes",
+            template=_cfg("kube_sandbox_template", default="dev") or "dev",
+            container=_cfg("kube_sandbox_container", default="dev") or "dev",
+            start_timeout=float(_cfg("kube_sandbox_start_timeout", default=180) or 180),
+        )
+
+
+    def _in_cluster_client():
+        """The pod's own service account: the only credential path that needs nothing on disk."""
+        kubesandbox = _kubesandbox_pkg()
+        ApiError, KubeClient = kubesandbox.ApiError, kubesandbox.KubeClient
+
+        base = "/var/run/secrets/kubernetes.io/serviceaccount"
+        if not os.path.exists(f"{base}/token"):
+            raise ApiError(0, "no kubeconfig for the sandbox cluster: set terminal.kubeconfig or run in-cluster "
+                              "(the mocha sandboxes app grants the hermes service account the sbx role)")
+        return KubeClient(server="https://kubernetes.default.svc", ca_pem=open(f"{base}/ca.crt", "rb").read(),
+                          token_file=f"{base}/token")
+
+
+    # The core's poll command names its three files this way (``/tmp/hermes_bg_<session>.{pid,log,exit}``).
+    def _kubectl_available() -> bool:
+        return bool(shutil.which(_cfg("kube_sandbox_kubectl", default="kubectl") or "kubectl"))
+
+
+    class KubeSandboxEnvironment(BaseEnvironment):
+        """One micro-VM (a claimed warm-pool pod), plus its teardown.
+
+        Subclasses ``BaseEnvironment`` for the CWD tracking, snapshot sourcing and shell wrapper that
+        every backend shares; only the spawn is ours: an exec stream into the pod instead of a local
+        process.
+        """
+
+        # cleanup() destroys the VM, so its background commands are gone with it.
+        cleanup_stops_processes = True
+
+        def __init__(self, *, cwd: str, timeout: int, task_id: str, image: str = "", client_factory=None,
+                     persistent: bool = False):
+            self.task_id = task_id
+            self.image = image
+            self.persistent = persistent
+            self._client_factory = client_factory or _sandbox_client
+            self._client = None
+            self._claim = None
+            self._lock = threading.Lock()
+            # Hermes passes ``~`` when default_cwd is a tilde: resolve it to this sandbox's home here, since
+            # ``cd ~`` inside the pod would follow the pod's own HOME whatever the config says.
+            super().__init__(cwd=self.home if cwd in ("", "~", None) else cwd, timeout=timeout)
+
+        # -- cluster plumbing --------------------------------------------------
+        def client(self):
+            if self._client is None:  # always first built under the claim's lock
+                self._client = self._client_factory()
+            return self._client
+
+        def claim(self):
+            """Create or reuse this task's claim. Lazy: a session that never runs a command pays nothing."""
+            with self._lock:
+                if self._claim is not None:
+                    return self._claim
+                self._claim = self.client().create(self.task_id or "default")
+                log.info("kube-sandbox: claim %s -> pod %s", self._claim.name, self._claim.sandbox)
+                self._seed_secrets()
+                return self._claim
+
+        @property
+        def home(self) -> str:
+            return _cfg("kube_sandbox_home", default=DEFAULT_HOME) or DEFAULT_HOME
+
+        # -- spawn -------------------------------------------------------------
+        def _run_bash(self, cmd_string: str, *, login: bool = False, timeout: int = 120,
+                      stdin_data: str | None = None):
+            """Run one wrapped script in the pod, in a worker thread behind the ProcessHandle the base waits on."""
+            claim = self.claim()
+            script = cmd_string
+            argv = ["bash", "-l", "-c", script] if login else ["bash", "-c", script]
+            data = stdin_data.encode() if stdin_data is not None else None
+
+            def run() -> tuple[str, int]:
+                out, rc = self.client().exec(claim, argv, timeout=float(timeout), stdin_data=data)
+                return out.decode("utf-8", "replace"), int(rc)
+
+            return _ThreadedProcessHandle(run)
+
+        def _seed_secrets(self):
+            """Write opt-in secret files into the VM from pod env vars — never into the sandbox env.
+
+            ``terminal.kube_sandbox_secret_files`` is a list of maps, e.g.::
+
+                terminal:
+                  kube_sandbox_secret_files:
+                    - path: /root/.git-credentials      # target file inside the micro-VM
+                      env: GH_TOKEN                      # source: env var of the *Hermes* pod (from a k8s secret)
+                      mode: 0600                         # optional, default 0600
+                    - path: /root/.npmrc
+                      env: NPM_TOKEN
+
+            The value is base64-carried through a single exec script and lands only in the target
+            file; it never appears in the sandbox's environment or in any process argv.
+            """
+            entries = _cfg("kube_sandbox_secret_files", default=None) or []
+            if isinstance(entries, dict):
+                entries = [{"path": k, "env": v} for k, v in entries.items()]
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                path, env_name = entry.get("path"), entry.get("env")
+                if not path or not env_name:
+                    continue
+                value = os.environ.get(str(env_name))
+                if not value:
+                    log.warning("kube-sandbox: secret env %s not set in Hermes pod; skipping %s", env_name, path)
+                    continue
+                mode = int(str(entry.get("mode", "0600")), 8)
+                try:
+                    self.client().write_secret_file(self._claim, path=str(path), content=value, mode=mode)
+                    log.info("kube-sandbox: secret file %s seeded from env %s (mode %o)", path, env_name, mode)
+                except Exception as exc:
+                    log.warning("kube-sandbox: seeding %s failed: %s", path, exc)
+            # Back-compat: the old git-specific keys map to the generic mechanism.
+            token = _cfg("kube_sandbox_git_token") or os.environ.get("KUBE_SANDBOX_GIT_TOKEN")
+            if token:
+                user = _cfg("kube_sandbox_git_user", default="unetassedecafe") or "unetassedecafe"
+                host = _cfg("kube_sandbox_git_host", default="github.com") or "github.com"
+                try:
+                    self.client().seed_git_credentials(self._claim, username=user, token=token, host=host)
+                    log.info("kube-sandbox: git credentials seeded for %s@%s (file-only)", user, host)
+                except Exception as exc:
+                    log.warning("kube-sandbox: git credential seeding skipped: %s", exc)
+
+        @property
+        def home(self) -> str:
+            return _cfg("kube_sandbox_home", default=DEFAULT_HOME) or DEFAULT_HOME
+
+        # -- teardown ----------------------------------------------------------
+        def cleanup(self):
+            """Destroy the VM. Already gone is success; a claim that may still be alive raises."""
+            claim = self._claim
+            if claim is None or self._client is None:
+                return
+            try:
+                self._client.remove(claim.name)
+                self._claim = None
+            except Exception as exc:
+                raise RuntimeError(f"sandbox claim {claim.name} may still be alive: {exc}") from exc
+
+
+    class KubeSandboxProvider(TerminalEnvironmentProvider):
+        name = NAME
+        display_name = "Kube Sandbox (micro-VM)"
+        is_remote = True
+        is_container = True
+        skip_container_guards = False
+        session_isolated_when_nonpersistent = True
+
+        @property
+        def description(self) -> str:
+            return "Run commands in a gVisor micro-VM claimed from the cluster's warm pool."
+
+        @property
+        def cache_path_base(self) -> str | None:
+            return None
+
+        @property
+        def strip_env_keys(self) -> frozenset:
+            return frozenset({"KUBECONFIG", "GITOPS_TOKEN", "SBX_KUBECONFIG"})
+
+        @property
+        def default_cwd(self) -> str:
+            return _cfg("kube_sandbox_home", default=DEFAULT_HOME) or DEFAULT_HOME
+
+        def is_available(self) -> bool:
+            """Cheap and network-free: a kubeconfig (or the pod's own token) plus a kubectl for doctor."""
+            if _cfg("kubeconfig") or _cfg("kube_sandbox_kubeconfig") or os.environ.get("KUBECONFIG"):
+                return os.path.exists(str(_cfg("kubeconfig") or _cfg("kube_sandbox_kubeconfig")
+                                          or os.environ.get("KUBECONFIG", "")))
+            return os.path.exists("/var/run/secrets/kubernetes.io/serviceaccount/token")
+
+        def probe(self) -> tuple[str, str]:
+            if not self.is_available():
+                return "needs_setup", "No kubeconfig and no in-cluster service account token."
+            return "ready", ""
+
+        def doctor_checks(self) -> list[tuple[bool, str, str]]:
+            checks: list[tuple[bool, str, str]] = [(self.is_available(), "kube-sandbox credentials",
+                                                    "(in-cluster token)" if os.path.exists(
+                                                        "/var/run/secrets/kubernetes.io/serviceaccount/token")
+                                                    else "(kubeconfig)")]
+            if _kubectl_available():
+                checks.append((True, "kube-sandbox API reachability", self._api_check()))
+            else:
+                checks.append((False, "kube-sandbox API reachability",
+                               "kubectl not on PATH (used by hermes doctor only; the backend speaks the API "
+                               "directly with hermes_yaml + the kubeconfig)"))
+            return checks
+
+        def _api_check(self) -> str:
+            kubectl = _cfg("kube_sandbox_kubectl", default="kubectl") or "kubectl"
+            args = [kubectl, "version", "--request-timeout=5s", "-o", "json"]
+            kubeconfig = _cfg("kubeconfig") or _cfg("kube_sandbox_kubeconfig")
+            if kubeconfig:
+                args[1:1] = ["--kubeconfig", str(kubeconfig)]
+            try:
+                proc = subprocess.run(args, capture_output=True, text=True, timeout=10, check=False)
+            except (OSError, subprocess.SubprocessError) as exc:
+                return f"kubectl failed: {exc}"
+            return "server reachable" if proc.returncode == 0 else (proc.stderr.strip() or "unreachable")[:200]
+
+        def create_environment(self, *, cwd: str, timeout: int, task_id: str = "default",
+                               image: str | None = None, container_config: dict | None = None, **kwargs):
+            """``**kwargs`` is part of the plugin contract: unknown keys are ignored, never rejected."""
+            task = task_id if task_id and task_id != "default" else f"ks-{uuid.uuid4().hex[:8]}"
+            override = (image or "").strip()
+            persistent = bool((container_config or {}).get("container_persistent"))
+            return KubeSandboxEnvironment(cwd=cwd, timeout=timeout, task_id=task, image=override,
+                                          persistent=persistent)
+  plugin.yaml: |
+    name: kube-sandbox
+    version: 0.1.0
+    description: Run every Hermes command in a gVisor micro-VM claimed from the mocha sandbox warm pool
+    kind: backend
+    requires_hermes: ">=0.22.5"
+    tags: [terminal, sandbox, kubernetes, gvisor]
+  ks-init.py: |
+    """Micro-VM sandboxes on Kubernetes: claim lifecycle plus the exec wire protocol.
+
+    Importing this package pulls in nothing from Hermes, so the plugin, a CLI and the SSH transport can
+    all share it.
+    """
+
+    from .protocol import ApiError, KubeClient, PodTarget, resolve_kubeconfig
+    from .sandbox import Claim, SandboxClient, Submitted
+    from .ssh_relay import SshRelay, ensure_sshd, read_client_key
+
+    __all__ = ["ApiError", "Claim", "KubeClient", "PodTarget", "SandboxClient", "SshRelay", "Submitted",
+               "ensure_sshd", "read_client_key", "resolve_kubeconfig"]
+  ks-protocol.py: |
+    """Kubernetes wire protocol for micro-VM sandboxes: kubeconfig, REST, and the exec streams.
+
+    Only what provisioning, probing and command execution need. Control-plane calls are plain REST;
+    command output rides the WebSocket exec protocol (``v4.channel.k8s.io``) with no channel
+    multiplexer library and no kubectl binary in the way.
+
+    Also serves the SSH backend: a micro-VM has no sshd, so ``stream_and_serve`` runs the sandbox's
+    commands in place and exposes them on a unix socket with a hand-built ``ssh-proxy`` dialect (the
+    same one zstd/socat use). Hermes' own ssh client and ``scp`` cannot speak that dialect, so SSH mode
+    is for harnesses and transports that can — see the plugin README.
+    """
+
+    from __future__ import annotations
+
+    import base64
+    import json
+    import os
+    import re
+    import socket
+    import ssl
+    import struct
+    import subprocess
+    import sys
+    import threading
+    import time
+    from dataclasses import dataclass
+
+    __all__ = ["ApiError", "KubeClient", "PodTarget", "resolve_kubeconfig"]
+
+    CH_STDIN, CH_STDOUT, CH_STDERR, CH_ERROR, CH_RESIZE = 0, 1, 2, 3, 4
+    _WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+
+
+    class ApiError(RuntimeError):
+        """Non-2xx answer from the API server, or a transport failure that makes the call moot."""
+
+        def __init__(self, status: int, message: str):
+            super().__init__(f"HTTP {status}: {message}" if status else message)
+            self.status = status
+            self.message = message
+
+        @property
+        def not_found(self) -> bool:
+            return self.status == 404
+
+
+    # --- kubeconfig --------------------------------------------------------------------------------
+
+
+    @dataclass
+    class KubeClient:
+        server: str
+        ca_pem: bytes | None = None
+        token: str | None = None
+        token_file: str | None = None
+        insecure: bool = False
+
+        # -- transport ------------------------------------------------------------
+        @property
+        def _hostport(self) -> tuple[str, int]:
+            authority = self.server.split("//", 1)[-1].split("/", 1)[0]
+            host, _, port = authority.rpartition(":")
+            if not host:
+                return authority.strip("[]"), 443
+            return host.strip("[]"), int(port)
+
+        @property
+        def _prefix(self) -> str:
+            rest = self.server.split("//", 1)[-1]
+            return "/" + rest.split("/", 1)[1] if "/" in rest else ""
+
+        def _headers(self) -> dict[str, str]:
+            token = self.token
+            if not token and self.token_file:
+                try:
+                    with open(self.token_file, encoding="utf-8") as fh:
+                        token = fh.read().strip()
+                except OSError:
+                    token = None
+            return {"Authorization": f"Bearer {token}"} if token else {}
+
+        def _ssl(self) -> ssl.SSLContext:
+            ctx = ssl.create_default_context()
+            if self.insecure:
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+            elif self.ca_pem:
+                ctx.load_verify_locations(cadata=self.ca_pem.decode())
+            return ctx
+
+        def connect(self, timeout: float) -> ssl.SSLSocket | socket.socket:
+            host, port = self._hostport
+            raw = socket.create_connection((host, port), timeout=timeout)
+            if self.server.startswith("http://"):
+                return raw
+            return self._ssl().wrap_socket(raw, server_hostname=host)
+
+        def _exchange(self, method: str, path: str, *, body: dict | None = None,
+                      extra: list[str] | None = None, timeout: float = 30.0,
+                      headers_out: list[str] | None = None) -> tuple[int, dict[str, str], bytes, socket.socket]:
+            """Send one request and read the whole answer, or hand back the socket on a 101 upgrade."""
+            sock = self.connect(timeout)
+            host, port = self._hostport
+            payload = b"" if body is None else json.dumps(body).encode()
+            lines = [f"{method} {self._prefix}{path} HTTP/1.1", f"Host: {host}:{port}"]
+
+            if extra:
+                # Upgrade request: the header block must stay exactly Upgrade / Connection / subprotocol
+                # versions before the key. Length, content type, accept, ``Origin`` or a different order
+                # all make the API server answer 406 or 400 instead of negotiating.
+                lines.extend(extra)
+            else:
+                lines.append(f"Content-Length: {len(payload)}")
+                if body is not None:
+                    lines.append("Content-Type: application/json")
+                else:
+                    lines.append("Accept: application/json")
+                lines.append("Connection: close")
+            lines.extend(f"{k}: {v}" for k, v in self._headers().items())
+            sock.sendall(("\r\n".join(lines) + "\r\n\r\n").encode() + payload)
+            buf = b""
+            while b"\r\n\r\n" not in buf:
+                chunk = sock.recv(65536)
+                if not chunk:
+                    sock.close()
+                    raise ApiError(0, f"API server {self.server} closed the connection")
+                buf += chunk
+            head, _, rest = buf.partition(b"\r\n\r\n")
+            head_text = head.decode("iso-8859-1")
+            status_line = head_text.split("\r\n", 1)[0]
+            try:
+                status = int(status_line.split()[1])
+            except (IndexError, ValueError) as exc:
+                sock.close()
+                raise ApiError(0, f"malformed status line from {self.server}: {status_line!r}") from exc
+            headers = {}
+            for line in head_text.split("\r\n")[1:]:
+                key, _, value = line.partition(":")
+                headers[key.strip().lower()] = value.strip()
+            if status == 101:
+                return status, headers, rest, sock
+            if headers.get("transfer-encoding", "").lower() == "chunked":
+                # Accumulate the raw stream, then de-chunk once: decoding incrementally discarded the
+                # partial chunk tail every round, and the stray bytes parsed as a bogus chunk size.
+                while True:
+                    chunk = sock.recv(65536)
+                    if not chunk:
+                        break
+                    rest += chunk
+                rest = _dechunk(rest)
+            else:
+                length = headers.get("content-length")
+                expected = int(length) if length is not None else None
+                while expected is None or len(rest) < expected:
+                    chunk = sock.recv(65536)
+                    if not chunk:
+                        break
+                    rest += chunk
+                if expected is not None:
+                    rest = rest[:expected]
+            sock.close()
+            return status, headers, rest, sock
+
+        # -- REST -----------------------------------------------------------------
+        def call(self, method: str, path: str, *, body: dict | None = None, timeout: float = 30.0) -> dict:
+            status, _, data, _ = self._exchange(method, path, body=body, timeout=timeout)
+            text = data.decode("utf-8", errors="replace")
+            if status >= 300:
+                raise ApiError(status, _api_message(text))
+            return json.loads(text) if text.strip() else {}
+
+        def version(self, timeout: float = 5.0) -> str:
+            return str(self.call("GET", "/version", timeout=timeout).get("gitVersion", ""))
+
+        # -- exec -----------------------------------------------------------------
+        def exec_ws(self, target: "PodTarget", command: list[str], *, stdin_data: bytes | None = None,
+                    timeout: float = 120.0, tty: bool = False) -> tuple[bytes, int]:
+            """Run *command* in a pod; return ``(merged stdout+stderr, exit_code)``."""
+            from urllib.parse import quote
+            query = [f"container={quote(target.container)}"] if target.container else []
+            query += [f"command={quote(c)}" for c in command]
+            query += [f"stdin={'true' if stdin_data is not None else 'false'}", "stdout=true", "stderr=true",
+                      f"tty={'true' if tty else 'false'}"]
+            path = f"/api/v1/namespaces/{target.namespace}/pods/{target.pod}/exec?" + "&".join(query)
+            status, headers, rest, sock = self._exchange(
+                "GET", path,
+                extra=["Upgrade: websocket",
+                       "Connection: Upgrade",
+                       "Sec-WebSocket-Version: 13",
+                       "X-Stream-Protocol-Version: v4.channel.k8s.io",
+                       f"Sec-WebSocket-Key: {base64.b64encode(os.urandom(16)).decode()}"],
+                timeout=min(timeout, 30.0))
+            if status != 101:
+                sock.close()
+                raise ApiError(status, _api_message(rest.decode("utf-8", errors="replace")))
+            ws = _WebSocket(sock, rest)
+            try:
+                return self._exec_roundtrip(ws, stdin_data, timeout)
+            finally:
+                ws.close()
+
+        @staticmethod
+        def _exec_roundtrip(ws: "_WebSocket", stdin_data: bytes | None, timeout: float) -> tuple[bytes, int]:
+            if stdin_data:
+                ws.send_binary(b"\x00" + stdin_data)
+            # v4 stdin is "data frames, then a zero byte, then a close-write" (an unframed byte the
+            # server's chanConn reads as EOF). A socket half-close tears the whole connection down on this
+            # API server, so the end of input is one zero byte plus the unframed close-write: a command that
+            # reads stdin gets a single NUL it rejects, never a hang.
+            ws.send_binary(b"\x00")
+            try:
+                ws.sock.sendall(b"\x00")  # the close-write that ends stdin, unframed
+            except OSError:
+                pass
+            output, exit_code = ws.drain(timeout)
+            return output, (0 if exit_code is None else exit_code)
+
+        def exec_stream(self, target: "PodTarget", command: list[str], *, tty: bool = False):
+            """Open a *persistent* exec stream: a ``_WebSocket`` whose stdin stays open for the caller.
+
+            Used by the SSH transport (an sshd session is a long-lived bidirectional stream) and by any
+            consumer that needs to keep writing after the first reply.
+            """
+            from urllib.parse import quote
+            query = [f"container={quote(target.container)}"] if target.container else []
+            query += [f"command={quote(c)}" for c in command]
+            query += ["stdin=true", "stdout=true", "stderr=true", f"tty={'true' if tty else 'false'}"]
+            path = f"/api/v1/namespaces/{target.namespace}/pods/{target.pod}/exec?" + "&".join(query)
+            status, headers, rest, sock = self._exchange(
+                "GET", path,
+                extra=["Upgrade: websocket",
+                       "Connection: Upgrade",
+                       "Sec-WebSocket-Version: 13",
+                       "X-Stream-Protocol-Version: v4.channel.k8s.io",
+                       f"Sec-WebSocket-Key: {base64.b64encode(os.urandom(16)).decode()}"],
+                timeout=30.0)
+            if status != 101:
+                sock.close()
+                raise ApiError(status, _api_message(rest.decode("utf-8", errors="replace")))
+            return _WebSocket(sock, rest)
+
+
+
+    _EXIT_RE = re.compile(r"exit code:?\s+(\d+)\s*$", re.MULTILINE)
+
+
+    def _exit_from_error(message: str) -> int | None:
+        """The command's exit status from the error channel ("... exit code 7"), else None.
+
+        The remotecommand handler reports a non-zero exit this way and may still close the stream with a
+        normal close frame, so this is the authoritative status when it is present.
+        """
+        matches = _EXIT_RE.findall(message)
+        return int(matches[-1]) if matches else None
+
+
+    def _api_message(text: str) -> str:
+        try:
+            return (json.loads(text).get("message") or text).strip()
+        except ValueError:
+            return text.strip()[:400]
+
+
+    def _dechunk(data: bytes) -> bytes:
+        """Decode a complete chunked body. A truncated tail is dropped rather than raising."""
+        out, i = bytearray(), 0
+        while True:
+            eol = data.find(b"\r\n", i)
+            if eol == -1:
+                return bytes(out)
+            size_text = data[i:eol].split(b";")[0].strip()
+            try:
+                size = int(size_text or b"0", 16)
+            except ValueError:
+                return bytes(out)
+            if size == 0 or len(data) < eol + 2 + size + 2:
+                return bytes(out)
+            out += data[eol + 2:eol + 2 + size]
+            i = eol + 2 + size + 2
+
+
+    class _WebSocket:
+        """Client framing over an already-upgraded socket, masked as the spec requires."""
+
+        def __init__(self, sock, prefetched: bytes = b""):
+            self.sock = sock
+            self.stream_cut_short = False  # True when the socket died before the close channel
+            self.buf = bytearray(prefetched)
+            self.write_lock = threading.Lock()
+            self.closed = False
+
+        def _frame(self, opcode: int, payload: bytes) -> bytes:
+            header = bytes([0x80 | opcode])
+            n = len(payload)
+            if n < 126:
+                header += bytes([0x80 | n])
+            elif n < 65536:
+                header += bytes([0x80 | 126]) + struct.pack(">H", n)
+            else:
+                header += bytes([0x80 | 127]) + struct.pack(">Q", n)
+            mask = os.urandom(4)
+            return header + mask + bytes(b ^ mask[i % 4] for i, b in enumerate(payload))
+
+        def _send(self, opcode: int, payload: bytes) -> None:
+            with self.write_lock:
+                self.sock.sendall(self._frame(opcode, payload))
+
+        def send_binary(self, payload: bytes) -> None:
+            self._send(0x2, payload)
+
+        def send_stdin(self, data: bytes) -> None:
+            """One stdin frame on a *persistent* stream (``exec_stream``): the socket stays open."""
+            self._send(0x2, b"\x00" + data)
+
+        def send_stdin_eof(self) -> None:
+            """End stdin on a persistent stream: a zero data frame, then the unframed close-write."""
+            self._send(0x2, b"\x00")
+            try:
+                self.sock.sendall(b"\x00")
+            except OSError:
+                pass
+
+        def recv_channel(self, timeout: float | None = None):
+            """Next ``(channel, data)`` frame, or ``None`` on close/timeout. Blocks for at most *timeout*."""
+            while True:
+                effective = time.monotonic() + timeout if timeout is not None else time.monotonic() + 3600.0
+                if not self._fill(2, effective):
+                    return None
+                b0, b1 = self.buf[0], self.buf[1]
+                length, offset = b1 & 0x7F, 2
+                if length == 126:
+                    if not self._fill(4, effective):
+                        return None
+                    length, offset = struct.unpack(">H", bytes(self.buf[2:4]))[0], 4
+                elif length == 127:
+                    if not self._fill(10, effective):
+                        return None
+                    length, offset = struct.unpack(">Q", bytes(self.buf[2:10]))[0], 10
+                masked = bool(b1 & 0x80)
+                total = offset + (4 if masked else 0) + length
+                if not self._fill(total, effective):
+                    return None
+                frame = bytes(self.buf[offset:total])
+                del self.buf[:total]
+                payload = frame[4:] if masked else frame
+                if masked:
+                    key = frame[:4]
+                    payload = bytes(b ^ key[i % 4] for i, b in enumerate(payload))
+                opcode = b0 & 0x0F
+                if opcode == 0x8:
+                    return None
+                if opcode == 0x9:
+                    self._send(0xA, payload)
+                    continue
+                if opcode not in (0x1, 0x2) or not payload:
+                    continue
+                return payload[0], payload[1:]
+
+        def _fill(self, need: int, deadline: float) -> bool:
+            while len(self.buf) < need:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return False
+                self.sock.settimeout(remaining)
+                try:
+                    chunk = self.sock.recv(65536)
+                except (TimeoutError, socket.timeout):
+                    return False
+                except OSError:
+                    self.stream_cut_short = True
+                    return False
+                if not chunk:
+                    self.stream_cut_short = True
+                    return False
+                self.buf += chunk
+            return True
+
+        def drain(self, timeout: float) -> tuple[bytes, int | None]:
+            """Until the stream closes: ``(output, exit_code)``. ``None`` = timed out or cut short.
+
+            With the v4 protocol the server closes the streams *before* it writes the close frame, so
+            a stream that simply ends is not a timeout: a short read after the close channel only means
+            the command's status was 0.
+            """
+            out = bytearray()
+            exit_code = None
+            deadline = time.monotonic() + timeout
+            while True:
+                if not self._fill(2, deadline):
+                    if self.stream_cut_short:
+                        return bytes(out), exit_code  # socket closed cleanly without a close frame
+                    return bytes(out), 124  # deadline hit
+                b0, b1 = self.buf[0], self.buf[1]
+                length, offset = b1 & 0x7F, 2
+                if length == 126:
+                    if not self._fill(4, deadline):
+                        return bytes(out), exit_code
+                    length, offset = struct.unpack(">H", bytes(self.buf[2:4]))[0], 4
+                elif length == 127:
+                    if not self._fill(10, deadline):
+                        return bytes(out), exit_code
+                    length, offset = struct.unpack(">Q", bytes(self.buf[2:10]))[0], 10
+                masked = bool(b1 & 0x80)
+                total = offset + (4 if masked else 0) + length
+                if not self._fill(total, deadline):
+                    return bytes(out), exit_code
+                frame = bytes(self.buf[offset:offset + (4 if masked else 0) + length])
+                del self.buf[:total]
+                if masked:
+                    key, payload = frame[:4], frame[4:]
+                    payload = bytes(b ^ key[i % 4] for i, b in enumerate(payload))
+                else:
+                    payload = frame
+                opcode = b0 & 0x0F
+                if opcode == 0x8:  # normal websocket close; the command's status came on the error channel
+                    return bytes(out), exit_code
+                if opcode == 0x9:
+                    self._send(0xA, payload)
+                    continue
+                if opcode not in (0x1, 0x2) or not payload:
+                    continue
+                channel, data = payload[0], payload[1:]
+                if channel == CH_ERROR and data:
+                    message = data.decode("utf-8", errors="replace").strip()
+                    if message:
+                        channel_exit = _exit_from_error(message)
+                        if channel_exit is not None:
+                            exit_code = channel_exit
+                        elif os.environ.get("KS_DEBUG"):
+                            sys.stderr.write(f"[debug] non-exit error channel: {message!r}\n")
+                elif channel in (CH_STDOUT, CH_STDERR):
+                    out += data
+
+        def close(self) -> None:
+            if self.closed:
+                return
+            self.closed = True
+            try:
+                self._send(0x8, struct.pack(">H", 1000))
+            except OSError:
+                pass
+            try:
+                self.sock.close()
+            except OSError:
+                pass
+
+
+    @dataclass(frozen=True)
+    class PodTarget:
+        namespace: str
+        pod: str
+        container: str = ""
+
+
+    def resolve_kubeconfig(kubeconfig: str | None = None, context: str | None = None) -> KubeClient:
+        """Load a kubeconfig the way kubectl would, for the fields a sandbox client needs.
+
+        PyYAML is not a Hermes dependency; its bundled reader is.
+        """
+        try:
+            import hermes_yaml as yaml
+        except ImportError:  # pragma: no cover - any install with PyYAML works too
+            import yaml  # type: ignore[no-redef]
+
+        path = kubeconfig or os.environ.get("KUBECONFIG", "").split(os.pathsep)[0] or os.path.expanduser("~/.kube/config")
+        with open(path, encoding="utf-8") as fh:
+            cfg = yaml.safe_load(fh) or {}
+        ctx_name = context or cfg.get("current-context") or ""
+        ctx = next((c.get("context") or {} for c in cfg.get("contexts") or [] if c.get("name") == ctx_name), None)
+        if ctx is None:
+            raise ApiError(0, f"context {ctx_name!r} is not in {path}")
+        cluster = next((c.get("cluster") or {} for c in cfg.get("clusters") or [] if c.get("name") == ctx.get("cluster")), {})
+        user = next((u.get("user") or {} for u in cfg.get("users") or [] if u.get("name") == ctx.get("user")), {})
+        if user.get("exec"):
+            raise ApiError(0, f"{path}: context {ctx_name!r} logs in with an exec plugin; "
+                              "point KUBECONFIG at a token-based config")
+        ca = base64.b64decode(cluster["certificate-authority-data"]) if cluster.get("certificate-authority-data") else None
+        ca_file = cluster.get("certificate-authority")
+        if ca_file and os.path.exists(ca_file):
+            with open(ca_file, "rb") as fh:
+                ca = fh.read()
+        return KubeClient(server=cluster.get("server", ""), ca_pem=ca, token=user.get("token"),
+                          token_file=user.get("tokenFile"), insecure=bool(cluster.get("insecure-skip-tls-verify")))
+  ks-sandbox.py: |
+    """Micro-VM sandbox lifecycle on Kubernetes: claim, resolve, exec, delete.
+
+    The cluster's agent-sandbox controller hands out a pod from a warm pool for each SandboxClaim, so
+    a sandbox is three REST calls plus a wait: create the claim, read ``status.sandbox.name`` off it,
+    delete the claim. Commands then ride the exec stream in :mod:`kubesandbox.protocol`.
+
+    Shared by the Hermes terminal backend (``kube-sandbox``), the SSH transport and any CLI wrapper, so
+    that provisioning cannot drift between them.
+    """
+
+    from __future__ import annotations
+
+    import os
+    import re
+    import time
+    import uuid
+    from dataclasses import dataclass
+
+    from .protocol import ApiError, KubeClient, PodTarget
+
+    __all__ = ["Claim", "SandboxClient", "Submitted"]
+
+    CLAIM_API = "/apis/extensions.agents.x-k8s.io/v1beta1"
+    _NAME_OK = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+
+
+    def _clean_name(value: str, *, max_len: int = 63) -> str:
+        """DNS-1123 label derived from *value*: task ids and session ids carry ``_`` and long hashes."""
+        name = re.sub(r"[^a-z0-9-]+", "-", value.lower()).strip("-")
+        name = re.sub(r"-{2,}", "-", name)
+        return name[:max_len].strip("-") or "sandbox"
+
+
+    @dataclass(frozen=True)
+    class Submitted:
+        """A detached command: its output and exit status land in files inside the sandbox."""
+
+        output_path: str
+        exit_path: str
+
+
+    @dataclass(frozen=True)
+    class Claim:
+        namespace: str
+        name: str
+        sandbox: str  # the pod the controller handed out
+        container: str
+
+
+    class SandboxClient:
+        def __init__(self, client: KubeClient, *, namespace: str = "sandboxes", template: str = "dev",
+                     container: str = "dev", start_timeout: float = 180.0, ttl_seconds: int = 7 * 24 * 3600):
+            self.client = client
+            self.namespace = namespace
+            self.template = template
+            self.container = container
+            self.start_timeout = start_timeout
+            self.ttl_seconds = ttl_seconds
+
+        # -- lifecycle ---------------------------------------------------------
+        def claim_body(self, name: str, ttl_seconds: int | None = None) -> dict:
+            ttl = self.ttl_seconds if ttl_seconds is None else ttl_seconds
+            deadline = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + ttl))
+            return {
+                "apiVersion": "extensions.agents.x-k8s.io/v1beta1",
+                "kind": "SandboxClaim",
+                "metadata": {"name": name},
+                "spec": {
+                    "warmPoolRef": {"name": self.template},
+                    "lifecycle": {"shutdownPolicy": "Delete", "shutdownTime": deadline},
+                },
+            }
+
+        def create(self, name: str, *, ttl_seconds: int | None = None) -> Claim:
+            """Create a claim and wait for its pod. ``AlreadyExists`` (409) means reuse it."""
+            name = _clean_name(name)
+            path = f"{CLAIM_API}/namespaces/{self.namespace}/sandboxclaims"
+            try:
+                obj = self.client.call("POST", path, body=self.claim_body(name, ttl_seconds), timeout=30)
+            except ApiError as exc:
+                if exc.status != 409:
+                    raise
+                obj = self.client.call("GET", f"{path}/{name}")
+            return self.wait(name, obj)
+
+        def get(self, name: str) -> Claim | None:
+            path = f"{CLAIM_API}/namespaces/{self.namespace}/sandboxclaims/{_clean_name(name)}"
+            try:
+                obj = self.client.call("GET", path)
+            except ApiError as exc:
+                if exc.not_found:
+                    return None
+                raise
+            return self.wait(name, obj)
+
+        def wait(self, name: str, obj: dict | None = None) -> Claim:
+            path = f"{CLAIM_API}/namespaces/{self.namespace}/sandboxclaims/{_clean_name(name)}"
+            deadline = time.monotonic() + self.start_timeout
+            while True:
+                if obj is None:
+                    obj = self.client.call("GET", path)
+                status = obj.get("status") or {}
+                conditions = {c.get("type"): c for c in status.get("conditions") or []}
+                ready = conditions.get("Ready") or {}
+                sandbox = (status.get("sandbox") or {}).get("name")
+                if sandbox and ready.get("status") == "True":
+                    return Claim(self.namespace, obj["metadata"]["name"], sandbox, self.container)
+                if str(ready.get("status")).lower() == "false" and "error" in str(ready.get("reason", "")).lower():
+                    raise ApiError(0, f"sandbox claim {name} failed: {ready.get('reason')} {ready.get('message')}".strip())
+                if time.monotonic() >= deadline:
+                    raise ApiError(0, f"sandbox claim {name} was not ready within {self.start_timeout:.0f}s "
+                                      f"(reason: {ready.get('reason') or 'none'})")
+                time.sleep(0.5)
+                obj = None
+
+        def remove(self, name: str) -> bool:
+            """Delete a claim; ``False`` when it was already gone (cleanup must not raise for that)."""
+            path = f"{CLAIM_API}/namespaces/{self.namespace}/sandboxclaims/{_clean_name(name)}"
+            try:
+                self.client.call("DELETE", path, body={"propagationPolicy": "Background"}, timeout=30)
+                return True
+            except ApiError as exc:
+                if exc.not_found:
+                    return False
+                raise
+
+        def list_claims(self) -> list[dict]:
+            obj = self.client.call("GET", f"{CLAIM_API}/namespaces/{self.namespace}/sandboxclaims")
+            return obj.get("items") or []
+
+        def exists(self, name: str) -> bool:
+            path = f"{CLAIM_API}/namespaces/{self.namespace}/sandboxclaims/{_clean_name(name)}"
+            try:
+                self.client.call("GET", path, timeout=10)
+                return True
+            except ApiError as exc:
+                if exc.not_found:
+                    return False
+                raise
+
+        # -- secret files --------------------------------------------------------
+        def write_secret_file(self, claim: Claim, *, path: str, content: str, mode: int = 0o600) -> None:
+            """Write *content* to *path* inside the sandbox with *mode* (default 0600).
+
+            The value travels base64-encoded inside a single exec script: it never appears in the
+            process argv of the exec stream nor in the sandbox environment, only in the target file.
+            """
+            import base64
+            blob = base64.b64encode(content.encode()).decode()
+            script = (
+                "set -e\n"
+                f"umask 077\n"
+                f"mkdir -p {_q(os.path.dirname(path) or '/')}\n"
+                f"printf '%s' {_q(blob)} | base64 -d > {_q(path)}\n"
+                f"chmod {mode:o} {_q(path)}\n"
+            )
+            out, rc = self.exec(claim, ["bash", "-c", script], timeout=30)
+            if rc != 0:
+                raise ApiError(rc, f"writing {path} in sandbox failed: {out.decode('utf-8', 'replace')[:200]}")
+
+        def seed_git_credentials(self, claim: Claim, *, username: str, token: str,
+                                 host: str = "github.com") -> None:
+            """Convenience wrapper: ~/.git-credentials + credential.helper, file-only (never env/argv)."""
+            self.write_secret_file(claim, path="/root/.git-credentials",
+                                   content=f"https://{username}:{token}@{host}\n")
+            script = (
+                "git config --global credential.helper 'store --file=/root/.git-credentials'\n"
+                f"git config --global user.name {_q(username)}\n"
+            )
+            out, rc = self.exec(claim, ["bash", "-c", script], timeout=30)
+            if rc != 0:
+                raise ApiError(rc, f"git config failed: {out.decode('utf-8', 'replace')[:200]}")
+
+        # -- execution ---------------------------------------------------------
+        def exec(self, claim: Claim, command: list[str], *, timeout: float = 120.0,
+                 stdin_data: bytes | None = None) -> tuple[bytes, int]:
+            return self.client.exec_ws(PodTarget(claim.namespace, claim.sandbox, claim.container), command,
+                                       stdin_data=stdin_data, timeout=timeout)
+
+        def submit(self, claim: Claim, command: list[str], *, name: str | None = None) -> Submitted:
+            """Detach *command*: its output and exit status land in files inside the sandbox.
+
+            The exec stream is torn down when its client goes away, so a background command cannot ride
+            it; a detached process writing to files can be polled through ordinary commands instead.
+            """
+            token = _clean_name(name or uuid.uuid4().hex[:8])
+            out = f"/tmp/.hermes-bg/{token}.log"
+            status = f"/tmp/.hermes-bg/{token}.rc"
+            inner = " ".join(_q(part) for part in command)
+            script = (
+                f"mkdir -p /tmp/.hermes-bg && : > {_q(out)} && rm -f {_q(status)}\n"
+                f"( {inner} ) > {_q(out)} 2>&1\n"
+                f"echo $? > {_q(status)}.tmp && mv {_q(status)}.tmp {_q(status)}\n"
+            )
+            # setsid detaches it from the exec stream's pty and session, so the command outlives this call:
+            # the shell forks it and exits at once, no pipe is left for the stream to hold open.
+            self.client.exec_ws(PodTarget(claim.namespace, claim.sandbox, self.container),
+                                ["bash", "-c", f"setsid bash -c {_q(script)} </dev/null >/dev/null 2>&1 &"], timeout=30)
+            return Submitted(out, status)
+
+
+    def _q(value: str) -> str:
+        import shlex
+        return shlex.quote(value)
+  ks-ssh-relay.py: |
+    """Long-lived exec tunnel: an in-sandbox sshd exposed on a local TCP port.
+
+    This is the relay the Phase 0 needs. Hermes' ``ssh`` backend runs its *client* on the Hermes host, so
+    the sandbox's sshd must be reachable from the host: here, a local TCP listener accepts connections and
+    for each one opens a **persistent** WebSocket exec stream running ``nc 127.0.0.1 22`` in the pod, then
+    pumps bytes both ways. ``ssh -o ProxyCommand=…`` is unnecessary — a plain ``ssh root@127.0.0.1 -p <port>``
+    works.
+
+    sshd itself is started inside the sandbox (the ``dev`` template has no sshd): a one-shot exec runs
+    ``setsid sshd …`` so it outlives that call, with a per-claim host key and an authorized key the caller
+    passes in. Keys never leave the sandbox except the *public* one being authorized.
+    """
+
+    from __future__ import annotations
+
+    import base64
+    import logging
+    import os
+    import secrets
+    import shlex
+    import socket
+    import subprocess
+    import threading
+    import time
+
+    from .protocol import ApiError, KubeClient, PodTarget
+
+    log = logging.getLogger(__name__)
+
+    __all__ = ["SshRelay", "ensure_sshd", "read_client_key"]
+
+    SSHD_CONFIG = (
+        "Port 22\n"
+        "ListenAddress 127.0.0.1\n"
+        "HostKey {host_key}\n"
+        "AuthorizedKeysFile /root/.ssh/authorized_keys\n"
+        "PermitRootLogin prohibit-password\n"
+        "StrictModes no\n"
+        "UsePAM no\n"
+        "PasswordAuthentication no\n"
+        "PubkeyAcceptedAlgorithms +ssh-ed25519,*\n"
+        "HostKeyAlgorithms +ssh-ed25519,*\n"
+        "Subsystem sftp internal-sftp\n"
+    )
+
+
+    def _exec(client: KubeClient, target: PodTarget, script: str, timeout: float = 60.0) -> tuple[bytes, int]:
+        return client.exec_ws(target, ["bash", "-c", script], timeout=timeout)
+
+
+    def ensure_sshd(client: KubeClient, claim, *, key_dir: str = "/run/kubesandbox-sshd",
+                    sshd_bin: str = "/usr/sbin/sshd") -> str:
+        """Install (if needed) and start sshd inside the sandbox, and return its *public* key.
+
+        The keypair is generated by the sandbox's own ``ssh-keygen``: this host's ``cryptography`` emits
+        ed25519 blobs the sandbox's sshd refuses to match against ``authorized_keys``, while a key it
+        generated itself is always accepted. Idempotent: a running sshd is left alone and its key re-read.
+        """
+        target = PodTarget(claim.namespace, claim.sandbox, claim.container)
+        probe = ("(exec 3<>/dev/tcp/127.0.0.1/22) 2>/dev/null && echo RUNNING || echo STOPPED")
+        out, rc = _exec(client, target, probe)
+        if b"RUNNING" not in out:
+            _start_sshd(client, target, key_dir, sshd_bin)
+        out, _ = _exec(client, target, f"cat {key_dir}/client.pub")
+        return out.decode().strip()
+    def _start_sshd(client: KubeClient, target: PodTarget, key_dir: str, sshd_bin: str) -> None:
+        script = (
+            "set -e\n"
+            "export DEBIAN_FRONTEND=noninteractive\n"
+            "command -v sshd >/dev/null 2>&1 || { "
+            "DEBIAN_FRONTEND=noninteractive apt-get update -qq; "
+            "DEBIAN_FRONTEND=noninteractive apt-get install -y -qq openssh-server netcat-openbsd; "
+            "} >/dev/null 2>&1\n"
+            "command -v sshd >/dev/null 2>&1 || { echo NO-SSHD; exit 1; }\n"
+            "mkdir -p /run/kubesandbox-sshd /run/sshd\n"
+            f"mkdir -p {key_dir} /run/sshd /root/.ssh\n"
+            f"[ -f {key_dir}/host ] || ssh-keygen -q -t ed25519 -N '' -f {key_dir}/host\n"
+            f"[ -f {key_dir}/client ] || ssh-keygen -q -t ed25519 -N '' -f {key_dir}/client\n"
+            f"cp {key_dir}/client.pub /root/.ssh/authorized_keys\n"
+            "chmod 700 /root/.ssh && chmod 600 /root/.ssh/authorized_keys\n"
+            f"printf {shlex.quote(SSHD_CONFIG.format(host_key=key_dir + '/host'))} > {key_dir}/sshd_config\n"
+            "pkill -x sshd 2>/dev/null || true\n"
+            f"setsid {sshd_bin} -f {key_dir}/sshd_config -E {key_dir}/sshd.log "
+            "</dev/null >/dev/null 2>&1 &\n"
+            "sleep 2\n"
+            "(exec 3<>/dev/tcp/127.0.0.1/22) 2>/dev/null && echo LISTENING "
+            f"|| {{ echo NO-LISTEN; tail -5 {key_dir}/sshd.log; }}"
+        )
+        out, rc = _exec(client, target, script, timeout=300)
+        if rc != 0 or b"LISTENING" not in out:
+            detail = (out or b"").decode(errors="replace")[-500:] or f"(exit {rc}, no output)"
+            raise ApiError(0, f"sshd did not start in {target.pod}: {detail}")
+
+
+    class SshRelay:
+        """A local TCP listener that forwards each connection to the sandbox's sshd over an exec stream."""
+
+        def __init__(self, client: KubeClient, claim, *, host: str = "127.0.0.1", port: int = 0,
+                     remote_host: str = "127.0.0.1", remote_port: int = 22):
+            self.client = client
+            self.claim = claim
+            self.host = host
+            self.requested_port = port
+            self.remote = (remote_host, remote_port)
+            self._sock: socket.socket | None = None
+            self._threads: list[threading.Thread] = []
+            self._stop = threading.Event()
+            self.port = port
+
+        # -- lifecycle ---------------------------------------------------------
+        def start(self) -> int:
+            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self._sock.bind((self.host, self.requested_port))
+            self._sock.listen(16)
+            self._sock.settimeout(0.5)
+            self.port = self._sock.getsockname()[1]
+            threading.Thread(target=self._accept_loop, daemon=True, name="kubesandbox-ssh-relay").start()
+            log.info("ssh relay on %s:%d -> %s exec nc %s:%d", self.host, self.port, self.claim.sandbox,
+                     *self.remote)
+            return self.port
+
+        def stop(self) -> None:
+            self._stop.set()
+            if self._sock is not None:
+                try:
+                    self._sock.close()
+                except OSError:
+                    pass
+
+        def __enter__(self):
+            self.start()
+            return self
+
+        def __exit__(self, *exc):
+            self.stop()
+
+        # -- plumbing ----------------------------------------------------------
+        def _accept_loop(self) -> None:
+            while not self._stop.is_set():
+                try:
+                    conn, _addr = self._sock.accept()
+                except (OSError, socket.timeout):
+                    continue
+                t = threading.Thread(target=self._serve, args=(conn,), daemon=True)
+                self._threads.append(t)
+                t.start()
+
+        def _serve(self, conn: socket.socket) -> None:
+            target = PodTarget(self.claim.namespace, self.claim.sandbox, self.claim.container)
+            try:
+                ws = self.client.exec_stream(target, ["nc", self.remote[0], str(self.remote[1])])
+            except ApiError as exc:
+                log.warning("relay: exec stream failed: %s", exc)
+                conn.close()
+                return
+            try:
+                up = threading.Thread(target=self._pump_local_to_ws, args=(conn, ws), daemon=True)
+                up.start()
+                while True:
+                    frame = ws.recv_channel(timeout=3600)
+                    if frame is None:
+                        break
+                    channel, data = frame
+                    if channel in (1, 2) and data:
+                        conn.sendall(data)
+            except OSError:
+                pass
+            finally:
+                try:
+                    ws.close()
+                except Exception:
+                    pass
+                try:
+                    conn.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+                conn.close()
+
+        @staticmethod
+        def _pump_local_to_ws(conn: socket.socket, ws) -> None:
+            try:
+                while True:
+                    data = conn.recv(65536)
+                    if not data:
+                        break
+                    ws.send_stdin(data)
+            except OSError:
+                pass
+            finally:
+                try:
+                    ws.send_stdin_eof()
+                except Exception:
+                    pass
+
+
+    def read_client_key(client: KubeClient, claim, key_dir: str = "/run/kubesandbox-sshd") -> bytes:
+        """The relay keypair's private half, pulled out of the sandbox for the local ssh client."""
+        out, _ = _exec(client, PodTarget(claim.namespace, claim.sandbox, claim.container),
+                       f"cat {key_dir}/client")
+        return out
