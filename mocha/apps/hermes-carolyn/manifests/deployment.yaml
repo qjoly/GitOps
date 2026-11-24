@@ -33,6 +33,7 @@ spec:
               set -eu
               cp /opt/data/config.yaml /opt/data/config.yaml.prev 2>/dev/null || true
               cp /config/config.yaml /opt/data/config.yaml
+              cp /config/SOUL.md /opt/data/SOUL.md
           volumeMounts:
             - name: data
               mountPath: /opt/data
