@@ -48,8 +48,10 @@ data:
   No-Deny Execution, Verify First, resourceful before asking, privacy, English commits, sandbox-only shell.
   config.yaml: |
     model:
-      # Served by Mistral's API under this exact ID
-      default: "deepseek-v4-1-flash-1017"
+      # Served by Mistral's API under this exact ID. large (not small/flash):
+      # small models were observed entering tool-call loops on the webui
+      # (hermes' stall guardrails only warn there), large breaks loops by itself.
+      default: "mistral-large-latest"
       provider: "custom"
       base_url: "https://api.mistral.ai/v1"
       key_env: "MISTRAL_API_KEY"
