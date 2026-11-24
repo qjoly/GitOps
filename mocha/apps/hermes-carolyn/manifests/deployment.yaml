@@ -176,17 +176,17 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /opt/data
-        # Desktop plugins for the webui app. Always overwritten: unlike config.yaml
+        # The GitHub desktop plugin for the webui app. Always overwritten: unlike config.yaml
         # there is no runtime state to preserve, and a hand-edited copy on the PVC
         # would otherwise win over the repo forever.
-        - name: seed-desktop-plugins
+        - name: seed-github-pane
           image: busybox:1.38
           command:
             - sh
             - -c
             - |
               mkdir -p /opt/data/desktop-plugins/github-pane
-              cp /src/desktop-plugins/github-pane.js /opt/data/desktop-plugins/github-pane/plugin.js
+              cp /src/github-pane.js /opt/data/desktop-plugins/github-pane/plugin.js
               printf '{"package":"github-pane"}\n' > /opt/data/desktop-plugins/github-pane/.hermes-package.json
               chmod -R a+rX /opt/data/desktop-plugins
               chown -R 10000:10000 /opt/data/desktop-plugins
@@ -838,7 +838,7 @@ spec:
             name: hermes-carolyn-config
         - name: desktop-plugins
           configMap:
-            name: hermes-carolyn-desktop-plugins
+            name: hermes-carolyn-github-pane
         - name: email-mcp-config
           secret:
             secretName: hermes-carolyn-email-mcp
