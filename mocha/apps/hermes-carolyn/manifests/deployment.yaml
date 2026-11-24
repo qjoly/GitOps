@@ -248,7 +248,7 @@ spec:
               # from its own repo (no embedded code in manifests). Replaced on every
               # start; selected by terminal.backend in config.yaml. Bump the tag on
               # each plugin release (see unetassedecafe/kube-sandbox releases).
-              wget -q https://github.com/unetassedecafe/kube-sandbox/archive/v0.2.0.tar.gz -O /tmp/ks.tgz
+              wget -q https://github.com/unetassedecafe/kube-sandbox/archive/v0.2.1.tar.gz -O /tmp/ks.tgz
               mkdir -p /opt/data/plugins/kube-sandbox
               tar -xzf /tmp/ks.tgz -C /tmp
               cp /tmp/kube-sandbox-*/plugin/__init__.py /tmp/kube-sandbox-*/plugin/plugin.yaml /opt/data/plugins/kube-sandbox/
