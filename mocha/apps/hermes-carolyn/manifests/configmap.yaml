@@ -86,15 +86,19 @@ data:
     plugins:
       enabled:
         - mistral-image
-        # - kube-sandbox  # DISABLED 2026-11-24 with the terminal backend below
+        # Plugin stays LOADED (registered backend name) so sessions/turns that
+        # still carry a stale kube-sandbox scope resolve instead of erroring,
+        # but terminal.backend below stays commented: new turns run LOCAL.
+        - kube-sandbox
 
     # Every command runs in a gVisor micro-VM claimed from the mocha sandboxes
     # warm pool (plugin kube-sandbox, seeded by the install-sbx init container).
     # GH_TOKEN is written to /root/.git-credentials inside the VM only, never
     # into the sandbox environment.
-    # DISABLED 2026-11-24: the kube-sandbox backend amplifies tool-call loops
-    # (fast successful execs in the VM spin loops ~10x faster) and browser
-    # tools cannot run there yet. Re-enable by uncommenting the block below.
+    # DISABLED 2026-11-24 as the DEFAULT backend: the kube-sandbox VM amplifies
+    # tool-call loops (fast successful execs spin loops ~10x faster) and browser
+    # tools cannot run there yet. The plugin itself stays enabled above so stale
+    # sessions keep working. Re-enable the backend by uncommenting this block.
     # terminal:
     #   backend: kube-sandbox
     #   kube_sandbox_namespace: sandboxes
