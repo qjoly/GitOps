@@ -310,15 +310,11 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: mistral_api_key
-            # Expanded as ${GITHUB_TOKEN} in the github MCP server headers. The
-            # github-mcp sidecar needs it: in `http` mode github-mcp-server
-            # ignores GITHUB_PERSONAL_ACCESS_TOKEN and authenticates every
-            # request with the client's Authorization header (401 without it).
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: hermes-carolyn
-                  key: github_token
+            # No GITHUB_TOKEN on purpose: the qjoly account must not be reachable
+            # from Hermes, not even via the github MCP. The MCP header uses
+            # ${GH_TOKEN} (configmap) and the github-mcp sidecar gets the bot token
+            # below, so every GitHub call is made as unetassedecafe.
+            # GH_TOKEN is the only GitHub credential in this pod.
             # git and gh run by the agent (sbx flow: apply the patch, commit,
             # push, open the PR) act as the unetassedecafe bot. It has no write
             # access to qjoly repos: it pushes to its own fork and opens PRs.
@@ -533,7 +529,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: hermes-carolyn
-                  key: github_token
+                  key: github_bot_token
             - name: GITHUB_TOOLSETS
               value: "repos,issues,pull_requests,search"
           ports:
@@ -639,15 +635,11 @@ spec:
               value: /home/hermeswebui/.hermes/webui
             - name: HERMES_WEBUI_AGENT_DIR
               value: /home/hermeswebui/.hermes/hermes-agent
-            # Expanded as ${GITHUB_TOKEN} in the github MCP server headers. The
-            # github-mcp sidecar needs it: in `http` mode github-mcp-server
-            # ignores GITHUB_PERSONAL_ACCESS_TOKEN and authenticates every
-            # request with the client's Authorization header (401 without it).
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: hermes-carolyn
-                  key: github_token
+            # No GITHUB_TOKEN on purpose: the qjoly account must not be reachable
+            # from Hermes, not even via the github MCP. The MCP header uses
+            # ${GH_TOKEN} (configmap) and the github-mcp sidecar gets the bot token
+            # below, so every GitHub call is made as unetassedecafe.
+            # GH_TOKEN is the only GitHub credential in this pod.
             # git and gh run by the agent (sbx flow: apply the patch, commit,
             # push, open the PR) act as the unetassedecafe bot. It has no write
             # access to qjoly repos: it pushes to its own fork and opens PRs.

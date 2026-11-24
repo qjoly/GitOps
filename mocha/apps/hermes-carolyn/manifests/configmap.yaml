@@ -136,7 +136,7 @@ data:
         trust: untrusted
         connect_timeout: 30
         headers:
-          Authorization: "Bearer ${GITHUB_TOKEN}"
+          Authorization: "Bearer ${GH_TOKEN}"
       # Google Calendar (read/write), calendar-mcp sidecar.
       # trust: full because the buy-tracking cron writes events unattended; an
       # untrusted server gates every write behind an approval prompt that no one
