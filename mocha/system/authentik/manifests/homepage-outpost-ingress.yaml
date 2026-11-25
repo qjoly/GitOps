@@ -7,6 +7,7 @@ metadata:
   namespace: authentik
   annotations:
     cert-manager.io/cluster-issuer: cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-ratelimit-default@kubernetescrd
     homepage.thoughtless.eu/hide: "true"
 spec:
   ingressClassName: traefik
