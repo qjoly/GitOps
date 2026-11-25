@@ -101,6 +101,7 @@ spec:
             secretName: "atuin-tls"
           annotations:
             cert-manager.io/cluster-issuer: cloudflare
+            traefik.ingress.kubernetes.io/router.middlewares: traefik-ratelimit-default@kubernetescrd
         # Only the database keeps state; the server itself is stateless.
         persistence:
           enabled: false
@@ -159,6 +160,7 @@ spec:
               name: atuin-web
               annotations:
                 cert-manager.io/cluster-issuer: cloudflare
+                traefik.ingress.kubernetes.io/router.middlewares: traefik-ratelimit-default@kubernetescrd
             spec:
               ingressClassName: traefik
               rules:
