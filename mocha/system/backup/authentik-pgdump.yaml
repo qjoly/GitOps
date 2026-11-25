@@ -59,6 +59,12 @@ spec:
           initContainers:
             - name: pgdump
               image: postgres:17.12-bookworm
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
               command: ["/bin/sh", "-c"]
               args:
                 - |
@@ -86,6 +92,12 @@ spec:
           containers:
             - name: upload
               image: restic/restic:0.20.0
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
               command: ["/bin/sh", "-c"]
               args:
                 - |
