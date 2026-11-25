@@ -55,6 +55,12 @@ spec:
           initContainers:
             - name: dump
               image: mariadb:12.3
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -78,6 +84,12 @@ spec:
           containers:
             - name: upload
               image: restic/restic:0.20.0
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -154,6 +166,12 @@ spec:
           initContainers:
             - name: dump
               image: postgres:18-alpine
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -185,6 +203,12 @@ spec:
           containers:
             - name: upload
               image: restic/restic:0.20.0
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
