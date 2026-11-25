@@ -38,6 +38,7 @@ spec:
                   secretName: "vaultwarden-tls"
                 annotations:
                   cert-manager.io/cluster-issuer: cloudflare
+                  traefik.ingress.kubernetes.io/router.middlewares: traefik-ratelimit-strict@kubernetescrd
               variables:
                 secret:
                   existingSecret:
