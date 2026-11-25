@@ -41,6 +41,12 @@ spec:
         image: atcr.io/tranquil.farm/tranquil-pds@sha256:9d803e048be9231ddc5dde854b9f581bf40a614adb6c812ac497bc7b8d4c06ce
         imagePullPolicy: IfNotPresent
         storageClass: openebs-lvmpv
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 2Gi
         ingress:
           host: pds.mocha.thoughtless.eu
           className: traefik
