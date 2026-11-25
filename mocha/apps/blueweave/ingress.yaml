@@ -8,6 +8,7 @@ metadata:
   annotations:
     # Automatic TLS via cert-manager, using mocha's only ClusterIssuer.
     cert-manager.io/cluster-issuer: cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-ratelimit-default@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
