@@ -51,7 +51,7 @@ addons:
       tunnelProtocol: vxlan
   - name: argocd
     chart: argo/argo-cd
-    version: 10.18.2
+    version: 10.20.0
     namespace: argocd
     repository:
       name: argo
