@@ -165,7 +165,7 @@ spec:
               emptyDir: {}
           initContainers:
             - name: dump
-              image: postgres:18-alpine
+              image: postgres:19-alpine
               resources:
                 requests:
                   cpu: 50m
