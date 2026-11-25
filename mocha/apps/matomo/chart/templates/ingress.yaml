@@ -4,6 +4,7 @@ metadata:
   name: matomo
   annotations:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer }}
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-ratelimit-default@kubernetescrd
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   tls:
