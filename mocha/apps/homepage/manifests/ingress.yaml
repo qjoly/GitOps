@@ -23,7 +23,7 @@ metadata:
   namespace: homepage
   annotations:
     cert-manager.io/cluster-issuer: cloudflare
-    traefik.ingress.kubernetes.io/router.middlewares: homepage-authentik@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: homepage-authentik@kubernetescrd,traefik-ratelimit-default@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
