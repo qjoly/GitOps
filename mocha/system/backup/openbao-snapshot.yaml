@@ -62,6 +62,12 @@ spec:
           initContainers:
             - name: snapshot
               image: openbao/openbao:2.7.3
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
               command: ["/bin/sh", "-c"]
               args:
                 - bao operator raft snapshot save /work/openbao.snap
@@ -84,6 +90,12 @@ spec:
           containers:
             - name: upload
               image: restic/restic:0.20.0
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
               command: ["/bin/sh", "-c"]
               args:
                 - |
