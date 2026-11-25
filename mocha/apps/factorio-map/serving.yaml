@@ -127,6 +127,7 @@ metadata:
   namespace: factorio-lucca
   annotations:
     cert-manager.io/cluster-issuer: cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-ratelimit-default@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
