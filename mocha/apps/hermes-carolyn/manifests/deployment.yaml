@@ -3,6 +3,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: hermes-carolyn
+  # Reloader (mocha/system/reloader) is cluster-wide and watches ConfigMaps
+  # referenced by this Deployment: any change to hermes-carolyn-config triggers
+  # a pod rollout automatically, so the seed-config init container re-copies
+  # config.yaml onto the PVC on the next start.
+  annotations:
+    configmap.reloader.stakater.com/reload: "hermes-carolyn-config"
   labels:
     app.kubernetes.io/name: hermes-carolyn
 spec:
