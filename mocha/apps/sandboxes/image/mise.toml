@@ -1,5 +1,0 @@
-# Drives the image build only: the Dockerfile reads this pin to pick the mise
-# version it installs. It must NOT preinstall a toolchain — that would couple the
-# image to one repo's versions (see the sbx skill, references/custom-image.md).
-[tools]
-mise = "2026.11.12"
