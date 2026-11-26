@@ -546,7 +546,7 @@ spec:
         # credential seeded by seed-calendar-creds; plain HTTP without MCP-level
         # auth, so it stays bound to 127.0.0.1 (the image's default in that mode).
         - name: calendar-mcp
-          image: ghcr.io/taylorwilsdon/google_workspace_mcp:2.6.0
+          image: ghcr.io/taylorwilsdon/google_workspace_mcp:2.7.1
           # The image's entrypoint is `sh -c`
           args:
             - exec /app/.venv/bin/python main.py --transport streamable-http --single-user --tools calendar
