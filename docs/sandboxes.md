@@ -23,17 +23,27 @@ sequenceDiagram
     L->>K: sbx down: claim deleted
 ```
 
-- **Isolation**: every pod runs under gVisor. The network policy managed by agent-sandbox allows
-  internet egress and nothing inside the cluster. The pod gets no service account token.
+- **Isolation**: every pod runs under gVisor. The template's custom network policy
+  (`spec.networkPolicy` in `manifests/dev.yaml`) allows internet egress plus, on ports 443/6443
+  (API) and 53 (DNS), traffic to cluster pods — see below for why it is pod-based, not CIDR-based.
 - **Storage**: no live mount. The checkout is copied in and changes come back as a patch, so builds
   run on the sandbox disk at full speed and nothing lives only in the cluster.
-- **Credentials**: none in the sandbox. Anything that needs GitHub happens locally on the applied patch.
+- **Credentials**: the sandbox gets exactly two, both mounted/seeded file-only, never as env vars
+  (the template's `envVarsInjectionPolicy: Disallowed` blocks claim-time env injection):
+  - the `unetassedecafe` bot token at `/root/.git-credentials` (mode 0600, seeded by `sbx up` /
+    the kube-sandbox plugin), so `git`/`gh` in the VM act as the bot;
+  - a **read-only** Kubernetes access: SA `sandbox-ro` (ClusterRole `sandbox-readonly` =
+    get/list/watch + pods/log only, bound cluster-wide), mounted as
+    `/var/run/secrets/kubernetes.io/serviceaccount/` plus `KUBECONFIG=/etc/sandbox-ro/kubeconfig`.
+    The kubeconfig points at the `apiserver-proxy` Service (a socat pod forwarding to the node
+    API), because Cilium classifies the node IP as `reserved:host` and denies egress to it —
+    ipBlock rules never match pod/host identities, only `world`, so the netpol allows the
+    needed ports via `namespaceSelector: {}` (all cluster pods) instead of CIDRs.
 
-  This works because `mise install` does not call the GitHub API: the `github` backend resolves
-  releases through `mise-versions.jdx.dev`, which spends a pooled token upstream. Check it with
+  `mise install` still does not call the GitHub API: the `github` backend resolves releases
+  through `mise-versions.jdx.dev`, which spends a pooled token upstream. Check it with
   `mise token github`, which reports `(none)` on a healthy sandbox. Only a `mise-versions` outage
-  falls back to anonymous `api.github.com` calls. Do not fix that by injecting a token — the
-  template refuses injected env vars for this reason.
+  falls back to anonymous `api.github.com` calls.
 
 See [Hermes](hermes.md) for the pod that drives these sandboxes and publishes the result.
 

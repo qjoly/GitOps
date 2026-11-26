@@ -146,10 +146,13 @@ sbx down "$n"
 ```
 
 The pod reaches the API server with its own service account, which has a
-namespace-scoped Role in `sandboxes` only. The sandbox itself has no service
-account token, no cluster network, and no credentials except the
-`/root/.git-credentials` bot token that `sbx up` seeds (see above). See
-[Sandboxes](sandboxes.md) for the template and the warm pool.
+namespace-scoped Role in `sandboxes` only. The sandbox itself has no cluster
+network beyond internet + API/DNS ports, and exactly two credentials: the
+`/root/.git-credentials` bot token that `sbx up` seeds (see above), and a
+**read-only** kubectl access (SA `sandbox-ro` mounted with a kubeconfig that
+goes through the `apiserver-proxy` pod — see [Sandboxes](sandboxes.md) for why
+the node IP is not dialed directly). See [Sandboxes](sandboxes.md) for the
+template and the warm pool.
 
 ## Talking to the agent
 
