@@ -1,0 +1,76 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: authentik
+  namespace: pages
+spec:
+  forwardAuth:
+    address: http://authentik-server.authentik.svc.cluster.local/outpost.goauthentik.io/auth/traefik
+    trustForwardHeader: true
+    authResponseHeaders:
+      - X-authentik-username
+      - X-authentik-groups
+      - X-authentik-email
+      - X-authentik-name
+      - X-authentik-uid
+---
+# Public hostname, gated by Authentik: no page leaves the cluster without a
+# valid session, even though the ingress sits on the public Traefik.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pages
+  namespace: pages
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: pages-authentik@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - pages.mocha.thoughtless.eu
+      secretName: pages-tls
+  rules:
+    - host: pages.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pages
+                port:
+                  number: 8080
+---
+# NetBird-only mirror: peers reach it without Authentik, the mesh is the gate.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pages-nb
+  namespace: pages
+spec:
+  ingressClassName: traefik-internal
+  rules:
+    - host: pages.nb.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pages
+                port:
+                  number: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pages
+  namespace: pages
+spec:
+  selector:
+    app: pages
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
