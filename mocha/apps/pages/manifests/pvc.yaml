@@ -1,0 +1,14 @@
+# Content lives on the PVC, never in git: these are personal documents
+# (delivery tracking, invoices, reports). Drop a file in and it is served.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pages
+  namespace: pages
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: openebs-hostpath
+  resources:
+    requests:
+      storage: 1Gi
