@@ -51,6 +51,8 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
+              # nginx entrypoint chowns its cache dirs then drops to uid 101
+              add: ["CHOWN", "SETUID", "SETGID"]
           readinessProbe:
             httpGet:
               path: /
