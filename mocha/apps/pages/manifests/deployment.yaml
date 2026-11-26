@@ -55,7 +55,8 @@ spec:
               add: ["CHOWN", "SETUID", "SETGID"]
           readinessProbe:
             httpGet:
-              path: /
+              # root 404s until the first page is published; probe a known page
+              path: /colis.html
               port: 8080
             initialDelaySeconds: 3
             periodSeconds: 20
