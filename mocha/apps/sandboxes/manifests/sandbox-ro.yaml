@@ -64,7 +64,9 @@ data:
     clusters:
       - name: mocha
         cluster:
-          server: https://10.96.0.1:443
+          # Node address, not the ClusterIP: avoids the service DNAT path
+          # entirely (the sandbox netpol blocks pod/service CIDRs post-DNAT).
+          server: https://5.196.80.72:6443
           certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
     contexts:
       - name: mocha
@@ -78,9 +80,11 @@ data:
           tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
 ---
 # Additive NetworkPolicy: the controller's managed policy allows internet
-# egress only and blocks RFC1918; this one additionally allows TCP/443 to the
-# service CIDR so the VMs can reach the API server. NetworkPolicies union, so
-# internet egress keeps working.
+# egress only and blocks RFC1918. This one additionally allows TCP 443/6443
+# to the cluster's own ranges so the VMs can reach the API server. NetworkPolicies
+# union, so internet egress keeps working. Cilium evaluates egress on the
+# post-DNAT destination too, so the pod CIDR and the node IP must be listed,
+# not just the service CIDR.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -93,7 +97,13 @@ spec:
   egress:
     - to:
         - ipBlock:
-            cidr: 10.96.0.0/12
+            cidr: 10.96.0.0/11   # service CIDRs (ClusterIPs)
+        - ipBlock:
+            cidr: 10.244.0.0/16  # pod CIDR (post-DNAT backends)
+        - ipBlock:
+            cidr: 5.196.80.72/32 # node mocha, external API endpoint :6443
       ports:
         - protocol: TCP
           port: 443
+        - protocol: TCP
+          port: 6443

@@ -38,9 +38,9 @@ spec:
             - name: KUBECONFIG
               value: /etc/sandbox-ro/kubeconfig
             - name: KUBERNETES_SERVICE_HOST
-              value: 10.96.0.1
+              value: 5.196.80.72
             - name: KUBERNETES_SERVICE_PORT
-              value: "443"
+              value: "6443"
           # A claim is handed out only once the mise install attempt is over.
           readinessProbe:
             exec:
