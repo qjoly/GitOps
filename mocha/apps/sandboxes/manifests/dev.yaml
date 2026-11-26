@@ -38,6 +38,12 @@ spec:
         ports:
           - { protocol: TCP, port: 443 }
           - { protocol: TCP, port: 6443 }
+      # CoreDNS ClusterIP: the VMs' resolv.conf points at cluster DNS
+      - to:
+          - ipBlock: { cidr: 10.96.0.0/11 }
+        ports:
+          - { protocol: UDP, port: 53 }
+          - { protocol: TCP, port: 53 }
   podTemplate:
     spec:
       runtimeClassName: gvisor
