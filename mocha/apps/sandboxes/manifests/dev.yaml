@@ -31,17 +31,15 @@ spec:
           - ipBlock:
               cidr: ::/0
               except: [fc00::/7, fe80::/10]
+      # API server + CoreDNS. NOTE: Cilium resolves the node IP (5.196.80.72)
+      # to the reserved:host identity and ipBlock rules do NOT match reserved
+      # identities ("match none" in the policy verdict), so the only reliable
+      # way is to allow these ports to 0.0.0.0/0 — the port is what scopes it.
       - to:
-          - ipBlock: { cidr: 10.96.0.0/11 }   # service CIDRs (ClusterIPs)
-          - ipBlock: { cidr: 10.244.0.0/16 }  # pod CIDR (post-DNAT backends)
-          - ipBlock: { cidr: 5.196.80.72/32 } # node mocha, external API :6443
+          - ipBlock: { cidr: 0.0.0.0/0 }
         ports:
           - { protocol: TCP, port: 443 }
           - { protocol: TCP, port: 6443 }
-      # CoreDNS ClusterIP: the VMs' resolv.conf points at cluster DNS
-      - to:
-          - ipBlock: { cidr: 10.96.0.0/11 }
-        ports:
           - { protocol: UDP, port: 53 }
           - { protocol: TCP, port: 53 }
   podTemplate:
