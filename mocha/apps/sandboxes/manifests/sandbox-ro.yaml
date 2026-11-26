@@ -64,10 +64,13 @@ data:
     clusters:
       - name: mocha
         cluster:
-          # Node address, not the ClusterIP: avoids the service DNAT path
-          # entirely (the sandbox netpol blocks pod/service CIDRs post-DNAT).
-          server: https://5.196.80.72:6443
-          certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          # Via the apiserver-proxy pod (same namespace): the VMs cannot reach
+          # the node IP directly (Cilium classifies it as reserved:host and
+          # denies egress to it). socat passes TLS through end-to-end, but the
+          # apiserver cert has no SAN for this ClusterIP, hence the skip-verify
+          # (lab, read-only token, traffic stays inside the cluster CNI).
+          server: https://apiserver-proxy.sandboxes.svc.cluster.local:443
+          insecure-skip-tls-verify: true
     contexts:
       - name: mocha
         context:
@@ -82,5 +85,41 @@ data:
 # The egress to the API server is NOT a standalone NetworkPolicy anymore: with
 # networkPolicyManagement=Managed and spec.networkPolicy set on the dev template,
 # the controller REPLACES its default internet-only policy with the template's
-# rules. The cluster ranges are allowed there (dev.yaml), including the pod CIDR
-# because Cilium also evaluates egress on the post-DNAT backend IP.
+# rules (dev.yaml allows the needed ports to all pods via namespaceSelector).
+---
+# TCP proxy to the real API server. The VMs cannot dial the node IP directly
+# (Cilium: reserved:host identity, egress denied, ipBlock never matches), so
+# they reach the apiserver through this pod's ClusterIP instead. socat forwards
+# raw TCP, TLS stays end-to-end between the VM and the apiserver.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apiserver-proxy
+  namespace: sandboxes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apiserver-proxy
+  template:
+    metadata:
+      labels:
+        app: apiserver-proxy
+    spec:
+      containers:
+        - name: socat
+          image: docker.io/alpine/socat:1.8.0.3
+          args: ["TCP-LISTEN:443,fork,reuseaddr", "TCP:5.196.80.72:6443"]
+          ports:
+            - { containerPort: 443 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: apiserver-proxy
+  namespace: sandboxes
+spec:
+  selector:
+    app: apiserver-proxy
+  ports:
+    - { port: 443, targetPort: 443, protocol: TCP }

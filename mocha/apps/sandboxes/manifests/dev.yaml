@@ -31,12 +31,15 @@ spec:
           - ipBlock:
               cidr: ::/0
               except: [fc00::/7, fe80::/10]
-      # API server + CoreDNS. NOTE: Cilium resolves the node IP (5.196.80.72)
-      # to the reserved:host identity and ipBlock rules do NOT match reserved
-      # identities ("match none" in the policy verdict), so the only reliable
-      # way is to allow these ports to 0.0.0.0/0 — the port is what scopes it.
+      # Cluster-internal targets (CoreDNS, apiserver-proxy pod). Cilium does NOT
+      # apply ipBlock egress rules to pod/host identities (policy verdict:
+      # "match none" even with cidr 0.0.0.0/0), so cluster traffic must be
+      # allowed by identity: namespaceSelector {} = every pod in the cluster,
+      # scoped to the ports we need (API 443/6443, DNS 53). The API server
+      # itself is reached via the apiserver-proxy pod (sandbox-ro.yaml) because
+      # the node IP resolves to reserved:host, which ipBlock can never match.
       - to:
-          - ipBlock: { cidr: 0.0.0.0/0 }
+          - namespaceSelector: {}
         ports:
           - { protocol: TCP, port: 443 }
           - { protocol: TCP, port: 6443 }
