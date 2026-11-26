@@ -8,7 +8,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: openebs-lvmpv
+  storageClassName: openebs-hostpath
   resources:
     requests:
       storage: 1Gi
