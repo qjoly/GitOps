@@ -95,20 +95,19 @@ data:
     # warm pool (plugin kube-sandbox, seeded by the install-sbx init container).
     # GH_TOKEN is written to /root/.git-credentials inside the VM only, never
     # into the sandbox environment.
-    # DISABLED 2026-11-24 as the DEFAULT backend: the kube-sandbox VM amplifies
-    # tool-call loops (fast successful execs spin loops ~10x faster) and browser
-    # tools cannot run there yet. The plugin itself stays enabled above so stale
-    # sessions keep working. Re-enable the backend by uncommenting this block.
-    # terminal:
-    #   backend: kube-sandbox
-    #   kube_sandbox_namespace: sandboxes
-    #   kube_sandbox_template: dev
-    #   kube_sandbox_container: dev
-    #   kube_sandbox_home: /root
-    #   kube_sandbox_kubeconfig: /opt/sbx/kubeconfig
-    #   kube_sandbox_secret_files:
-    #     - path: /root/.git-credentials
-    #       env: GH_TOKEN
+    # Disabled 2026-11-24 then re-enabled 2026-11-26: the VMs need the bot
+    # token for git/gh to work in-session. The loop-amplification concern that
+    # disabled it is handled on the agent side.
+    terminal:
+      backend: kube-sandbox
+      kube_sandbox_namespace: sandboxes
+      kube_sandbox_template: dev
+      kube_sandbox_container: dev
+      kube_sandbox_home: /root
+      kube_sandbox_kubeconfig: /opt/sbx/kubeconfig
+      kube_sandbox_secret_files:
+        - path: /root/.git-credentials
+          env: GH_TOKEN
 
     platforms:
       discord:

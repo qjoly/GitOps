@@ -25,7 +25,9 @@ data:
   sbx: |
     #!/usr/bin/env bash
     # Disposable gVisor sandboxes on mocha. The local checkout stays the source of truth:
-    # code is copied in, changes come back as a git patch, and git/gh only ever run locally.
+    # code is copied in, changes come back as a git patch. `sbx up` seeds the unetassedecafe
+    # bot token into /root/.git-credentials (file-only), so git/gh inside the sandbox act as
+    # the bot too.
     set -euo pipefail
     
     here=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
@@ -63,6 +65,27 @@ data:
     EOF
     )
         k wait "sandboxclaim/$name" --for=condition=Ready --timeout=5m >/dev/null
+        # Seed the bot token as /root/.git-credentials (mode 0600, never in the sandbox
+        # env): git/gh run inside the sandbox act as unetassedecafe. The token travels on
+        # the exec stdin, never in argv, so it lands in no process list or log. /root is
+        # not under /work, so `sbx push` never copies it back.
+        tok=${GH_TOKEN:-}
+        if [[ -z $tok ]]; then
+          for p in /proc/[0-9]*/environ; do
+            v=$(tr '\0' '\n' < "$p" 2>/dev/null | sed -n 's/^GH_TOKEN=//p' | head -1)
+            [[ -n $v ]] && { tok=$v; break; }
+          done
+        fi
+        if [[ -n $tok ]]; then
+          printf '%s' "$tok" | k exec -i "$(pod "$name")" -- bash -ec '
+            umask 077
+            t=$(cat)
+            printf "https://unetassedecafe:%s@github.com\n" "$t" > /root/.git-credentials
+            chmod 600 /root/.git-credentials
+            git config --global credential.helper "store --file=/root/.git-credentials"'
+        else
+          echo "sbx: warning: GH_TOKEN not found in the pod, sandbox left without git credentials" >&2
+        fi
         echo "$name"
         ;;
       push)
@@ -106,9 +129,11 @@ data:
     
     # Sandboxes on mocha (`sbx`)
     
-    The local checkout stays the source of truth. A sandbox gets a copy, works on it, and hands back a patch. git commits, pushes and `gh` (PR, review, issues) only ever run locally, after the patch is applied.
+    The local checkout stays the source of truth. A sandbox gets a copy, works on it, and hands back a patch.
     
-    Never pass a token, kubeconfig or any secret into a sandbox for the code it runs: the sandbox has none on purpose. The one exception is the publishing step below, which hands `gh` a token on stdin to open the pull request, never as an environment variable baked into the sandbox, a file in `/work`, or a remote URL.
+    `sbx up` seeds the unetassedecafe bot token into the sandbox as `/root/.git-credentials` (mode 0600, file-only — never in the sandbox env, never under `/work`), so `git` and `gh` run inside the sandbox act as the bot, same as in the pod. Confirm the identity once per sandbox with `sbx exec "$n" -- gh api user`.
+    
+    Never pass any other token, kubeconfig or secret into a sandbox: pass data on `exec` stdin instead — never argv (visible in process lists), never a file in `/work` (`.git` is copied in by `sbx push`, `/work` comes back with `sbx diff`).
     
     ## Flow
     
@@ -128,25 +153,18 @@ data:
     
     ## Publishing the result
 
-    git and `gh` act as the `unetassedecafe` bot (`GH_TOKEN` plus a git credential helper wired through
-    `GIT_CONFIG_*`). It has `pull` on the upstream repos and push only on its own fork, so an upstream
-    push returns `403 Permission ... denied to unetassedecafe`. That 403 is success at stopping a direct
+    git and `gh` act as the `unetassedecafe` bot — in the pod via `GH_TOKEN` + `GIT_CONFIG_*`, in the
+    sandbox via the `/root/.git-credentials` that `sbx up` seeds. The bot has `pull` on the upstream
+    repos and push only on its own fork, so an upstream push returns
+    `403 Permission ... denied to unetassedecafe`. That 403 is success at stopping a direct
     commit: never try to work around it.
 
     Two traps, both verified the hard way:
 
-    - **`GH_TOKEN` is not in the shell's environment.** The pod runs your shell through `su`, which drops
-      it. Find the process that has it (pid 1 is `su`, so do not hardcode a pid), then pass it to the
-      sandbox on stdin — never argv, never a file left behind:
-      ```sh
-      TOK=$( { for p in /proc/[0-9]*/environ; do
-                 v=$(tr '\0' '\n' < "$p" | sed -n 's/^GH_TOKEN=//p' | head -1)
-                 [ -n "$v" ] && { printf '%s' "$v"; break; }
-               done; } 2>/dev/null )
-      sbx exec "$n" -- bash -ec 'T="$(cat)"; export GH_TOKEN="$T"; gh pr create …' <<<"$TOK"
-      ```
-      Check it resolved before using it (`test -n "$TOK"`), and confirm the identity once with
-      `curl -s -H "Authorization: Bearer $TOK" https://api.github.com/user` from the sandbox.
+    - **The sandbox token is file-only on purpose.** `sbx up` writes `/root/.git-credentials` from the
+      pod's `GH_TOKEN` over the exec stdin; it never appears in the sandbox env, in argv, or under
+      `/work`. Do not copy it anywhere else (no remote URL, no `.git/config`, no file in `/work`):
+      `sbx push` copies `.git` into the sandbox and `sbx diff` brings `/work` back.
     - **`gh` is not in the sandbox image.** Install it once per sandbox:
       ```sh
       curl -fsSL https://github.com/cli/cli/releases/download/v2.63.2/gh_2.63.2_linux_amd64.tar.gz \

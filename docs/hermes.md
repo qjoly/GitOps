@@ -77,8 +77,7 @@ maps keys from `kv/hermes-carolyn` in the cluster Vault (OpenBao) into the
 
 | Key in `kv/hermes-carolyn` | Used for |
 |---|---|
-| `github_token` | the `github-mcp` sidecar |
-| `github_bot_token` | git and `gh` run by the agent (see below) |
+| `github_bot_token` | the only GitHub credential: `github-mcp` sidecar **and** git/`gh` (see below) |
 | `mistral_api_key` | the model |
 | `bot_token`, `allowed_users` | Discord |
 | `hass_token` | Home Assistant MCP |
@@ -92,29 +91,38 @@ A missing key is a **CrashLoop**, not a degraded start: `secretKeyRef` fails
 the container. When you add a key to the ExternalSecret, add it to Vault in the
 same change.
 
-## The two GitHub identities
+## The one GitHub identity
 
-There are two tokens, and they are not interchangeable.
+There is a single GitHub token, `github_bot_token`, belonging to the bot
+account **unetassedecafe** — the `qjoly` account is deliberately not reachable
+from Hermes (`github_token` no longer exists in the ExternalSecret). It is used
+both by the `github-mcp` sidecar (`GITHUB_PERSONAL_ACCESS_TOKEN`, with the MCP
+config sending `Authorization: Bearer ${GH_TOKEN}`; the server runs with the
+`repos,issues,pull_requests,search` toolsets) and by `git`/`gh` run by the agent,
+wired as `GH_TOKEN` plus a git credential helper through `GIT_CONFIG_*`
+environment variables — not in `.git/config`, because `sbx push` copies `.git`
+into the sandbox. The bot is a collaborator with `read` on this repository: it
+pushes a branch to its own fork (`unetassedecafe/GitOps`) and opens a pull
+request from there.
 
-**`github_token`** authenticates the agent to the GitHub API through the
-`github-mcp` sidecar. The [MCP config](https://github.com/qjoly/GitOps/blob/main/mocha/apps/hermes-carolyn/manifests/configmap.yaml)
-sends it as `Authorization: Bearer ${GITHUB_TOKEN}`; the server runs with the
-`repos,issues,pull_requests,search` toolsets.
+The token is also given to the VMs, file-only, so `git`/`gh` work in-session:
 
-**`github_bot_token`** belongs to a separate bot account, `unetassedecafe`, and is
-what `git` and `gh` use when the agent publishes work. It is wired as `GH_TOKEN`
-plus a git credential helper through `GIT_CONFIG_*` environment variables — not in
-`.git/config`, because `sbx push` copies `.git` into the sandbox. The bot is a
-collaborator with `read` on this repository: it pushes a branch to its own fork
-(`unetassedecafe/GitOps`) and opens a pull request from there.
+- **kube-sandbox terminal backend**: `terminal.kube_sandbox_secret_files` in the
+  [MCP config](https://github.com/qjoly/GitOps/blob/main/mocha/apps/hermes-carolyn/manifests/configmap.yaml)
+  writes `GH_TOKEN` to `/root/.git-credentials` (mode 0600) inside the micro-VM
+  at claim time — never into the sandbox environment.
+- **`sbx` sandboxes**: `sbx up` seeds the same `/root/.git-credentials` from the
+  pod's `GH_TOKEN` over the exec stdin (never argv, never under `/work`, so it
+  is not copied back by `sbx diff`).
 
-Two rules follow, and they are the ones that get broken:
+Rules that follow, and are the ones that get broken:
 
-- **No token in a sandbox.** The sandbox template rejects injected env vars, and
-  nothing needs one: `mise install` resolves tools through
+- **No secret other than the bot token in a sandbox.** The sandbox template
+  rejects injected env vars (`envVarsInjectionPolicy: Disallowed`), so the token
+  always lands as a file, never in the env. Never pass a kubeconfig or any other
+  secret in: use `exec` stdin. `mise install` resolves tools through
   `mise-versions.jdx.dev`, not the GitHub API (verified with `mise token github`
-  reporting *none* and all four tools installing). Build and test in the
-  sandbox; commit and push from the pod.
+  reporting *none* and all four tools installing).
 - **Never push to `main`.** The bot's access is read-only on the upstream repo,
   so a direct push fails. Open a PR.
 
@@ -135,7 +143,8 @@ sbx down "$n"
 
 The pod reaches the API server with its own service account, which has a
 namespace-scoped Role in `sandboxes` only. The sandbox itself has no service
-account token, no cluster network, and no credentials. See
+account token, no cluster network, and no credentials except the
+`/root/.git-credentials` bot token that `sbx up` seeds (see above). See
 [Sandboxes](sandboxes.md) for the template and the warm pool.
 
 ## Talking to the agent
