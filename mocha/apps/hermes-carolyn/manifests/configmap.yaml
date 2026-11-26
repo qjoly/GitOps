@@ -4,13 +4,111 @@ kind: ConfigMap
 metadata:
   name: hermes-carolyn-config
 data:
+  SOUL.md: |
+    # SOUL.md - Princess Carolyn
+
+    You are Hermes Agent, built by Nous Research, speaking as Princess Carolyn (BoJack Horseman): an agent at the top of her game. Sharp, warm, fast, feline. She gets shit done and she always lands on her feet.
+
+    ## Voice
+
+    - Agent energy, not theatre. You are a Hollywood agent for one client: the user. Decisive, generous, mildly amused by how the world keeps making things harder than they need to be.
+    - Warm, never saccharine. Show care by being useful, not nice.
+    - Direct and concrete. Answer first, then detail. No filler openers, no restating the request.
+    - Short by default. Depth is earned.
+    - Claws only when useful: disagree with evidence, "level with you" beats hedging. Never sycophantic.
+
+    ## Verbal habits (light touch)
+
+    - A deal-maker opener at most once per message, only when it fits: "Okay, here's the pitch:", "All right, honey."
+    - "honey" / "sweetheart" in informal or went-wrong moments; never in technical passages.
+    - "Oh, fish." as the swear substitute, one line, only when something actually breaks.
+    - One short alliterative riff per session at most, when a situation is absurd. It never replaces the point.
+    - "I always land on my feet" as the note when recovering from a failed attempt.
+    - Sign-offs only when genuinely done: "It's handled."
+
+    ## Hard limits (override the voice)
+
+    - Clarity wins over character, always. If a bit competes with the answer, cut the bit.
+    - No bit inside code, commands, paths, config, commits, PRs, issues.
+    - No bit in reports about failures, security, credentials, money, health.
+    - Never invent facts to keep the voice going.
+    - Max one riff per message; zero is valid.
+
+    ## ADHD-first output shape
+
+    1. First line = the answer or the next action.
+    2. Numbered steps for anything over one step.
+    3. Bold the decision so it is findable at a glance.
+    4. "En bref: ..." with 3 bullets max when the message passes ~15 lines.
+    5. One concrete next action if anything stays open.
+    6. Finish the current thread before offering a second issue.
+
+    ## Operating rules (unchanged)
+
+    No-Deny Execution, Verify First, resourceful before asking, privacy, English commits, sandbox-only shell.
   config.yaml: |
     model:
-      # Served by Mistral's API under this exact ID
-      default: "deepseek-v4-1-flash-1017"
+      # Served by Mistral's API under this exact ID. large (not small/flash):
+      # small models were observed entering tool-call loops on the webui
+      # (hermes' stall guardrails only warn there), large breaks loops by itself.
+      default: "mistral-large-latest"
       provider: "custom"
       base_url: "https://api.mistral.ai/v1"
       key_env: "MISTRAL_API_KEY"
+
+    # Backup lane for rate limits and stale-model cutoffs. Same host and key as
+    # the primary, so it survives a 429 on deepseek without a second credential.
+    # Deliberately NOT the local Ollama: cold start measured at 40s.
+    fallback_providers:
+      - provider: custom
+        model: mistral-small-latest
+        base_url: https://api.mistral.ai/v1
+        key_env: MISTRAL_API_KEY
+
+    # Side-task routing. Both defaults ("auto") would run these on the main
+    # model at 2x the price; the review in particular replays the whole
+    # conversation. Naming a different model also switches the review fork to
+    # a compact digest instead of a full snapshot replay.
+    auxiliary:
+      title_generation:
+        model: ministral-3b-2512
+      background_review:
+        provider: custom
+        model: mistral-small-latest
+        base_url: https://api.mistral.ai/v1
+
+    # Image generation (image_generate tool, bot avatars) through the
+    # mistral-image plugin, which the install-sbx init container drops in
+    # $HERMES_HOME/plugins. User plugins load only when listed in plugins.enabled.
+    image_gen:
+      provider: "mistral"
+
+    plugins:
+      enabled:
+        - mistral-image
+        # Plugin stays LOADED (registered backend name) so sessions/turns that
+        # still carry a stale kube-sandbox scope resolve instead of erroring,
+        # but terminal.backend below stays commented: new turns run LOCAL.
+        - kube-sandbox
+
+    # Every command runs in a gVisor micro-VM claimed from the mocha sandboxes
+    # warm pool (plugin kube-sandbox, seeded by the install-sbx init container).
+    # GH_TOKEN is written to /root/.git-credentials inside the VM only, never
+    # into the sandbox environment.
+    # DISABLED 2026-11-24 as the DEFAULT backend: the kube-sandbox VM amplifies
+    # tool-call loops (fast successful execs spin loops ~10x faster) and browser
+    # tools cannot run there yet. The plugin itself stays enabled above so stale
+    # sessions keep working. Re-enable the backend by uncommenting this block.
+    # terminal:
+    #   backend: kube-sandbox
+    #   kube_sandbox_namespace: sandboxes
+    #   kube_sandbox_template: dev
+    #   kube_sandbox_container: dev
+    #   kube_sandbox_home: /root
+    #   kube_sandbox_kubeconfig: /opt/sbx/kubeconfig
+    #   kube_sandbox_secret_files:
+    #     - path: /root/.git-credentials
+    #       env: GH_TOKEN
 
     platforms:
       discord:
@@ -42,12 +140,20 @@ data:
         trust: untrusted
         connect_timeout: 30
         headers:
-          Authorization: "Bearer ${GITHUB_TOKEN}"
-      # Google Calendar (read/write), calendar-mcp sidecar
+          Authorization: "Bearer ${GH_TOKEN}"
+      # Google Calendar (read/write), calendar-mcp sidecar.
+      # trust: full because the buy-tracking cron writes events unattended; an
+      # untrusted server gates every write behind an approval prompt that no one
+      # is present to answer, so the job silently stops creating events.
+      # The exclusion keeps event deletion off the surface entirely.
       calendar:
         url: "http://127.0.0.1:8083/mcp"
-        trust: untrusted
+        trust: full
         connect_timeout: 60
+        tools:
+          exclude:
+            - manage_calendar
+            - delete_calendar
       # Home Assistant's built-in MCP server; only entities exposed to Assist
       # are reachable. Goes through Cloudflare, which lets httpx's UA through.
       homeassistant:
@@ -61,6 +167,19 @@ data:
         url: "http://127.0.0.1:8084/mcp"
         trust: untrusted
         connect_timeout: 30
+      # Hatchdoor (mocha/apps/hatchdoor): the Markdown vault as a tool surface.
+      # Read-only on the Hatchdoor side until "Let assistants change notes" is
+      # turned on there; this entry adds no write capability of its own.
+      # Streamable HTTP, so every agent on this pod shares one server.
+      hatchdoor:
+        url: "http://hatchdoor.hatchdoor.svc.cluster.local/mcp"
+        trust: untrusted
+        connect_timeout: 30
+        headers:
+          Authorization: "Bearer ${HATCHDOOR_MCP_TOKEN}"
+        tools:
+          prompts: false
+          resources: false
 
     # Triage is the inbox (nothing runs there, no auto-decompose); moving a
     # task to Ready dispatches it, unassigned ones to the default profile.
@@ -68,8 +187,65 @@ data:
       default_assignee: "default"
       auto_decompose: false
 
+    # The agent's browser is a headed Chromium on the Bot Desktop screen, so
+    # a human can watch it from Hermes Desktop and take over (logins, 2FA,
+    # CAPTCHAs). While the screen is up it uses one persistent profile,
+    # $HERMES_HOME/bot-desktop/browser-profile, so logins survive restarts.
+    # No cdp_url: that would pin it to a remote Chromium instead.
     browser:
-      cdp_url: "http://127.0.0.1:9222"
+      headed: true
+
+    # Start the screen the first time computer_use or the headed browser
+    # needs it; it stops after bot_desktop.idle_stop_minutes (30) unused.
+    bot_desktop:
+      auto_start: true
+
+    # computer_use actions pre-approved, so the agent drives its desktop
+    # without a prompt on each click; capture needs no approval. Hermes still
+    # hard-blocks dangerous typed shell patterns and destructive key combos.
+    # Without AT-SPI only foreground delivery works on this X11 screen, hence
+    # both delivery modes.
+    command_allowlist:
+      - cua:click:background
+      - cua:click:foreground
+      - cua:double_click:background
+      - cua:double_click:foreground
+      - cua:right_click:background
+      - cua:right_click:foreground
+      - cua:middle_click:background
+      - cua:middle_click:foreground
+      - cua:drag:background
+      - cua:drag:foreground
+      - cua:scroll:background
+      - cua:scroll:foreground
+      - cua:type:background
+      - cua:type:foreground
+      - cua:key:background
+      - cua:key:foreground
+      - cua:set_value:background
+      - cua:set_value:foreground
+      - cua:wait:background
+      - cua:wait:foreground
+      - cua:list_apps:background
+      - cua:list_apps:foreground
+      - cua:list_windows:background
+      - cua:list_windows:foreground
+      - cua:focus_app:background
+      - cua:focus_app:foreground
+      # Pre-granted trust-gate answers for MCP write tools. Without these the
+      # trust prompt fires in an unattended run, and approvals.cron_mode: deny
+      # turns that into a silent failure instead of an approval.
+      - mcp:calendar/manage_event
+      - mcp:hatchdoor/create_note
+      - mcp:hatchdoor/delete_note
+      - mcp:hatchdoor/edit_note
+      # GitHub MCP write tools pre-approved so the agent can commit, push
+      # and open PRs without a trust prompt in every session.
+      - mcp:github/create_or_update_file
+      - mcp:github/push_files
+      - mcp:github/create_branch
+      - mcp:github/create_pull_request
+      - mcp:github/delete_file
 
     # The gateway's Webapp listener (the browser-hosted Desktop: Bots tab,
     # sessions, routines) and the JSON-RPC/WS backend a dev machine's Desktop
@@ -106,3 +282,35 @@ data:
 
     database:
       journal_mode: "wal"
+
+    # Gateway service health over OTLP, to SigNoz (mocha/system/signoz). Only a
+    # content-free snapshot of counters and states leaves the pod; the
+    # collector stamps k8s.cluster.name, which is what the SigNoz dashboard and
+    # rules filter on. health_export needs otlp itself enabled or it stays off.
+    #
+    # The endpoint carries the /v1/metrics signal path on purpose: Hermes only
+    # rewrites a path that already ends in /v1/traces or /v1/metrics, so a bare
+    # host:port is POSTed as-is and the collector answers 404 on every batch.
+    monitoring:
+      export:
+        otlp:
+          enabled: true
+          endpoint: "http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/metrics"
+      gateway_health_export:
+        enabled: true
+        export_interval_seconds: 60
+      # Pinned so service.instance.id survives a restart. This is the id the
+      # exporter mints and persists when the key is absent, and the seed
+      # rewrites this file on every start: without it here, each rollout
+      # silently becomes a new instance in SigNoz and the per-instance history
+      # breaks. Opaque UUID, no account identity.
+      install_id: 4ca0ab40-2f79-4d2b-bc8b-d362bff9207a
+
+    # Consent answer for shared metrics, written by the CLI when the offer is
+    # answered. offer_version is what marks the answer as already given; drop
+    # it and the running surface offers the prompt again on the next start.
+    telemetry:
+      shared_metrics:
+        enabled: false
+        send: false
+        offer_version: 2
