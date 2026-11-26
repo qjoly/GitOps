@@ -79,31 +79,8 @@ data:
         user:
           tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
 ---
-# Additive NetworkPolicy: the controller's managed policy allows internet
-# egress only and blocks RFC1918. This one additionally allows TCP 443/6443
-# to the cluster's own ranges so the VMs can reach the API server. NetworkPolicies
-# union, so internet egress keeps working. Cilium evaluates egress on the
-# post-DNAT destination too, so the pod CIDR and the node IP must be listed,
-# not just the service CIDR.
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-apiserver-egress
-  namespace: sandboxes
-spec:
-  podSelector: {}
-  policyTypes:
-    - Egress
-  egress:
-    - to:
-        - ipBlock:
-            cidr: 10.96.0.0/11   # service CIDRs (ClusterIPs)
-        - ipBlock:
-            cidr: 10.244.0.0/16  # pod CIDR (post-DNAT backends)
-        - ipBlock:
-            cidr: 5.196.80.72/32 # node mocha, external API endpoint :6443
-      ports:
-        - protocol: TCP
-          port: 443
-        - protocol: TCP
-          port: 6443
+# The egress to the API server is NOT a standalone NetworkPolicy anymore: with
+# networkPolicyManagement=Managed and spec.networkPolicy set on the dev template,
+# the controller REPLACES its default internet-only policy with the template's
+# rules. The cluster ranges are allowed there (dev.yaml), including the pod CIDR
+# because Cilium also evaluates egress on the post-DNAT backend IP.

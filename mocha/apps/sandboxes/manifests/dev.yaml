@@ -8,6 +8,36 @@ spec:
   networkPolicyManagement: Managed
   envVarsInjectionPolicy: Disallowed
   volumeClaimTemplatesPolicy: Disallowed
+  # Custom policy REPLACES the controller's default internet-only one (Managed +
+  # networkPolicy set = our rules only), so restate both halves here:
+  # internet egress like the secure default, plus the cluster ranges on 443/6443
+  # so the VMs can reach the API server for the read-only kubectl (sandbox-ro).
+  # Ingress stays router-only. Pod CIDR is listed because Cilium also evaluates
+  # egress on the post-DNAT backend IP.
+  networkPolicy:
+    ingress:
+      - from:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: agent-sandbox-system
+            podSelector:
+              matchLabels:
+                app: sandbox-router
+    egress:
+      - to:
+          - ipBlock:
+              cidr: 0.0.0.0/0
+              except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16]
+          - ipBlock:
+              cidr: ::/0
+              except: [fc00::/7, fe80::/10]
+      - to:
+          - ipBlock: { cidr: 10.96.0.0/11 }   # service CIDRs (ClusterIPs)
+          - ipBlock: { cidr: 10.244.0.0/16 }  # pod CIDR (post-DNAT backends)
+          - ipBlock: { cidr: 5.196.80.72/32 } # node mocha, external API :6443
+        ports:
+          - { protocol: TCP, port: 443 }
+          - { protocol: TCP, port: 6443 }
   podTemplate:
     spec:
       runtimeClassName: gvisor
