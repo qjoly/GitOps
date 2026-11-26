@@ -3,6 +3,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: hermes-carolyn
+  # Reloader (mocha/system/reloader) is cluster-wide and watches ConfigMaps
+  # referenced by this Deployment: any change to hermes-carolyn-config (e.g.
+  # the terminal.backend block) triggers a pod rollout automatically, so the
+  # seed-config init container re-copies config.yaml onto the PVC.
+  annotations:
+    configmap.reloader.stakater.com/reload: "hermes-carolyn-config"
   labels:
     app.kubernetes.io/name: hermes-carolyn
 spec:
@@ -24,7 +30,16 @@ spec:
           command:
             - sh
             - -c
-            - test -f /opt/data/config.yaml || cp /config/config.yaml /opt/data/config.yaml
+            # Unconditional, not "seed once". With `test -f || cp` a change to
+            # config.yaml in git never reached an existing PVC: the deploy went
+            # green, the pod kept the old file, and the new MCP server silently
+            # did not exist. Git is the source of truth for this file, exactly
+            # like the skills this pod rewrites on every start.
+            - |
+              set -eu
+              cp /opt/data/config.yaml /opt/data/config.yaml.prev 2>/dev/null || true
+              cp /config/config.yaml /opt/data/config.yaml
+              cp /config/SOUL.md /opt/data/SOUL.md
           volumeMounts:
             - name: data
               mountPath: /opt/data
@@ -57,8 +72,10 @@ spec:
         # Share the agent source with the webui container: the webui discovers
         # the agent at $HERMES_HOME/hermes-agent (same layout as the upstream
         # two-container compose).
+        # Same image as the hermes-carolyn container, so the webui and the
+        # gateway always run the same agent version.
         - name: seed-agent-src
-          image: docker.io/nousresearch/hermes-agent:v0.23.3
+          image: docker.io/nousresearch/hermes-agent:v0.23.3-desktop
           command:
             - sh
             - -c
@@ -74,20 +91,117 @@ spec:
               #    cp314 ABI tag). Under 3.12 pydantic_core fails to load with
               #    "undefined symbol: PyDict_GetItemRef", so the dashboard dies
               #    before serving. Point it at the bundled 3.14 interpreter.
-              ln -sfn /agent-src/tools/python-3.14.9+20261021-linux-x64/bin/python3.14 \
+              #    The target must stay RELATIVE: agent-src is an emptyDir mounted at
+              #    /agent-src here but at $HERMES_HOME/hermes-agent in the webui and
+              #    agent containers, so an absolute target resolves only during this
+              #    init container and is dangling for every consumer afterwards.
+              ln -sfn ../../tools/python-3.14.9+20261021-linux-x64/bin/python3.14 \
                 /agent-src/.venv/bin/python
               # 2. install-stamp.json bakes pmRuntime as /opt/hermes/pm-runtime,
               #    the path in the agent image. The copy lives at /agent-src, so
               #    PM refuses to run ("packaged PM runtime is missing or
               #    invalid") and every plugin install/update aborts. Rewrite it
               #    to the relocated runtime.
-              # Use the bundled interpreter: the base image does not guarantee a
-              # python3 on PATH, and this is the one the venv targets anyway.
+              #    Use the bundled interpreter: the base image does not guarantee
+              #    a python3 on PATH, and this is the one the venv targets anyway.
               /agent-src/tools/python-3.14.9+20261021-linux-x64/bin/python3.14 -c \
                 'import json, pathlib; p = pathlib.Path("/agent-src/install-stamp.json"); s = json.loads(p.read_text()); s["pmRuntime"] = "/agent-src/pm-runtime"; p.write_text(json.dumps(s) + "\n")'
           volumeMounts:
             - name: agent-src
               mountPath: /agent-src
+        # Cron fleet reconciliation. The seed rewrites config.yaml but nothing
+        # ever touches cron state, so jobs.json lived only on the PVC and was
+        # lost with the volume; this makes the fleet durable. Runs after
+        # seed-agent-src because it imports cron.jobs from the copied tree, and
+        # before the gateway starts so the ticker sees the final set.
+        # Never fatal: a broken reconcile must not stop the agent from booting.
+        - name: sync-cron
+          image: docker.io/nousresearch/hermes-agent:v0.23.3-desktop
+          securityContext:
+            runAsUser: 10000
+            runAsGroup: 10000
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              /agent-src/.venv/bin/python /cron-spec/cron-sync.py \
+                --spec /cron-spec/spec.json \
+                --home /opt/data \
+                --agent-root /agent-src \
+                || echo "cron-sync failed; the existing jobs.json is untouched"
+          volumeMounts:
+            - name: data
+              mountPath: /opt/data
+            - name: agent-src
+              mountPath: /agent-src
+            - name: cron-spec
+              mountPath: /cron-spec
+          env:
+            # The committed spec carries ${CRON_CHANNEL_*} and ${MAIL_ADDRESS_*}
+            # references instead of the real values; these are what they resolve to.
+            - name: CRON_CHANNEL_NEWS
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: cron_channel_news
+            - name: CRON_CHANNEL_BRIEFING
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: cron_channel_briefing
+            - name: MAIL_ADDRESS_CATCHALL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn-email-mcp
+                  key: mail_address_catchall
+            - name: GOOGLE_CALENDAR_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn-calendar-mcp
+                  key: user_google_email
+        # cua-driver, the driver behind the computer_use toolset. Hermes PM
+        # installs the version it pins into $HERMES_HOME/tools, on the PVC, so
+        # this is a few seconds' no-op once it is there and a repair after a
+        # Hermes bump that moves the pin. Not fatal: without it the agent loses
+        # computer_use, not the rest.
+        - name: install-cua-driver
+          image: docker.io/nousresearch/hermes-agent:v0.23.3-desktop
+          securityContext:
+            runAsUser: 10000
+            runAsGroup: 10000
+          command:
+            - sh
+            - -c
+            - /opt/hermes/bin/hermes computer-use install || echo "cua-driver install failed, computer_use stays unavailable"
+          env:
+            - name: HOME
+              value: /opt/data
+            - name: HERMES_HOME
+              value: /opt/data
+          volumeMounts:
+            - name: data
+              mountPath: /opt/data
+        # Desktop plugins for the webui app. Always overwritten: unlike config.yaml
+        # there is no runtime state to preserve, and a hand-edited copy on the PVC
+        # would otherwise win over the repo forever.
+        - name: seed-desktop-plugins
+          image: busybox:1.38
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /opt/data/desktop-plugins/github-pane
+              cp /src/desktop-plugins/github-pane.js /opt/data/desktop-plugins/github-pane/plugin.js
+              printf '{"package":"github-pane"}\n' > /opt/data/desktop-plugins/github-pane/.hermes-package.json
+              chmod -R a+rX /opt/data/desktop-plugins
+              chown -R 10000:10000 /opt/data/desktop-plugins
+          volumeMounts:
+            - name: desktop-plugins
+              mountPath: /src
+              readOnly: true
+            - name: data
+              mountPath: /opt/data
         # sbx CLI + kubectl + in-cluster kubeconfig, shared with the agent containers
         - name: install-sbx
           image: docker.io/alpine/k8s:1.36.2
@@ -117,7 +231,37 @@ spec:
               mkdir -p /opt/data/skills/sbx /opt/data/skills/arr
               cp /src/SKILL.md /opt/data/skills/sbx/SKILL.md
               cp /src-arr/SKILL.md /opt/data/skills/arr/SKILL.md
+              # Versioned skills: simple-english and i-have-adhd. These files are
+              # replaced on every start (unlike config.yaml), so a fix committed
+              # here wins over a stale copy on the volume. simple-english's
+              # SKILL.md is split across numbered ConfigMaps because a single
+              # object that size is unwieldy; the parts are concatenated.
+              mkdir -p /opt/data/skills/simple-english/references
+              cat /src-se1/SKILL.md.part1 /src-se2/SKILL.md.part2 /src-se3/SKILL.md.part3 > /opt/data/skills/simple-english/SKILL.md
+              cp /src-refs/use-cases.md /opt/data/skills/simple-english/references/use-cases.md
+              cp /src-refs/checklist.md /opt/data/skills/simple-english/references/checklist.md
+              mkdir -p /opt/data/skills/i-have-adhd/agents
+              cp /src-adhd/SKILL.md /opt/data/skills/i-have-adhd/SKILL.md
+              cp /src-adhd/openai.yaml /opt/data/skills/i-have-adhd/agents/openai.yaml
+              cp /src-adhd-gemini/gemini.toml /opt/data/skills/i-have-adhd/agents/gemini.toml
               chown -R 10000:10000 /opt/data/skills
+              # Image backend plugin: Mistral has no images endpoint, so this
+              # drives its image_generation tool. Replaced on every start, like
+              # the skills; selected by image_gen.provider in config.yaml.
+              mkdir -p /opt/data/plugins/mistral-image
+              cp /src-plugin-mistral-image/__init__.py /src-plugin-mistral-image/plugin.yaml /opt/data/plugins/mistral-image/
+              chown -R 10000:10000 /opt/data/plugins/mistral-image
+              # kube-sandbox terminal backend, fetched as the release-tag tarball
+              # from its own repo (no embedded code in manifests). Replaced on every
+              # start; selected by terminal.backend in config.yaml. Bump the tag on
+              # each plugin release (see unetassedecafe/kube-sandbox releases).
+              wget -q https://github.com/unetassedecafe/kube-sandbox/archive/v0.2.2.tar.gz -O /tmp/ks.tgz
+              mkdir -p /opt/data/plugins/kube-sandbox
+              tar -xzf /tmp/ks.tgz -C /tmp
+              cp /tmp/kube-sandbox-*/plugin/__init__.py /tmp/kube-sandbox-*/plugin/plugin.yaml /opt/data/plugins/kube-sandbox/
+              rm -rf /opt/data/plugins/kube-sandbox/kubesandbox
+              cp -r /tmp/kube-sandbox-*/plugin/kubesandbox /opt/data/plugins/kube-sandbox/kubesandbox
+              chown -R 10000:10000 /opt/data/plugins/kube-sandbox
           volumeMounts:
             - name: sbx-tools
               mountPath: /opt/sbx
@@ -126,6 +270,27 @@ spec:
               readOnly: true
             - name: arr-config
               mountPath: /src-arr
+              readOnly: true
+            - name: skill-se1
+              mountPath: /src-se1
+              readOnly: true
+            - name: skill-se2
+              mountPath: /src-se2
+              readOnly: true
+            - name: skill-se3
+              mountPath: /src-se3
+              readOnly: true
+            - name: skill-refs
+              mountPath: /src-refs
+              readOnly: true
+            - name: skill-adhd
+              mountPath: /src-adhd
+              readOnly: true
+            - name: skill-adhd-gemini
+              mountPath: /src-adhd-gemini
+              readOnly: true
+            - name: plugin-mistral-image
+              mountPath: /src-plugin-mistral-image
               readOnly: true
             - name: arr-secret
               mountPath: /arr-secret
@@ -136,7 +301,12 @@ spec:
               mountPath: /opt/data
       containers:
         - name: hermes-carolyn
-          image: docker.io/nousresearch/hermes-agent:v0.23.3
+          # The upstream -desktop variant: TigerVNC, the Xfce core and Chromium
+          # for the Bot Desktop screen (Hermes Desktop's Screen pane), which
+          # the agent's computer_use and headed browser act on. The plain
+          # image lacks them and cannot install them at runtime (hermes user,
+          # no sudo).
+          image: docker.io/nousresearch/hermes-agent:v0.23.3-desktop
           args:
             - gateway
             - run
@@ -146,12 +316,41 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: mistral_api_key
-            # Expanded as ${GITHUB_TOKEN} in the github MCP server headers
-            - name: GITHUB_TOKEN
+            # No GITHUB_TOKEN on purpose: the qjoly account must not be reachable
+            # from Hermes, not even via the github MCP. The MCP header uses
+            # ${GH_TOKEN} (configmap) and the github-mcp sidecar gets the bot token
+            # below, so every GitHub call is made as unetassedecafe.
+            # GH_TOKEN is the only GitHub credential in this pod.
+            # git and gh run by the agent (sbx flow: apply the patch, commit,
+            # push, open the PR) act as the unetassedecafe bot. It has no write
+            # access to qjoly repos: it pushes to its own fork and opens PRs.
+            # GH_TOKEN takes precedence over GITHUB_TOKEN in gh.
+            - name: GH_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: hermes-carolyn
-                  key: github_token
+                  key: github_bot_token
+            # git config through env, so no token is ever written to a
+            # .git/config (sbx push copies .git into the sandbox). The empty
+            # helper drops any helper configured on the PVC.
+            - name: GIT_CONFIG_COUNT
+              value: "4"
+            - name: GIT_CONFIG_KEY_0
+              value: credential.https://github.com.helper
+            - name: GIT_CONFIG_VALUE_0
+              value: ""
+            - name: GIT_CONFIG_KEY_1
+              value: credential.https://github.com.helper
+            - name: GIT_CONFIG_VALUE_1
+              value: '!f() { test "$1" = get && echo username=unetassedecafe && echo "password=$GH_TOKEN"; }; f'
+            - name: GIT_CONFIG_KEY_2
+              value: user.name
+            - name: GIT_CONFIG_VALUE_2
+              value: unetassedecafe
+            - name: GIT_CONFIG_KEY_3
+              value: user.email
+            - name: GIT_CONFIG_VALUE_3
+              value: 176228475+unetassedecafe@users.noreply.github.com
             # Expanded as ${HA_MCP_TOKEN} in the homeassistant MCP server headers.
             # Not HASS_TOKEN: hermes treats that one as "enable the native Home
             # Assistant integration" and installs its plugin (messaging platform
@@ -161,6 +360,15 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: hass_token
+            # Expanded as ${HATCHDOOR_MCP_TOKEN} in the hatchdoor MCP server
+            # headers. A secretKeyRef cannot cross namespaces, so the value is
+            # mirrored into hermes-carolyn's own Secret from the same Vault key
+            # the hatchdoor app reads: one source, two copies.
+            - name: HATCHDOOR_MCP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: hatchdoor_mcp_token
             - name: HERMES_API_TIMEOUT
               value: "1800"
             # Dashboard-gate credentials for the gateway's Webapp listener
@@ -217,13 +425,17 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: deluge_password
+          # The Bot Desktop and its Chromium now run in this container (they
+          # replace the headless browser sidecar): Xvnc + Xfce idle at ~220 MiB
+          # and a browser adds 0.5-1 GiB. Hermes refuses to start the screen
+          # below bot_desktop.min_free_memory_mb (1536) of free cgroup memory.
           resources:
             requests:
               cpu: 200m
               memory: 512Mi
             limits:
               cpu: "2"
-              memory: 4Gi
+              memory: 6Gi
           # Declared so the hermes-carolyn-gateway Service can target it by name;
           # the actual listen address/host comes from webapp.{host,port} in the
           # seeded config.yaml (it has to be 0.0.0.0 there for traefik).
@@ -242,6 +454,10 @@ spec:
               mountPath: /opt/sbx
             - name: ssh-state
               mountPath: /opt/ssh
+            # Chromium keeps its shared memory there; the 64 MiB the runtime
+            # gives /dev/shm by default crashes tabs on heavy pages.
+            - name: dshm
+              mountPath: /dev/shm
         - name: netbird
           # NetBird peer inside the pod (netstack mode, proven on k8s like the
           # jump peer) so the pod can reach Americano (100.92.156.232) and the
@@ -310,28 +526,6 @@ spec:
             - name: email-mcp-config
               mountPath: /home/node/.config/email-mcp
               readOnly: true
-        - name: browser
-          # Headless Chromium exposing CDP; hermes connects via browser.cdp_url
-          image: docker.io/chromedp/headless-shell:160.0.8171.0
-          # Bypass the image's run.sh (it forces port 9223 behind a socat on 9222)
-          command:
-            - /headless-shell/headless-shell
-          args:
-            - --remote-debugging-address=0.0.0.0
-            - --remote-debugging-port=9222
-            - --no-sandbox
-            - --disable-gpu
-            - --disable-dev-shm-usage
-          ports:
-            - name: cdp
-              containerPort: 9222
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: "2"
-              memory: 2Gi
         - name: github-mcp
           image: ghcr.io/github/github-mcp-server:v2.2.0
           args:
@@ -341,7 +535,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: hermes-carolyn
-                  key: github_token
+                  key: github_bot_token
             - name: GITHUB_TOOLSETS
               value: "repos,issues,pull_requests,search"
           ports:
@@ -431,8 +625,14 @@ spec:
             - name: http
               containerPort: 8787
           env:
+            # The gateway (hermes-carolyn container) runs with HERMES_HOME=/opt/data,
+            # the image default, and publishes that path in gateway.lock. A worker
+            # spawned from this container compares the profile home it resolves
+            # with the one the gateway advertises and refuses with
+            # "profile_mismatch" when they differ. Both mount points below are the
+            # same `data` volume, so point HERMES_HOME at the gateway's spelling.
             - name: HERMES_HOME
-              value: /home/hermeswebui/.hermes
+              value: /opt/data
             - name: HERMES_WEBUI_HOST
               value: 0.0.0.0
             - name: HERMES_WEBUI_PORT
@@ -441,12 +641,41 @@ spec:
               value: /home/hermeswebui/.hermes/webui
             - name: HERMES_WEBUI_AGENT_DIR
               value: /home/hermeswebui/.hermes/hermes-agent
-            # Expanded as ${GITHUB_TOKEN} in the github MCP server headers
-            - name: GITHUB_TOKEN
+            # No GITHUB_TOKEN on purpose: the qjoly account must not be reachable
+            # from Hermes, not even via the github MCP. The MCP header uses
+            # ${GH_TOKEN} (configmap) and the github-mcp sidecar gets the bot token
+            # below, so every GitHub call is made as unetassedecafe.
+            # GH_TOKEN is the only GitHub credential in this pod.
+            # git and gh run by the agent (sbx flow: apply the patch, commit,
+            # push, open the PR) act as the unetassedecafe bot. It has no write
+            # access to qjoly repos: it pushes to its own fork and opens PRs.
+            # GH_TOKEN takes precedence over GITHUB_TOKEN in gh.
+            - name: GH_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: hermes-carolyn
-                  key: github_token
+                  key: github_bot_token
+            # git config through env, so no token is ever written to a
+            # .git/config (sbx push copies .git into the sandbox). The empty
+            # helper drops any helper configured on the PVC.
+            - name: GIT_CONFIG_COUNT
+              value: "4"
+            - name: GIT_CONFIG_KEY_0
+              value: credential.https://github.com.helper
+            - name: GIT_CONFIG_VALUE_0
+              value: ""
+            - name: GIT_CONFIG_KEY_1
+              value: credential.https://github.com.helper
+            - name: GIT_CONFIG_VALUE_1
+              value: '!f() { test "$1" = get && echo username=unetassedecafe && echo "password=$GH_TOKEN"; }; f'
+            - name: GIT_CONFIG_KEY_2
+              value: user.name
+            - name: GIT_CONFIG_VALUE_2
+              value: unetassedecafe
+            - name: GIT_CONFIG_KEY_3
+              value: user.email
+            - name: GIT_CONFIG_VALUE_3
+              value: 176228475+unetassedecafe@users.noreply.github.com
             # Expanded as ${HA_MCP_TOKEN} in the homeassistant MCP server headers.
             # Not HASS_TOKEN: hermes treats that one as "enable the native Home
             # Assistant integration" and installs its plugin (messaging platform
@@ -505,6 +734,24 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: deluge_password
+            # YouTube upload (highlights pipeline). The refresh token is added to
+            # the same Secret only after the OAuth consent, so it is not wired
+            # here yet: a missing key would block the pod at start.
+            - name: YT_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: youtube_client_id
+            - name: YT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: youtube_client_secret
+            - name: YT_REFRESH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: youtube_refresh_token
           resources:
             requests:
               cpu: 100m
@@ -517,6 +764,13 @@ spec:
               path: /health
               port: http
           volumeMounts:
+            # Two paths for the same `data` volume, deliberately: HERMES_HOME must
+            # match what the gateway advertises (see the env block above), while the
+            # webui image and its existing PVC layout keep using the hermeswebui
+            # home. Moving the variable without this mount would leave the container
+            # with an empty HERMES_HOME.
+            - name: data
+              mountPath: /opt/data
             - name: data
               mountPath: /home/hermeswebui/.hermes
             - name: agent-src
@@ -534,6 +788,10 @@ spec:
             claimName: hermes-carolyn-data
         - name: agent-src
           emptyDir: {}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
         - name: sbx-tools
           emptyDir: {}
         - name: ssh-state
@@ -546,12 +804,39 @@ spec:
         - name: arr-config
           configMap:
             name: hermes-carolyn-arr
+        - name: cron-spec
+          configMap:
+            name: hermes-carolyn-cron
+        - name: skill-se1
+          configMap:
+            name: hermes-carolyn-skill-se-part1
+        - name: skill-se2
+          configMap:
+            name: hermes-carolyn-skill-se-part2
+        - name: skill-se3
+          configMap:
+            name: hermes-carolyn-skill-se-part3
+        - name: skill-refs
+          configMap:
+            name: hermes-carolyn-skill-simple-english-refs
+        - name: skill-adhd
+          configMap:
+            name: hermes-carolyn-skill-i-have-adhd
+        - name: skill-adhd-gemini
+          configMap:
+            name: hermes-carolyn-skill-i-have-adhd-gemini
+        - name: plugin-mistral-image
+          configMap:
+            name: hermes-carolyn-plugin-mistral-image
         - name: arr-secret
           secret:
             secretName: hermes-carolyn
         - name: config
           configMap:
             name: hermes-carolyn-config
+        - name: desktop-plugins
+          configMap:
+            name: hermes-carolyn-desktop-plugins
         - name: email-mcp-config
           secret:
             secretName: hermes-carolyn-email-mcp
