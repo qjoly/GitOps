@@ -1,0 +1,32 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pages-nb
+  namespace: pages
+spec:
+  ingressClassName: traefik-internal
+  rules:
+    - host: pages.nb.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pages
+                port:
+                  number: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pages
+  namespace: pages
+spec:
+  selector:
+    app: pages
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
