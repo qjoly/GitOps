@@ -316,6 +316,14 @@ spec:
                 secretKeyRef:
                   name: hermes-carolyn
                   key: mistral_api_key
+            # Read by the kube-sandbox plugin (os.environ fallback when
+            # terminal.kube_sandbox_git_token is unset): seeds
+            # /root/.git-credentials + credential.helper in the VM at claim.
+            - name: KUBE_SANDBOX_GIT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-carolyn
+                  key: github_bot_token
             # No GITHUB_TOKEN on purpose: the qjoly account must not be reachable
             # from Hermes, not even via the github MCP. The MCP header uses
             # ${GH_TOKEN} (configmap) and the github-mcp sidecar gets the bot token

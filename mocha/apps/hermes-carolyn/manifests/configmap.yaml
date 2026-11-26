@@ -105,9 +105,16 @@ data:
       kube_sandbox_container: dev
       kube_sandbox_home: /root
       kube_sandbox_kubeconfig: /opt/sbx/kubeconfig
-      kube_sandbox_secret_files:
-        - path: /root/.git-credentials
-          env: GH_TOKEN
+      # Seed git credentials in the VM at claim: the plugin writes
+      # /root/.git-credentials as https://unetassedecafe:$TOKEN@github.com
+      # (mode 0600, file-only, never in the sandbox env) and sets
+      # credential.helper=store. The token comes from the pod's
+      # KUBE_SANDBOX_GIT_TOKEN env (github_bot_token secret). Do NOT use
+      # kube_sandbox_secret_files for this path: it writes the raw env value,
+      # but credential store expects a full URL, and it would leave the
+      # helper unset.
+      kube_sandbox_git_user: unetassedecafe
+      kube_sandbox_git_host: github.com
 
     platforms:
       discord:

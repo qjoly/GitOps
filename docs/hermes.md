@@ -107,10 +107,14 @@ request from there.
 
 The token is also given to the VMs, file-only, so `git`/`gh` work in-session:
 
-- **kube-sandbox terminal backend**: `terminal.kube_sandbox_secret_files` in the
+- **kube-sandbox terminal backend**: `terminal.kube_sandbox_git_user` in the
   [MCP config](https://github.com/qjoly/GitOps/blob/main/mocha/apps/hermes-carolyn/manifests/configmap.yaml)
-  writes `GH_TOKEN` to `/root/.git-credentials` (mode 0600) inside the micro-VM
-  at claim time — never into the sandbox environment.
+  plus the pod's `KUBE_SANDBOX_GIT_TOKEN` env make the plugin write
+  `/root/.git-credentials` as `https://unetassedecafe:$TOKEN@github.com`
+  (mode 0600) and set `credential.helper=store` inside the micro-VM at claim
+  time — file-only, never in the sandbox environment. (Not
+  `kube_sandbox_secret_files`: it writes the raw env value, but credential
+  store expects a full URL and would leave the helper unset.)
 - **`sbx` sandboxes**: `sbx up` seeds the same `/root/.git-credentials` from the
   pod's `GH_TOKEN` over the exec stdin (never argv, never under `/work`, so it
   is not copied back by `sbx diff`).
