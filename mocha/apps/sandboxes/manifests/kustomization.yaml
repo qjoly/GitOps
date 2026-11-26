@@ -10,4 +10,5 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - rbac.yaml
+  - sandbox-ro.yaml
   - dev.yaml

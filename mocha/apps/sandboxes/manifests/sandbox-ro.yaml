@@ -1,0 +1,99 @@
+# Read-only Kubernetes access FROM the sandbox VMs themselves.
+#
+# The SandboxTemplate (dev.yaml) mounts this SA's token and a kubeconfig into
+# every VM, so `kubectl get pods -A` etc. work inside a sandbox. The VMs only
+# get get/list/watch (+ pods/log) — no create/update/delete/exec — and the
+# egress to the API server is opened by the NetworkPolicy at the bottom of
+# this file (the managed sandbox policy is internet-only).
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sandbox-ro
+  namespace: sandboxes
+---
+# Wildcard read-only, cluster-wide: this is a lab, and "kubectl RO" for
+# debugging means being able to inspect anything. No write verbs at all.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sandbox-readonly
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sandbox-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sandbox-readonly
+subjects:
+  - kind: ServiceAccount
+    name: sandbox-ro
+    namespace: sandboxes
+---
+# Legacy SA token Secret (k8s >= 1.24 no longer creates one automatically).
+# Mounted read-only into the VMs at /var/run/secrets/kubernetes.io/serviceaccount.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sandbox-ro-token
+  namespace: sandboxes
+  annotations:
+    kubernetes.io/service-account.name: sandbox-ro
+type: kubernetes.io/service-account-token
+---
+# Kubeconfig the VMs use: straight to the API server ClusterIP, no in-cluster
+# DNS needed, CA + token from the mounted SA secret.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sandbox-ro-kubeconfig
+  namespace: sandboxes
+data:
+  kubeconfig: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: mocha
+        cluster:
+          server: https://10.96.0.1:443
+          certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    contexts:
+      - name: mocha
+        context:
+          cluster: mocha
+          user: ro
+    current-context: mocha
+    users:
+      - name: ro
+        user:
+          tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+---
+# Additive NetworkPolicy: the controller's managed policy allows internet
+# egress only and blocks RFC1918; this one additionally allows TCP/443 to the
+# service CIDR so the VMs can reach the API server. NetworkPolicies union, so
+# internet egress keeps working.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-apiserver-egress
+  namespace: sandboxes
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.96.0.0/12
+      ports:
+        - protocol: TCP
+          port: 443

@@ -31,6 +31,16 @@ spec:
               value: "1"
             - name: MISE_TRUSTED_CONFIG_PATHS
               value: /work
+            # Read-only kubectl from inside the VM: kubeconfig + SA token are
+            # mounted from sandbox-ro.yaml (ClusterRole sandbox-readonly, RO only).
+            # KUBERNETES_SERVICE_HOST/PORT mirror the in-cluster env so a bare
+            # `kubectl` without KUBECONFIG still lands on the API server.
+            - name: KUBECONFIG
+              value: /etc/sandbox-ro/kubeconfig
+            - name: KUBERNETES_SERVICE_HOST
+              value: 10.96.0.1
+            - name: KUBERNETES_SERVICE_PORT
+              value: "443"
           # A claim is handed out only once the mise install attempt is over.
           readinessProbe:
             exec:
@@ -48,10 +58,18 @@ spec:
             - { name: scratch, mountPath: /work, subPath: work }
             - { name: scratch, mountPath: /root, subPath: home }
             - { name: scratch, mountPath: /tmp, subPath: tmp }
+            - { name: sa-token, mountPath: /var/run/secrets/kubernetes.io/serviceaccount, readOnly: true }
+            - { name: kubeconfig, mountPath: /etc/sandbox-ro, readOnly: true }
       volumes:
         - name: scratch
           emptyDir:
             sizeLimit: 30Gi
+        - name: sa-token
+          secret:
+            secretName: sandbox-ro-token
+        - name: kubeconfig
+          configMap:
+            name: sandbox-ro-kubeconfig
 ---
 apiVersion: extensions.agents.x-k8s.io/v1beta1
 kind: SandboxWarmPool
