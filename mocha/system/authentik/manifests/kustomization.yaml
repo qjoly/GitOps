@@ -5,4 +5,5 @@ resources:
   - externalsecret.yaml
   - homepage-outpost-ingress.yaml
   - maintenant-outpost-ingress.yaml
+  - pages-outpost-ingress.yaml
   - slimfaas-outpost-ingress.yaml

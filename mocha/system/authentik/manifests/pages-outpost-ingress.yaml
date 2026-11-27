@@ -1,0 +1,30 @@
+# Lives here rather than next to pages: Traefik refuses ExternalName
+# services, so the outpost path has to be served from authentik's own namespace.
+# Without this route the forwardAuth redirect to /outpost.goauthentik.io/ on
+# pages.mocha.thoughtless.eu 404s on the pages backend (nginx) instead of
+# reaching authentik, and the OIDC login loop never completes.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pages-outpost
+  namespace: authentik
+  annotations:
+    cert-manager.io/cluster-issuer: cloudflare
+    homepage.thoughtless.eu/hide: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - pages.mocha.thoughtless.eu
+      secretName: pages-outpost-tls
+  rules:
+    - host: pages.mocha.thoughtless.eu
+      http:
+        paths:
+          - path: /outpost.goauthentik.io
+            pathType: Prefix
+            backend:
+              service:
+                name: authentik-server
+                port:
+                  number: 80
