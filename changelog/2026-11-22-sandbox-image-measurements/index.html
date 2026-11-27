@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+     
+     
+    
+    <link rel="canonical" href="https://qjoly.github.io/GitOps/changelog/2026-11-22-sandbox-image-measurements/"><link rel="icon" type="image/png" sizes="192x192" href="../../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Sandbox image: what it costs and what it buys, measured - GitOps</title>
+
+
+<link href="../../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../../css/normalize.css" rel="stylesheet">
+<link href="../../css/terminal.css" rel="stylesheet">
+<link href="../../css/theme.css" rel="stylesheet">
+<link href="../../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "../..",
+    shortcuts = "{}";
+</script>
+<script src="../../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://qjoly.github.io/GitOps/" class="no-style">GitOps</a></div>
+        </header>
+        
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../.." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Welcome aboard!</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../backup/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Backup</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../cloudflared/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Cloudflared</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../getting-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Getting Started</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../hermes/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Hermes on mocha</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../octodoctor/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">OctoDoctor</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../sandboxes/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Sandboxes</span>
+                    </a>
+                    <meta property="position" content="6">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../secret-management/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Secret Management</span>
+                    </a>
+                    <meta property="position" content="7">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../signoz/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">SigNoz</span>
+                    </a>
+                    <meta property="position" content="8">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../spindle/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Spindle</span>
+                    </a>
+                    <meta property="position" content="9">
+                </li>
+                
+                
+                
+                    
+                    
+
+
+<li property="itemListElement" typeof="ListItem">
+    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+    </a>
+    <meta property="position" content="10">
+</li>
+                    
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../..">Welcome aboard!</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../backup/">Backup</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../cloudflared/">Cloudflared</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../getting-started/">Getting Started</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../hermes/">Hermes on mocha</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../octodoctor/">OctoDoctor</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../sandboxes/">Sandboxes</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../secret-management/">Secret Management</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../signoz/">SigNoz</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../spindle/">Spindle</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        <span class="
+        
+    terminal-mkdocs-side-nav-item--active terminal-mkdocs-side-nav-section-no-index">Changelog</span>
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../2026-07-13-mocha-avp-to-bank-vaults/">Migration: argocd-vault-plugin (AVP) → bank-vaults / OpenBao — cluster mocha</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../2026-07-14-americano-onboarding/">Onboarding: Americano — the first podman / Materia host in this GitOps</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../2026-11-20-mac-relay/">Definitive URL for a Mac port on NetBird: mac-relay</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../2026-11-21-mac-peer-setup-key/">NetBird logins made durable, and the Mac Mini provisioned with a setup key</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">Sandbox image: what it costs and what it buys, measured</span>
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#sandbox-image-what-it-costs-and-what-it-buys-measured">Sandbox image: what it costs and what it buys, measured</a></li>
+        <li><a href="#why">Why</a></li><li><a href="#the-figures">The figures</a></li><li><a href="#where-the-2845-mib-goes">Where the +284.5 MiB goes</a></li><li><a href="#is-it-over-the-pod-budget">Is it over the pod budget?</a></li><li><a href="#why-kubectl-top-pod-cannot-answer-this-and-what-to-read-instead">Why kubectl top pod cannot answer this, and what to read instead</a></li><li><a href="#how-to-reproduce">How to reproduce</a></li><li><a href="#what-was-found-and-not-fixed-the-live-pool-does-not-run-the-published-build">What was found and not fixed: the live pool does not run the published build</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+<section id="mkdocs-terminal-content">
+    <h1 id="sandbox-image-what-it-costs-and-what-it-buys-measured">Sandbox image: what it costs and what it buys, measured</h1>
+<p><strong>Started:</strong> 2026-11-22
+<strong>Scope:</strong> measurements only. Step 6 of <code>SANDBOX-IMAGE-PLAN.md</code>; the image
+itself landed in #657 / #658 / #659. Nothing here changes a manifest — see
+"What was found and not fixed" at the end.</p>
+<h2 id="why">Why</h2>
+<p>gVisor keeps the container root filesystem in memory, so every binary added to
+the image is paid by every warm-pool pod, permanently. The custom image
+(<code>mocha/apps/sandboxes/image/</code>) exists to remove two startup costs — the
+<code>curl https://mise.run | sh</code> download and the per-task <code>gh</code>/<code>jq</code>/<code>kubectl</code>
+download — but it has to earn its RAM back.</p>
+<h2 id="the-figures">The figures</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>avant</th>
+<th>après</th>
+<th>delta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Image, compressed layers</td>
+<td>380.1 MB (<code>buildpack-deps:trixie</code>, <code>docker.io/…@sha256:0bcdd861</code>)</td>
+<td>477.9 MB (<code>ghcr.io/qjoly/sandbox-dev@sha256:e3b74538…</code>)</td>
+<td><strong>+97.8 MB (+25.7 %)</strong></td>
+</tr>
+<tr>
+<td>Image, upper bound on what gVisor holds in RAM (sum of uncompressed layer sizes, measured by decompressing every blob)</td>
+<td>997.1 MiB</td>
+<td>1,281.6 MiB</td>
+<td><strong>+284.5 MiB (+28.5 %)</strong></td>
+</tr>
+<tr>
+<td>Warm-pool pod, <code>PodScheduled</code> → <code>ContainersReady</code></td>
+<td>4.8 s, 5.5 s, 6.2 s, 7.0 s (four pods on <code>buildpack-deps:trixie</code>)</td>
+<td>1.0 s (<code>dev-fhw4h</code>, on the image)</td>
+<td><strong>−3.8 s to −6.0 s</strong></td>
+</tr>
+<tr>
+<td><code>mise</code> bootstrap inside the pod</td>
+<td>3.1 s (<code>curl -fsSL https://mise.run \| sh</code>, measured in a live sandbox)</td>
+<td>0 s (baked at <code>/usr/local/bin/mise</code>)</td>
+<td><strong>−3.1 s</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Both sides on node <code>mocha</code>, same <code>SandboxTemplate</code> <code>dev</code>. The "avant" numbers
+are the four pods created 2026-11-22 between 16:36 and 17:48 (still on
+<code>buildpack-deps:trixie</code>); the "après" number is <code>dev-fhw4h</code>, the warm-pool
+replacement pod created at 19:57:44Z after the template moved to the image.
+The pod-start saving is bounded by the bootstrap it removes: minus ~3.1 s of
+<code>mise.run</code> download leaves ~1.7–3.9 s per cold pod, which is what a regression
+in image size would have to claw back.</p>
+<h2 id="where-the-2845-mib-goes">Where the +284.5 MiB goes</h2>
+<p>Per layer, from the OCI manifest (tag <code>2026.11.12</code> → index
+<code>sha256:e3b74538…</code> → amd64 manifest <code>sha256:d8313330…</code>). The first four layers
+are byte-identical to the base image; everything below is the image's own
+contribution:</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Step</th>
+<th>On disk (uncompressed)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4</td>
+<td><code>apt-get install jq ca-certificates</code></td>
+<td>2.4 MiB</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>kubectl</code> v1.37.2 (dl.k8s.io)</td>
+<td>39.3 MiB</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>gh</code> 2.105.0 (release tarball)</td>
+<td>59.0 MiB</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>mise.toml</code> pin copied to <code>/usr/local/share/sandbox-image/</code></td>
+<td>0.0 MiB</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>mise</code> 2026.11.12 (release tarball)</td>
+<td>183.7 MiB</td>
+</tr>
+<tr>
+<td></td>
+<td>total</td>
+<td>284.5 MiB</td>
+</tr>
+</tbody>
+</table>
+<p>This overturns the assumption the step-6 DoD was written on:</p>
+<ul>
+<li><strong><code>mise</code> is the most expensive thing in the image</strong>: 183.7 MiB, three times
+  <code>gh</code> and nearly five times <code>kubectl</code>. The pinned release tarball unpacks to
+  that for one binary, against the ~40 MB the <code>mise.run</code> installer fetches at
+  boot. It is still the right trade (183 MiB held once per warm pod against
+  ~40 MB downloaded on every boot), but it is not a small addition.</li>
+<li><strong>The fallback target is wrong.</strong> The DoD says to drop <code>kubectl</code> first
+  "because it is the biggest addition after <code>gh</code>". It is the opposite: <code>kubectl</code>
+  is the <em>smallest</em> of the three (39.3 MiB) and <code>gh</code> is next at 59.0 MiB.
+  Dropping <code>kubectl</code> would recover 14 % of the increase. If RAM ever becomes the
+  constraint the order is <code>mise</code> → <code>gh</code> → <code>kubectl</code>, and the first question is
+  whether <code>mise</code> can be a smaller build, not which binary to cut.</li>
+<li>In relative terms the image is unremarkable: +28.5 % on disk, 1.25 GiB total,
+  on top of a 997 MiB base.</li>
+</ul>
+<h2 id="is-it-over-the-pod-budget">Is it over the pod budget?</h2>
+<p>Not close. The container requests <code>1Gi</code> and is limited to <code>8Gi</code>; the entire
+image is 1.25 GiB uncompressed, and gVisor faults pages in lazily, so a warm
+pod's resident set is what its processes touch, not the whole rootfs. In the
+same window the sandboxes namespace requested 3.0 of the node's 12 cores
+against 12.63 cores of pod requests cluster-wide, which is why the warm-pool
+replacement pod sat <code>Pending</code> with <code>0/1 nodes are available: 1 Insufficient
+cpu</code> once a fifth claim was live. The node was CPU-bound, not memory-bound: the
+image did not contribute to the scheduling failure.</p>
+<h2 id="why-kubectl-top-pod-cannot-answer-this-and-what-to-read-instead">Why <code>kubectl top pod</code> cannot answer this, and what to read instead</h2>
+<p><code>kubectl top pod -n sandboxes</code> reports <strong>2 MiB for every running sandbox</strong>, and
+<code>369Mi</code> for exactly one — including a pod running a full <code>make</code> at 828m CPU.
+cAdvisor under <code>runsc</code> does not account the sandbox kernel's page cache, so that
+number is anonymous memory only. The honest figures come from the image
+(uncompressed layer sizes = the upper bound on what gVisor must be able to hold)
+and from the pod timeline (<code>PodScheduled</code> → <code>ContainersReady</code>), both
+reproducible with the commands below.</p>
+<h2 id="how-to-reproduce">How to reproduce</h2>
+<pre><code class="language-bash"># Image size, compressed and uncompressed, with a per-layer split.
+T=$(curl -s &quot;https://ghcr.io/token?scope=repository:qjoly/sandbox-dev:pull&quot; | jq -r .token)
+curl -s -H &quot;Authorization: Bearer $T&quot; -H 'Accept: application/vnd.oci.image.index.v1+json' \
+  https://ghcr.io/v2/qjoly/sandbox-dev/manifests/2026.11.12 | jq -r '.manifests[].digest'
+# /manifests/&lt;amd64 digest&gt; gives layers[].size; /blobs/&lt;config digest&gt; gives
+# rootfs.diff_ids and history[].created_by, which attributes each layer.
+# Uncompressed sizes: GET /blobs/&lt;layer digest&gt; piped through `gzip -dc | wc -c`
+# (the layer is a gzipped tar, so this is what the registry never reports).
+# docker.io/library/buildpack-deps:trixie goes through auth.docker.io with the
+# same three calls; take the amd64 entry of its index.
+
+# Pod start: creation time and the ContainersReady transition.
+kubectl --kubeconfig /opt/sbx/kubeconfig --context mocha -n sandboxes \
+  get pod &lt;pod&gt; -o jsonpath='{.status.startTime}{&quot;\n&quot;}{range .status.conditions[*]}{.type}={.lastTransitionTime} {end}'
+
+# Warm-pool pod identity and image digest.
+kubectl --kubeconfig /opt/sbx/kubeconfig --context mocha -n sandboxes \
+  get pods -l agents.x-k8s.io/warm-pool-sandbox \
+  -o custom-columns='N:.metadata.name,IMG:.spec.containers[0].image,ID:.status.containerStatuses[0].imageID'
+</code></pre>
+<h2 id="what-was-found-and-not-fixed-the-live-pool-does-not-run-the-published-build">What was found and not fixed: the live pool does not run the published build</h2>
+<p>Tags <code>2026.11.12</code> and <code>latest</code> both resolve to
+<code>sha256:e3b74538a490f34c6490dc1a7f0aada1e051e75b0c56b885d0325d8375c6b986</code>
+(built 19:51:46Z from <code>1e6125d1</code>, workflow run #2). The warm-pool pod and every
+pod created since 19:41 are on
+<code>sha256:ff995f55f0e363374fc3891c351bd4853053f719a1e727cf968d0052fe4a60e1</code>, the
+<em>pre-fix</em> build: <code>/etc/mise/mise.toml</code> is still present, <code>mise config ls</code> lists
+it as a runtime config beside <code>/work/mise.toml</code>, and <code>mise install</code> in a sandbox
+still fails with <code>mise ERROR mise not found in mise tool registry</code>. The size
+figures above are for the corrected <code>e3b74538</code>; the start-time figures are for
+a pod on the pre-fix build. The two differ by nothing that moves either number —
+the fix relocates a 270-byte file and edits an env var.</p>
+<p><code>kubectl -n sandboxes get pod -o jsonpath='{.spec.containers[0].image}'</code> returns
+the tag, so it cannot tell the two builds apart; only
+<code>.status.containerStatuses[0].imageID</code> can. A mutable tag that now means two
+different bytes depending on when a pod started is the argument for pinning
+<code>dev.yaml</code> by digest. Closing the gap needs free CPU on the node and write
+access to the sandbox namespace: <code>kubectl delete pod &lt;warm-pool pod&gt;</code> (the
+controller recreates it from the tag, i.e. the fixed image), or bump the
+template to the new digest.</p>
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>

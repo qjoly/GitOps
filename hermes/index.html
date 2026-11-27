@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+     
+     
+    
+    <link rel="canonical" href="https://qjoly.github.io/GitOps/hermes/"><link rel="icon" type="image/png" sizes="192x192" href="../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Hermes on mocha - GitOps</title>
+
+
+<link href="../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../css/normalize.css" rel="stylesheet">
+<link href="../css/terminal.css" rel="stylesheet">
+<link href="../css/theme.css" rel="stylesheet">
+<link href="../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "..",
+    shortcuts = "{}";
+</script>
+<script src="../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://qjoly.github.io/GitOps/" class="no-style">GitOps</a></div>
+        </header>
+        
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href=".." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Welcome aboard!</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../backup/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Backup</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../cloudflared/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Cloudflared</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../getting-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Getting Started</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="./" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">Hermes on mocha</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../octodoctor/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">OctoDoctor</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../sandboxes/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Sandboxes</span>
+                    </a>
+                    <meta property="position" content="6">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../secret-management/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Secret Management</span>
+                    </a>
+                    <meta property="position" content="7">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../signoz/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">SigNoz</span>
+                    </a>
+                    <meta property="position" content="8">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../spindle/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Spindle</span>
+                    </a>
+                    <meta property="position" content="9">
+                </li>
+                
+                
+                
+                    
+                    
+
+
+<li property="itemListElement" typeof="ListItem">
+    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+    </a>
+    <meta property="position" content="10">
+</li>
+                    
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="..">Welcome aboard!</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../backup/">Backup</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../cloudflared/">Cloudflared</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../getting-started/">Getting Started</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">Hermes on mocha</span>
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../octodoctor/">OctoDoctor</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../sandboxes/">Sandboxes</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../secret-management/">Secret Management</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../signoz/">SigNoz</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../spindle/">Spindle</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Changelog</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../changelog/2026-07-13-mocha-avp-to-bank-vaults/">Migration: argocd-vault-plugin (AVP) → bank-vaults / OpenBao — cluster mocha</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../changelog/2026-07-14-americano-onboarding/">Onboarding: Americano — the first podman / Materia host in this GitOps</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../changelog/2026-11-20-mac-relay/">Definitive URL for a Mac port on NetBird: mac-relay</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../changelog/2026-11-21-mac-peer-setup-key/">NetBird logins made durable, and the Mac Mini provisioned with a setup key</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../changelog/2026-11-22-sandbox-image-measurements/">Sandbox image: what it costs and what it buys, measured</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#hermes-on-mocha">Hermes on mocha</a></li>
+        <li><a href="#one-pod-many-containers">One pod, many containers</a></li><li><a href="#init-containers-what-gets-seeded-where">Init containers: what gets seeded where</a></li><li><a href="#storage">Storage</a></li><li><a href="#credentials">Credentials</a></li><li><a href="#the-one-github-identity">The one GitHub identity</a></li><li><a href="#sandboxes">Sandboxes</a></li><li><a href="#talking-to-the-agent">Talking to the agent</a></li><li><a href="#the-bot-desktop-screen">The Bot Desktop screen</a></li><li><a href="#changing-it">Changing it</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+<section id="mkdocs-terminal-content">
+    <h1 id="hermes-on-mocha">Hermes on mocha</h1>
+<p>Hermes Agent runs as one pod in the <code>hermes-carolyn</code> namespace, deployed from
+<a href="https://github.com/qjoly/GitOps/tree/main/mocha/apps/hermes-carolyn/manifests"><code>mocha/apps/hermes-carolyn/manifests/</code></a>
+by ArgoCD. This page is the map: what runs in the pod, which path survives a
+restart, where the credentials come from, and how the agent reaches GitHub and
+the sandboxes.</p>
+<p>The manifests are the source of truth. Read this page to know <em>where to look</em>,
+then read the manifest before changing behaviour.</p>
+<h2 id="one-pod-many-containers">One pod, many containers</h2>
+<p>Everything below runs in a single pod, so <code>127.0.0.1</code> works between them and
+nothing talks to a Service except Traefik.</p>
+<table>
+<thead>
+<tr>
+<th>Container</th>
+<th>Role</th>
+<th>Reached by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hermes-carolyn</code></td>
+<td>the agent: gateway, Discord platform, kanban dispatcher, and its Bot Desktop screen + headed Chromium</td>
+<td>nothing inbound</td>
+</tr>
+<tr>
+<td><code>webui</code></td>
+<td>browser UI (<code>hermes-webui</code>)</td>
+<td>Traefik on 8787</td>
+</tr>
+<tr>
+<td><code>github-mcp</code></td>
+<td>GitHub API tools for the agent</td>
+<td>agent on 8082</td>
+</tr>
+<tr>
+<td><code>email-mcp</code></td>
+<td>reads the mailboxes, read-only</td>
+<td>agent on 8080</td>
+</tr>
+<tr>
+<td><code>calendar-mcp</code></td>
+<td>Google Calendar, read/write</td>
+<td>agent on 8083</td>
+</tr>
+<tr>
+<td><code>grafana-mcp</code></td>
+<td>Grafana on mocha, read-only (<code>--disable-write</code>)</td>
+<td>agent on 8084</td>
+</tr>
+<tr>
+<td><code>netbird</code></td>
+<td>WireGuard peer in netstack mode</td>
+<td>agent through a SOCKS5 on 1080</td>
+</tr>
+</tbody>
+</table>
+<p>The agent only ever reaches the MCP servers over loopback. <code>github-mcp</code> and
+NetBird's socket bind on all interfaces, but
+<a href="https://github.com/qjoly/GitOps/blob/main/mocha/apps/hermes-carolyn/manifests/ciliumnetworkpolicy.yaml"><code>ciliumnetworkpolicy.yaml</code></a>
+makes the namespace default-deny ingress, so only Traefik (8787) and the
+kubelet readiness probe get in. Same policy means "no egress section": outbound
+traffic is open on purpose, the agent needs the internet.</p>
+<h2 id="init-containers-what-gets-seeded-where">Init containers: what gets seeded where</h2>
+<p>Five init containers run before anything else. Each one is the single writer of
+its target, so its repair is re-applied on every pod start.</p>
+<table>
+<thead>
+<tr>
+<th>Container</th>
+<th>Writes</th>
+<th>Semantics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>seed-config</code></td>
+<td><code>/opt/data/config.yaml</code></td>
+<td><strong>never overwrites</strong> (<code>test -f … \|\| cp</code>)</td>
+</tr>
+<tr>
+<td><code>seed-calendar-creds</code></td>
+<td>the calendar MCP credential file in an <code>emptyDir</code></td>
+<td>overwrites, mode 600</td>
+</tr>
+<tr>
+<td><code>seed-agent-src</code></td>
+<td>the agent source into an <code>emptyDir</code> shared with <code>webui</code></td>
+<td>copies from the image, then repairs two image defects</td>
+</tr>
+<tr>
+<td><code>install-cua-driver</code></td>
+<td>the pinned <code>cua-driver</code> (computer_use) under <code>/opt/data/tools</code></td>
+<td>no-op when present, repairs after a bump; not fatal</td>
+</tr>
+<tr>
+<td><code>install-sbx</code></td>
+<td><code>sbx</code>, <code>kubectl</code>, <code>jq</code>, <code>arr.sh</code>, SSH material, the skills, and the <code>mistral-image</code> plugin</td>
+<td>overwrites</td>
+</tr>
+</tbody>
+</table>
+<p>The seed-versus-overwrite split matters: a committed change to <code>config.yaml</code> or
+<code>SOUL.md</code> does <strong>not</strong> reach a running pod, because the file already exists on
+the volume. To apply one, delete the file on the PVC and restart. Everything
+else — skills, <code>sbx</code>, <code>arr</code> — is replaced at every start, so a committed fix
+wins immediately.</p>
+<p><code>seed-agent-src</code> deserves a warning: it repairs the image it copies. The
+bundled <code>.venv</code> is built for Python 3.14 and the <code>install-stamp.json</code> bakes a
+path that does not exist in the copy; both break the <code>webui</code> container, which
+discovers the agent at <code>$HERMES_HOME/hermes-agent</code>. Do not delete those repair
+lines without a replacement.</p>
+<h2 id="storage">Storage</h2>
+<p>One PVC, <code>hermes-carolyn-data</code>, mounted at <strong>two paths</strong>:</p>
+<ul>
+<li><code>/opt/data</code> in <code>hermes-carolyn</code> — this is <code>HERMES_HOME</code>;</li>
+<li><code>/workspace</code> in both <code>hermes-carolyn</code> and <code>webui</code>;</li>
+<li><code>/home/hermeswebui/.hermes</code> in <code>webui</code>.</li>
+</ul>
+<p><code>/workspace</code> and <code>HERMES_HOME</code> are the same volume, which is why a repo cloned
+by the agent shows up at <code>/workspace/&lt;repo&gt;</code> in the webui. Anything written
+outside <code>/opt/data</code> and <code>/workspace</code> — an <code>emptyDir</code> — is gone on restart.</p>
+<h2 id="credentials">Credentials</h2>
+<p>No secret lives in this repository. The
+<a href="https://github.com/qjoly/GitOps/blob/main/mocha/apps/hermes-carolyn/manifests/externalsecret.yaml"><code>hermes-carolyn</code> ExternalSecret</a>
+maps keys from <code>kv/hermes-carolyn</code> in the cluster Vault (OpenBao) into the
+<code>hermes-carolyn</code> Secret, which the containers read with <code>secretKeyRef</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Key in <code>kv/hermes-carolyn</code></th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>github_bot_token</code></td>
+<td>the only GitHub credential: <code>github-mcp</code> sidecar <strong>and</strong> git/<code>gh</code> (see below)</td>
+</tr>
+<tr>
+<td><code>mistral_api_key</code></td>
+<td>the model</td>
+</tr>
+<tr>
+<td><code>bot_token</code>, <code>allowed_users</code></td>
+<td>Discord</td>
+</tr>
+<tr>
+<td><code>hass_token</code></td>
+<td>Home Assistant MCP</td>
+</tr>
+<tr>
+<td><code>mail_password</code>, <code>mail_password_quentinj</code></td>
+<td><code>email-mcp</code></td>
+</tr>
+<tr>
+<td><code>sonarr_api_key</code>, <code>radarr_api_key</code>, <code>prowlarr_api_key</code>, <code>deluge_password</code></td>
+<td><code>arr.sh</code></td>
+</tr>
+<tr>
+<td><code>netbird_setup_key</code></td>
+<td>the NetBird peer</td>
+</tr>
+<tr>
+<td><code>grafana_token</code></td>
+<td><code>grafana-mcp</code></td>
+</tr>
+<tr>
+<td><code>webui_password</code></td>
+<td>the webui login</td>
+</tr>
+</tbody>
+</table>
+<p>A missing key is a <strong>CrashLoop</strong>, not a degraded start: <code>secretKeyRef</code> fails
+the container. When you add a key to the ExternalSecret, add it to Vault in the
+same change.</p>
+<h2 id="the-one-github-identity">The one GitHub identity</h2>
+<p>There is a single GitHub token, <code>github_bot_token</code>, belonging to the bot
+account <strong>unetassedecafe</strong> — the <code>qjoly</code> account is deliberately not reachable
+from Hermes (<code>github_token</code> no longer exists in the ExternalSecret). It is used
+both by the <code>github-mcp</code> sidecar (<code>GITHUB_PERSONAL_ACCESS_TOKEN</code>, with the MCP
+config sending <code>Authorization: Bearer ${GH_TOKEN}</code>; the server runs with the
+<code>repos,issues,pull_requests,search</code> toolsets) and by <code>git</code>/<code>gh</code> run by the agent,
+wired as <code>GH_TOKEN</code> plus a git credential helper through <code>GIT_CONFIG_*</code>
+environment variables — not in <code>.git/config</code>, because <code>sbx push</code> copies <code>.git</code>
+into the sandbox. The bot is a collaborator with <code>read</code> on this repository: it
+pushes a branch to its own fork (<code>unetassedecafe/GitOps</code>) and opens a pull
+request from there.</p>
+<p>The token is also given to the VMs, file-only, so <code>git</code>/<code>gh</code> work in-session:</p>
+<ul>
+<li><strong>kube-sandbox terminal backend</strong>: <code>terminal.kube_sandbox_git_user</code> in the
+  <a href="https://github.com/qjoly/GitOps/blob/main/mocha/apps/hermes-carolyn/manifests/configmap.yaml">MCP config</a>
+  plus the pod's <code>KUBE_SANDBOX_GIT_TOKEN</code> env make the plugin write
+  <code>/root/.git-credentials</code> as <code>https://unetassedecafe:$TOKEN@github.com</code>
+  (mode 0600) and set <code>credential.helper=store</code> inside the micro-VM at claim
+  time — file-only, never in the sandbox environment. (Not
+  <code>kube_sandbox_secret_files</code>: it writes the raw env value, but credential
+  store expects a full URL and would leave the helper unset.)</li>
+<li><strong><code>sbx</code> sandboxes</strong>: <code>sbx up</code> seeds the same <code>/root/.git-credentials</code> from the
+  pod's <code>GH_TOKEN</code> over the exec stdin (never argv, never under <code>/work</code>, so it
+  is not copied back by <code>sbx diff</code>).</li>
+</ul>
+<p>Rules that follow, and are the ones that get broken:</p>
+<ul>
+<li><strong>No secret other than the bot token in a sandbox.</strong> The sandbox template
+  rejects injected env vars (<code>envVarsInjectionPolicy: Disallowed</code>), so the token
+  always lands as a file, never in the env. Never pass a kubeconfig or any other
+  secret in: use <code>exec</code> stdin. <code>mise install</code> resolves tools through
+  <code>mise-versions.jdx.dev</code>, not the GitHub API (verified with <code>mise token github</code>
+  reporting <em>none</em> and all four tools installing).</li>
+<li><strong>Never push to <code>main</code>.</strong> The bot's access is read-only on the upstream repo,
+  so a direct push fails. Open a PR.</li>
+</ul>
+<h2 id="sandboxes">Sandboxes</h2>
+<p><code>sbx</code> (in
+<a href="https://github.com/qjoly/GitOps/blob/main/mocha/apps/hermes-carolyn/manifests/sbx-configmap.yaml"><code>sbx-configmap.yaml</code></a>)
+drives disposable gVisor pods in the <code>sandboxes</code> namespace. The checkout is
+copied in, work happens there, and the result comes back as a git patch:</p>
+<pre><code class="language-bash">n=$(sbx up)
+sbx push &quot;$n&quot; .
+sbx exec &quot;$n&quot; -- bash -c 'mise install &amp;&amp; make test'
+sbx diff &quot;$n&quot; | git apply
+sbx down &quot;$n&quot;
+</code></pre>
+<p>The pod reaches the API server with its own service account, which has a
+namespace-scoped Role in <code>sandboxes</code> only. The sandbox itself has no cluster
+network beyond internet + API/DNS ports, and exactly two credentials: the
+<code>/root/.git-credentials</code> bot token that <code>sbx up</code> seeds (see above), and a
+<strong>read-only</strong> kubectl access (SA <code>sandbox-ro</code> mounted with a kubeconfig that
+goes through the <code>apiserver-proxy</code> pod — see <a href="../sandboxes/">Sandboxes</a> for why
+the node IP is not dialed directly). See <a href="../sandboxes/">Sandboxes</a> for the
+template and the warm pool.</p>
+<h2 id="talking-to-the-agent">Talking to the agent</h2>
+<p>Two surfaces, both on the NetBird-only <code>*.nb.mocha.thoughtless.eu</code> zone, so
+neither is reachable from the public internet:</p>
+<ul>
+<li><code>hermes-carolyn.nb.mocha.thoughtless.eu</code> — the webui, password login
+  (<code>HERMES_WEBUI_PASSWORD</code>, from Vault).</li>
+<li><code>hermes-carolyn-gw.nb.mocha.thoughtless.eu</code> — the gateway, for the Hermes
+  Desktop app and the JSON-RPC/WebSocket backend, with basic auth.</li>
+</ul>
+<p>Discord is a platform, not a surface: the agent answers there and auto-threads,
+mention required.</p>
+<h2 id="the-bot-desktop-screen">The Bot Desktop screen</h2>
+<p>The agent has its own Xfce desktop (TigerVNC <code>Xvnc</code> on a Unix socket under
+<code>/opt/data/bot-desktop/</code>). Its <code>computer_use</code> tool and its browser act on it,
+and the Hermes Desktop "Screen" pane shows it live and lets a human take over
+for logins, 2FA or CAPTCHAs.</p>
+<table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>Where it comes from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Xvnc, Xfce, Chromium</td>
+<td>the upstream <code>-desktop</code> image (<code>nousresearch/hermes-agent:&lt;version&gt;-desktop</code>). The plain image lacks them, and the pane's "Install on host" button cannot add them: the gateway runs as <code>hermes</code> without <code>sudo</code></td>
+</tr>
+<tr>
+<td><code>cua-driver</code> (computer_use)</td>
+<td>installed by Hermes PM into <code>/opt/data/tools</code> by the <code>install-cua-driver</code> init container</td>
+</tr>
+<tr>
+<td>headed browser</td>
+<td><code>browser.headed: true</code>, no <code>cdp_url</code>. While the screen is up the agent and the desktop's browser share one persistent profile, <code>/opt/data/bot-desktop/browser-profile</code></td>
+</tr>
+<tr>
+<td>screen on demand</td>
+<td><code>bot_desktop.auto_start: true</code>; it stops after 30 idle minutes</td>
+</tr>
+<tr>
+<td>no prompt per click</td>
+<td>every <code>cua:&lt;action&gt;:&lt;mode&gt;</code> key in <code>command_allowlist</code>. Hermes still hard-blocks dangerous typed shell patterns and destructive key combos</td>
+</tr>
+</tbody>
+</table>
+<p>Things that look broken and are not:</p>
+<ul>
+<li><code>hermes computer-use doctor</code> reports <strong>degraded</strong>: AT-SPI is off. Hermes'
+  launcher disables it on purpose (<code>NO_AT_BRIDGE=1</code>), so the agent works from
+  screenshots and X11 input, and only <code>delivery_mode: foreground</code> lands.</li>
+<li><code>capture</code> with <code>mode: vision</code> needs a model that reads images. The main
+  model does, so <code>auxiliary.vision</code> stays on <code>auto</code>.</li>
+</ul>
+<p>Renovate bumps the <code>-desktop</code> tag like any image: its docker versioning keeps
+the suffix. Keep <code>seed-agent-src</code>, <code>install-cua-driver</code> and <code>hermes-carolyn</code> on
+the same tag, since the webui runs the agent source <code>seed-agent-src</code> copies.</p>
+<p>These keys live in the seeded <code>config.yaml</code>, which never overwrites the file
+on the PVC: on an existing volume, apply them with <code>hermes config set</code>.</p>
+<p>From a shell in the pod: <code>hermes computer-use screen status|start|stop</code>,
+<code>hermes computer-use status</code>.</p>
+<h2 id="changing-it">Changing it</h2>
+<ol>
+<li>Edit the manifests in <code>mocha/apps/hermes-carolyn/manifests/</code>, never the pod.
+   <code>selfHeal: true</code> reverts a manual <code>kubectl edit</code>.</li>
+<li>Render in a sandbox — <code>kubectl kustomize</code> is the check that the change still
+   parses and still produces every document.</li>
+<li>If the change needs a new Vault key, write it first, then open the PR.</li>
+<li>Open a PR. ArgoCD syncs it after merge; a seeding change may need the file
+   deleted on the PVC to take effect.</li>
+</ol>
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>

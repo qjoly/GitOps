@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+     
+     
+    
+    <link rel="canonical" href="https://qjoly.github.io/GitOps/changelog/2026-11-21-mac-peer-setup-key/"><link rel="icon" type="image/png" sizes="192x192" href="../../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>NetBird logins made durable, and the Mac Mini provisioned with a setup key - GitOps</title>
+
+
+<link href="../../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../../css/normalize.css" rel="stylesheet">
+<link href="../../css/terminal.css" rel="stylesheet">
+<link href="../../css/theme.css" rel="stylesheet">
+<link href="../../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "../..",
+    shortcuts = "{}";
+</script>
+<script src="../../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://qjoly.github.io/GitOps/" class="no-style">GitOps</a></div>
+        </header>
+        
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../.." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Welcome aboard!</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../backup/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Backup</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../cloudflared/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Cloudflared</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../getting-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Getting Started</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../hermes/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Hermes on mocha</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../octodoctor/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">OctoDoctor</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../sandboxes/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Sandboxes</span>
+                    </a>
+                    <meta property="position" content="6">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../secret-management/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Secret Management</span>
+                    </a>
+                    <meta property="position" content="7">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../signoz/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">SigNoz</span>
+                    </a>
+                    <meta property="position" content="8">
+                </li>
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../spindle/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Spindle</span>
+                    </a>
+                    <meta property="position" content="9">
+                </li>
+                
+                
+                
+                    
+                    
+
+
+<li property="itemListElement" typeof="ListItem">
+    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+    </a>
+    <meta property="position" content="10">
+</li>
+                    
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../..">Welcome aboard!</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../backup/">Backup</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../cloudflared/">Cloudflared</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../getting-started/">Getting Started</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../hermes/">Hermes on mocha</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../octodoctor/">OctoDoctor</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../sandboxes/">Sandboxes</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../secret-management/">Secret Management</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../signoz/">SigNoz</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../spindle/">Spindle</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        <span class="
+        
+    terminal-mkdocs-side-nav-item--active terminal-mkdocs-side-nav-section-no-index">Changelog</span>
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../2026-07-13-mocha-avp-to-bank-vaults/">Migration: argocd-vault-plugin (AVP) → bank-vaults / OpenBao — cluster mocha</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../2026-07-14-americano-onboarding/">Onboarding: Americano — the first podman / Materia host in this GitOps</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../2026-11-20-mac-relay/">Definitive URL for a Mac port on NetBird: mac-relay</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">NetBird logins made durable, and the Mac Mini provisioned with a setup key</span>
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../2026-11-22-sandbox-image-measurements/">Sandbox image: what it costs and what it buys, measured</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#netbird-logins-made-durable-and-the-mac-mini-provisioned-with-a-setup-key">NetBird logins made durable, and the Mac Mini provisioned with a setup key</a></li>
+        <li><a href="#why">Why</a></li><li><a href="#sso-made-durable-the-actual-fix-for-the-re-logins">SSO made durable (the actual fix for the re-logins)</a></li><li><a href="#mac-mini-provisioned-with-a-setup-key-no-sso-no-sleep-drop">Mac Mini provisioned with a setup key (no SSO, no sleep drop)</a></li><li><a href="#what-was-done">What was done</a></li><li><a href="#use-it-on-the-mac-mini">Use it on the Mac Mini</a></li><li><a href="#rotate-the-key">Rotate the key</a></li><li><a href="#left-unchanged">Left unchanged</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+<section id="mkdocs-terminal-content">
+    <h1 id="netbird-logins-made-durable-and-the-mac-mini-provisioned-with-a-setup-key">NetBird logins made durable, and the Mac Mini provisioned with a setup key</h1>
+<p><strong>Started:</strong> 2026-11-21
+<strong>Scope:</strong> NetBird account/peer login expiration disabled via the management
+API, reusable setup key <code>matcha</code> in NetBird, <code>kv/netbird</code> <code>mac_setup_key</code> in
+Vault, new <code>mise run nb:peer</code> task on macOS.</p>
+<h2 id="why">Why</h2>
+<p>Two things made <code>Matcha.local</code> show as disconnected with a warning and force a
+fresh authentik login every time:</p>
+<ul>
+<li>The account setting <code>peer_login_expiration_enabled</code> was <code>true</code> with
+  <code>peer_login_expiration = 86400</code> (24 h). Every SSO peer (the Mac's desktop
+  client logs in through the authentik OIDC provider) expired after 24 h; while
+  expired it was disconnected and the client had to re-login in a browser, i.e.
+  re-authenticate on authentik.</li>
+<li>A sleeping Mac Mini drops its WireGuard connection, so the peer read
+  "last seen … ago" until it woke.</li>
+</ul>
+<h2 id="sso-made-durable-the-actual-fix-for-the-re-logins">SSO made durable (the actual fix for the re-logins)</h2>
+<ul>
+<li><code>PUT /api/accounts/dbun6tt27a40009lvbgg</code> with
+  <code>settings.peer_login_expiration_enabled = false</code>: SSO peer logins now never
+  expire. The helm chart has no value for this (checked <code>helm show values
+  netbird@1.9.0</code>); the setting lives in the management sqlite DB
+  (<code>persistentVolume</code> on <code>openebs-lvmpv</code>), so it survives upgrades and ArgoCD
+  does not revert it. Re-apply it only if the datastore is ever wiped.</li>
+<li>Per-peer <code>login_expiration_enabled = false</code> on the existing SSO peers
+  (<code>Matcha.local</code>, <code>iPhone</code>) via <code>PUT /api/peers/&lt;id&gt;</code>. The iPhone showed
+  <code>login_expired = true</code> until its next connection; with the flag off, its
+  stored login is accepted again and at most one re-login is needed.</li>
+</ul>
+<h2 id="mac-mini-provisioned-with-a-setup-key-no-sso-no-sleep-drop">Mac Mini provisioned with a setup key (no SSO, no sleep drop)</h2>
+<h2 id="what-was-done">What was done</h2>
+<ul>
+<li>Setup key <strong><code>matcha</code></strong>: reusable, <strong>non-ephemeral</strong> (the peer is not deleted
+  when the Mac sleeps), <code>usage_limit = 0</code>, auto-group <code>users</code>. Created through
+  the management API with the <code>kv/netbird</code> <code>operator_api_key</code> PAT:</li>
+</ul>
+<p><code>bash
+  curl -X POST -H "Authorization: Token $PAT" -H "Content-Type: application/json" \
+    -d '{"name":"matcha","type":"reusable","ephemeral":false,"usage_limit":0,"auto_groups":["&lt;users-group-id&gt;"]}' \
+    https://netbird.mocha.thoughtless.eu/api/setup-keys</code></p>
+<ul>
+<li>The key is stored as <code>kv/netbird</code> <strong><code>mac_setup_key</code></strong> (never committed):</li>
+</ul>
+<p><code>bash
+  mise run vault:kv patch kv/netbird mac_setup_key=&lt;key from the API response&gt;</code></p>
+<p>(<code>kv patch</code>, not <code>kv put</code>: on this OpenBao, <code>put</code> replaces the whole data of
+  the path and would drop the other <code>kv/netbird</code> keys.)</p>
+<ul>
+<li><strong><code>mise run nb:peer</code></strong> (one-time, sudo, on the Mac): reads <code>mac_setup_key</code>
+  from Vault, writes it to <code>/etc/netbird-matcha.key</code> (chmod 600, never in the
+  plist or git), installs a LaunchDaemon <code>eu.thoughtless.netbird-matcha</code> that
+  runs <code>netbird up --management-url https://netbird.mocha.thoughtless.eu
+  --setup-key …</code> in a loop, and sets <code>pmset -a womp 1</code> + <code>sleep 0 disksleep 0</code>
+  so the Mini stays awake and the peer stays connected. <code>nb:teardown</code> now
+  removes this daemon too.</li>
+</ul>
+<p>Setup-key peers have no SSO user, so the 24 h login expiration does not apply to
+them: no browser, no authentik, ever.</p>
+<h2 id="use-it-on-the-mac-mini">Use it on the Mac Mini</h2>
+<ol>
+<li><code>mise install &amp;&amp; mise run nb:peer</code> (sudo prompts).</li>
+<li>Quit the NetBird desktop app if it was running (it holds the SSO session).</li>
+<li>Delete the old SSO peer <code>Matcha.local</code> in the NetBird dashboard (Peers), or:</li>
+</ol>
+<p><code>bash
+   PAT="$(mise run -q vault:kv get -field=operator_api_key kv/netbird)"
+   curl -X DELETE -H "Authorization: Token $PAT" \
+     https://netbird.mocha.thoughtless.eu/api/peers/dc0093t27a4000cpo9cg</code></p>
+<ol>
+<li>Check: <code>sudo netbird status</code>, and the peer in the dashboard is connected with
+   no warning. The Mac gets a new NetBird IP (nothing in this repo referenced
+   the old <code>100.92.44.4</code>).</li>
+</ol>
+<h2 id="rotate-the-key">Rotate the key</h2>
+<p>Revoke <code>matcha</code> in the dashboard (or <code>DELETE /api/setup-keys/&lt;id&gt;</code>), create a
+new one, <code>mise run vault:kv patch kv/netbird mac_setup_key=&lt;new&gt;</code>, then
+re-run <code>mise run nb:peer</code> on the Mac (it rewrites <code>/etc/netbird-matcha.key</code> and
+restarts the daemon).</p>
+<h2 id="left-unchanged">Left unchanged</h2>
+<p>Nothing on the authentik side: the NetBird OIDC provider and its authentik
+sessions were not touched. The peer login expiration was the cause of the
+repeated authentik logins; with it disabled, SSO peers log in once and stay.</p>
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>
