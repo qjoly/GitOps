@@ -427,3 +427,9 @@ spec:
                 externalHost: https://maintenant.mocha.thoughtless.eu
                 accessTokenValidity: hours=24
                 icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/uptime-kuma.svg
+              - slug: pages
+                name: Pages
+                mode: forward_single
+                externalHost: https://pages.mocha.thoughtless.eu
+                accessTokenValidity: hours=24
+                icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/simple-web.svg
