@@ -33,9 +33,10 @@ The home cluster runs [Talos](https://www.talos.dev/) (don't hesitate to check [
 
 - [**Omni** (Self-hosted)](https://www.siderolabs.com/platform/saas-for-kubernetes/) : Manage the Talos nodes (**`turing`**).
 - [**Corium**](https://github.com/Corium-OS/Corium) : bootc + k0s image for the OVH servers (**`mocha`**, **`doppio`**).
-- [Cilium](https://cilium.io/) as CNI and LB (ARP mode)
-- [ArgoCD](https://argoproj.github.io/argo-cd/) to manage the GitOps workflow
-- [Traefik](https://doc.traefik.io/traefik/getting-started/install-traefik/#use-the-helm-chart) as Ingress controller (and for middleware management)
+- [Cilium](https://cilium.io/) as CNI and LB (ARP mode). On `mocha` and `doppio`, Corium installs it as an addon of the node document.
+- [ArgoCD](https://argoproj.github.io/argo-cd/) to manage the GitOps workflow (also a Corium addon on `mocha` and `doppio`)
+- [Traefik](https://doc.traefik.io/traefik/getting-started/install-traefik/#use-the-helm-chart) as Ingress controller (and for middleware management). `mocha` runs a second instance, `traefik-internal`, for the private hostnames under `*.nb.mocha.thoughtless.eu`.
+- [NetBird](https://netbird.io/) (self-hosted, with the NetBird operator) as private network to reach internal services (**`mocha`**)
 - [Cert Manager](https://cert-manager.io/) for TLS certificates
 - [External DNS](https://kubernetes-sigs.github.io/external-dns/) to publish records from Ingresses
 - Storage:
@@ -45,7 +46,9 @@ The home cluster runs [Talos](https://www.talos.dev/) (don't hesitate to check [
 - [External Secrets](https://external-secrets.io/latest/) to fetch secrets from a remote store
 - [OpenBao](https://openbao.org/) (via [bank-vaults](https://bank-vaults.dev/)) as secret store, one per cluster
 - [Authentik](https://goauthentik.io/) for SSO / forward-auth, and [Dex](https://dexidp.io/) (**`mocha`**)
-- [SigNoz](https://signoz.io/) + [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator) for metrics, logs and traces
+- [SigNoz](https://signoz.io/) + [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator) for metrics, logs and traces, with [OBI](https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation) (eBPF auto-instrumentation) on `mocha`
+- [Grafana](https://grafana.com/) + [Loki](https://grafana.com/oss/loki/) dashboards (**`mocha`**)
+- [Trivy Operator](https://aquasecurity.github.io/trivy-operator/) for vulnerability and configuration reports (**`mocha`**)
 - [CrowdSec](https://www.crowdsec.net/) to filter traffic hitting the Ingress (**`mocha`**)
 - [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) to expose services to the internet (**`turing`**)
 - restic CronJobs (database dumps, OpenBao snapshots) to S3 (**`mocha`**)
@@ -54,12 +57,12 @@ The home cluster runs [Talos](https://www.talos.dev/) (don't hesitate to check [
 
 ### Clusters
 
-- [**Mocha**](https://github.com/qjoly/GitOps/tree/main/mocha) : single bare-metal node hosted by OVH (128GB RAM, 8 CPU, 2x512GB NVMe), running Corium. Production cluster, also hosts SigNoz. Its node document is [`mocha/corium/mocha.yaml`](./mocha/corium/mocha.yaml).
-- [**Turing**](https://github.com/qjoly/GitOps/tree/main/turing) : cluster made of small devices (ARM and x86) at home. Local hosting, storage (Rook + NAS) and testing.
-- [**Doppio**](https://github.com/qjoly/GitOps/tree/main/doppio) : single bare-metal node at OVH, kept for storage and backup. The odd one out — it runs [Corium](https://github.com/Corium-OS/Corium) (bootc + k0s) rather than Talos, so it is driven with `cctl` and has no Omni template. See [`doppio/README.md`](./doppio/README.md).
+- [**Mocha**](https://github.com/qjoly/GitOps/tree/main/mocha) : single bare-metal node hosted by OVH (128GB RAM, 8 CPU, 2x512GB NVMe), running Corium. Production cluster, also hosts SigNoz, NetBird and most of the apps (Vaultwarden, Hermes agents, sandboxes, Ollama, Matomo...). Its node document is [`mocha/corium/mocha.yaml`](./mocha/corium/mocha.yaml).
+- [**Turing**](https://github.com/qjoly/GitOps/tree/main/turing) : cluster made of small devices (ARM and x86) at home. Local hosting, storage (Rook + NAS) and testing. Hosts Home Assistant, Immich, Paperless and RustFS.
+- [**Doppio**](https://github.com/qjoly/GitOps/tree/main/doppio) : single bare-metal node at OVH, kept for storage, backup and downloads (Deluge, FlexGet, Kavita). Like `mocha`, it runs [Corium](https://github.com/Corium-OS/Corium) on a ZFS pool and is driven with `cctl`. See [`doppio/README.md`](./doppio/README.md).
 - [**Ristretto**](https://github.com/qjoly/GitOps/tree/main/ristretto) : single-node Talos VM on Proxmox, not managed by ArgoCD and reachable through ProxyAuthK8S. See [`ristretto/README.md`](./ristretto/README.md).
 
-`cortado` and the standalone `kubevirt` cluster have been retired — the old configs live in the git history.
+`cortado` and the standalone `kubevirt` cluster are retired. The old configurations live in the git history.
 
 ### Not Kubernetes
 
@@ -86,18 +89,29 @@ On `mocha` CI does it: a push to `mocha/corium/` runs [`corium-mocha`](./.github
 
 [`mocha/kubeconfig`](./mocha/kubeconfig) logs into `mocha` through Authentik (OIDC).
 
-Recurring operations (Vault unseal and KV access) are `mise` tasks:
+Recurring operations are `mise` tasks:
+
+| Tasks | What they do |
+|-------|--------------|
+| `vault:status`, `vault:unseal`, `vault:kv` | Show the seal status, unseal, and read or write `kv/` in the Vault of the current context |
+| `octodoctor:scan`, `octodoctor:export` | Run [OctoDoctor](./docs/octodoctor.md) on the manifests in git or on an export of a live ArgoCD |
+| `nb:setup`, `nb:tunnel`, `nb:peer`, `nb:mac`, `nb:teardown` | Reach the NetBird hostnames from a Mac, and expose a local port through `mac-relay` |
 
 ```bash
 mise tasks          # list them
 mise run vault:status
 ```
 
+## Documentation
+
+The [`docs/`](./docs) directory holds the guides (getting started, secret management, backup, SigNoz, Cloudflare tunnels, sandboxes...) and a changelog. The `page.yaml` workflow publishes them as an mkdocs site: <https://qjoly.github.io/GitOps/>.
+
 ## CI/CD
 
 | Workflow | What it does |
 |----------|--------------|
 | `omni-template-sync.yaml` | Syncs the Omni cluster template of `turing` on every push to `main` (see below) |
+| `corium-mocha.yaml` | Upgrades `mocha` to the image in `mocha/corium/image.yaml` (reboot), then applies `mocha.yaml` |
 | `materia-americano.yaml` | Republishes `americano/` to the root of the `americano` branch for Materia |
 | `tangled-mirror.yaml` | Mirrors the repo to tangled |
 | `page.yaml` | Builds and publishes the mkdocs site ([docs](https://qjoly.github.io/GitOps/)) |
@@ -107,7 +121,7 @@ mise run vault:status
 
 The workflow `.github/workflows/omni-template-sync.yaml` runs `omnictl cluster template sync` and `helmfile apply` on every push to `main` that modifies `turing/template.yaml`, `turing/patches/`, `turing/helmfile.yaml` or `turing/helm/`. On a pull request it posts the dry-run and the `helmfile diff` as a comment.
 
-It authenticates against Omni using a **service account** (not a Kubernetes ServiceAccount — it is an Omni-native token-based credential).
+It authenticates against Omni with an Omni service account. This is an Omni token, not a Kubernetes ServiceAccount.
 
 ### Create the Omni service account (one-time setup)
 
@@ -124,7 +138,7 @@ The command prints an `OMNI_ENDPOINT` and an `OMNI_SERVICE_ACCOUNT_KEY`. Store b
 | `OMNI_ENDPOINT`             | Endpoint printed by the command   |
 | `OMNI_SERVICE_ACCOUNT_KEY`  | Key printed by the command        |
 
-> The `OMNI_SERVICE_ACCOUNT_KEY` is shown only once — save it immediately.
+> Save the `OMNI_SERVICE_ACCOUNT_KEY` immediately. The command shows it only once.
 
 Add them at: **Repository → Settings → Secrets and variables → Actions → New repository secret**
 
