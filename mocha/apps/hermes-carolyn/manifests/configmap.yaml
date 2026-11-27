@@ -211,6 +211,11 @@ data:
     # hard-blocks dangerous typed shell patterns and destructive key combos.
     # Without AT-SPI only foreground delivery works on this X11 screen, hence
     # both delivery modes.
+    # approvals.mode: off disables all command approval prompts (equivalent to
+    # --yolo): every shell command runs without asking.
+    approvals:
+      mode: off
+
     command_allowlist:
       - cua:click:background
       - cua:click:foreground
