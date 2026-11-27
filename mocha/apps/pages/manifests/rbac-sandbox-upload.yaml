@@ -1,0 +1,28 @@
+# Lets the sandbox service account (sandboxes/sandbox-ro) publish pages with
+# kubectl cp into the pages pod: read pods + create pods/exec, nothing else.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pages-upload
+  namespace: pages
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pages-upload-sandbox
+  namespace: pages
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pages-upload
+subjects:
+  - kind: ServiceAccount
+    name: sandbox-ro
+    namespace: sandboxes

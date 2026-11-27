@@ -5,3 +5,4 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - ingress.yaml
+  - rbac-sandbox-upload.yaml
