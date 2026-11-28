@@ -12,7 +12,7 @@ node:
 addons:
   - name: cilium
     chart: cilium/cilium
-    version: 1.20.2
+    version: 1.20.5
     namespace: kube-system
     repository:
       name: cilium
