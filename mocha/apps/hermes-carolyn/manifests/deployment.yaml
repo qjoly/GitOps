@@ -600,7 +600,7 @@ spec:
         # Grafana (mocha), read-only: Viewer service account plus --disable-write.
         # Plain HTTP without auth, bound to 127.0.0.1.
         - name: grafana-mcp
-          image: docker.io/grafana/mcp-grafana:2.3.0
+          image: docker.io/grafana/mcp-grafana:2.4.0
           args:
             - -t
             - streamable-http
