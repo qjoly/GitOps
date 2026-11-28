@@ -75,7 +75,7 @@ spec:
         # Same image as the hermes-carolyn container, so the webui and the
         # gateway always run the same agent version.
         - name: seed-agent-src
-          image: docker.io/nousresearch/hermes-agent:v0.23.3-desktop
+          image: docker.io/nousresearch/hermes-agent:v0.23.5-desktop
           command:
             - sh
             - -c
@@ -116,7 +116,7 @@ spec:
         # before the gateway starts so the ticker sees the final set.
         # Never fatal: a broken reconcile must not stop the agent from booting.
         - name: sync-cron
-          image: docker.io/nousresearch/hermes-agent:v0.23.3-desktop
+          image: docker.io/nousresearch/hermes-agent:v0.23.5-desktop
           securityContext:
             runAsUser: 10000
             runAsGroup: 10000
@@ -166,7 +166,7 @@ spec:
         # Hermes bump that moves the pin. Not fatal: without it the agent loses
         # computer_use, not the rest.
         - name: install-cua-driver
-          image: docker.io/nousresearch/hermes-agent:v0.23.3-desktop
+          image: docker.io/nousresearch/hermes-agent:v0.23.5-desktop
           securityContext:
             runAsUser: 10000
             runAsGroup: 10000
@@ -306,7 +306,7 @@ spec:
           # the agent's computer_use and headed browser act on. The plain
           # image lacks them and cannot install them at runtime (hermes user,
           # no sudo).
-          image: docker.io/nousresearch/hermes-agent:v0.23.3-desktop
+          image: docker.io/nousresearch/hermes-agent:v0.23.5-desktop
           args:
             - gateway
             - run
