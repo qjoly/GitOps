@@ -4,7 +4,7 @@
 # Static analysis of Argo CD manifests, see docs/octodoctor.md.
 "github:OctopusDeploy/octodoctor-argocd" = "0.6.0"
 # Local resolver for *.nb.mocha.thoughtless.eu, see mocha/apps/netbird-jump/README.md.
-"github:coredns/coredns" = "1.15.0"
+"github:coredns/coredns" = "011"
 # Reverse-tunnel client for nb:mac, see mocha/apps/mac-relay/README.md.
 "github:jpillora/chisel" = "1.12.0"
 
