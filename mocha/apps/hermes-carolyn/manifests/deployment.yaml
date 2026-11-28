@@ -628,7 +628,7 @@ spec:
               cpu: 500m
               memory: 256Mi
         - name: webui
-          image: ghcr.io/nesquena/hermes-webui:0.52.734
+          image: ghcr.io/nesquena/hermes-webui:0.52.761
           ports:
             - name: http
               containerPort: 8787
