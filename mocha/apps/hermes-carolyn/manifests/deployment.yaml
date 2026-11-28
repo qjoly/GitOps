@@ -535,7 +535,7 @@ spec:
               mountPath: /home/node/.config/email-mcp
               readOnly: true
         - name: github-mcp
-          image: ghcr.io/github/github-mcp-server:v2.2.0
+          image: ghcr.io/github/github-mcp-server:v2.3.0
           args:
             - http
           env:
