@@ -470,7 +470,7 @@ spec:
           # NetBird peer inside the pod (netstack mode, proven on k8s like the
           # jump peer) so the pod can reach Americano (100.92.156.232) and the
           # other peers over the WireGuard tunnel.
-          image: netbirdio/netbird:0.83.1
+          image: netbirdio/netbird:0.84.0
           env:
             - name: NB_SETUP_KEY
               valueFrom:
