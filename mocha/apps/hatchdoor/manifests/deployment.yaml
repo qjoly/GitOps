@@ -83,7 +83,7 @@ spec:
               mountPath: /models
       containers:
         - name: hatchdoor
-          image: battermanz/hatchdoor:2.10.0
+          image: battermanz/hatchdoor:2.10.1
           env:
             # Non-loopback bind; Hatchdoor refuses to start without the token.
             - name: HOST
