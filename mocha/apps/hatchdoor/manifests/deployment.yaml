@@ -55,7 +55,7 @@ spec:
         # here rather than in a startup script. `chown` on an already-correct
         # volume is cheap, and OpenEBS sometimes mounts it as root.
         - name: fix-permissions
-          image: busybox:1.37
+          image: busybox:1.38
           command:
             - sh
             - -c
